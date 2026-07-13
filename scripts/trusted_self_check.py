@@ -80,9 +80,9 @@ def _validate_commit(root: Path, trust: dict[str, Any]) -> None:
     ancestor = _git(root, "merge-base", "--is-ancestor", commit, "HEAD")
     if ancestor.returncode != 0:
         raise RuntimeError(f"trusted verifier is not an ancestor of HEAD: {commit}")
-    version = _git(root, "show", f"{commit}:src/clean_docs/__init__.py")
-    expected = f'__version__ = "{trust["package_version"]}"'
-    if version.returncode != 0 or expected not in version.stdout:
+    project = _git(root, "show", f"{commit}:pyproject.toml")
+    expected = f'version = "{trust["package_version"]}"'
+    if project.returncode != 0 or expected not in project.stdout:
         raise RuntimeError("trusted commit does not match the recorded package version")
 
 

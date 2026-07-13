@@ -55,6 +55,9 @@ def test_release_toolchain_and_ci_install_are_pinned() -> None:
     assert {"build==1.2.2.post1", "setuptools==75.8.0", "wheel==0.45.1"} <= set(
         project["project"]["optional-dependencies"]["dev"]
     )
+    package = (ROOT / "src/clean_docs/__init__.py").read_text()
+    assert '__version__ = "' not in package
+    assert 'version("clean-docs")' in package
 
     workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
     steps = workflow["jobs"]["release-artifact"]["steps"]
