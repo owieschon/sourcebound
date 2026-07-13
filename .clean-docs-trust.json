@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "channel": "release",
-  "commit": "d30638d24c440b52df301b700fbf87e454a8796f",
-  "package_version": "1.0.0rc11",
+  "commit": "763b24a120255925941f23dfa90f90712c4d46eb",
+  "package_version": "1.0.0rc12",
   "required_checks": ["standard", "bindings"]
 }
