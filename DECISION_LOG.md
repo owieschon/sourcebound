@@ -191,3 +191,15 @@ own it. Working-tree output does not embed `HEAD`: committing that value would c
 make the projection stale again. Immutable refs will be recorded only when projecting an
 immutable snapshot. Reversible: projection output paths and source selection remain manifest
 data, while removing the projection leaves the canonical corpus unchanged.
+
+## 19. Separate provider execution from deterministic task scoring (2026-07-13)
+
+Context: an agent round trip has two different claims: a specific provider produced a response,
+and a deterministic scorer accepted or rejected its observable output. Combining them would make
+offline regression tests depend on a network or imply that one recorded result generalizes to
+other models. Chose replay as the default. Recorded responses are scored without provider
+execution; live command adapters require `--mode live` and a record directory. Reports label live
+outcomes model-specific, split human and agent scores from hygiene findings, and record corpus,
+prompt, response, model, scorer, and result digests in a deduplicated history. Human command tasks
+must name an allowlisted command and an excerpt present in their supplied docs. Reversible: new
+provider adapters can implement the same response protocol without entering deterministic gates.

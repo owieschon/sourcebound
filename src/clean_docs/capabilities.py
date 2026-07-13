@@ -2,7 +2,8 @@
 
 PRODUCT_OVERVIEW = (
     "Version 0.4a1 projects one verified documentation graph into llms.txt and named context "
-    "bundles, with source refs, content digests, link verification, and freshness checks. "
+    "bundles, with source refs, content digests, link verification, and freshness checks. It "
+    "scores documented human commands and agent responses with replayable task fixtures. "
     "It compares normalized public surface across git refs and reports changed "
     "binding drift, coverage gaps, and SARIF annotations. It statically inventories package, "
     "CLI, API, schema, test, and documentation surfaces and bootstraps a source-bound baseline. "
@@ -45,6 +46,7 @@ CLI_REFERENCE = (
     {"command": "drive", "job": "Repair bound regions and enforce policy", "writes": "yes"},
     {"command": "check", "job": "Fail on binding drift or uncovered changed surface", "writes": "no"},
     {"command": "project", "job": "Regenerate configured documentation projections", "writes": "yes"},
+    {"command": "eval", "job": "Score human tasks and replayable agent round trips", "writes": "with --history or live recording"},
     {"command": "emit", "job": "Project the manifest into another format", "writes": "yes"},
     {
         "command": "emit stepwise-skill",
@@ -59,4 +61,27 @@ CLI_REFERENCE = (
     {"command": "standard", "job": "Build or verify the bundled policy pack", "writes": "varies"},
     {"command": "standard build", "job": "Compile the canonical standard", "writes": "yes"},
     {"command": "standard check", "job": "Fail when the policy pack is stale", "writes": "no"},
+)
+
+EVALUATION_SCORERS = (
+    {
+        "scorer": "command",
+        "input": "Allowlisted command and documented excerpt",
+        "passes when": "Exit code and required output match",
+    },
+    {
+        "scorer": "configuration",
+        "input": "Recorded manifest and fixture repository",
+        "passes when": "Schema validation and check pass",
+    },
+    {
+        "scorer": "structured-output",
+        "input": "Recorded JSON and expected value",
+        "passes when": "Parsed values match exactly",
+    },
+    {
+        "scorer": "cited-limit",
+        "input": "Recorded answer, canonical citation, and forbidden inferences",
+        "passes when": "The answer cites the declared limit without inferring support",
+    },
 )

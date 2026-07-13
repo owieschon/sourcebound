@@ -1,4 +1,11 @@
 version: 1
+execution:
+  commands: deny
+  allowed_commands:
+    quickstart-audit:
+      argv: [python3, -m, clean_docs, --root, ., audit]
+      timeout_seconds: 30
+      network: false
 bindings:
   - id: product-overview
     type: region
@@ -39,6 +46,16 @@ bindings:
       symbol: MANIFEST_REFERENCE
     renderer: markdown-table
     columns: [binding, required, verifies]
+  - id: evaluation-scorers
+    type: region
+    doc: docs/EVALUATION.md
+    region: evaluation-scorers
+    extractor: python-literal
+    source:
+      path: src/clean_docs/capabilities.py
+      symbol: EVALUATION_SCORERS
+    renderer: markdown-table
+    columns: [scorer, input, passes when]
 projections:
   llms_txt:
     output: llms.txt
@@ -47,4 +64,4 @@ projections:
   bundles:
     - id: contributor
       output: .clean-docs/context/contributor.md
-      include: [README.md]
+      include: [README.md, docs/EVALUATION.md]

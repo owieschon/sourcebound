@@ -1,0 +1,9 @@
+version: 1
+bindings:
+  - id: fixture-fact
+    type: region
+    doc: README.md
+    region: fixture-fact
+    extractor: file
+    source: {path: source.txt}
+    renderer: scalar

@@ -1,0 +1,84 @@
+# Evaluate documentation tasks
+
+This guide shows how to score observable human tasks and replayable agent responses.
+
+## Intended reader
+
+Use this guide when repository documentation must prove that a person or agent can complete a specific task from declared pages alone.
+
+## Value
+
+`clean-docs eval` reports human task success, agent task success, and hygiene findings separately. A passing task proves its configured observable result. It does not turn one model response into a general quality score.
+
+## Prerequisites
+
+- A valid `.clean-docs.yml`.
+- Context files that contain every fact required by the task.
+- Recorded response files for agent replay tasks.
+- Manifest-allowlisted commands for human command tasks.
+
+## Run recorded tasks
+
+Store a version 1 fixture at `.clean-docs/eval.yml`, then run:
+
+```bash
+clean-docs eval --history .clean-docs/evaluation-history.json
+```
+
+Replay is the default. It reads recorded responses without invoking a provider. The history is content-addressed and records the corpus, prompt, response, model, scorer, and result for each task.
+
+## Fixture contract
+
+Every task names an audience, prompt, context paths, and scorer. Agent tasks also name either a recorded response adapter or an explicit live command adapter.
+
+<!-- clean-docs:begin evaluation-scorers -->
+| scorer | input | passes when |
+| --- | --- | --- |
+| command | Allowlisted command and documented excerpt | Exit code and required output match |
+| configuration | Recorded manifest and fixture repository | Schema validation and check pass |
+| structured-output | Recorded JSON and expected value | Parsed values match exactly |
+| cited-limit | Recorded answer, canonical citation, and forbidden inferences | The answer cites the declared limit without inferring support |
+<!-- clean-docs:end evaluation-scorers -->
+
+A human command expectation must include `documented_as`. clean-docs first finds that exact excerpt in the supplied context, then runs the named allowlisted command and compares its exit code and required output.
+
+This recorded limitation task contains no provider command:
+
+```yaml
+version: 1
+tasks:
+  - id: limitation-retrieval
+    audience: agent
+    prompt: Does the documented limit permit this behavior?
+    context: [.clean-docs/context/contributor.md]
+    model:
+      adapter: recorded
+      name: recorded-fixture
+      response: .clean-docs/evaluation/responses/limitation.txt
+    scorer:
+      type: cited-limit
+      answer: The canonical limitation text
+      citation: README.md#current-limits
+      forbidden: [unsupported inference]
+```
+
+## Run a live provider
+
+Live execution is explicit and must retain its response:
+
+```bash
+clean-docs eval --mode live --record-dir .clean-docs/evaluation/live
+```
+
+The task's command adapter receives a deterministic JSON prompt on standard input. Its result is labeled `model-specific-live`. Move an accepted response into a recorded fixture before relying on it in offline CI.
+
+## Limits
+
+- Scorers are deterministic; live provider output is model-specific.
+- Replay proves the saved response against the named corpus digest, not current behavior of the named model.
+- Provider commands run only in live mode. The execution environment owns their network isolation.
+- Configuration scoring writes the response only inside a temporary copy of the fixture repository.
+
+## Next step
+
+Run `clean-docs project` before evaluation when a task consumes a generated context bundle, then commit the bundle and evaluation history with the canonical documentation change.
