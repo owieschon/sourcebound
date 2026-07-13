@@ -1,0 +1,38 @@
+[
+  {
+    "check": "surface",
+    "file": "STATUS.md",
+    "line": 1,
+    "detail": "process-artifact name on the reader-facing doc surface"
+  },
+  {
+    "check": "audience",
+    "file": "REFERENCE.md",
+    "line": 1,
+    "detail": "3 harness/agent-address terms -- audience reads as an agent"
+  },
+  {
+    "check": "provenance",
+    "file": "REFERENCE.md",
+    "line": 7,
+    "detail": "1 provenance/receipt marks in a reference doc (e.g. '(Program 9)')"
+  },
+  {
+    "check": "near-dup",
+    "file": "ALPHA.md",
+    "line": 3,
+    "detail": "~100% overlap with BETA.md:3 (different doc -- pick one canonical home)"
+  },
+  {
+    "check": "doc-length",
+    "file": "LONG.md",
+    "line": 1,
+    "detail": "123 lines (> 120) -- justify one file or split"
+  },
+  {
+    "check": "section-length",
+    "file": "SECTION.md",
+    "line": 3,
+    "detail": "section 'Oversized' is 42 lines (> 40)"
+  }
+]

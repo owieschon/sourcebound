@@ -5,6 +5,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
+from clean_docs.corpus import scan_corpus
 from clean_docs.standard import load_default_pack
 
 
@@ -14,7 +15,9 @@ PROCESS_NAME = re.compile(
 )
 LINK = re.compile(r"\[[^\]]+\]\(([^)\s]+)(?:\s+[^)]*)?\)")
 HEADING = re.compile(r"^#{2,}\s+(.+?)\s*$")
-ALLOW = re.compile(r'<!--\s*clean-docs:allow\s+(doc-length|section-length)\s+reason="([^"]+)"\s*-->')
+ALLOW = re.compile(
+    r'<!--\s*clean-docs:allow\s+([a-z][a-z-]+)\s+reason="([^"]+)"\s*-->'
+)
 
 
 @dataclass(frozen=True)
@@ -125,5 +128,35 @@ def audit(root: Path) -> AuditReport:
                         line_number,
                         f"target does not exist: {target}",
                     ))
+    corpus_rule_names = {
+        "surface": "process-artifact",
+        "audience": "audience",
+        "provenance": "provenance",
+        "near-dup": "near-duplicate",
+        "restatement": "restatement",
+    }
+    for corpus_finding in scan_corpus(root, include_lengths=False):
+        rule = corpus_rule_names.get(corpus_finding.rule)
+        if rule is None:
+            continue
+        try:
+            text = (root / corpus_finding.doc).read_text(encoding="utf-8")
+        except OSError:
+            continue
+        if rule in _allowances(text.splitlines()):
+            continue
+        candidate = AuditFinding(
+            rule,
+            corpus_finding.doc,
+            corpus_finding.line,
+            corpus_finding.detail,
+        )
+        if not any(
+            existing.rule == candidate.rule
+            and existing.path == candidate.path
+            and existing.line == candidate.line
+            for existing in findings
+        ):
+            findings.append(candidate)
     findings.sort(key=lambda item: (item.path, item.line, item.rule))
     return AuditReport(tuple(active), tuple(ignored), tuple(findings))
