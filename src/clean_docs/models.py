@@ -5,6 +5,10 @@ from pathlib import Path
 from typing import Any
 
 
+PLUGIN_API_VERSION = 1
+PLUGIN_INTERFACES = frozenset({"discoverer", "extractor", "policy", "renderer"})
+
+
 @dataclass(frozen=True)
 class Source:
     path: Path
@@ -62,6 +66,15 @@ class CommandSpec:
 
 
 @dataclass(frozen=True)
+class PluginSpec:
+    id: str
+    api_version: int
+    interfaces: tuple[str, ...]
+    argv: tuple[str, ...]
+    timeout_seconds: int
+
+
+@dataclass(frozen=True)
 class LlmsTxtProjection:
     output: Path
     title: str | None = None
@@ -94,6 +107,7 @@ class Manifest:
     version: int
     bindings: tuple[Binding, ...]
     commands: tuple[CommandSpec, ...] = ()
+    plugins: tuple[PluginSpec, ...] = ()
     projections: ProjectionConfig | None = None
 
 

@@ -56,6 +56,14 @@ EXPECTED_IDS_BY_RELEASE = {
         "stepwise-skill-projection",
         "static-demonstration",
     },
+    "0.5": {
+        "factual-release-delta",
+        "phrasing-cannot-alter-facts",
+        "third-party-extractor",
+        "incompatible-plugin",
+        "schema-migration",
+        "cross-ref-isolation",
+    },
 }
 
 

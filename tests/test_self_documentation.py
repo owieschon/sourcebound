@@ -63,7 +63,9 @@ def test_self_check_detects_reference_source_drift(
     root = tmp_path / "repo"
     package = root / "src/clean_docs"
     package.mkdir(parents=True)
+    (root / "docs").mkdir()
     (root / "README.md").write_text((ROOT / "README.md").read_text())
+    (root / "docs/CLI.md").write_text((ROOT / "docs/CLI.md").read_text())
     for name in ("capabilities.py", "manifest.py"):
         (package / name).write_text((ROOT / "src/clean_docs" / name).read_text())
     (root / ".clean-docs.yml").write_text("""\
@@ -71,7 +73,7 @@ version: 1
 bindings:
   - id: cli-reference
     type: region
-    doc: README.md
+    doc: docs/CLI.md
     region: cli-reference
     extractor: python-literal
     source: {path: src/clean_docs/capabilities.py, symbol: CLI_REFERENCE}
