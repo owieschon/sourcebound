@@ -85,16 +85,13 @@ workflow execution in a temporary repository. A target-specific build, security 
 integration remains outside this proof. Reversible: the adapter is isolated under `emit/`;
 deleting it leaves the engine untouched.
 
-## 9. Add an llms.txt projection and judge emit targets by payload, not format (2026-07-13)
+## 9. Separate command projections from content indexes (2026-07-13)
 
-Context: the stepwise-skill adapter is format-correct but its payload is clean-docs' own command
-workflow. context-mill is a content system, so a package that carries commands is dressed in a
-content system's shape and no external registry will serve a "run clean-docs" skill. Options: (a)
-treat the stepwise skill as a live integration; (b) draw a content-vs-command line, keep the
-stepwise skill as a demonstration of format fluency and adapter architecture, and add the
-content-carrying projection the system actually wants. Chose (b): `src/clean_docs/emit/llms_txt.py`
-emits an llms.txt index of the manifest's source-bound documents, each linked with its bindings
-and a content sha256, regenerated as bindings change, so the index stays current by construction.
-The Agent Skill (`skill/SKILL.md`) already owns the command payload. The interface-compat doc now
-states this seam and labels the stepwise skill demonstration, not live integration. Reversible:
-the projection is additive under `emit/`; the framing is prose.
+Context: the stepwise package carries clean-docs' maintenance commands, while an agent-readable
+content index must point at the repository documentation itself. Treating one payload as the
+other would make a format-correct artifact serve the wrong reader task. Chose two explicit
+projections. `emit stepwise-skill` packages the audit, repair, and verify workflow.
+`emit llms-txt` indexes manifest-bound documents with binding identifiers and content digests.
+The latter changes deterministically when a bound document or binding changes; a later projection
+gate will make committing that change mandatory. Reversible: both implementations are isolated
+under `emit/` and share only the native manifest model.
