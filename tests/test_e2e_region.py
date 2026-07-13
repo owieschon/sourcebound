@@ -1,0 +1,124 @@
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+
+MANIFEST = """\
+version: 1
+bindings:
+  - id: actions
+    type: region
+    doc: README.md
+    region: actions
+    extractor: python-literal
+    source:
+      path: src/actions.py
+      symbol: ACTIONS
+    renderer: markdown-table
+    columns: [name, tier, external]
+"""
+
+SOURCE_TWO = """\
+from dataclasses import dataclass
+
+ACTIONS = {
+    "recommend": Action(name="recommend", tier=1, external=False),
+    "draft": Action(name="draft", tier=2, external=True),
+}
+"""
+
+SOURCE_THREE = SOURCE_TWO.replace(
+    "}\n",
+    '    "call": Action(name="call", tier=3, external=True),\n}\n',
+)
+
+README = """\
+# Fixture
+
+Author-owned introduction.
+
+<!-- clean-docs:begin actions -->
+| name | tier | external |
+| --- | --- | --- |
+| recommend | 1 | false |
+| draft | 2 | true |
+<!-- clean-docs:end actions -->
+
+Author-owned ending.
+"""
+
+
+def _run(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    env = dict(os.environ)
+    src = Path(__file__).parents[1] / "src"
+    env["PYTHONPATH"] = str(src) + os.pathsep + env.get("PYTHONPATH", "")
+    return subprocess.run(
+        [sys.executable, "-m", "clean_docs", "--root", str(root), *args],
+        text=True,
+        capture_output=True,
+        env=env,
+        check=False,
+    )
+
+
+def _repo(tmp_path: Path) -> Path:
+    root = tmp_path / "repo"
+    (root / "src").mkdir(parents=True)
+    (root / ".clean-docs.yml").write_text(MANIFEST)
+    (root / "src/actions.py").write_text(SOURCE_TWO)
+    (root / "README.md").write_text(README)
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+    subprocess.run(
+        [
+            "git", "-C", str(root), "-c", "user.name=Fixture", "-c",
+            "user.email=fixture@example.test", "commit", "-qm", "baseline",
+        ],
+        check=True,
+    )
+    return root
+
+
+def test_detects_repairs_and_preserves_author_prose(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    assert _run(root, "check").returncode == 0
+    (root / "src/actions.py").write_text(SOURCE_THREE)
+
+    check = _run(root, "check", "--format", "json")
+    assert check.returncode == 1
+    report = json.loads(check.stdout)
+    assert report["results"][0]["status"] == "drift"
+    assert "| call | 3 | true |" in report["results"][0]["diff"]
+    assert (root / "README.md").read_text() == README
+
+    preview = _run(root, "derive")
+    assert preview.returncode == 0
+    assert "| call | 3 | true |" in preview.stdout
+    assert (root / "README.md").read_text() == README
+
+    write = _run(root, "derive", "--write")
+    assert write.returncode == 0
+    updated = (root / "README.md").read_text()
+    assert updated.startswith("# Fixture\n\nAuthor-owned introduction.\n")
+    assert updated.endswith("\nAuthor-owned ending.\n")
+    assert "| call | 3 | true |" in updated
+    assert _run(root, "check").returncode == 0
+
+
+def test_reads_source_from_immutable_ref_without_mutation(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    baseline = subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "HEAD"], text=True, capture_output=True, check=True
+    ).stdout.strip()
+    (root / "src/actions.py").write_text(SOURCE_THREE)
+    before = (root / "src/actions.py").read_text()
+
+    check = _run(root, "check", "--ref", baseline, "--format", "json")
+    assert check.returncode == 0
+    report = json.loads(check.stdout)
+    assert report["results"][0]["provenance"]["ref"] == baseline
+    assert (root / "src/actions.py").read_text() == before
