@@ -102,9 +102,11 @@ UI, use a consistent viewport, annotate the target, remove personal or sensitive
 alt text, and provide light and dark variants when appearance changes. A caption states what to
 notice rather than repeating the image.
 
-Use a short video for a multi-step interaction, temporal UI behavior, or a workflow whose motion is
-the lesson. Prefer a controllable video to an animated image. Provide a text path to the same outcome
-and make code legible at full screen. Do not use media as decoration or as the only record of a fact.
+Video is optional. Use it only when motion is necessary to understand a multi-step interaction or
+temporal UI behavior and the team can maintain it. Prefer a controllable video to an animated image.
+Provide a complete text path to the same outcome and make code legible at full screen. A person or
+agent must be able to complete and verify every documented task without watching it. Do not use media
+as decoration or as the only record of a fact.
 
 ---
 
@@ -403,8 +405,8 @@ Run this against any doc before shipping. Each line is a fail/pass check.
       (`bash` vs `text` vs `json`).
 - [ ] Code examples are realistic and sparse in comments; filenames, diffs, focus, or tabs expose
       placement and variants when needed.
-- [ ] Screenshots are cropped, scrubbed, annotated, captioned, and described; video has a text path;
-      diagrams have a text equivalent.
+- [ ] Screenshots are cropped, scrubbed, annotated, captioned, and described; optional video has a
+      complete text path; diagrams have a text equivalent.
 - [ ] The page names its one governing constraint early.
 - [ ] No booster adjectives (`seamless`, `powerful`, `simply`, `comprehensive`, `leverage`, `utilize`). <!-- slop-ok: banned-word registry for the checklist -->
 - [ ] Every clause adds information; claims needing separate evidence are split; the system is named

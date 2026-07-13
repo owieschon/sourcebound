@@ -20,10 +20,11 @@ def test_reader_install_and_repair_guidance_matches_candidate_artifacts() -> Non
     support = (PROJECT / "docs/SUPPORT.md").read_text()
     readme = (PROJECT / "README.md").read_text()
 
-    assert "python -m pip install ./clean_docs-*.whl" in support
+    assert "python -m pip install --no-index --find-links ./wheelhouse ./clean_docs-*.whl" in support
+    assert "The version output must match the wheel filename" in support
     assert "expected one wheel" in support
     assert "does not refresh projections" in readme
-    assert "`clean-docs drive`, then `clean-docs project`" in readme
+    assert "`drive` does not refresh projections" in readme
 
 
 def _commit(root: Path, message: str) -> str:

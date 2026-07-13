@@ -31,11 +31,11 @@ execution:
   commands: deny
   allowed_commands:
     install:
-      argv: [python, -c, "print('installed')"]
+      argv: ["{{python}}", -c, "print('installed')"]
       timeout_seconds: 30
       network: false
     first-command:
-      argv: [python, -c, "print('{command_output}')"]
+      argv: ["{{python}}", -c, "print('{command_output}')"]
       timeout_seconds: 30
       network: false
 bindings:
