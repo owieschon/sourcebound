@@ -3,7 +3,7 @@
 SUPPORTED_BINDINGS = {
     "region": {
         "binding": "region",
-        "source": "Static Python assignment",
+        "source": "Static Python assignment or JSON Pointer",
         "output": "Markdown table",
         "check": "Re-render and compare",
     },

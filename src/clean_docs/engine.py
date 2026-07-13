@@ -4,7 +4,7 @@ import difflib
 from pathlib import Path
 
 from clean_docs.errors import ConfigurationError
-from clean_docs.extractors import extract_python_literal
+from clean_docs.extractors import extract_json_pointer, extract_python_literal
 from clean_docs.manifest import load_manifest
 from clean_docs.models import BindingResult, RegionBinding
 from clean_docs.policy import PolicyFinding, check_documents
@@ -35,7 +35,11 @@ def evaluate(
     results: list[BindingResult] = []
     documents: dict[str, str] = {}
     for binding in _select(manifest.bindings, binding_id):
-        evidence = extract_python_literal(snapshot, binding)
+        evidence = (
+            extract_python_literal(snapshot, binding)
+            if binding.extractor == "python-literal"
+            else extract_json_pointer(snapshot, binding)
+        )
         rendered = render_markdown_table(evidence, binding)
         doc_path = root / binding.doc
         doc_key = binding.doc.as_posix()

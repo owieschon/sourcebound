@@ -12,7 +12,8 @@ ROOT_KEYS = {"version", "bindings"}
 BINDING_KEYS = {
     "id", "type", "doc", "region", "extractor", "source", "renderer", "columns"
 }
-SOURCE_KEYS = {"path", "symbol"}
+SOURCE_KEYS = {"path", "symbol", "pointer"}
+EXTRACTORS = {"json", "python-literal"}
 
 
 def _mapping(value: Any, where: str) -> dict[str, Any]:
@@ -66,16 +67,30 @@ def load_manifest(path: Path) -> Manifest:
         ids.add(binding_id)
         if data.get("type") != "region":
             raise ConfigurationError(f"{where}.type must be region in manifest version 1")
-        if data.get("extractor") != "python-literal":
-            raise ConfigurationError(f"{where}.extractor must be python-literal in this release")
+        extractor = data.get("extractor")
+        if extractor not in EXTRACTORS:
+            raise ConfigurationError(
+                f"{where}.extractor must be one of: {', '.join(sorted(EXTRACTORS))}"
+            )
         if data.get("renderer") != "markdown-table":
             raise ConfigurationError(f"{where}.renderer must be markdown-table in this release")
 
         source_data = _mapping(data.get("source"), f"{where}.source")
         _reject_unknown(source_data, SOURCE_KEYS, f"{where}.source")
         symbol = source_data.get("symbol")
-        if not isinstance(symbol, str) or not symbol.isidentifier():
-            raise ConfigurationError(f"{where}.source.symbol must be a Python identifier")
+        pointer = source_data.get("pointer")
+        if extractor == "python-literal":
+            if not isinstance(symbol, str) or not symbol.isidentifier():
+                raise ConfigurationError(f"{where}.source.symbol must be a Python identifier")
+            if pointer is not None:
+                raise ConfigurationError(f"{where}.source.pointer is only valid for json")
+        else:
+            if symbol is not None:
+                raise ConfigurationError(f"{where}.source.symbol is only valid for python-literal")
+            if not isinstance(pointer, str) or not pointer.startswith("/"):
+                raise ConfigurationError(
+                    f"{where}.source.pointer must be a JSON Pointer starting with /"
+                )
         region = data.get("region")
         if not isinstance(region, str) or not region.strip():
             raise ConfigurationError(f"{where}.region must be a non-empty string")
@@ -91,10 +106,11 @@ def load_manifest(path: Path) -> Manifest:
             id=binding_id,
             doc=_relative_path(data.get("doc"), f"{where}.doc"),
             region=region,
-            extractor=data["extractor"],
+            extractor=extractor,
             source=Source(
                 path=_relative_path(source_data.get("path"), f"{where}.source.path"),
                 symbol=symbol,
+                pointer=pointer,
             ),
             renderer=data["renderer"],
             columns=tuple(columns),
