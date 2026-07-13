@@ -10,11 +10,12 @@ test -f SECURITY.md
 test -f .github/workflows/ci.yml
 python3 scripts/check_doc_names.py
 python3 -m pytest -q
-PYTHONPATH=src python3 -m clean_docs --version | grep -q '^0.1.0$'
+PYTHONPATH=src python3 -m clean_docs --version | grep -q '^0.2.0a1$'
 PYTHONPATH=src python3 -m clean_docs --help | grep -q 'derive'
 PYTHONPATH=src python3 -m clean_docs --help | grep -q 'check'
 PYTHONPATH=src python3 -m clean_docs --help | grep -q 'drive'
 PYTHONPATH=src python3 -m clean_docs --help | grep -q 'audit'
+PYTHONPATH=src python3 -m clean_docs --help | grep -q 'inventory'
 PYTHONPATH=src python3 -m clean_docs --help | grep -q 'doctor'
 PYTHONPATH=src python3 -m clean_docs --help | grep -q 'emit'
 PYTHONPATH=src python3 -m clean_docs --root "$root" audit | grep -q '0 finding(s)'

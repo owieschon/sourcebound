@@ -1,8 +1,9 @@
 """Public capability registry rendered into the clean-docs README."""
 
 PRODUCT_OVERVIEW = (
-    "Version 0.1 audits documentation without configuration and verifies region, claim, "
-    "and symbol bindings from static Python, structured data, text files, path globs, and "
+    "Version 0.2 alpha statically inventories package, CLI, API, schema, test, and documentation "
+    "surfaces. It audits documentation without configuration and verifies region, claim, and "
+    "symbol bindings from static Python, structured data, text files, path globs, and "
     "allowlisted JSON commands. It emits manifest-derived stepwise skill packages and llms.txt "
     "indexes, and it never imports repository code. `derive` previews changes "
     "unless you pass `--write`; `audit` and `check` never write."
@@ -31,6 +32,7 @@ SUPPORTED_BINDINGS = {
 
 CLI_REFERENCE = (
     {"command": "audit", "job": "Inventory and check repository documentation", "writes": "no"},
+    {"command": "inventory", "job": "List detected repository surfaces and coverage", "writes": "no"},
     {"command": "doctor", "job": "Check repository and integration readiness", "writes": "no"},
     {"command": "derive", "job": "Preview generated region changes", "writes": "with --write"},
     {"command": "drive", "job": "Repair bound regions and enforce policy", "writes": "yes"},

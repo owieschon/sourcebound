@@ -13,6 +13,7 @@ from clean_docs.extractors import (
     extract_json_pointer,
     extract_paths,
     extract_python_literal,
+    extract_repository_inventory,
     extract_structured,
 )
 from clean_docs.manifest import load_manifest
@@ -131,6 +132,7 @@ def evaluate(
             "json": extract_json_pointer,
             "path": extract_paths,
             "python-literal": extract_python_literal,
+            "repository-inventory": extract_repository_inventory,
             "structured-data": extract_structured,
         }
         evidence = extractors[binding.extractor](snapshot, binding)

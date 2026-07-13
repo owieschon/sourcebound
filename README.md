@@ -5,7 +5,7 @@ clean-docs is a self-driving documentation system that applies one packaged stan
 Write the standard once; clean-docs does the repository work. The finished product audits each repository, derives its factual spine from source, phrases it to the packaged standard, tests the result, and maintains it on every change. Models may phrase grounded facts; deterministic code owns the facts and gate results.
 
 <!-- clean-docs:begin product-overview -->
-Version 0.1 audits documentation without configuration and verifies region, claim, and symbol bindings from static Python, structured data, text files, path globs, and allowlisted JSON commands. It emits manifest-derived stepwise skill packages and llms.txt indexes, and it never imports repository code. `derive` previews changes unless you pass `--write`; `audit` and `check` never write.
+Version 0.2 alpha statically inventories package, CLI, API, schema, test, and documentation surfaces. It audits documentation without configuration and verifies region, claim, and symbol bindings from static Python, structured data, text files, path globs, and allowlisted JSON commands. It emits manifest-derived stepwise skill packages and llms.txt indexes, and it never imports repository code. `derive` previews changes unless you pass `--write`; `audit` and `check` never write.
 <!-- clean-docs:end product-overview -->
 
 ## Install and audit
@@ -27,6 +27,7 @@ This table is derived from the command registry used by the parser:
 | command | job | writes |
 | --- | --- | --- |
 | audit | Inventory and check repository documentation | no |
+| inventory | List detected repository surfaces and coverage | no |
 | doctor | Check repository and integration readiness | no |
 | derive | Preview generated region changes | with --write |
 | drive | Repair bound regions and enforce policy | yes |
@@ -89,9 +90,8 @@ Run the pinned public-repository dogfood proof with:
 PYTHONPATH=src python3 scripts/dogfood_public_repos.py
 ```
 
-The proof clones two fixed commits, checks region and symbol bindings, detects deliberate
-source drift, repairs or restores the affected source relationship, and verifies each final
-state. It never executes code from either target repository.
+The proof clones two fixed commits, checks region and symbol bindings, and detects deliberate source drift.
+It repairs or restores the affected source relationship, verifies the final state, and never executes target code.
 
 Self-hosting uses `python3 scripts/trusted_self_check.py`. Candidate code checks its own
 tree, then the verifier pinned in `.clean-docs-trust.json` independently checks the same

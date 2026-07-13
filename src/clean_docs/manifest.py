@@ -23,7 +23,9 @@ BINDING_KEYS = {
     "columns", "language", "command", "assertion",
 }
 SOURCE_KEYS = {"path", "symbol", "pointer", "glob"}
-EXTRACTORS = {"file", "json", "path", "python-literal", "structured-data"}
+EXTRACTORS = {
+    "file", "json", "path", "python-literal", "repository-inventory", "structured-data",
+}
 RENDERERS = {"fenced-text", "markdown-list", "markdown-table", "scalar"}
 EXECUTION_KEYS = {"commands", "allowed_commands"}
 COMMAND_KEYS = {"argv", "timeout_seconds", "network"}
@@ -204,6 +206,13 @@ def load_manifest(path: Path) -> Manifest:
         elif extractor == "file":
             if any(value is not None for value in (symbol, pointer, source_glob)):
                 raise ConfigurationError(f"{where}.source.path is the only valid file source field")
+        elif extractor == "repository-inventory":
+            if source_path != "." or any(
+                value is not None for value in (symbol, pointer, source_glob)
+            ):
+                raise ConfigurationError(
+                    f"{where}.source.path must be . for repository-inventory"
+                )
         else:
             if not isinstance(source_glob, str) or not source_glob:
                 raise ConfigurationError(f"{where}.source.glob must be non-empty")
@@ -218,6 +227,7 @@ def load_manifest(path: Path) -> Manifest:
             "json": {"markdown-table"},
             "path": {"markdown-list"},
             "python-literal": {"markdown-table", "scalar"},
+            "repository-inventory": {"markdown-table"},
             "structured-data": {"markdown-list", "markdown-table", "scalar"},
         }
         if renderer not in compatible[extractor]:

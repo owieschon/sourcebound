@@ -13,6 +13,7 @@ from clean_docs.doctor import diagnose
 from clean_docs.emit import emit_llms_txt, emit_stepwise_skill
 from clean_docs.engine import drive, evaluate, write_results
 from clean_docs.errors import CleanDocsError
+from clean_docs.inventory import scan_inventory
 from clean_docs.manifest import load_manifest
 from clean_docs.models import BindingResult
 from clean_docs.standard import compile_standard, pack_matches_standard, write_pack
@@ -32,6 +33,8 @@ def _parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
     audit_parser = sub.add_parser("audit", help=_command_help("audit"))
     audit_parser.add_argument("--format", choices=("text", "json"), default="text")
+    inventory_parser = sub.add_parser("inventory", help=_command_help("inventory"))
+    inventory_parser.add_argument("--format", choices=("text", "json"), default="text")
     doctor_parser = sub.add_parser("doctor", help=_command_help("doctor"))
     doctor_parser.add_argument("--format", choices=("text", "json"), default="text")
     derive = sub.add_parser("derive", help=_command_help("derive"))
@@ -143,6 +146,18 @@ def main(argv: list[str] | None = None) -> int:
                 f"{len(report.ignored_documents)} archived, {len(report.findings)} finding(s)"
             )
         return 1 if report.findings else 0
+    if args.command == "inventory":
+        inventory_report = scan_inventory(root)
+        if args.format == "json":
+            print(json.dumps(inventory_report.as_dict(), indent=2))
+        else:
+            for item in inventory_report.items:
+                print(f"[{item.coverage}] {item.kind} {item.name}: {item.source}#{item.locator}")
+            print(
+                f"inventory: {len(inventory_report.items)} surface(s); "
+                f"{len(inventory_report.languages)} language(s)"
+            )
+        return 0
     if args.command == "doctor":
         manifest = args.manifest if args.manifest.is_absolute() else root / args.manifest
         checks = diagnose(root, manifest)
