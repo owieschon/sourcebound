@@ -13,6 +13,8 @@ python3 -m pytest -q
 PYTHONPATH=src python3 -m clean_docs --version | grep -q '^0.1.0a1$'
 PYTHONPATH=src python3 -m clean_docs --help | grep -q 'derive'
 PYTHONPATH=src python3 -m clean_docs --help | grep -q 'check'
+PYTHONPATH=src python3 -m clean_docs --help | grep -q 'drive'
+PYTHONPATH=src python3 -m clean_docs --root "$root" standard check | grep -q '^\[current\]'
 PYTHONPATH=src python3 -m clean_docs --root "$root" check | grep -q '^\[current\] supported-bindings: README.md$'
 
 ! rg -n 'requests|httpx|urllib|openai|anthropic' src/clean_docs tests

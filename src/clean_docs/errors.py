@@ -14,3 +14,7 @@ class ExtractionError(CleanDocsError):
 
 class RegionError(CleanDocsError):
     exit_code = 3
+
+
+class PolicyError(CleanDocsError):
+    exit_code = 1

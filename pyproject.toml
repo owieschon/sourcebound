@@ -20,7 +20,10 @@ clean-docs = "clean_docs.cli:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+clean_docs = ["standards/*.json"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
-pythonpath = ["src"]
+pythonpath = ["src", "."]
