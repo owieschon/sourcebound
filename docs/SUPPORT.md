@@ -94,7 +94,7 @@ The migration writes `.clean-docs.yml.v0.bak`. Restore those exact prior bytes w
 Verify the one downloaded wheel against its published checksum without requiring every release asset to be present:
 
 ```bash
-python - <<'PY'
+python3 - <<'PY'
 from hashlib import sha256
 from pathlib import Path
 

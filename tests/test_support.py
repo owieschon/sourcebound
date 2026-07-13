@@ -22,6 +22,9 @@ def test_reader_install_and_repair_guidance_matches_candidate_artifacts() -> Non
 
     assert "python -m pip install --no-index --find-links ./wheelhouse ./clean_docs-*.whl" in support
     assert "The version output must match the wheel filename" in support
+    checksum_section = support.split("### Verify release artifacts", 1)[1]
+    assert "python3 - <<'PY'" in checksum_section
+    assert "\npython - <<'PY'" not in checksum_section
     assert "expected one wheel" in support
     assert "does not refresh projections" in readme
     assert "`drive` does not refresh projections" in readme
