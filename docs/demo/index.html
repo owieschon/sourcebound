@@ -5,61 +5,61 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>A source change should break stale docs.</title>
   <style>
-    :root { color-scheme: light; --ink: #102238; --muted: #5b6b7d; --paper: #f4f8fb; --panel: #ffffff; --line: #c9d5df; --source: #116b78; --bad: #d4473f; --good: #177245; --signal: #f4b942; --code: #0b1726; }
+    :root { color-scheme: light; --ink: #20242c; --muted: #667085; --paper: #f7f8fa; --panel: #ffffff; --line: #d9dde5; --binding: #6558d3; --binding-soft: #eeecff; --bad: #c9342f; --bad-soft: #fff0ef; --good: #22734b; --good-soft: #eaf7f0; --code: #171a21; }
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
-    body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.6 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.55 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
     a { color: inherit; text-underline-offset: .22em; }
     .skip { position: absolute; left: 1rem; top: -5rem; z-index: 5; background: var(--ink); color: white; padding: .7rem 1rem; }
     .skip:focus { top: 1rem; }
-    .wrap, main { width: min(76rem, calc(100% - 2.5rem)); margin: 0 auto; }
-    header { overflow: hidden; background: var(--ink); color: #f7fbff; }
-    .hero { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(25rem, .95fr); gap: clamp(2rem, 6vw, 6rem); align-items: center; min-height: 42rem; padding: 5rem 0; }
-    h1 { max-width: 12ch; margin: .6rem 0 1.5rem; font: 760 clamp(3.1rem, 7vw, 6.8rem)/.91 ui-sans-serif, system-ui, sans-serif; letter-spacing: -.065em; }
-    h2 { margin: 0 0 1rem; font-size: clamp(2rem, 4vw, 3.4rem); line-height: 1.02; letter-spacing: -.045em; }
-    h3 { margin: 0; font-size: 1.35rem; letter-spacing: -.025em; }
+    .wrap, main { width: min(72rem, calc(100% - 2.5rem)); margin: 0 auto; }
+    header { background: var(--panel); border-bottom: 1px solid var(--line); }
+    .hero { display: grid; grid-template-columns: minmax(0, .9fr) minmax(28rem, 1.1fr); gap: clamp(2rem, 5vw, 4.5rem); align-items: center; padding: 3.25rem 0; }
+    h1 { max-width: 14ch; margin: .45rem 0 1rem; font-size: clamp(2.5rem, 5vw, 4.5rem); line-height: .98; letter-spacing: -.055em; }
+    h2 { margin: 0 0 .75rem; font-size: clamp(1.65rem, 3vw, 2.45rem); line-height: 1.08; letter-spacing: -.035em; }
+    h3 { margin: 0; font-size: 1.05rem; letter-spacing: -.015em; }
     .eyebrow, .digest, .state-index, .node-label { font: 700 .75rem/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .1em; text-transform: uppercase; }
-    .eyebrow { color: #8ed4dc; }
+    .eyebrow { color: var(--binding); }
     .hero-copy { min-width: 0; }
-    .hero-copy > p:not(.eyebrow):not(.digest) { max-width: 39rem; color: #c5d2df; font-size: 1.08rem; overflow-wrap: anywhere; }
-    .digest { margin-top: 2rem; color: #8294a8; overflow-wrap: anywhere; word-break: break-all; text-transform: none; letter-spacing: .02em; }
-    .binding { position: relative; padding: 1.2rem; border: 1px solid #38506a; background: #132a43; box-shadow: 1.1rem 1.1rem 0 #091522; }
-    .binding-title { margin: 0 0 1.2rem; color: #9fb1c4; font-size: .85rem; }
-    .node { padding: 1rem; border: 1px solid #49627d; background: #0d1d30; }
-    .node-label { display: block; margin-bottom: .65rem; color: #8ed4dc; }
-    .node code { display: block; overflow-x: auto; color: #f7fbff; font-size: .9rem; }
-    .tether { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: .7rem; margin: .8rem 0; color: #f7c85f; }
+    .hero-copy > p:not(.eyebrow):not(.digest) { max-width: 34rem; color: var(--muted); font-size: 1.02rem; overflow-wrap: anywhere; }
+    .digest { margin-top: 1.35rem; color: #8b93a3; overflow-wrap: anywhere; word-break: break-all; text-transform: none; letter-spacing: .01em; font-size: .67rem; }
+    .binding { position: relative; padding: 1rem; border: 1px solid var(--line); border-radius: .65rem; background: #fafaff; }
+    .binding-title { margin: 0 0 .75rem; color: var(--muted); font-size: .8rem; }
+    .node { padding: .8rem .9rem; border: 1px solid #d5d1fb; border-radius: .4rem; background: var(--panel); }
+    .node-label { display: block; margin-bottom: .4rem; color: var(--binding); }
+    .node code { display: block; overflow-x: auto; color: var(--ink); font-size: .84rem; }
+    .tether { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: .6rem; margin: .55rem 0; color: var(--bad); }
     .tether::before, .tether::after { content: ""; border-top: 2px dashed currentColor; }
-    .tether span { padding: .3rem .55rem; border: 1px solid currentColor; font: 700 .72rem/1 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .08em; }
-    .mismatch { color: #ff8178; }
-    main { padding: 5rem 0 2rem; }
-    .intro-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 4rem; padding-bottom: 4rem; border-bottom: 1px solid var(--line); }
+    .tether span { padding: .25rem .5rem; border: 1px solid currentColor; border-radius: 999px; background: var(--bad-soft); font: 700 .67rem/1 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .06em; }
+    .mismatch { color: var(--bad); }
+    main { padding: 2.5rem 0 2rem; }
+    .intro-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 3rem; padding-bottom: 2.5rem; border-bottom: 1px solid var(--line); }
     .intro-grid p { max-width: 44rem; font-size: 1.15rem; }
-    .prerequisites { margin: 0; padding: 1.3rem 1.3rem 1.3rem 2.5rem; background: #e7f1f5; }
-    .section-kicker { margin: 0 0 .8rem; color: var(--source); font: 700 .78rem/1.2 ui-monospace, monospace; letter-spacing: .1em; text-transform: uppercase; }
-    .procedure { padding: 5rem 0; }
-    .procedure-lead { max-width: 43rem; margin-bottom: 2rem; color: var(--muted); }
+    .prerequisites { margin: 0; padding: 1rem 1rem 1rem 2.2rem; border: 1px solid var(--line); border-radius: .5rem; background: var(--panel); }
+    .section-kicker { margin: 0 0 .55rem; color: var(--binding); font: 700 .72rem/1.2 ui-monospace, monospace; letter-spacing: .08em; text-transform: uppercase; }
+    .procedure { padding: 2.75rem 0; }
+    .procedure-lead { max-width: 43rem; margin: 0 0 1.35rem; color: var(--muted); }
     .states { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--line); background: var(--line); gap: 1px; }
-    .state { position: relative; background: var(--panel); padding: 1.5rem; min-width: 0; }
-    .state::before { content: ""; position: absolute; inset: 0 auto auto 0; width: 100%; height: .35rem; background: var(--source); }
+    .state { position: relative; background: var(--panel); padding: 1.2rem; min-width: 0; }
+    .state::before { content: ""; position: absolute; inset: 0 auto auto 0; width: 100%; height: .25rem; background: var(--binding); }
     .state.drift::before { background: var(--bad); } .state.repaired::before { background: var(--good); }
-    .state-heading { display: flex; align-items: baseline; gap: .75rem; margin-bottom: 1rem; }
+    .state-heading { display: flex; align-items: baseline; gap: .65rem; margin-bottom: .65rem; }
     .state-index { color: var(--muted); }
-    .state-explanation { min-height: 5.1rem; color: var(--muted); }
-    .step { margin-top: 1.2rem; }
-    .step > p { margin: 0; padding: .7rem .85rem; border: 1px solid var(--line); border-bottom: 0; background: #eef3f6; }
+    .state-explanation { min-height: 4.65rem; margin: 0; color: var(--muted); font-size: .9rem; }
+    .step { margin-top: .85rem; }
+    .step > p { margin: 0; padding: .55rem .7rem; border: 1px solid var(--line); border-bottom: 0; background: #f5f6f8; }
     .step span { float: right; color: var(--muted); font: 700 .75rem/1.8 ui-monospace, monospace; text-transform: uppercase; }
     code, pre { font: .84rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
-    pre { min-height: 8rem; margin: 0; overflow: auto; padding: 1rem; background: var(--code); color: #dbe9f4; white-space: pre-wrap; }
-    .proof { display: grid; grid-template-columns: .75fr 1.25fr; gap: 4rem; padding: 4rem 0; border-top: 1px solid var(--line); }
+    pre { min-height: 7rem; margin: 0; overflow: auto; padding: .8rem; background: var(--code); color: #e8eaf0; white-space: pre-wrap; }
+    .proof { display: grid; grid-template-columns: .75fr 1.25fr; gap: 3rem; padding: 2.75rem 0; border-top: 1px solid var(--line); }
     .proof ul { margin: 0; padding-left: 1.2rem; }
     .proof li + li { margin-top: .8rem; }
-    .next-section { display: flex; justify-content: space-between; align-items: center; gap: 2rem; margin-top: 2rem; padding: 2rem; background: #dceaf0; }
+    .next-section { display: flex; justify-content: space-between; align-items: center; gap: 2rem; margin-top: 1rem; padding: 1.5rem; border: 1px solid #d5d1fb; border-radius: .65rem; background: var(--binding-soft); }
     .next-section h2 { max-width: 15ch; font-size: 2rem; }
-    .next { flex: none; display: inline-block; padding: .9rem 1.2rem; border: 2px solid var(--ink); background: var(--ink); color: white; font-weight: 750; text-decoration: none; }
-    .next:hover { background: transparent; color: var(--ink); }
-    @media (max-width: 900px) { .hero { grid-template-columns: 1fr; min-height: auto; } .binding { max-width: 38rem; } .states { grid-template-columns: 1fr; } .state-explanation { min-height: 0; } .intro-grid, .proof { grid-template-columns: 1fr; gap: 1.5rem; } }
-    @media (max-width: 560px) { .wrap, main { width: min(100% - 2rem, 76rem); } .hero { padding: 3.5rem 0; } h1 { font-size: 3rem; } .binding { padding: .8rem; box-shadow: .55rem .55rem 0 #091522; } .next-section { align-items: flex-start; flex-direction: column; } }
+    .next { flex: none; display: inline-block; padding: .75rem 1rem; border: 1px solid var(--binding); border-radius: .4rem; background: var(--binding); color: white; font-weight: 700; text-decoration: none; }
+    .next:hover { background: #5145bd; }
+    @media (max-width: 900px) { .hero { grid-template-columns: 1fr; } .binding { max-width: 38rem; } .states { grid-template-columns: 1fr; } .state-explanation { min-height: 0; } .intro-grid, .proof { grid-template-columns: 1fr; gap: 1.5rem; } }
+    @media (max-width: 560px) { .wrap, main { width: min(100% - 2rem, 72rem); } .hero { padding: 2.25rem 0; } h1 { font-size: 2.65rem; } .binding { padding: .75rem; } .next-section { align-items: flex-start; flex-direction: column; } }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; } }
   </style>
 </head>
@@ -82,10 +82,6 @@
     </div>
   </header>
   <main id="main">
-    <section class="intro-grid" aria-labelledby="intended-reader">
-      <div><p class="section-kicker">Why this demonstration exists</p><h2 id="intended-reader">See the failure before adding the gate.</h2><p>Maintainers deciding whether source-bound documentation is worth adding to a repository.</p></div>
-      <div><p class="section-kicker" id="prerequisites">What is running</p><ul class="prerequisites" aria-labelledby="prerequisites"><li>No account, credentials, backend, or database.</li><li>The outputs below come from a generated temporary repository.</li></ul></div>
-    </section>
     <section class="procedure" aria-labelledby="procedure"><p class="section-kicker">The complete loop</p><h2 id="procedure">One binding. Three observable states.</h2><p class="procedure-lead">The source changes in state two. The document is left untouched until the declared repair runs in state three.</p><div class="states"><article class="state before" aria-labelledby="state-before"><div class="state-heading"><span class="state-index">01</span><h3 id="state-before">Current</h3></div><p class="state-explanation">Source and README agree. The gate has nothing to repair.</p><div class="step"><p><code>clean-docs check</code> <span>exit 0</span></p><pre aria-label="Output from clean-docs check"><code>[current] public-command: README.md</code></pre></div></article><article class="state drift" aria-labelledby="state-drift"><div class="state-heading"><span class="state-index">02</span><h3 id="state-drift">Drift caught</h3></div><p class="state-explanation">The source changed; the README did not. The gate names the stale binding.</p><div class="step"><p><code>clean-docs check</code> <span>exit 1</span></p><pre aria-label="Output from clean-docs check"><code>[drift] public-command: README.md
 --- README.md
 +++ README.md (derived)
@@ -106,6 +102,10 @@
 +clean-docs check --changed
  &lt;!-- clean-docs:end public-command --&gt;
 drive: repaired 1 document(s); implemented policy checks passed</code></pre></div><div class="step"><p><code>clean-docs check</code> <span>exit 0</span></p><pre aria-label="Output from clean-docs check"><code>[current] public-command: README.md</code></pre></div></article></div></section>
+    <section class="intro-grid" aria-labelledby="intended-reader">
+      <div><p class="section-kicker">Why this demonstration exists</p><h2 id="intended-reader">See the failure before adding the gate.</h2><p>Maintainers deciding whether source-bound documentation is worth adding to a repository.</p></div>
+      <div><p class="section-kicker" id="prerequisites">What is running</p><ul class="prerequisites" aria-labelledby="prerequisites"><li>No account, credentials, backend, or database.</li><li>The outputs below come from a generated temporary repository.</li></ul></div>
+    </section>
     <section class="proof" aria-labelledby="limits"><div><p class="section-kicker">Evidence boundary</p><h2 id="limits">What this proves.</h2></div><ul><li>This page replays recorded deterministic evidence; it does not execute in the browser.</li><li>The fixture proves one region-binding workflow, not every supported extractor.</li></ul></section>
     <section class="next-section" aria-labelledby="next-step"><h2 id="next-step">Try the same loop in a repository.</h2><a class="next" href="https://github.com/owieschon/clean-docs#install-and-audit">Run the local quickstart</a></section>
   </main>
