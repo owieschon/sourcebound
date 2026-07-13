@@ -1,13 +1,13 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `5102f4791393bc57bab507ca04a5fe9ffe1a834b1783a91fb31d6018757eb6b8`
+- Corpus sha256: `34845dcf7a991fd02748779bb13957bb73ec9f730f5abefaaf285083131cf2e8`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `d352943d308f9178c9e543b527afe3bc867aecd78b4594ea9d38ef3a78b13120`
+- Content sha256: `8cb9f71ace1b70c7c9de4db250c41f0572e50010386563eeae332339e0ad8826`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
@@ -17,7 +17,7 @@ clean-docs is a self-driving documentation system that applies one packaged stan
 Write the standard once; clean-docs does the repository work. The finished product audits each repository, derives its factual spine from source, phrases it to the packaged standard, tests the result, and maintains it on every change. Models may phrase grounded facts; deterministic code owns the facts and gate results.
 
 <!-- clean-docs:begin product-overview -->
-Version 0.4a1 projects one verified documentation graph into llms.txt and named context bundles, with source refs, content digests, link verification, and freshness checks. It scores documented human commands and agent responses with replayable task fixtures and generates one accessible static demonstration from recorded drift evidence. It compares normalized public surface across git refs and reports changed binding drift, coverage gaps, and SARIF annotations. It statically inventories package, CLI, API, schema, test, and documentation surfaces and bootstraps a source-bound baseline. It audits documentation without configuration and verifies region, claim, and symbol bindings from static Python, structured data, text files, path globs, and allowlisted JSON commands. It emits manifest-derived stepwise skill packages and llms.txt indexes, and it never imports repository code. `derive` previews changes unless you pass `--write`; `audit` and `check` never write.
+Version 0.4 projects one verified documentation graph into llms.txt and named context bundles, with source refs, content digests, link verification, and freshness checks. It scores documented human commands and agent responses with replayable task fixtures and generates one accessible static demonstration from recorded drift evidence. It compares normalized public surface across git refs and reports changed binding drift, coverage gaps, and SARIF annotations. It statically inventories package, CLI, API, schema, test, and documentation surfaces and bootstraps a source-bound baseline. It audits documentation without configuration and verifies region, claim, and symbol bindings from static Python, structured data, text files, path globs, and allowlisted JSON commands. It emits manifest-derived stepwise skill packages and llms.txt indexes, and it never imports repository code. `derive` previews changes unless you pass `--write`; `audit` and `check` never write.
 <!-- clean-docs:end product-overview -->
 ## Install and audit
 

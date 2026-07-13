@@ -1,7 +1,7 @@
 """Public capability registry rendered into the clean-docs README."""
 
 PRODUCT_OVERVIEW = (
-    "Version 0.4a1 projects one verified documentation graph into llms.txt and named context "
+    "Version 0.4 projects one verified documentation graph into llms.txt and named context "
     "bundles, with source refs, content digests, link verification, and freshness checks. It "
     "scores documented human commands and agent responses with replayable task fixtures and "
     "generates one accessible static demonstration from recorded drift evidence. "

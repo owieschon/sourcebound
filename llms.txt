@@ -4,5 +4,5 @@
 
 ## Source-bound documentation
 
-- [README.md](README.md): bindings: cli-reference, manifest-reference, product-overview, supported-bindings; sha256: d352943d308f9178c9e543b527afe3bc867aecd78b4594ea9d38ef3a78b13120
+- [README.md](README.md): bindings: cli-reference, manifest-reference, product-overview, supported-bindings; sha256: 8cb9f71ace1b70c7c9de4db250c41f0572e50010386563eeae332339e0ad8826
 - [docs/EVALUATION.md](docs/EVALUATION.md): bindings: evaluation-scorers; sha256: 4f7d56256d3d7d3fe72cad2cfb42517c610ee52ef10d0321a28f363d41916eba
