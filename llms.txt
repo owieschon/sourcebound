@@ -4,7 +4,7 @@
 
 ## Source-bound documentation
 
-- [README.md](README.md): bindings: manifest-reference, product-overview, supported-bindings; sha256: 36cf700b8b386030ba9dc5215a5f24ca761df9f2016ed1f50b37e604c66fc607
+- [README.md](README.md): bindings: manifest-reference, product-overview, supported-bindings; sha256: e509e1c2a3e47b41fe4b0a76939ed86e4fa6e199c67e6c8a758ac14a6bef9752
 - [docs/CLI.md](docs/CLI.md): bindings: cli-reference; sha256: 8e85e281ac2e08bbae0228b022eed4f3b1c1f8e77367074191c8cebab72e4671
 - [docs/EVALUATION.md](docs/EVALUATION.md): bindings: evaluation-scorers; sha256: 4f7d56256d3d7d3fe72cad2cfb42517c610ee52ef10d0321a28f363d41916eba
 - [docs/EXTENSIONS.md](docs/EXTENSIONS.md): bindings: extension-guide, migration-guide; sha256: 7d86665951370945a23a9be17a9c9128cbe4b95446228707f8f098a6eeb47bd5
