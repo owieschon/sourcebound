@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import site
 import shutil
 import subprocess
 import sys
@@ -40,7 +41,9 @@ def test_human_quickstart_installs_and_runs_from_declared_docs(tmp_path: Path) -
     shutil.copy2(ROOT / "README.md", package / "README.md")
     shutil.copytree(ROOT / "src", package / "src")
     environment = dict(os.environ)
-    environment.pop("PYTHONPATH", None)
+    # Python 3.12 no longer seeds setuptools into a new venv. Expose the
+    # running test environment's pinned build backend without using the network.
+    environment["PYTHONPATH"] = os.pathsep.join(site.getsitepackages())
     venv = tmp_path / ".venv"
     subprocess.run(
         [sys.executable, "-m", "venv", "--system-site-packages", str(venv)],

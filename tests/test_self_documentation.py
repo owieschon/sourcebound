@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import shlex
 from pathlib import Path
 
 import pytest
@@ -38,6 +39,17 @@ def test_cli_and_manifest_registries_drive_the_parser_and_self_manifest() -> Non
         "cli-reference",
         "manifest-reference",
     }
+
+
+def test_cli_reference_examples_parse() -> None:
+    for item in CLI_REFERENCE:
+        argv = shlex.split(item["example"])[1:]
+        if argv[-1:] == ["--help"]:
+            with pytest.raises(SystemExit) as exc:
+                _parser().parse_args(argv)
+            assert exc.value.code == 0
+        else:
+            _parser().parse_args(argv)
 
 
 @pytest.mark.parametrize(
@@ -78,7 +90,7 @@ bindings:
     extractor: python-literal
     source: {path: src/clean_docs/capabilities.py, symbol: CLI_REFERENCE}
     renderer: markdown-table
-    columns: [command, job, writes]
+    columns: [command, job, writes, example]
   - id: manifest-reference
     type: region
     doc: README.md

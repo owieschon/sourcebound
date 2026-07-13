@@ -98,8 +98,14 @@ def explain(root: Path, identifier: str) -> Explanation:
         "sha256": item.digest,
     }
     if item.coverage == "bound":
-        summary = "The detected surface is covered by the repository inventory binding."
+        summary = "The detected surface has a source-specific documentation binding."
         repair = "No repair is required while the binding remains current."
+    elif item.coverage == "cataloged":
+        summary = (
+            "The detected surface is tracked by a repository catalog, but has no "
+            "source-specific documentation binding."
+        )
+        repair = "Add a source-specific binding if readers depend on this surface."
     elif item.coverage == "ignored":
         summary = f"The detected surface is ignored by policy: {item.coverage_reason}"
         repair = "Remove the reasoned ignore when this surface becomes reader-facing."

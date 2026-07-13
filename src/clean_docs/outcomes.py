@@ -11,6 +11,7 @@ from clean_docs.changed import ChangedReport, check_changed
 from clean_docs.engine import evaluate
 from clean_docs.errors import ConfigurationError
 from clean_docs.manifest import load_manifest
+from clean_docs.inventory import scan_inventory
 from clean_docs.projections import evaluate_projections
 from clean_docs.snapshot import RepositorySnapshot
 
@@ -28,6 +29,11 @@ class OutcomeReceipt:
     projections: int
     current_projections: int
     stale_projections: int
+    inventory_items: int
+    covered_inventory_items: int
+    cataloged_inventory_items: int
+    ignored_inventory_items: int
+    standard_gaps: int
     changed: ChangedReport | None = None
 
     @property
@@ -56,7 +62,13 @@ class OutcomeReceipt:
             "ref": self.ref,
             "ok": self.ok,
             "outcomes": {
-                "protected_baseline_current": self.ok and self.changed is None,
+                "protected_baseline_current": (
+                    self.ok and self.changed is None and self.standard_gaps == 0
+                ),
+                "coverage_complete": self.standard_gaps == 0,
+                "direct_coverage_complete": (
+                    self.standard_gaps == 0 and self.cataloged_inventory_items == 0
+                ),
                 "drift_caught_before_merge": (
                     0
                     if self.changed is None
@@ -68,6 +80,13 @@ class OutcomeReceipt:
                 "archived": self.archived_documents,
                 "hygiene_findings": self.hygiene_findings,
                 "baselined_hygiene_findings": self.baselined_hygiene_findings,
+            },
+            "coverage": {
+                "total": self.inventory_items,
+                "bound": self.covered_inventory_items,
+                "cataloged": self.cataloged_inventory_items,
+                "ignored": self.ignored_inventory_items,
+                "standard_gaps": self.standard_gaps,
             },
             "bindings": {
                 "total": self.bindings,
@@ -97,6 +116,11 @@ def build_outcome_receipt(
     root = root.resolve()
     manifest = load_manifest(manifest_path)
     audit_report = audit(root)
+    inventory = scan_inventory(root)
+    covered_items = sum(item.coverage == "bound" for item in inventory.items)
+    cataloged_items = sum(item.coverage == "cataloged" for item in inventory.items)
+    ignored_items = sum(item.coverage == "ignored" for item in inventory.items)
+    standard_gaps = sum(item.coverage == "standard-gap" for item in inventory.items)
     bindings = evaluate(root, manifest_path)
     projections = (
         evaluate_projections(root, manifest) if manifest.projections is not None else []
@@ -122,5 +146,10 @@ def build_outcome_receipt(
         len(projections),
         sum(not item.changed for item in projections),
         sum(item.changed for item in projections),
+        len(inventory.items),
+        covered_items,
+        cataloged_items,
+        ignored_items,
+        standard_gaps,
         changed,
     )

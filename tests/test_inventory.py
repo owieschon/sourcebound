@@ -18,6 +18,8 @@ def _python_repo(tmp_path: Path) -> Path:
     (root / "schemas").mkdir()
     (root / "pyproject.toml").write_text(
         '[project]\nname = "fixture-service"\nversion = "1.2.3"\n'
+        'requires-python = ">=3.11"\n'
+        '[project.scripts]\nfixture = "service.cli:main"\n'
     )
     (root / "src/service/cli.py").write_text("""\
 raise RuntimeError("inventory must not import this module")
@@ -68,11 +70,17 @@ def test_python_inventory_is_static_typed_and_deterministic(tmp_path: Path) -> N
         "document",
         "mcp-tool",
         "package",
+        "runtime-constraint",
         "schema",
         "test-suite",
     } <= {item.kind for item in first.items}
     assert all(item.coverage == "standard-gap" for item in first.items)
     assert all(len(item.digest) == 64 for item in first.items)
+    assert any(item.kind == "cli-command" and item.name == "fixture" for item in first.items)
+    assert any(
+        item.kind == "runtime-constraint" and item.name == "Python >=3.11"
+        for item in first.items
+    )
     assert not any(item.name == "internal_build_task" for item in first.items)
     public_api = next(item for item in first.items if item.name == "public_api")
     assert public_api.digest == hashlib.sha256(
@@ -88,6 +96,8 @@ def test_typescript_package_inventory_needs_no_project_execution(tmp_path: Path)
         "version": "2.0.0",
         "bin": {"fixture": "dist/cli.js"},
         "scripts": {"test": "vitest run", "build": "tsc", "//note": "not a script"},
+        "type": "module",
+        "engines": {"node": ">=20"},
     }))
     (root / "src/index.ts").write_text(
         "throw new Error('must not execute');\nexport function start() { return true }\n"
@@ -101,6 +111,9 @@ def test_typescript_package_inventory_needs_no_project_execution(tmp_path: Path)
     assert by_kind["package"].name == "fixture-cli"
     assert by_kind["cli-command"].name == "fixture"
     assert by_kind["test-runner"].name == "test"
+    assert {
+        item.name for item in report.items if item.kind == "runtime-constraint"
+    } == {"ES modules", "node >=20"}
     assert any(item.kind == "api-symbol" and item.name == "start" for item in report.items)
     assert any(item.kind == "test-suite" for item in report.items)
     assert not any(item.name == "//note" for item in report.items)
@@ -160,7 +173,7 @@ bindings:
     assert "| cli-command | serve | src/service/cli.py | serve |" in results[0].expected
     write_results(root, results)
     assert not any(result.changed for result in evaluate(root, manifest))
-    assert all(item.coverage == "bound" for item in scan_inventory(root).items)
+    assert all(item.coverage == "cataloged" for item in scan_inventory(root).items)
 
     ignored_id = scan_inventory(root).items[0].id
     (root / ".clean-docs-ignore.yml").write_text(

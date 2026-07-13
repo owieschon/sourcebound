@@ -31,6 +31,7 @@ TITLE_FILLER = {
 }
 PURPOSE_BEGIN = "<!-- clean-docs:purpose -->"
 PURPOSE_END = "<!-- clean-docs:end purpose -->"
+NON_PROSE_STARTS = ("#", "- ", "* ", ">", "|", "```", "![", "[![", "<img", "<picture")
 
 
 def _prose_lines(text: str) -> list[tuple[int, str]]:
@@ -112,7 +113,7 @@ def _purpose_contract(doc: str, text: str, pack: dict[str, Any]) -> list[PolicyF
     body = lines[begin_lines[0] + 1:end_lines[0]]
     prose = " ".join(line.strip() for line in body if line.strip())
     if not prose or any(
-        line.lstrip().startswith(("#", "- ", "* ", ">", "|", "```"))
+        line.lstrip().lower().startswith(NON_PROSE_STARTS)
         for line in body
         if line.strip()
     ):
@@ -136,7 +137,7 @@ def _purpose_contract(doc: str, text: str, pack: dict[str, Any]) -> list[PolicyF
 
 
 def ensure_purpose_contract(text: str) -> str:
-    """Mark existing opening prose or add a deterministic repository-page fallback."""
+    """Move substantive authored prose to the opening contract or add a grounded fallback."""
     if PURPOSE_BEGIN in text or PURPOSE_END in text:
         return text
     lines = text.splitlines()
@@ -147,43 +148,73 @@ def ensure_purpose_contract(text: str) -> str:
     if heading is None:
         return text
     h1_index, title = heading
-    start = h1_index + 1
-    while start < len(lines):
-        stripped = lines[start].strip()
-        if not stripped or stripped.startswith("<!-- clean-docs:allow "):
-            start += 1
-            continue
-        break
-    end = start
-    while end < len(lines) and lines[end].strip():
-        stripped = lines[end].lstrip()
-        if stripped.startswith(("#", "- ", "* ", ">", "|", "```")):
-            break
-        end += 1
-    opening = " ".join(line.strip() for line in lines[start:end])
     title_tokens = _title_tokens(title)
-    opening_tokens = _title_tokens(
-        re.split(r"(?<=[.!?])\s+", opening, maxsplit=1)[0]
-    )
-    restates_title = (
-        bool(title_tokens)
-        and title_tokens <= opening_tokens
-        and len(opening_tokens - title_tokens) < 3
-    )
-    if not opening or restates_title:
+    selected: tuple[int, int, list[str]] | None = None
+    rejected_restatements: list[tuple[int, int]] = []
+    index = h1_index + 1
+    in_fence = False
+    while index < len(lines):
+        stripped = lines[index].strip()
+        if stripped.startswith("## "):
+            break
+        if stripped.startswith("```"):
+            in_fence = not in_fence
+            index += 1
+            continue
+        if (
+            in_fence
+            or not stripped
+            or stripped.startswith("<!--")
+            or stripped.lower().startswith(NON_PROSE_STARTS)
+        ):
+            index += 1
+            continue
+        end = index
+        while end < len(lines) and lines[end].strip():
+            candidate = lines[end].lstrip()
+            if candidate.lower().startswith(NON_PROSE_STARTS) or candidate.startswith("<!--"):
+                break
+            end += 1
+        paragraph = lines[index:end]
+        opening = " ".join(line.strip() for line in paragraph)
+        opening_tokens = _title_tokens(
+            re.split(r"(?<=[.!?])\s+", opening, maxsplit=1)[0]
+        )
+        restates_title = (
+            bool(title_tokens)
+            and title_tokens <= opening_tokens
+            and len(opening_tokens - title_tokens) < 3
+        )
+        if not restates_title:
+            selected = (index, end, paragraph)
+            break
+        rejected_restatements.append((index, end))
+        index = max(end, index + 1)
+
+    insertion = h1_index + 1
+    while insertion < len(lines) and (
+        not lines[insertion].strip()
+        or lines[insertion].strip().startswith("<!-- clean-docs:allow ")
+    ):
+        insertion += 1
+    if selected is None:
         topic = " ".join(title.split())
         opening = (
-            f"Use this page when you need the {topic} for this repository. "
-            "Without one canonical explanation, the work is easy to miss or repeat; "
-            "after reading, you can act from the documented source."
+            f"Use this page when you need to understand {topic} before changing this repository. "
+            "Without the documented scope and constraints, a change can rely on behavior the "
+            "project does not promise; after reading, you can work from the stated contract."
         )
-        if restates_title:
-            end = max(end, start + 1)
         purpose_lines = [opening]
+        remaining = lines
+        for start, end in reversed(rejected_restatements):
+            remaining = remaining[:start] + remaining[end:]
     else:
-        purpose_lines = lines[start:end]
+        start, end, purpose_lines = selected
+        remaining = lines[:start] + lines[end:]
+        if start < insertion:
+            insertion -= end - start
     replacement = [PURPOSE_BEGIN, *purpose_lines, PURPOSE_END]
-    updated = lines[:start] + replacement + lines[end:]
+    updated = remaining[:insertion] + replacement + remaining[insertion:]
     return "\n".join(updated).rstrip() + "\n"
 
 

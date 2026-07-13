@@ -284,11 +284,14 @@ coverage:
 projections:
   llms_txt:
     output: llms.txt
+    include: [README.md, docs/CONTRIBUTING.md, docs/ARCHITECTURE.md]
   bundles:
     - id: contributor
       output: .clean-docs/context/contributor.md
       include: [README.md, docs/CONTRIBUTING.md, docs/ARCHITECTURE.md]
 ```
+
+`llms_txt.include` declares canonical context that contains no generated binding. The projection labels those entries as declared context and labels source-bound entries with their binding IDs. Every entry carries a content digest. This distinction prevents an index of bound facts from claiming to be the complete documentation corpus.
 
 ### 6.5 Generated-region markers
 

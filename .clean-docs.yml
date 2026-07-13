@@ -7,6 +7,13 @@ execution:
       timeout_seconds: 30
       network: false
 bindings:
+  - id: repository-surface
+    type: region
+    doc: docs/SURFACE.md
+    region: repository-surface
+    extractor: repository-overview
+    source: {path: .}
+    renderer: markdown-fragment
   - id: product-overview
     type: region
     doc: README.md
@@ -35,7 +42,7 @@ bindings:
       path: src/clean_docs/capabilities.py
       symbol: CLI_REFERENCE
     renderer: markdown-table
-    columns: [command, job, writes]
+    columns: [command, job, writes, example]
   - id: manifest-reference
     type: region
     doc: README.md
@@ -86,6 +93,19 @@ projections:
     output: llms.txt
     title: clean-docs documentation
     summary: Canonical product documentation with source-bound facts and content digests.
+    include:
+      - README.md
+      - CLEAN_DOCS_SPEC.md
+      - STANDARD.md
+      - SECURITY.md
+      - docs/CLI.md
+      - docs/EVALUATION.md
+      - docs/EXTENSIONS.md
+      - docs/RELEASES.md
+      - docs/SECURITY_MODEL.md
+      - docs/SUPPORT.md
+      - docs/SURFACE.md
+      - skill/SKILL.md
   bundles:
     - id: contributor
       output: .clean-docs/context/contributor.md

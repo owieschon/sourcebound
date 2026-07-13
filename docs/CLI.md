@@ -7,28 +7,28 @@ Use this reference when you know the repository task but need the clean-docs com
 The table is generated from the command registry used by the parser:
 
 <!-- clean-docs:begin cli-reference -->
-| command | job | writes |
-| --- | --- | --- |
-| audit | Inventory and check repository documentation | with --update-baseline |
-| inventory | List detected repository surfaces and coverage | no |
-| init | Write a source-bound documentation baseline | yes |
-| explain | Explain a finding or coverage state | no |
-| doctor | Check repository and integration readiness | no |
-| verify | Write a local deterministic outcome receipt | with --out |
-| benchmark | Measure changed-check time and memory budgets | with --out |
-| derive | Preview generated region changes | with --write |
-| drive | Repair bound regions and enforce policy | yes |
-| check | Fail on binding drift or uncovered changed surface | no |
-| project | Regenerate configured documentation projections | yes |
-| eval | Score human tasks and replayable agent round trips | with --history or live recording |
-| release | Render typed release facts between immutable refs | no |
-| migrate | Upgrade a prior manifest with rollback backup | with --write or --rollback |
-| emit | Project the manifest into another format | yes |
-| emit stepwise-skill | Write a manifest-derived stepwise skill package | yes |
-| emit llms-txt | Write an index of source-bound documents | yes |
-| standard | Build or verify the bundled policy pack | varies |
-| standard build | Compile the canonical standard | yes |
-| standard check | Fail when the policy pack is stale | no |
+| command | job | writes | example |
+| --- | --- | --- | --- |
+| audit | Inventory and check repository documentation | with --update-baseline | clean-docs audit --format json |
+| inventory | List detected repository surfaces and coverage | no | clean-docs inventory --format json |
+| init | Write a source-bound documentation baseline | yes | clean-docs init --no-model |
+| explain | Explain a finding or coverage state | no | clean-docs explain purpose-contract --format json |
+| doctor | Check repository and integration readiness | with --bundle | clean-docs doctor --bundle doctor.json |
+| verify | Write a local deterministic outcome receipt | with --out | clean-docs verify --out outcome.json |
+| benchmark | Measure changed-check time and memory budgets | with --out | clean-docs benchmark --base HEAD~1 --head HEAD |
+| derive | Preview generated region changes | with --write | clean-docs derive --write |
+| drive | Repair bound regions and enforce policy | yes | clean-docs drive |
+| check | Fail on binding drift or uncovered changed surface | no | clean-docs check --base origin/main --head HEAD |
+| project | Regenerate configured documentation projections | yes | clean-docs project --check |
+| eval | Score human tasks and replayable agent round trips | with --history or live recording | clean-docs eval --fixtures .clean-docs/eval.yml |
+| release | Render typed release facts between immutable refs | no | clean-docs release --from v0.9.0 --to HEAD |
+| migrate | Upgrade a prior manifest with rollback backup | with --write or --rollback | clean-docs migrate --write |
+| emit | Project the manifest into another format | yes | clean-docs emit --help |
+| emit stepwise-skill | Write a manifest-derived stepwise skill package | yes | clean-docs emit stepwise-skill --out skill |
+| emit llms-txt | Write an index of source-bound documents | yes | clean-docs emit llms-txt --out llms.txt |
+| standard | Build or verify the bundled policy pack | varies | clean-docs standard --help |
+| standard build | Compile the canonical standard | yes | clean-docs standard build |
+| standard check | Fail when the policy pack is stale | no | clean-docs standard check |
 <!-- clean-docs:end cli-reference -->
 
 Run `clean-docs <command> --help` for command-specific flags. Return to the [project overview](../README.md) for installation and the supported binding surface.

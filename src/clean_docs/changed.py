@@ -255,7 +255,7 @@ def check_changed(
         )
         if item.coverage == "ignored":
             ignored.append(finding)
-        elif item.coverage != "bound":
+        elif item.coverage not in {"bound", "cataloged"}:
             gaps.append(finding)
     return ChangedReport(
         base_sha,
