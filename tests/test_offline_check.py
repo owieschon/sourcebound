@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import socket
 import subprocess
+import time
 from pathlib import Path
 from typing import NoReturn
 
@@ -40,4 +41,6 @@ bindings:
     monkeypatch.setattr(socket.socket, "connect", _block_network)
     monkeypatch.setattr(socket.socket, "connect_ex", _block_network)
 
+    started = time.monotonic()
     assert main(["--root", str(root), "check"]) == 0
+    assert time.monotonic() - started < 5

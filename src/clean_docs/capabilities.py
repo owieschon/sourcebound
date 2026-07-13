@@ -1,7 +1,7 @@
 """Public capability registry rendered into the clean-docs README."""
 
 PRODUCT_OVERVIEW = (
-    "The current alpha audits documentation without configuration and verifies region, claim, "
+    "Version 0.1 audits documentation without configuration and verifies region, claim, "
     "and symbol bindings from static Python, structured data, text files, path globs, and "
     "allowlisted JSON commands. It emits manifest-derived stepwise skill packages and llms.txt "
     "indexes, and it never imports repository code. `derive` previews changes "

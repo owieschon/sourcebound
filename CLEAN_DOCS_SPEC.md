@@ -901,14 +901,12 @@ Each version follows the same delivery sequence:
 - Round-trip evaluation measures task completion, not stylistic resemblance.
 - Agent skills, pre-write hooks, editor extensions, and static publishing integrations are distribution adapters. None defines the product architecture.
 
-## 17. Open decisions before Version 0.1 implementation
+## 17. Version 0.1 architecture decisions
 
-Only decisions that change the core contract block implementation:
+1. The package targets CPython 3.10 through 3.14 on Linux and macOS. The required CI matrix runs every supported runtime and operating system pair.
+2. Static Python evidence uses the standard-library abstract syntax tree and never imports repository modules.
+3. `derive` prints a diff by default. `derive --write` and `drive` are the explicit write paths.
+4. A static micro-repository check must complete within five seconds. Explicit command runtime is governed separately by each allowlisted timeout.
+5. Tables and lists preserve source evidence order. Path evidence sorts lexicographically. clean-docs does not reorder semantic arrays to manufacture stable output.
 
-1. Choose the implementation language and minimum supported runtime. Python fits the proven code and dogfood repos; a compiled binary may reduce installation friction later.
-2. Choose the initial static-parser strategy for Python. The contract requires no module import, regardless of parser library.
-3. Decide whether `derive` writes by default or requires `--write`. The safer default is a printed diff, with `--write` explicit.
-4. Set the Version 0.1 performance budget and supported platforms.
-5. Define the normalized-table ordering contract so generated diffs remain stable.
-
-These choices belong in architecture decision records when implementation begins. Product extensions, model providers, static publishing, and additional ecosystems do not block Version 0.1.
+Product extensions, model providers, static publishing, and additional ecosystems do not alter these Version 0.1 contracts.
