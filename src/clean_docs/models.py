@@ -79,6 +79,7 @@ class LlmsTxtProjection:
     output: Path
     title: str | None = None
     summary: str | None = None
+    include: tuple[Path, ...] = ()
 
 
 @dataclass(frozen=True)

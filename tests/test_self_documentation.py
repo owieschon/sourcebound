@@ -78,7 +78,7 @@ bindings:
     extractor: python-literal
     source: {path: src/clean_docs/capabilities.py, symbol: CLI_REFERENCE}
     renderer: markdown-table
-    columns: [command, job, writes]
+    columns: [command, job, writes, example]
   - id: manifest-reference
     type: region
     doc: README.md

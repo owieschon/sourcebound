@@ -160,7 +160,7 @@ bindings:
     assert "| cli-command | serve | src/service/cli.py | serve |" in results[0].expected
     write_results(root, results)
     assert not any(result.changed for result in evaluate(root, manifest))
-    assert all(item.coverage == "bound" for item in scan_inventory(root).items)
+    assert all(item.coverage == "cataloged" for item in scan_inventory(root).items)
 
     ignored_id = scan_inventory(root).items[0].id
     (root / ".clean-docs-ignore.yml").write_text(

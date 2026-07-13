@@ -66,6 +66,7 @@ projections:
   llms_txt:
     output: llms.txt
     title: Fixture documentation
+    include: [README.md, docs/CANONICAL.md]
   bundles:
     - id: contributor
       output: .clean-docs/context/contributor.md
@@ -77,6 +78,10 @@ projections:
     assert projections is not None
     assert projections.llms_txt is not None
     assert projections.llms_txt.output == Path("llms.txt")
+    assert projections.llms_txt.include == (
+        Path("README.md"),
+        Path("docs/CANONICAL.md"),
+    )
     assert projections.bundles[0].include == (Path("README.md"),)
 
 

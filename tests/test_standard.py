@@ -9,7 +9,13 @@ import pytest
 from clean_docs.capabilities import PRODUCT_OVERVIEW
 from clean_docs.errors import ConfigurationError
 from clean_docs.manifest import load_manifest
-from clean_docs.policy import check_document, check_prose, ensure_purpose_contract
+from clean_docs.policy import (
+    PURPOSE_BEGIN,
+    PURPOSE_END,
+    check_document,
+    check_prose,
+    ensure_purpose_contract,
+)
 from clean_docs.standard import compile_standard, load_default_pack, load_pack, pack_matches_standard
 
 
@@ -145,16 +151,30 @@ def test_bootstrap_marks_author_prose_and_replaces_a_title_restatement() -> None
     authored = "# Project\n\nMaintainers use this guide before changing the API.\n\n## Next\n"
     marked = ensure_purpose_contract(authored)
 
-    assert (
-        "<!-- clean-docs:purpose -->\n"
-        "Maintainers use this guide before changing the API.\n"
-        "<!-- clean-docs:end purpose -->"
-    ) in marked
+    contract = marked.split(PURPOSE_BEGIN, 1)[1].split(PURPOSE_END, 1)[0]
+    assert "Maintainers use this guide before changing the API." in contract
     assert ensure_purpose_contract(marked) == marked
 
     replaced = ensure_purpose_contract("# Project guide\n\nThis is the project guide.\n")
     assert "This is the project guide." not in replaced
-    assert "Use this page when you need the Project guide" in replaced
+    assert "Use this page when you need to understand Project guide" in replaced
+
+
+def test_bootstrap_moves_authored_prose_ahead_of_logos_and_badges() -> None:
+    content = (
+        "# Queue\n\n"
+        "![Queue logo](media/logo.png)\n\n"
+        "[![Build](https://example.test/badge.svg)](https://example.test/build)\n\n"
+        "A tiny queue data structure with a promise-based API.\n\n"
+        "## Install\n"
+    )
+
+    marked = ensure_purpose_contract(content)
+
+    assert marked.index(PURPOSE_BEGIN) < marked.index("![Queue logo]")
+    contract = marked.split(PURPOSE_BEGIN, 1)[1].split(PURPOSE_END, 1)[0]
+    assert "A tiny queue data structure with a promise-based API." in contract
+    assert "![" not in contract
 
 
 def test_fragment_policy_does_not_require_a_document_contract() -> None:

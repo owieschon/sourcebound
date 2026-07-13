@@ -69,7 +69,7 @@ class InventoryReport:
             "items": [asdict(item) for item in self.items],
             "counts": {
                 state: sum(item.coverage == state for item in self.items)
-                for state in ("bound", "ignored", "standard-gap")
+                for state in ("bound", "cataloged", "ignored", "standard-gap")
             },
         }
 
@@ -300,19 +300,32 @@ def _coverage_ignores(root: Path, identifiers: set[str]) -> dict[str, str]:
     return ignored
 
 
-def _coverage(root: Path, identifiers: set[str]) -> tuple[bool, dict[str, str]]:
-    bound = False
+def _coverage(root: Path, identifiers: set[str]) -> tuple[set[tuple[str, str]], bool, dict[str, str]]:
+    direct_locators: set[tuple[str, str]] = set()
+    cataloged = False
     manifest = root / ".clean-docs.yml"
     if manifest.exists():
         try:
-            manifest_text = manifest.read_text(encoding="utf-8")
-            bound = any(
-                f"extractor: {extractor}" in manifest_text
-                for extractor in ("repository-inventory", "repository-overview")
-            )
-        except OSError:
+            data = yaml.safe_load(manifest.read_text(encoding="utf-8"))
+            bindings = data.get("bindings", []) if isinstance(data, dict) else []
+            for binding in bindings if isinstance(bindings, list) else []:
+                if not isinstance(binding, dict):
+                    continue
+                source = binding.get("source")
+                source_data = source if isinstance(source, dict) else {}
+                path = source_data.get("path")
+                if binding.get("extractor") in {
+                    "repository-inventory",
+                    "repository-overview",
+                } and path == ".":
+                    cataloged = True
+                elif isinstance(path, str):
+                    locator = source_data.get("symbol") or source_data.get("pointer")
+                    if isinstance(locator, str):
+                        direct_locators.add((Path(path).as_posix(), locator))
+        except (OSError, yaml.YAMLError):
             pass
-    return bound, _coverage_ignores(root, identifiers)
+    return direct_locators, cataloged, _coverage_ignores(root, identifiers)
 
 
 def scan_inventory(root: Path) -> InventoryReport:
@@ -376,11 +389,18 @@ def scan_inventory(root: Path) -> InventoryReport:
         )
     ]
     unique = {item["id"]: item for item in raw_items}
-    bound, ignored = _coverage(root, set(unique))
+    direct_locators, cataloged, ignored = _coverage(root, set(unique))
     items = []
     for identifier in sorted(unique):
         item = unique[identifier]
-        coverage = "ignored" if identifier in ignored else "bound" if bound else "standard-gap"
+        if identifier in ignored:
+            coverage = "ignored"
+        elif (item["source"], item["locator"]) in direct_locators:
+            coverage = "bound"
+        elif cataloged:
+            coverage = "cataloged"
+        else:
+            coverage = "standard-gap"
         items.append(
             InventoryItem(
                 **item,

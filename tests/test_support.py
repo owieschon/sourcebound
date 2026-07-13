@@ -105,6 +105,8 @@ def test_local_outcome_receipt_reports_baseline_and_changed_impact(
     assert baseline.ok
     assert baseline.as_dict()["outcomes"] == {
         "protected_baseline_current": True,
+        "coverage_complete": True,
+        "direct_coverage_complete": False,
         "drift_caught_before_merge": 0,
     }
     assert not changed.ok
@@ -141,6 +143,36 @@ def test_verify_writes_the_same_local_receipt_it_prints(tmp_path: Path) -> None:
     assert command.returncode == 0, command.stderr
     assert command.stdout == (root / "outcome.json").read_text()
     assert json.loads(command.stdout)["schema"] == "clean-docs.outcome.v1"
+
+
+def test_outcome_does_not_claim_complete_baseline_with_standard_gaps(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "gapped"
+    root.mkdir()
+    (root / "README.md").write_text(
+        "# Gapped\n\n<!-- clean-docs:purpose -->\n"
+        "Use this page when changing the fixture. Without its contract, callers can guess; "
+        "after reading, they can use the declared API.\n"
+        "<!-- clean-docs:end purpose -->\n\n## API\n"
+    )
+    (root / "api.py").write_text("def public_api():\n    return True\n")
+    manifest = root / ".clean-docs.yml"
+    manifest.write_text(
+        "version: 1\nbindings:\n  - id: api\n    type: symbol\n"
+        "    doc: README.md\n    anchor: api\n"
+        "    source: {path: api.py, symbol: public_api}\n"
+    )
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    receipt = build_outcome_receipt(root, manifest)
+    payload = receipt.as_dict()
+
+    assert receipt.ok
+    assert payload["coverage"]["standard_gaps"] > 0
+    assert payload["outcomes"]["coverage_complete"] is False
+    assert payload["outcomes"]["protected_baseline_current"] is False
 
 
 def test_benchmark_reports_reproducible_time_and_memory_budget(tmp_path: Path) -> None:

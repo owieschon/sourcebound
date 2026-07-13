@@ -17,9 +17,10 @@ The same verified graph produces `llms.txt`, named context bundles, grounded rel
 Create an isolated environment, install the project, and audit the current repository:
 
 ```bash
+git clone https://github.com/owieschon/clean-docs.git && cd clean-docs
 python -m venv .venv
 source .venv/bin/activate
-pip install -e ".[dev]"
+python -m pip install -e ".[dev]"
 clean-docs audit
 ```
 
@@ -116,5 +117,4 @@ This table is derived from `src/clean_docs/capabilities.py` by clean-docs itself
 - Destination markers must already exist and cannot nest.
 - Evaluation claim boundaries are defined in the [evaluation guide](docs/EVALUATION.md).
 - clean-docs reports malformed configuration as exit `2`, drift as exit `1`, and extraction failures as exit `3`.
-
 See the [recorded drift demonstration](https://owieschon.github.io/clean-docs/) and use the [evaluation guide](docs/EVALUATION.md) for task fixtures. The full product contract and version plan live in [`CLEAN_DOCS_SPEC.md`](CLEAN_DOCS_SPEC.md).

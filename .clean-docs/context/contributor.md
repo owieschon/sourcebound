@@ -1,13 +1,13 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `419407606e7f58de5b6e07f26c796b4e92da40101c9a5dcfefb32e7bded8c185`
+- Corpus sha256: `8891742d0863bfd31b32cb7ccf044aab9c520619d375fe20f2b8e23593f43ae3`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `513c9405519d8af55d3426061fdfa59671f57dcb30e78966552d90cb87cd324e`
+- Content sha256: `573cf56bfdf030b07530bd266d39d8a72155944be9ab13657f1f8274b0c89684`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
@@ -29,9 +29,10 @@ The same verified graph produces `llms.txt`, named context bundles, grounded rel
 Create an isolated environment, install the project, and audit the current repository:
 
 ```bash
+git clone https://github.com/owieschon/clean-docs.git && cd clean-docs
 python -m venv .venv
 source .venv/bin/activate
-pip install -e ".[dev]"
+python -m pip install -e ".[dev]"
 clean-docs audit
 ```
 
@@ -128,7 +129,6 @@ This table is derived from `src/clean_docs/capabilities.py` by clean-docs itself
 - Destination markers must already exist and cannot nest.
 - Evaluation claim boundaries are defined in the [evaluation guide](docs/EVALUATION.md).
 - clean-docs reports malformed configuration as exit `2`, drift as exit `1`, and extraction failures as exit `3`.
-
 See the [recorded drift demonstration](https://owieschon.github.io/clean-docs/) and use the [evaluation guide](docs/EVALUATION.md) for task fixtures. The full product contract and version plan live in [`CLEAN_DOCS_SPEC.md`](CLEAN_DOCS_SPEC.md).
 <!-- clean-docs:canonical README.md end -->
 

@@ -1,4 +1,4 @@
-"""Project a clean-docs manifest into an llms.txt index of source-bound docs."""
+"""Project a manifest into an llms.txt index of bound and declared canonical docs."""
 from __future__ import annotations
 
 import hashlib
@@ -24,6 +24,15 @@ def _bound_facts(manifest: Manifest) -> dict[str, list[str]]:
     return {doc: sorted(ids) for doc, ids in sorted(groups.items())}
 
 
+def _indexed_documents(manifest: Manifest) -> dict[str, list[str]]:
+    documents = _bound_facts(manifest)
+    projection = manifest.projections.llms_txt if manifest.projections else None
+    if projection is not None:
+        for path in projection.include:
+            documents.setdefault(path.as_posix(), [])
+    return dict(sorted(documents.items()))
+
+
 def _one_line(value: str, name: str) -> str:
     if not value.strip() or "\n" in value or "\r" in value:
         raise ConfigurationError(f"llms.txt {name} must be one non-empty line")
@@ -44,7 +53,7 @@ def _document_metadata(
         try:
             content = path.read_bytes()
         except OSError as exc:
-            raise ConfigurationError(f"cannot index bound document {document}: {exc}") from exc
+            raise ConfigurationError(f"cannot index document {document}: {exc}") from exc
     if output_path is None:
         link = document
     else:
@@ -63,11 +72,12 @@ def render_llms_txt(
     """Render an llms.txt projection without writing it."""
     heading = _one_line(title or DEFAULT_TITLE, "title")
     blurb = _one_line(summary or DEFAULT_SUMMARY, "summary")
-    lines = [f"# {heading}", "", f"> {blurb}", "", "## Source-bound documentation", ""]
-    for doc, ids in _bound_facts(manifest).items():
+    lines = [f"# {heading}", "", f"> {blurb}", "", "## Canonical documentation", ""]
+    for doc, ids in _indexed_documents(manifest).items():
         link, digest = _document_metadata(manifest, doc, documents, output_path)
+        status = f"bindings: {', '.join(ids)}" if ids else "declared canonical context"
         lines.append(
-            f"- [{doc}]({link}): bindings: {', '.join(ids)}; sha256: {digest}"
+            f"- [{doc}]({link}): {status}; sha256: {digest}"
         )
     return "\n".join(lines) + "\n"
 

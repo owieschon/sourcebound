@@ -22,6 +22,10 @@ bindings:
     doc: docs/REFERENCE.md
     anchor: settings
     source: {path: source.txt}
+projections:
+  llms_txt:
+    output: llms.txt
+    include: [docs/CANONICAL.md]
 """
 
 
@@ -48,6 +52,7 @@ def _repo(tmp_path: Path) -> Path:
         "<!-- clean-docs:end overview -->\n"
     )
     (root / "docs/REFERENCE.md").write_text("# Reference\n\nSettings.\n")
+    (root / "docs/CANONICAL.md").write_text("# Canonical\n\nDeclared context.\n")
     return root
 
 
@@ -62,14 +67,15 @@ def test_llms_index_follows_format_and_tracks_document_content(tmp_path: Path) -
     assert first.returncode == 0, first.stderr
     text = output.read_text()
     assert text.startswith("# Fixture docs\n\n> Bound documentation index.\n")
-    assert "## Source-bound documentation" in text
+    assert "## Canonical documentation" in text
     assert "[README.md](../repo/README.md): bindings: overview; sha256:" in text
     assert (
         "[docs/REFERENCE.md](../repo/docs/REFERENCE.md): bindings: settings; sha256:"
         in text
     )
+    assert "[docs/CANONICAL.md](../repo/docs/CANONICAL.md): declared canonical context; sha256:" in text
     assert str(root) not in text
-    assert len(re.findall(r"sha256: [0-9a-f]{64}", text)) == 2
+    assert len(re.findall(r"sha256: [0-9a-f]{64}", text)) == 3
 
     (root / "README.md").write_text((root / "README.md").read_text() + "\nNew guidance.\n")
     second = _run(root, *arguments)

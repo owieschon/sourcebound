@@ -97,7 +97,7 @@ Each release publishes the wheel, its SPDX 2.3 software bill of materials, check
 clean-docs verify --base origin/main --head HEAD --out .clean-docs/outcome.json
 ```
 
-The receipt counts current bindings, caught drift, coverage gaps, active and baselined hygiene findings, and projection state. It records `network_requests: 0` and sends nothing.
+The receipt counts current bindings, caught drift, coverage gaps, active and baselined hygiene findings, and projection state. `bound` means a source-specific binding covers the detected locator. `cataloged` means a repository-wide inventory binding tracks the surface but no source-specific documentation claim covers it. `coverage_complete` permits either form; `direct_coverage_complete` requires source-specific bindings or reasoned ignores for the whole detected surface. The receipt records `network_requests: 0` and sends nothing.
 
 Measure the changed-check P95 and peak process memory on a repository with:
 

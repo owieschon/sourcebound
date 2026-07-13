@@ -42,7 +42,7 @@ EXECUTION_KEYS = {"commands", "allowed_commands"}
 COMMAND_KEYS = {"argv", "timeout_seconds", "network"}
 ASSERTION_KEYS = {"json_path", "operator", "expected"}
 PROJECTION_KEYS = {"llms_txt", "bundles", "demo"}
-LLMS_TXT_KEYS = {"output", "title", "summary"}
+LLMS_TXT_KEYS = {"output", "title", "summary", "include"}
 BUNDLE_KEYS = {"id", "output", "include"}
 DEMO_KEYS = {"output", "evidence"}
 PLUGIN_KEYS = {"id", "api_version", "interfaces", "argv", "timeout_seconds"}
@@ -104,11 +104,26 @@ def _load_projections(raw: Any, bound_docs: set[Path]) -> ProjectionConfig | Non
     if raw_llms is not None:
         item = _mapping(raw_llms, "projections.llms_txt")
         _reject_unknown(item, LLMS_TXT_KEYS, "projections.llms_txt")
+        raw_include = item.get("include", [])
+        if not isinstance(raw_include, list) or not all(
+            isinstance(path, str) for path in raw_include
+        ):
+            raise ConfigurationError("projections.llms_txt.include must be a path list")
+        include = tuple(
+            _relative_path(path, "projections.llms_txt.include") for path in raw_include
+        )
+        if len(set(include)) != len(include):
+            raise ConfigurationError("projections.llms_txt.include must not contain duplicates")
         llms_txt = LlmsTxtProjection(
             output=_relative_path(item.get("output"), "projections.llms_txt.output"),
             title=_one_line(item.get("title"), "projections.llms_txt.title"),
             summary=_one_line(item.get("summary"), "projections.llms_txt.summary"),
+            include=include,
         )
+        if llms_txt.output in include:
+            raise ConfigurationError(
+                "projections.llms_txt.output cannot also be a source document"
+            )
     bundles: list[ContextBundleProjection] = []
     raw_bundles = data.get("bundles", [])
     if not isinstance(raw_bundles, list):

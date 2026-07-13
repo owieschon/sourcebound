@@ -1,0 +1,19 @@
+# Detected repository surface
+
+<!-- clean-docs:purpose -->
+Use this reference when deciding whether clean-docs directly documents a detected source locator or only tracks it through the repository catalog. It prevents catalog coverage from being mistaken for a source-specific reader claim and gives maintainers the current detected surface behind the coverage receipt.
+<!-- clean-docs:end purpose -->
+
+The catalog binding catches additions, removals, and replacements across the detected surface. It does not assert that every symbol or option needs a reader-facing explanation. `clean-docs verify` reports source-specific bindings as `bound` and the remaining catalog entries as `cataloged`.
+
+<!-- clean-docs:begin repository-surface -->
+| surface | discovered | examples |
+| --- | ---: | --- |
+| api-symbol | 175 | `AcceptanceCase`, `Assertion`, `AuditFinding`, and 172 more |
+| cli-command | 18 | `audit`, `benchmark`, `check`, and 15 more |
+| cli-option | 50 | `--accept-hygiene-baseline`, `--base`, `--binding`, and 47 more |
+| package | 1 | `clean-docs` |
+| test-suite | 46 | `scripts/test_release_lifecycle.py`, `tests/test_audit.py`, `tests/test_changed_check.py`, and 43 more |
+
+<!-- clean-docs:inventory-sha256 e2c3f4d20091ca83f98694c462def63571a3b17986230dd1acc851e1c4fbb26f -->
+<!-- clean-docs:end repository-surface -->
