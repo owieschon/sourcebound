@@ -7,6 +7,7 @@ from pathlib import Path
 
 from clean_docs.audit import audit
 from clean_docs.errors import CleanDocsError, ConfigurationError
+from clean_docs.execution import resolve_argv
 from clean_docs.manifest import load_manifest
 from clean_docs.standard import load_default_pack
 
@@ -62,7 +63,7 @@ def diagnose(root: Path, manifest_path: Path) -> tuple[DoctorCheck, ...]:
             f"version {manifest.version}; {len(manifest.bindings)} bindings",
         ))
         for command in manifest.commands:
-            executable = command.argv[0]
+            executable = resolve_argv(command.argv)[0]
             available = shutil.which(executable) is not None or (
                 (root / executable).is_file() and "/" in executable
             )

@@ -6,6 +6,7 @@ from typing import Any
 import yaml
 
 from clean_docs.errors import ConfigurationError
+from clean_docs.execution import PYTHON_EXECUTABLE_TOKEN
 from clean_docs.models import (
     Assertion,
     Binding,
@@ -190,6 +191,11 @@ def load_manifest(path: Path) -> Manifest:
             network = command.get("network", False)
             if not isinstance(argv, list) or not argv or not all(isinstance(item, str) and item for item in argv):
                 raise ConfigurationError(f"execution.allowed_commands.{command_id}.argv must be a non-empty string list")
+            if PYTHON_EXECUTABLE_TOKEN in argv[1:]:
+                raise ConfigurationError(
+                    f"execution.allowed_commands.{command_id}.argv may use "
+                    f"{PYTHON_EXECUTABLE_TOKEN} only as its executable"
+                )
             if not isinstance(timeout, int) or not 1 <= timeout <= 300:
                 raise ConfigurationError(f"execution.allowed_commands.{command_id}.timeout_seconds must be 1..300")
             if network is not False:

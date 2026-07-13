@@ -109,7 +109,7 @@ This table is derived from `src/clean_docs/capabilities.py` by clean-docs itself
 ## Current limits
 
 - Claims consume JSON from an allowlisted command; symbols resolve static paths or Python names.
-- Command allowlisting and timeouts are enforced; network isolation belongs to the execution environment.
+- Command allowlisting and timeouts are enforced. In an allowlisted `argv`, `{python}` selects the interpreter running clean-docs. Network isolation belongs to the execution environment.
 - Coverage ignores must name a detected inventory ID and carry a specific reason; `explain` reports the evidence and repair for gaps.
 - Changed checks have a published five-second median budget on each pinned dogfood repository.
 - Source constructor calls must use keyword arguments.

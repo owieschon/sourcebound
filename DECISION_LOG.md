@@ -216,3 +216,14 @@ uploads only the generated file after `project --check`; the CLI remains local a
 telemetry. Desktop and 390-pixel viewport checks caught and fixed digest overflow before publish.
 Reversible: deleting the demo projection and deployment workflow leaves every CLI and evaluation
 contract intact.
+
+## 21. Resolve allowlisted Python commands against the running artifact (2026-07-13)
+
+Context: the release-artifact gate passed audit and projection checks but its human task failed.
+The fixture invoked `python3`, which selected the runner's ambient interpreter instead of the
+wheel's interpreter. Chose an explicit `{python}` executable token for allowlisted commands and
+live provider adapters. clean-docs resolves the token to `sys.executable`; literal executables
+keep their existing meaning, and the token is rejected outside the first argument. The doctor,
+command extractor, and task scorer use the same resolver. A clean wheel now evaluates the same
+artifact that launched the command. Reversible: replacing the token with a literal executable
+restores ordinary process lookup without changing the manifest schema.

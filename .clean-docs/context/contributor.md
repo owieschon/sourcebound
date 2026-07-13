@@ -1,13 +1,13 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `9176cfdfaf5cc7caf1404ef34ac4adb1815d4338e279223e52bc9d92ed93ecbf`
+- Corpus sha256: `5102f4791393bc57bab507ca04a5fe9ffe1a834b1783a91fb31d6018757eb6b8`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `d0110fa01e1310dfa2ba30bbda281ec7bd604b30db5f453bd8adf11694178b52`
+- Content sha256: `d352943d308f9178c9e543b527afe3bc867aecd78b4594ea9d38ef3a78b13120`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
@@ -121,7 +121,7 @@ This table is derived from `src/clean_docs/capabilities.py` by clean-docs itself
 ## Current limits
 
 - Claims consume JSON from an allowlisted command; symbols resolve static paths or Python names.
-- Command allowlisting and timeouts are enforced; network isolation belongs to the execution environment.
+- Command allowlisting and timeouts are enforced. In an allowlisted `argv`, `{python}` selects the interpreter running clean-docs. Network isolation belongs to the execution environment.
 - Coverage ignores must name a detected inventory ID and carry a specific reason; `explain` reports the evidence and repair for gaps.
 - Changed checks have a published five-second median budget on each pinned dogfood repository.
 - Source constructor calls must use keyword arguments.

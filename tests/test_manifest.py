@@ -40,6 +40,25 @@ def test_loads_json_pointer_binding(tmp_path: Path) -> None:
     assert binding.source.symbol is None
 
 
+def test_python_token_is_valid_only_as_the_allowlisted_executable(tmp_path: Path) -> None:
+    path = tmp_path / ".clean-docs.yml"
+    path.write_text(
+        VALID.replace(
+            "bindings:",
+            "execution:\n"
+            "  commands: deny\n"
+            "  allowed_commands:\n"
+            "    invalid:\n"
+            "      argv: [python, \"{python}\"]\n"
+            "      network: false\n"
+            "bindings:",
+        )
+    )
+
+    with pytest.raises(ConfigurationError, match="only as its executable"):
+        load_manifest(path)
+
+
 def test_loads_strict_projection_contract(tmp_path: Path) -> None:
     path = tmp_path / ".clean-docs.yml"
     path.write_text(VALID + """\

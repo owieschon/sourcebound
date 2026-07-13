@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -9,12 +10,18 @@ import yaml
 
 from clean_docs.errors import ConfigurationError
 from clean_docs.evaluation import (
+    _command_environment,
     load_evaluation_tasks,
     run_evaluation,
     write_evaluation_history,
 )
 from clean_docs.manifest import load_manifest
 from clean_docs.projections import write_projections
+
+
+def test_command_environment_prefers_the_running_install() -> None:
+    path = _command_environment()["PATH"].split(os.pathsep)
+    assert path[0] == str(Path(sys.executable).parent)
 
 
 def _manifest(command_output: str = "quickstart ok") -> str:

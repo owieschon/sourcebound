@@ -34,6 +34,57 @@
     {
       "audience": "agent",
       "claim": "deterministic-replay",
+      "corpus_sha256": "60a8fb6f0bcb2fe96c9bbe1170cb0e24139ab6245c8e5ed5b2f32edacd096d83",
+      "detail": "configuration passes schema validation and check",
+      "id": "manifest-round-trip",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "2c22342cbafc3aba2cffd84600d9cb5968262bffb9ffa6fa5f5fe752952b3c66",
+      "record_id": "862063b5c0358d4e2f1c589979c08c04950d107674c25cddaced49d215712deb",
+      "response_sha256": "419da826adecee1c63ef7edd7f2cc8734533db94f1803b769e1cc201bd7a9e6b",
+      "scorer": "configuration",
+      "scorer_sha256": "ff2c7701e55c68a09f63c7dd94d3e2b350c22d5c224e9bb77a26b01869420a79"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
+      "corpus_sha256": "60a8fb6f0bcb2fe96c9bbe1170cb0e24139ab6245c8e5ed5b2f32edacd096d83",
+      "detail": "structured output matches exactly",
+      "id": "structured-command",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "b3731fc95828fca6f34a3efc8bf61545476e99cf11fe9d34b1325dc35dec6e17",
+      "record_id": "931f97a54eb91bb5b9c33b58f63a8fbba5e963cd87d1ebc7237ebd27c72466d8",
+      "response_sha256": "e7f35caa3eb02a30de3263aabdfd78950084743b352aee6c9b83cdf6c80de1d3",
+      "scorer": "structured-output",
+      "scorer_sha256": "a568bd4db2835284cafe510465310b031b59201d10e97b4bc3d1cbd6e4004f1c"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
+      "corpus_sha256": "60a8fb6f0bcb2fe96c9bbe1170cb0e24139ab6245c8e5ed5b2f32edacd096d83",
+      "detail": "response states and cites the canonical limitation",
+      "id": "limitation-retrieval",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "c569464245245214d85c41661e0bdf4d133cdcdcc6c2bd1181de80a2c40b6b82",
+      "record_id": "ab61453da951e50e5dde203ac621d5bafcef0ad8caa0dd2c0b63a118a537355c",
+      "response_sha256": "464ef28f67818db5d6b1195c91fdb6a8c8050f3197d83a72f0ab78f60fb0dbfe",
+      "scorer": "cited-limit",
+      "scorer_sha256": "37b1057dea54e8b36d29e16d8dadde9706c7a71bad88f14b19cbc3ed3bb0e9f3"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
       "corpus_sha256": "61d804c2a1e611158edd1a44b0ae1011a5b2c40f3d87cbb57402e16ef97287eb",
       "detail": "configuration passes schema validation and check",
       "id": "manifest-round-trip",
@@ -47,6 +98,20 @@
       "response_sha256": "419da826adecee1c63ef7edd7f2cc8734533db94f1803b769e1cc201bd7a9e6b",
       "scorer": "configuration",
       "scorer_sha256": "ff2c7701e55c68a09f63c7dd94d3e2b350c22d5c224e9bb77a26b01869420a79"
+    },
+    {
+      "audience": "human",
+      "claim": "deterministic-command",
+      "corpus_sha256": "10d55508c0a15048ebd10d25b8f909fe024ec83ac485322193d4f2ba60f4c2c4",
+      "detail": "1 documented command(s) matched expected output",
+      "id": "human-quickstart",
+      "model": null,
+      "ok": true,
+      "prompt_sha256": "721c35cfc5c6740b0b62e32b433e40acf0115377d81fab532b2ff8dcde6b9b3b",
+      "record_id": "b40c750631bed2756f31504cdbd8174b569efdfb83128ad03901914a60847ca3",
+      "response_sha256": null,
+      "scorer": "command",
+      "scorer_sha256": "f2181116da95d6b96069b9665ef7b77072513d026dd4de66791779bdeb08828b"
     },
     {
       "audience": "agent",

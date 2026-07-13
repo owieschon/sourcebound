@@ -8,6 +8,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -18,6 +19,7 @@ import yaml
 from clean_docs.audit import audit
 from clean_docs.engine import evaluate
 from clean_docs.errors import CleanDocsError, ConfigurationError
+from clean_docs.execution import resolve_argv
 from clean_docs.manifest import load_manifest
 from clean_docs.models import CommandSpec, Manifest
 from clean_docs.regions import atomic_write
@@ -130,13 +132,14 @@ class CommandResponseProvider:
     def complete(self, prompt: str) -> str:
         try:
             proc = subprocess.run(
-                self.argv,
+                resolve_argv(self.argv),
                 cwd=self.root,
                 input=prompt,
                 text=True,
                 capture_output=True,
                 timeout=120,
                 check=False,
+                env=_command_environment(),
             )
         except (OSError, subprocess.SubprocessError) as exc:
             raise ConfigurationError(f"provider command failed: {exc}") from exc
@@ -153,6 +156,14 @@ def _score(results: tuple[TaskResult, ...]) -> dict[str, int]:
         "passed": sum(result.ok for result in results),
         "attempted": len(results),
     }
+
+
+def _command_environment() -> dict[str, str]:
+    """Resolve sibling console scripts from the environment running clean-docs."""
+    executable_dir = str(Path(sys.executable).parent)
+    inherited_path = os.environ.get("PATH", "")
+    path = executable_dir if not inherited_path else executable_dir + os.pathsep + inherited_path
+    return {**os.environ, "NO_COLOR": "1", "PATH": path}
 
 
 def _mapping(raw: Any, where: str) -> dict[str, Any]:
@@ -333,13 +344,13 @@ def _command_score(
             raise ConfigurationError(f"evaluation command is not allowlisted: {expected['ref']}")
         try:
             proc = subprocess.run(
-                command.argv,
+                resolve_argv(command.argv),
                 cwd=root,
                 text=True,
                 capture_output=True,
                 timeout=command.timeout_seconds,
                 check=False,
-                env={**os.environ, "NO_COLOR": "1"},
+                env=_command_environment(),
             )
         except (OSError, subprocess.SubprocessError) as exc:
             return False, f"command {index + 1} could not run: {exc}"

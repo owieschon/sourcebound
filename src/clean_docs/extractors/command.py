@@ -7,6 +7,7 @@ import subprocess
 from typing import Any
 
 from clean_docs.errors import ExtractionError
+from clean_docs.execution import resolve_argv
 from clean_docs.models import CommandSpec, EvidenceValue, Provenance
 from clean_docs.snapshot import RepositorySnapshot
 
@@ -27,7 +28,7 @@ def extract_command(
     try:
         with snapshot.materialized_root() as command_root:
             proc = subprocess.run(
-                list(command.argv),
+                resolve_argv(command.argv),
                 cwd=command_root,
                 env=env,
                 text=True,
