@@ -1,13 +1,13 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `48d2d13c48fe52557d709b28b977fbdd778e2ea9d9e213410a991fc87295feeb`
+- Corpus sha256: `5dd7b023a2ea5dd085ccaa9fb1f87ef1d0da4a7023a84d51b870d1b61480f59b`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `22b21dd54dc01f63836bd35e7b3d5a362d5d3c092f8d83cb9ad580e139c6ffdb`
+- Content sha256: `2f5cfa9a389aad23d74d195fbccc6c513a010f886552d2405f68fa1188ee6e6d`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
@@ -49,7 +49,7 @@ clean-docs check
 clean-docs verify
 ```
 
-`init` adds a compact source-surface summary, `.clean-docs.yml`, and a checked `llms.txt` projection. It discovers nested package manifests, proposes at most eight canonical documents, and caps machine-readable plan details while retaining the full-plan digest and counts. Run `clean-docs inventory` for the complete detected catalog. The summary carries a hidden catalog digest, so `check` catches a source replacement even when its surface count stays the same. Catalog coverage does not validate unrelated prose claims; bind those claims to their specific sources. Commit the generated files with the source they describe. Use `drive` to repair recognized binding drift and `project` to refresh projections.
+`init` adds a compact source-surface summary, `.clean-docs.yml`, and a checked `llms.txt` projection. It discovers nested package manifests, proposes at most eight canonical documents, and caps machine-readable plan details while retaining the full-plan digest and counts. Run `clean-docs inventory` for the complete detected catalog. The summary carries a hidden catalog digest, so `check` catches a source replacement even when its surface count stays the same. Catalog coverage does not validate unrelated prose claims; bind those claims to their specific sources. Commit the generated files with the source they describe. `drive` repairs recognized binding drift but does not refresh projections. When a repaired document feeds `llms.txt` or another projection, run `clean-docs drive`, then `clean-docs project`, before the final `clean-docs verify`.
 
 If clean-docs cannot identify substantive authored purpose prose, `init` reports the affected page instead of marking metadata, a status line, or a feature fragment as a valid contract. If existing hygiene findings block adoption, follow the [mature-repository baseline procedure](docs/SUPPORT.md#adopt-an-existing-documentation-corpus). The explicit baseline protects existing debt by exact fingerprint and still fails on new or resolved findings.
 

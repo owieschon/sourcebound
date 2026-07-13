@@ -16,6 +16,16 @@ from clean_docs.performance import benchmark_changed_check
 PROJECT = Path(__file__).parents[1]
 
 
+def test_reader_install_and_repair_guidance_matches_candidate_artifacts() -> None:
+    support = (PROJECT / "docs/SUPPORT.md").read_text()
+    readme = (PROJECT / "README.md").read_text()
+
+    assert "python -m pip install ./clean_docs-*.whl" in support
+    assert "expected one wheel" in support
+    assert "does not refresh projections" in readme
+    assert "`clean-docs drive`, then `clean-docs project`" in readme
+
+
 def _commit(root: Path, message: str) -> str:
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
     subprocess.run(
