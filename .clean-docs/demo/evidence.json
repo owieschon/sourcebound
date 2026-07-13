@@ -32,7 +32,7 @@
         {
           "command": "clean-docs check",
           "exit_code": 1,
-          "output": "[drift] public-command: README.md\n--- README.md\n+++ README.md (derived)\n@@ -3,5 +3,5 @@\n ## Command\n \n <!-- clean-docs:begin public-command -->\n-clean-docs check\n+clean-docs check --changed\n <!-- clean-docs:end public-command -->"
+          "output": "[drift] public-command: README.md\n--- README.md\n+++ README.md (derived)\n@@ -7,5 +7,5 @@\n ## Command\n \n <!-- clean-docs:begin public-command -->\n-clean-docs check\n+clean-docs check --changed\n <!-- clean-docs:end public-command -->"
         }
       ]
     },
@@ -43,7 +43,7 @@
         {
           "command": "clean-docs drive",
           "exit_code": 0,
-          "output": "[repaired] public-command: README.md\n--- README.md\n+++ README.md (derived)\n@@ -3,5 +3,5 @@\n ## Command\n \n <!-- clean-docs:begin public-command -->\n-clean-docs check\n+clean-docs check --changed\n <!-- clean-docs:end public-command -->\ndrive: repaired 1 document(s); implemented policy checks passed"
+          "output": "[repaired] public-command: README.md\n--- README.md\n+++ README.md (derived)\n@@ -7,5 +7,5 @@\n ## Command\n \n <!-- clean-docs:begin public-command -->\n-clean-docs check\n+clean-docs check --changed\n <!-- clean-docs:end public-command -->\ndrive: repaired 1 document(s); implemented policy checks passed"
         },
         {
           "command": "clean-docs check",

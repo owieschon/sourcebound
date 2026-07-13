@@ -35,7 +35,7 @@
     <p class="eyebrow">Recorded local evidence</p>
     <h1>Documentation drift, caught before it ships</h1>
     <p>The same deterministic binding reports a current page, catches a source change, repairs only its declared region, and passes the final check.</p>
-    <p class="digest">Evidence sha256: a7f683efa736e1d64f0714141a83723a947af7ac7ec6d6e039edc99eb38a90cb</p>
+    <p class="digest">Evidence sha256: baa83a06dba96f25ab41f5fe424a856757c67e70d8948cb45de49e95cd53bead</p>
   </header>
   <main id="main">
     <section aria-labelledby="intended-reader"><h2 id="intended-reader">Intended reader</h2><p>Maintainers who want to see the local failure and repair path before adding a CI gate.</p></section>
@@ -43,7 +43,7 @@
     <section aria-labelledby="procedure"><h2 id="procedure">Procedure</h2><div class="states"><article class="state before" aria-labelledby="state-before"><h3 id="state-before">1. Current</h3><div class="step"><p><code>clean-docs check</code> <span>exit 0</span></p><pre aria-label="Output from clean-docs check"><code>[current] public-command: README.md</code></pre></div></article><article class="state drift" aria-labelledby="state-drift"><h3 id="state-drift">2. Drift caught</h3><div class="step"><p><code>clean-docs check</code> <span>exit 1</span></p><pre aria-label="Output from clean-docs check"><code>[drift] public-command: README.md
 --- README.md
 +++ README.md (derived)
-@@ -3,5 +3,5 @@
+@@ -7,5 +7,5 @@
  ## Command
 &#32;
  &lt;!-- clean-docs:begin public-command --&gt;
@@ -52,7 +52,7 @@
  &lt;!-- clean-docs:end public-command --&gt;</code></pre></div></article><article class="state repaired" aria-labelledby="state-repaired"><h3 id="state-repaired">3. Repaired and verified</h3><div class="step"><p><code>clean-docs drive</code> <span>exit 0</span></p><pre aria-label="Output from clean-docs drive"><code>[repaired] public-command: README.md
 --- README.md
 +++ README.md (derived)
-@@ -3,5 +3,5 @@
+@@ -7,5 +7,5 @@
  ## Command
 &#32;
  &lt;!-- clean-docs:begin public-command --&gt;
