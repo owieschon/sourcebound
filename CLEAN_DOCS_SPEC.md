@@ -477,7 +477,7 @@ Version 0 preservation work at the start of Version 0.1:
 - Every known false-positive fix in `DECISION_LOG.md` has a regression-case specification.
 - The Version 0 limitation is stated without qualification: it detects hygiene problems but does not keep documentation facts synchronized with code.
 
-### Version 0.1: Deterministic binding engine
+### Version 0.1: Deterministic binding engine, complete
 
 **Claim:** clean-docs packages the proven policy foundation, then derives and continuously verifies factual documentation on two dissimilar repositories without a model. The two initial dogfoods prove repository independence, not cross-language discovery.
 
