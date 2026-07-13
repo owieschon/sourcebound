@@ -22,3 +22,22 @@ def test_rejects_unresolved_names_in_factual_source(tmp_path: Path) -> None:
     )
     with pytest.raises(ExtractionError, match="Name"):
         extract_python_literal(RepositorySnapshot(tmp_path), binding)
+
+
+def test_extracts_a_scalar_without_importing_the_module(tmp_path: Path) -> None:
+    source = tmp_path / "values.py"
+    source.write_text('OVERVIEW = "Bound " + "summary"\nraise RuntimeError("must not run")\n')
+    binding = RegionBinding(
+        id="overview",
+        doc=Path("README.md"),
+        region="overview",
+        extractor="python-literal",
+        source=Source(Path("values.py"), "OVERVIEW"),
+        renderer="scalar",
+        columns=(),
+    )
+
+    evidence = extract_python_literal(RepositorySnapshot(tmp_path), binding)
+
+    assert evidence.kind == "scalar"
+    assert evidence.value == "Bound summary"

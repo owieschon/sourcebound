@@ -73,11 +73,21 @@ def extract_python_literal(
         tree = ast.parse(text, filename=binding.source.path.as_posix())
     except SyntaxError as exc:
         raise ExtractionError(f"cannot parse {binding.source.path}: {exc}") from exc
-    value = _rows(_evaluate(_find_assignment(tree, binding.source.symbol)))
+    extracted = _evaluate(_find_assignment(tree, binding.source.symbol))
+    if binding.renderer == "markdown-table":
+        value = _rows(extracted)
+        kind = "table"
+    elif binding.renderer == "scalar" and not isinstance(extracted, (dict, list)):
+        value = extracted
+        kind = "scalar"
+    else:
+        raise ExtractionError(
+            f"{binding.renderer} cannot render the bound Python literal"
+        )
     normalized = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
     digest = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
     return EvidenceValue(
-        kind="table",
+        kind=kind,
         value=value,
         provenance=Provenance(
             ref=snapshot.label,
