@@ -63,6 +63,5 @@ for field in ("artifact", "sbom"):
 assert receipt["sbom"]["format"] == "SPDX-2.3"
 PY
 
-! git grep -niE 'portfolio|hiring|posthog|context-mill' -- ':!docs/archive/**'
-! git grep -niE 'claude( code)?' -- '*.md' ':!docs/archive/**'
+PYTHONPATH=src python3 -m clean_docs --root . audit >/dev/null
 git diff --check
