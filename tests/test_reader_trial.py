@@ -38,13 +38,14 @@ def _write_trial(root: Path) -> Path:
         context.append({"path": relative, "sha256": _sha256(document.read_bytes())})
 
     participants = []
-    for audience in ("human", "agent"):
+    for profile in rubric["profiles"]:
+        profile_id = profile["id"]
         tasks = []
         for task in rubric["tasks"]:
-            relative = Path(".clean-docs/reader-trials") / audience / f"{task['id']}.txt"
+            relative = Path(".clean-docs/reader-trials") / profile_id / f"{task['id']}.txt"
             evidence = root / relative
             evidence.parent.mkdir(parents=True, exist_ok=True)
-            evidence.write_text(f"{audience} passed {task['id']} using published docs only\n")
+            evidence.write_text(f"{profile_id} passed {task['id']} using published docs only\n")
             tasks.append({
                 "id": task["id"],
                 "ok": True,
@@ -52,15 +53,15 @@ def _write_trial(root: Path) -> Path:
                 "sha256": _sha256(evidence.read_bytes()),
             })
         participants.append({
-            "id": f"reader-{audience}",
-            "audience": audience,
+            "id": f"reader-{profile_id}",
+            "profile": profile_id,
             "independent": True,
             "context": "published-docs-only",
             "completed_at": "2026-07-14T12:00:00Z",
             "tasks": tasks,
         })
     receipt = {
-        "schema": "clean-docs.independent-reader-trial.v1",
+        "schema": "clean-docs.independent-reader-trial.v2",
         "candidate": "1.0.0rc9",
         "candidate_commit": "a" * 40,
         "candidate_artifact_sha256": "b" * 64,
@@ -81,7 +82,12 @@ def test_reader_trial_binds_rubric_context_participants_and_task_evidence(
     summary = verify_reader_trial(tmp_path, "1.0.0")
 
     assert summary["candidate"] == "1.0.0rc9"
-    assert summary["participants"] == {"human": 1, "agent": 1}
+    assert summary["participants"] == {
+        "anthropic-opus-4-8": 1,
+        "anthropic-sonnet-5": 1,
+        "codex-gpt-5-5-pro": 1,
+        "codex-gpt-6-5-pro": 1,
+    }
     assert summary["tasks_per_participant"] == 5
     assert summary["receipt_sha256"] == _sha256(receipt.read_bytes())
 
@@ -97,12 +103,11 @@ def test_reader_trial_rejects_tampered_or_incomplete_evidence(tmp_path: Path) ->
 
     receipt = json.loads(receipt_path.read_text())
     first_task = receipt["participants"][0]["tasks"][0]["id"]
-    evidence.write_text(f"human passed {first_task} using published docs only\n")
-    receipt["participants"] = [
-        item for item in receipt["participants"] if item["audience"] == "human"
-    ]
+    profile = receipt["participants"][0]["profile"]
+    evidence.write_text(f"{profile} passed {first_task} using published docs only\n")
+    receipt["participants"] = receipt["participants"][:-1]
     receipt_path.write_text(json.dumps(receipt))
-    with pytest.raises(ReaderTrialError, match="one human and one agent"):
+    with pytest.raises(ReaderTrialError, match="every model profile"):
         verify_reader_trial(tmp_path, "1.0.0")
 
 
@@ -117,6 +122,26 @@ def test_reader_trial_rejects_evidence_outside_its_declared_directory(
     receipt_path.write_text(json.dumps(receipt))
 
     with pytest.raises(ReaderTrialError, match="must be under"):
+        verify_reader_trial(tmp_path, "1.0.0")
+
+
+def test_reader_trial_rejects_substituted_or_duplicate_model_profiles(
+    tmp_path: Path,
+) -> None:
+    receipt_path = _write_trial(tmp_path)
+    receipt = json.loads(receipt_path.read_text())
+    receipt["participants"][0]["profile"] = "undeclared-model"
+    receipt_path.write_text(json.dumps(receipt))
+
+    with pytest.raises(ReaderTrialError, match="undeclared profile"):
+        verify_reader_trial(tmp_path, "1.0.0")
+
+    receipt_path = _write_trial(tmp_path)
+    receipt = json.loads(receipt_path.read_text())
+    receipt["participants"][0]["profile"] = receipt["participants"][1]["profile"]
+    receipt_path.write_text(json.dumps(receipt))
+
+    with pytest.raises(ReaderTrialError, match="every model profile"):
         verify_reader_trial(tmp_path, "1.0.0")
 
 
@@ -137,7 +162,12 @@ def test_stable_release_requires_reader_trial_while_candidate_build_does_not(
     _write_trial(tmp_path)
     summary = verify_release_reader_trial(tmp_path)
     assert summary["required"] is True
-    assert summary["participants"] == {"human": 1, "agent": 1}
+    assert set(summary["participants"]) == {
+        "anthropic-opus-4-8",
+        "anthropic-sonnet-5",
+        "codex-gpt-5-5-pro",
+        "codex-gpt-6-5-pro",
+    }
 
 
 def test_candidate_gate_does_not_import_yaml(tmp_path: Path) -> None:

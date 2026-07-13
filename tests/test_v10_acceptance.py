@@ -420,6 +420,12 @@ def test_independent_reader_release_requires_receipts_and_published_tasks_work(
     rubric.parent.mkdir(parents=True)
     shutil.copyfile(PROJECT / ".clean-docs/reader-trial-rubric.yml", rubric)
     reader_trial = yaml.safe_load(rubric.read_text())
+    assert [profile["id"] for profile in reader_trial["profiles"]] == [
+        "anthropic-opus-4-8",
+        "anthropic-sonnet-5",
+        "codex-gpt-5-5-pro",
+        "codex-gpt-6-5-pro",
+    ]
     assert [task["id"] for task in reader_trial["tasks"]] == [
         "identify-purpose",
         "install",

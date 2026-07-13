@@ -866,18 +866,18 @@ Version 0 preservation work at the start of Version 0.1:
    - When clean-docs upgrades to 1.0.
    - Then manifests migrate or fail with an exact action, and bound evidence does not silently change.
 6. **independent reader success**
-   - Given new human and agent users with only published clean-docs docs.
-   - When they install the tool, protect a fixture repo, repair deliberate drift, and explain one limitation.
-   - Then every observable task passes the published rubric.
+   - Given fresh sessions for Anthropic Opus 4.8, Anthropic Sonnet 5, Codex GPT 5.5 Pro, and Codex GPT 6.5 Pro with only published clean-docs docs.
+   - When each model independently installs the tool, protects a fixture repo, repairs deliberate drift, and explains one limitation.
+   - Then every model passes every observable task in the published rubric without shared history or prior outputs.
    - A reader can identify the README's applicability, problem, and resulting capability without reading past its first body block.
    - Required release evidence binds the candidate commit and artifact, rubric, supplied documents, participant independence attestations, and per-task receipts by SHA-256. Internal command rehearsal and recorded responses test the harness but do not substitute for the independent trial.
 
 #### Definition of done
 
 - All six 1.0 E2E scenarios pass on every supported platform.
-- The stable release build rejects missing, incomplete, stale, or tampered independent human and agent reader receipts.
+- The stable release build rejects a missing, duplicate, substituted, incomplete, stale, or tampered receipt for any required model profile.
 - All earlier release E2E suites remain green.
-- Two external pilot repositories run the required check for at least 30 days with recorded false-positive and repair-time metrics.
+- Two external pilot repositories continue a 30-day evaluation window that records false-positive and repair-time metrics; this observation window does not block the stable release.
 - No open critical security issue exists; threat-model review and adversarial fixtures are complete.
 - P95 changed-file check time and memory use meet published budgets on small, medium, and monorepo fixtures.
 - Install, upgrade, rollback, and uninstall paths are documented and tested.

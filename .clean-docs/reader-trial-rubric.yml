@@ -4,6 +4,19 @@ context:
   - docs/CLI.md
   - docs/SUPPORT.md
   - docs/SECURITY_MODEL.md
+profiles:
+  - id: anthropic-opus-4-8
+    provider: anthropic
+    model: Opus 4.8
+  - id: anthropic-sonnet-5
+    provider: anthropic
+    model: Sonnet 5
+  - id: codex-gpt-5-5-pro
+    provider: codex
+    model: GPT 5.5 Pro
+  - id: codex-gpt-6-5-pro
+    provider: codex
+    model: GPT 6.5 Pro
 tasks:
   - id: identify-purpose
     instruction: Read only the README's first body block, then state who clean-docs applies to, the problem it addresses, and the capability it gives that reader.
