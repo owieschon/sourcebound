@@ -1,0 +1,111 @@
+participant: 05d6179a-3e58-470c-9140-248f9cb5435e
+profile: anthropic-sonnet-5
+independent: true
+context: published-docs-only
+completed_at: 2026-07-13T22:39:57Z
+result: PASS
+task: repair-drift
+
+evidence:
+Instructions followed: README.md "Protect a repository" section's
+explicit repair sequence (lines 53-58):
+
+    clean-docs check       # exits 1 and names the stale binding
+    clean-docs drive       # repairs recognized bound regions
+    clean-docs project     # refreshes projections that include the repaired document
+    clean-docs verify      # exits 0 only when the repository is current
+
+Source-to-document binding: the `repository-surface` region binding
+declared in .clean-docs.yml by `clean-docs init --no-model` during the
+protect-fixture task -- this is a supported binding type (type: region,
+per README's manifest reference table) and was already established with
+a passing baseline, committed as 87d8148 "protected baseline (clean-docs
+init)" in the protect-fixture task.
+
+.clean-docs.yml binding (unmodified, inspected only):
+  bindings:
+    - id: repository-surface
+      type: region
+      doc: README.md
+      region: repository-surface
+      extractor: repository-overview
+      source: {path: .}
+      renderer: markdown-fragment
+
+change to the bound source: renamed the public function
+`add(a, b)` to `total(a, b)` in src/fixture_pkg/__init__.py (body/
+docstring unchanged), so the source no longer matches the bound
+repository-surface table, which had recorded `add`.
+
+commands, exit codes, and output:
+
+$ clean-docs check
+[drift] repository-surface: README.md
+--- README.md
++++ README.md (derived)
+@@ -13,9 +13,9 @@
+ <!-- clean-docs:begin repository-surface -->
+ | surface | discovered | examples |
+ | --- | ---: | --- |
+-| api-symbol | 1 | `add` |
++| api-symbol | 1 | `total` |
+ | package | 1 | `fixture-pkg` |
+ | runtime-constraint | 1 | `Python >=3.10` |
+
+-<!-- clean-docs:inventory-sha256 f4010a8c...ffc0906 -->
++<!-- clean-docs:inventory-sha256 fa04042f...3f07a50 -->
+ <!-- clean-docs:end repository-surface -->
+[current] projection:llms.txt: llms.txt
+check_before_repair_exit=1
+(first check fails, and names the stale binding "repository-surface",
+as required)
+
+$ clean-docs drive
+[repaired] repository-surface: README.md
+drive: repaired 1 document(s); implemented policy checks passed
+drive_exit=0
+(the declared documentation region -- README.md's repository-surface
+block -- changed to reflect `total` in place of `add`)
+
+$ clean-docs check
+[current] repository-surface: README.md
+[drift] projection:llms.txt: llms.txt
+--- llms.txt
++++ llms.txt (projected)
+@@ -4,4 +4,4 @@
+ ## Canonical documentation
+-- [README.md](README.md): bindings: repository-surface; sha256: 82ea229a...c5a81aba
++- [README.md](README.md): bindings: repository-surface; sha256: ac615fe9...d6265ee2e
+check_after_drive_exit=1
+(region now current, but the llms.txt projection is stale -- matches
+README's documented "drive does not refresh projections" behavior, so
+the separate `project` step is required)
+
+$ clean-docs project
+[projected] llms.txt
+project: wrote 1 file(s)
+project_exit=0
+(dependent projection refreshed)
+
+$ clean-docs check
+[current] repository-surface: README.md
+[current] projection:llms.txt: llms.txt
+check_final_exit=0
+
+$ clean-docs verify
+{"schema": "clean-docs.outcome.v1", "version": "1.0.0rc16", "ref": "WORKTREE",
+ "ok": true, "outcomes": {"protected_baseline_current": true,
+ "coverage_complete": true, "direct_coverage_complete": false,
+ "drift_caught_before_merge": 0}, "bindings": {"total": 1, "current": 1,
+ "drifted": 0}, "projections": {"total": 1, "current": 1, "stale": 0},
+ "network_requests": 0}
+verify_final_exit=0
+
+result: the first check failed as required (exit 1, named the stale
+"repository-surface" binding); the bound documentation region changed
+via `clean-docs drive` (published procedure only, no manual editing);
+the dependent llms.txt projection was refreshed via `clean-docs
+project`; the final check and verify both pass (exit 0, ok: true,
+network_requests: 0).
+
+documentation_gaps: none

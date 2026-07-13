@@ -1,0 +1,15 @@
+participant: 2B1AE0F7-FC8C-409F-8FF5-2678FF4820C9
+profile: codex-gpt-5-6-sol-high
+independent: true
+context: published-docs-only
+completed_at: 2026-07-13T22:42:07Z
+result: PASS
+task: identify-purpose
+evidence:
+  Citation: README.md, first body block, clean-docs:purpose (line 4).
+  Published text: "Use clean-docs when code changes faster than its documentation and reviewers cannot tell which claims are stale. It gives maintainers a local, deterministic path from source change to repaired, verified docs; models may phrase facts, but they never decide the facts or gate results."
+  Applicability or audience: maintainers working where code changes faster than documentation; reviewers who need to determine whether claims are stale.
+  Reader's problem: reviewers cannot tell which documentation claims are stale after code changes.
+  Resulting capability: a local, deterministic path from a source change to repaired and verified documentation, with models allowed to phrase facts but not decide facts or gate outcomes.
+  Observed result: all three requested elements are explicit in the first README body block.
+documentation_gaps: none

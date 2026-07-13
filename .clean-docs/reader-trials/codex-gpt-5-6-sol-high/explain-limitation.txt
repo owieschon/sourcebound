@@ -1,0 +1,13 @@
+participant: 2B1AE0F7-FC8C-409F-8FF5-2678FF4820C9
+profile: codex-gpt-5-6-sol-high
+independent: true
+context: published-docs-only
+completed_at: 2026-07-13T22:42:07Z
+result: PASS
+task: explain-limitation
+evidence:
+  Conclusion: No. clean-docs does not enforce global host network isolation.
+  Exact published citation: docs/SECURITY_MODEL.md, section "Host boundary" (lines 24-28; controlling statement at line 26).
+  Published support: the process controls are not an operating-system sandbox; a declared executable can open a network connection or address an absolute host path when the surrounding runner permits it. The document directs operators to run untrusted declared code in a network-blocked container or equivalent OS sandbox.
+  Observed result: network blocking is the responsibility of the surrounding execution environment, not a global host isolation guarantee enforced by clean-docs.
+documentation_gaps: none

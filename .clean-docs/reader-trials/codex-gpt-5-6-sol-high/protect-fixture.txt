@@ -1,0 +1,116 @@
+participant: 2B1AE0F7-FC8C-409F-8FF5-2678FF4820C9
+profile: codex-gpt-5-6-sol-high
+independent: true
+context: published-docs-only
+completed_at: 2026-07-13T22:42:07Z
+result: PASS
+task: protect-fixture
+evidence:
+  Published procedure citation: README.md, section "Protect a repository".
+  Fresh fixture: workspace/fixture
+  Authored tracked inputs:
+    - README.md with substantive purpose prose and a Public API section.
+    - src/widget.py with public function public_greeting(name: str) -> str and static ACTIONS data.
+  Command: git init workspace/fixture
+  Output:
+    Initialized empty Git repository in /Users/owieschon/clean-docs-reader-trials-rc16/codex-gpt-5-6-sol-high/workspace/fixture/.git/
+  Exit code: 0
+  Command: git add README.md src/widget.py
+  Output: <empty>
+  Exit code: 0
+  Command: git commit -m 'Create fixture'
+  Output:
+    [main (root-commit) b5d7827] Create fixture
+     2 files changed, 17 insertions(+)
+     create mode 100644 README.md
+     create mode 100644 src/widget.py
+  Exit code: 0
+  Command: ../install-venv/bin/clean-docs init --no-model
+  Output:
+    [applied] write README.md: bind detected repository surfaces
+    [applied] write .clean-docs.yml: declare the generated binding
+    [applied] write llms.txt: index the canonical documentation
+    init: applied 3 operation(s); 1 grounded fact(s)
+  Exit code: 0
+  Command: git diff
+  Output:
+    diff --git a/README.md b/README.md
+    index b404ec8..42675b9 100644
+    --- a/README.md
+    +++ b/README.md
+    @@ -1,7 +1,21 @@
+     # Widget fixture
+
+    +<!-- clean-docs:purpose -->
+     Use this fixture to understand the public widget helper and the actions exposed by its Python module. It gives readers a concise, source-backed view of the fixture's supported interface.
+    +<!-- clean-docs:end purpose -->
+
+     ## Public API
+
+     `public_greeting(name)` returns a greeting for a widget user.
+    +
+    +## Repository surface
+    +
+    +This summary is a static catalog of detected package, CLI, API, schema, and test surfaces. It does not validate existing prose claims. Direct manifest bindings are the accuracy boundary; run `clean-docs inventory` for coverage state and the full catalog.
+    +
+    +<!-- clean-docs:begin repository-surface -->
+    +| surface | discovered | examples |
+    +| --- | ---: | --- |
+    +| api-symbol | 1 | `public_greeting` |
+    +
+    +<!-- clean-docs:inventory-sha256 eaf80e0897cd102dd4972852f94637a28153e2ad5ad425ed6a9ccdb507b8aa8b -->
+    +<!-- clean-docs:end repository-surface -->
+  Exit code: 0
+  Command: git status --short
+  Output:
+     M README.md
+    ?? .clean-docs.yml
+    ?? llms.txt
+  Exit code: 0
+  Command: ../install-venv/bin/clean-docs check
+  Output:
+    [current] repository-surface: README.md
+    [current] projection:llms.txt: llms.txt
+  Exit code: 0
+  Command: ../install-venv/bin/clean-docs verify
+  Output:
+    {
+      "schema": "clean-docs.outcome.v1",
+      "version": "1.0.0rc16",
+      "ref": "WORKTREE",
+      "ok": true,
+      "outcomes": {
+        "protected_baseline_current": true,
+        "coverage_complete": true,
+        "direct_coverage_complete": false,
+        "drift_caught_before_merge": 0
+      },
+      "documentation": {
+        "active": 1,
+        "archived": 0,
+        "hygiene_findings": 0,
+        "baselined_hygiene_findings": 0
+      },
+      "coverage": {
+        "total": 2,
+        "bound": 0,
+        "cataloged": 2,
+        "ignored": 0,
+        "standard_gaps": 0
+      },
+      "bindings": {
+        "total": 1,
+        "current": 1,
+        "drifted": 0
+      },
+      "projections": {
+        "total": 1,
+        "current": 1,
+        "stale": 0
+      },
+      "changed": null,
+      "network_requests": 0
+    }
+  Exit code: 0
+  Observed result: documented no-model initialization created the manifest and llms.txt projection, baseline check passed, and verification returned "ok": true.
+documentation_gaps: none
