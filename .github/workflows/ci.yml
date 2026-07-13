@@ -33,3 +33,15 @@ jobs:
       - run: clean-docs --root /tmp/clean-docs-stepwise audit
       - run: clean-docs --root . emit llms-txt --out /tmp/clean-docs-llms.txt
       - run: python scripts/trusted_self_check.py
+
+  public-dogfood:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install .
+      - run: python scripts/dogfood_public_repos.py

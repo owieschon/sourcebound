@@ -61,3 +61,7 @@ def test_distribution_integrations_are_strict() -> None:
     assert upload["if"] == "always()"
     assert upload["uses"] == "actions/upload-artifact@v4"
     assert upload["with"]["if-no-files-found"] == "error"
+    ci = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
+    dogfood = ci["jobs"]["public-dogfood"]
+    assert dogfood["needs"] == "test"
+    assert dogfood["steps"][-1]["run"] == "python scripts/dogfood_public_repos.py"

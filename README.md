@@ -89,8 +89,8 @@ Run the pinned public-repository dogfood proof with:
 PYTHONPATH=src python3 scripts/dogfood_public_repos.py
 ```
 
-The proof clones two fixed commits, derives documentation from Python and JSON sources,
-detects deliberate source drift, repairs the generated regions, and verifies each final
+The proof clones two fixed commits, checks region and symbol bindings, detects deliberate
+source drift, repairs or restores the affected source relationship, and verifies each final
 state. It never executes code from either target repository.
 
 Self-hosting uses `python3 scripts/trusted_self_check.py`. Candidate code checks its own
