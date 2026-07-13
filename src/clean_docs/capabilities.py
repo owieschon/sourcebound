@@ -1,7 +1,7 @@
 """Public capability registry rendered into the clean-docs README."""
 
 PRODUCT_OVERVIEW = (
-    "Version 1.0rc2 protects Python and TypeScript repository documentation through local, "
+    "Version 1.0rc3 protects Python and TypeScript repository documentation through local, "
     "pre-commit, and pull-request workflows. It compares normalized evidence across immutable "
     "refs and renders "
     "provenance-backed release facts. Optional narrative drafts cannot change, omit, or "
