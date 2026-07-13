@@ -30,3 +30,24 @@ def render_markdown_table(evidence: EvidenceValue, binding: RegionBinding) -> st
         for row in rows
     ]
     return "\n".join([header, divider, *body])
+
+
+def render(evidence: EvidenceValue, binding: RegionBinding) -> str:
+    if binding.renderer == "markdown-table":
+        return render_markdown_table(evidence, binding)
+    if binding.renderer == "markdown-list":
+        if not isinstance(evidence.value, list) or any(
+            isinstance(item, (dict, list)) for item in evidence.value
+        ):
+            raise ExtractionError("markdown-list evidence must contain scalar items")
+        return "\n".join(f"- {_cell(item)}" for item in evidence.value)
+    if binding.renderer == "scalar":
+        if isinstance(evidence.value, (dict, list)):
+            raise ExtractionError("scalar renderer requires a scalar value")
+        return _cell(evidence.value)
+    if binding.renderer == "fenced-text":
+        if not isinstance(evidence.value, str):
+            raise ExtractionError("fenced-text renderer requires text evidence")
+        fence = "```" + (binding.language or "")
+        return f"{fence}\n{evidence.value.rstrip()}\n```"
+    raise ExtractionError(f"unsupported renderer: {binding.renderer}")
