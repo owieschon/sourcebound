@@ -557,9 +557,11 @@ Version 0 preservation work at the start of Version 0.1:
 - The repository carries an OSI-approved license, security policy, and reproducible release artifact.
 - A repository-residue scan passes across code, docs, tests, examples, issue templates, and package metadata.
 
-### Version 0.2: Repository audit and baseline generation
+### Version 0.2: Repository audit and baseline generation, complete
 
 **Claim:** clean-docs can drive an unfamiliar repository to the configured documentation standard without turning model output into factual authority.
+
+Release receipt: [`v0.2.0`](https://github.com/owieschon/clean-docs/releases/tag/v0.2.0) resolves to `cea7c10b52c2fb4e7f836a92836a210bbc7557a7`; required [CI run 29228125889](https://github.com/owieschon/clean-docs/actions/runs/29228125889) passed; the reproducible wheel SHA-256 is `02b742a95d2676453e1ca14129978297e496f2a441c27c80f91f8c75f4d59b46`.
 
 #### Build
 
