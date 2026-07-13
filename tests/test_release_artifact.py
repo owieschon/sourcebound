@@ -53,7 +53,9 @@ def test_release_workflow_attests_wheel_and_sbom() -> None:
     assert attestations[0]["with"] == {"subject-path": "dist/*.whl"}
     assert attestations[1]["with"] == {
         "subject-path": "dist/*.whl",
-        "sbom-path": "dist/*.spdx.json",
+        "sbom-path": "${{ steps.release-files.outputs.sbom }}",
     }
+    resolver = next(step for step in steps if step.get("id") == "release-files")
+    assert "expected one SBOM" in resolver["run"]
     upload = next(step for step in steps if step.get("uses") == UPLOAD_ARTIFACT)
     assert upload["with"]["if-no-files-found"] == "error"

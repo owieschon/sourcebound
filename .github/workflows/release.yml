@@ -29,6 +29,16 @@ jobs:
       - run: /tmp/clean-docs-release/bin/clean-docs --version
       - run: /tmp/clean-docs-release/bin/clean-docs --root . verify
       - run: python scripts/test_release_lifecycle.py --wheel dist/*.whl
+      - name: Resolve release files
+        id: release-files
+        shell: bash
+        run: |
+          mapfile -t sboms < <(find dist -maxdepth 1 -type f -name '*.spdx.json' -print)
+          if [[ "${#sboms[@]}" -ne 1 ]]; then
+            echo "expected one SBOM, found ${#sboms[@]}" >&2
+            exit 1
+          fi
+          echo "sbom=${sboms[0]}" >> "$GITHUB_OUTPUT"
       - name: Attest wheel provenance
         uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4.1.1
         with:
@@ -37,7 +47,7 @@ jobs:
         uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4.1.1
         with:
           subject-path: dist/*.whl
-          sbom-path: dist/*.spdx.json
+          sbom-path: ${{ steps.release-files.outputs.sbom }}
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: clean-docs-release-${{ github.sha }}
