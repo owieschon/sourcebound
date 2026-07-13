@@ -127,3 +127,13 @@ returns that same plan without writing. The default path rejects gaps, applies t
 and writes, then requires binding and policy checks to pass. Existing manifests are never replaced
 implicitly. Reversible: the plan schema isolates bootstrap decisions from the binding engine, so a
 later information-architecture planner can add operations without weakening the write gate.
+
+## 13. Restrict model phrasing to grounded templates (2026-07-13)
+
+Context: free-form model prose cannot be factual authority, but repository onboarding still needs
+an optional phrasing seam. Chose a provider protocol whose response can only map known evidence
+identifiers to compatible prose templates. Deterministic code validates the mapping and renders
+the sentence. Unknown facts, arbitrary fields, duplicate mappings, and incompatible templates
+fail before writes. Prompts are deterministic, secret-redacted, and stripped of repository
+instructions; required checks never consume provider output. Reversible: additional templates can
+be added with explicit compatibility tests without broadening the provider's authority.

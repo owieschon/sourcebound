@@ -15,9 +15,11 @@ from clean_docs.errors import ConfigurationError, PolicyError
 from clean_docs.extractors.inventory import INCLUDED_KINDS, extract_repository_inventory
 from clean_docs.inventory import InventoryItem, scan_inventory
 from clean_docs.models import Manifest, RegionBinding, Source
+from clean_docs.phrasing import GroundedDraft, ModelRecord, PhrasingProvider, build_model_record
 from clean_docs.regions import atomic_write, replace_region
 from clean_docs.renderers import render
 from clean_docs.snapshot import RepositorySnapshot
+from clean_docs.write_gate import redact_secrets
 
 
 REFERENCE_REGION = "repository-surface"
@@ -48,21 +50,35 @@ class BootstrapPlan:
     writes: tuple[PlannedWrite, ...]
     moves: tuple[PlannedMove, ...]
     gaps: tuple[str, ...]
+    model: ModelRecord | None
     digest: str
 
     def as_dict(self) -> dict[str, object]:
+        facts = []
+        for item in self.facts:
+            facts.append({
+                field: redact_secrets(value)[0] if isinstance(value, str) else value
+                for field, value in asdict(item).items()
+            })
         return {
             "schema": "clean-docs.content-plan.v1",
             "ok": not self.gaps,
             "digest": self.digest,
-            "facts": [asdict(item) for item in self.facts],
+            "facts": facts,
             "operations": [
-                {"action": "write", **asdict(write), "content": None}
+                {
+                    "action": "write",
+                    "path": write.path,
+                    "content": None,
+                    "reason": write.reason,
+                    "diff": redact_secrets(write.diff)[0],
+                }
                 for write in self.writes
             ] + [
                 {"action": "move", **asdict(move)} for move in self.moves
             ],
             "gaps": list(self.gaps),
+            "model": self.model.as_dict() if self.model else None,
         }
 
 
@@ -93,15 +109,21 @@ def _binding(root: Path) -> RegionBinding:
     )
 
 
-def _reference_document(root: Path) -> str:
+def _reference_document(root: Path, drafts: tuple[GroundedDraft, ...] = ()) -> str:
     readme = root / "README.md"
     current = readme.read_text(encoding="utf-8") if readme.exists() else "# Repository\n"
     binding = _binding(root)
     evidence = extract_repository_inventory(RepositorySnapshot(root), binding)
     generated = render(evidence, binding)
+    highlights = ""
+    if drafts:
+        highlights = "### Grounded highlights\n\n" + "\n".join(
+            f"- {draft.text}" for draft in drafts
+        ) + "\n\n"
     section = (
         "## Repository surface\n\n"
         "This table is generated from statically detected package, CLI, API, schema, and test surfaces.\n\n"
+        f"{highlights}"
         f"<!-- clean-docs:begin {REFERENCE_REGION} -->\n"
         f"{generated}\n"
         f"<!-- clean-docs:end {REFERENCE_REGION} -->\n"
@@ -157,7 +179,9 @@ def _archive_moves(root: Path) -> list[PlannedMove]:
     return sorted(moves.values(), key=lambda item: item.source)
 
 
-def build_bootstrap_plan(root: Path) -> BootstrapPlan:
+def build_bootstrap_plan(
+    root: Path, provider: PhrasingProvider | None = None
+) -> BootstrapPlan:
     root = root.resolve()
     existing_manifest = root / ".clean-docs.yml"
     manifest_text = _manifest_text()
@@ -167,7 +191,8 @@ def build_bootstrap_plan(root: Path) -> BootstrapPlan:
         )
     report = scan_inventory(root)
     facts = tuple(item for item in report.items if item.kind in INCLUDED_KINDS)
-    readme = _reference_document(root)
+    model = build_model_record(root, facts, provider) if provider else None
+    readme = _reference_document(root, model.drafts if model else ())
     manifest = Manifest(
         path=root / ".clean-docs.yml",
         version=1,
@@ -187,18 +212,22 @@ def build_bootstrap_plan(root: Path) -> BootstrapPlan:
         for language in report.languages
         if language not in supported
     )
+    if any(redact_secrets(item.content)[1] for item in writes):
+        gaps += ("secret detected in generated documentation",)
     moves = _archive_moves(root)
     payload = json.dumps({
         "facts": [item.id + ":" + item.digest for item in facts],
         "writes": [(item.path, hashlib.sha256(item.content.encode()).hexdigest()) for item in writes],
         "moves": [(item.source, item.path) for item in moves],
         "gaps": gaps,
+        "model": model.as_dict() if model else None,
     }, sort_keys=True, separators=(",", ":"))
     return BootstrapPlan(
         facts,
         tuple(writes),
         tuple(moves),
         gaps,
+        model,
         hashlib.sha256(payload.encode()).hexdigest(),
     )
 

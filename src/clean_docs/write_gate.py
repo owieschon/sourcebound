@@ -21,6 +21,14 @@ EXEMPT_PATH_PARTS = (
     "narrative_content", "golden_corpus", "/gold/", "fixtures", "corpus", ".venv/",
     "node_modules/", "quality-gate", "quality_gate",
 )
+SECRET_RULES = (
+    ("secret-aws-key", re.compile(r"\bAKIA[0-9A-Z]{16}\b"), "all"),
+    ("secret-github-token", re.compile(r"\b(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})"), "all"),
+    ("secret-openai-key", re.compile(r"\bsk-[A-Za-z0-9_-]{20,}\b"), "all"),
+    ("secret-pem-private", re.compile(r"-----BEGIN [A-Z ]{0,20}PRIVATE KEY-----"), "all"),
+    ("secret-jwt", re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b"), "all"),
+    ("secret-auth-header-json", re.compile(r'"(authorization|api[_-]?key|apikey|token|secret|password)"\s*:\s*"(?=[^"]*[0-9])(Bearer |Basic |Token )?[A-Za-z0-9_./+=-]{16,}"', re.I), "all"),
+)
 RULES = (
     ("delve", re.compile(r"\bdelv(e|es|ing)\b", re.I), "all"),
     ("important-to-note", re.compile(r"\bit('| i)s important to note\b", re.I), "all"),
@@ -38,13 +46,7 @@ RULES = (
     ("deferred-work-marker", re.compile(r"\b(TODO|FIXME|XXX|HACK)\b"), "code"),
     ("comment-meta-narration", re.compile(r"(#\s*this (function|method|class|file)\b|\"\"\"\s*This (function|method|class)\b)", re.I), "code"),
     ("emoji-in-code", re.compile(r"[\U0001F300-\U0001FAFF✅❌✨]"), "code"),
-    ("secret-aws-key", re.compile(r"\bAKIA[0-9A-Z]{16}\b"), "all"),
-    ("secret-github-token", re.compile(r"\b(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})"), "all"),
-    ("secret-openai-key", re.compile(r"\bsk-[A-Za-z0-9_-]{20,}\b"), "all"),
-    ("secret-pem-private", re.compile(r"-----BEGIN [A-Z ]{0,20}PRIVATE KEY-----"), "all"),
-    ("secret-jwt", re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b"), "all"),
-    ("secret-auth-header-json", re.compile(r'"(authorization|api[_-]?key|apikey|token|secret|password)"\s*:\s*"(?=[^"]*[0-9])(Bearer |Basic |Token )?[A-Za-z0-9_./+=-]{16,}"', re.I), "all"),
-)
+) + SECRET_RULES
 PRAGMA = re.compile(r"slop-ok:\s*\S+")
 
 
@@ -53,6 +55,16 @@ class WriteGateResult:
     path: str
     findings: tuple[PolicyFinding, ...]
     overridden: tuple[PolicyFinding, ...]
+
+
+def redact_secrets(text: str) -> tuple[str, tuple[str, ...]]:
+    redacted = text
+    rules: list[str] = []
+    for rule_id, pattern, _applies in SECRET_RULES:
+        if pattern.search(redacted):
+            rules.append(rule_id)
+            redacted = pattern.sub("[REDACTED]", redacted)
+    return redacted, tuple(rules)
 
 
 def _new_content(tool_name: str, tool_input: dict[str, Any]) -> str:
