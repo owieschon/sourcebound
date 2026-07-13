@@ -307,3 +307,25 @@ agent judgment owns truth and scope. Bootstrap preserves an existing author open
 Source-derived Markdown fragments preserve paragraph boundaries so regeneration cannot collapse the
 README back into brochure prose. Reversible: a future pack version can change the markers or rubric
 through an explicit migration without weakening current repositories silently.
+
+## 30. Bind the README purpose contract to independent-reader evidence (2026-07-13)
+
+Context: Version 1.0 required a new reader to identify the README's applicability, problem, and
+resulting capability, but the release rubric still contained only the four tasks that predated
+the purpose contract. A stable receipt could therefore pass without testing the writing behavior
+that prompted the rule. Added a fifth exact task that limits the reader to the first body block
+and records the three contract slots as content-addressed evidence. The acceptance suite asserts
+the task ID, instruction, and passing rubric. Internal rehearsal still cannot substitute for an
+independent human and agent result. Reversible: a later rubric version can replace the task only
+with an independently tried measure of the same reader outcome.
+
+## 31. Hash Python source evidence instead of runtime AST serialization (2026-07-13)
+
+Context: the RC8 pilot gate derived one repository-overview digest under Python 3.12 while local
+repair under Python 3.14 derived another from the same Git tree. `ast.dump` includes fields added
+between CPython releases, so the evidence hash encoded the interpreter rather than only the source.
+Changed Python inventory evidence to hash the exact source segments selected by the static AST
+walk. The parser still decides which symbols, commands, tools, and settings exist, while their
+digests now remain identical across supported runtimes. A fixed digest assertion and a direct
+3.12-versus-3.14 replay cover the failure. Reversible: a future versioned semantic encoding can
+replace source segments after proving identical bytes on every supported runtime.
