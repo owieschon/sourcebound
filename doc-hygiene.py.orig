@@ -1,0 +1,253 @@
+#!/usr/bin/env python3
+"""Doc-hygiene linter: mechanical enforcement of the corpus-level (tier 3) rules
+in ~/.claude/writing-style.md that a per-write slop gate cannot see.
+
+Seven deterministic checks, no model:
+  surface       process artifacts (reports/handoffs/status) on the tracked doc surface
+  audience      docs written for a future agent, not a reader (harness vocabulary)
+  provenance    verification receipts / (Program N) tags stored inside a reference doc
+  doc-length    docs over the one-file justification threshold
+  section-length sections over the split-or-justify threshold
+  near-dup      near-identical paragraphs across docs (one-canonical-home violation)
+  restatement   likely-restated paragraphs within a single doc
+
+Usage: doc-hygiene.py [PATH] [--json]   (PATH defaults to cwd)
+Exit 1 if any finding, 0 if clean -- so it can gate a pre-publish step.
+"""
+import json
+import os
+import re
+import subprocess
+import sys
+
+DOC_MAX_LINES = 120
+SECTION_MAX_LINES = 40
+MIN_PARA_TOKENS = 8
+NEAR_DUP = 0.80          # near-verbatim
+RESTATEMENT = 0.60       # same claim, reworded
+POSTINGS_CAP = 200       # skip non-discriminative tokens when generating pairs
+
+# A doc whose basename matches this is process exhaust, not reader documentation.
+PROCESS_RE = re.compile(
+    r"(REPORT|HANDOFF|DISPATCH|BLOCKED|STATUS|PROGRESS|RECEIPT|FINDINGS"
+    r"|WEEK\d|WAVE\d|PROTOCOL|EXECUTION_PLAN|EXECUTOR|RETRO|_AUDIT)", re.I)
+
+# Names that are ALLOWED to carry provenance/receipts (they are the changelog surface).
+CHANGELOG_RE = re.compile(r"(CHANGELOG|DECISION_LOG|PROGRAM_REPORT|RETRO)", re.I)
+
+# Harness / agent-to-agent vocabulary. Density >= threshold => audience is an agent.
+HARNESS_RE = re.compile(
+    r"\b(next executor|pick up this branch|worktree|STOP condition|tripwire"
+    r"|do not edit|mid-edit|reconciles exactly|diff budget|skeptical reviewer"
+    r"|origin/main|git log|killed PID|baseline SHA|DoD table|IF/THEN)\b", re.I)
+HARNESS_HITS = 3
+
+# Provenance-as-canon: history that would be equally true if deleted.
+PROVENANCE_RE = re.compile(
+    r"(\((?:Program|Wave|Harvest|Dispatch|WS-[A-Za-z]+)\s*\d*\)"
+    r"|verified after authoring|byte-identical|\$\d+\.\d{6})")
+
+STOPWORDS = frozenset(
+    "the a an and or but of to in on at for with without from into is are was were be been "
+    "being it its this that these those as by not no also than then so such can may must will "
+    "which when where what who how why each any all one two per via if do does done only same "
+    "here there they them their you your we our us".split())
+
+WORD_RE = re.compile(r"[a-z][a-z0-9-]{2,}")
+FENCE_RE = re.compile(r"^```")
+
+
+def git_tracked_md(root):
+    """Tracked *.md paths, or None if root is not a git repo (or git is unavailable)."""
+    try:
+        proc = subprocess.run(
+            ["git", "-C", root, "ls-files", "*.md"],
+            capture_output=True, text=True, timeout=20)
+    except (subprocess.SubprocessError, OSError):
+        return None
+    if proc.returncode != 0:
+        return None
+    files = [os.path.join(root, p) for p in proc.stdout.splitlines() if p.strip()]
+    return files or None
+
+
+def list_docs(root):
+    """Tracked *.md if inside a git repo, else every *.md under root; caches skipped."""
+    if os.path.isfile(root):
+        return [root]
+    tracked = git_tracked_md(root)
+    if tracked is not None:
+        return tracked
+    skip = ("node_modules", ".venv", ".git", ".pytest_cache")
+    found = []
+    for base, dirs, names in os.walk(root):
+        dirs[:] = [d for d in dirs if d not in skip]
+        found.extend(os.path.join(base, n) for n in names if n.endswith(".md"))
+    return found
+
+
+def read(path):
+    try:
+        with open(path, encoding="utf-8", errors="replace") as f:
+            return f.read()
+    except OSError:
+        return ""
+
+
+def content_tokens(text):
+    return frozenset(w for w in WORD_RE.findall(text.lower()) if w not in STOPWORDS)
+
+
+def paragraphs(text):
+    """Prose paragraphs only: drop code fences, headings, and table/quote-marker lines."""
+    out, buf, in_fence, line_no, start = [], [], False, 0, 1
+    for raw in text.splitlines():
+        line_no += 1
+        if FENCE_RE.match(raw):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        if raw.strip() == "":
+            if buf:
+                out.append((start, " ".join(buf)))
+                buf = []
+            continue
+        if not buf:
+            start = line_no
+        stripped = raw.lstrip()
+        if stripped.startswith(("#", "|", ">")):
+            if buf:
+                out.append((start, " ".join(buf)))
+                buf = []
+            continue
+        buf.append(stripped)
+    if buf:
+        out.append((start, " ".join(buf)))
+    return out
+
+
+def sections(text):
+    """(title, start_line, line_count) for each `## `+ heading block."""
+    lines = text.splitlines()
+    heads = [(i + 1, ln) for i, ln in enumerate(lines) if re.match(r"^#{2,} ", ln)]
+    result = []
+    for idx, (ln_no, title) in enumerate(heads):
+        end = heads[idx + 1][0] if idx + 1 < len(heads) else len(lines) + 1
+        result.append((title.strip("# ").strip(), ln_no, end - ln_no))
+    return result
+
+
+def scan(root):
+    docs = list_docs(root)
+    base_dir = root if os.path.isdir(root) else os.path.dirname(root)
+    findings = []
+    para_index = {}   # token -> list of global paragraph ids
+    paras = []        # global id -> (rel_path, start_line, token_set, text)
+
+    for path in docs:
+        rel = os.path.relpath(path, base_dir)
+        base = os.path.basename(path)
+        text = read(path)
+        nlines = text.count("\n") + 1
+
+        if PROCESS_RE.search(base):
+            findings.append(("surface", rel, 1,
+                             "process-artifact name on the reader-facing doc surface"))
+
+        if not CHANGELOG_RE.search(base):
+            hits = len(HARNESS_RE.findall(text))
+            if hits >= HARNESS_HITS:
+                findings.append(("audience", rel, 1,
+                                 f"{hits} harness/agent-address terms -- audience reads as an agent"))
+            prov = PROVENANCE_RE.findall(text)
+            if prov:
+                m = PROVENANCE_RE.search(text)
+                ln = text.count("\n", 0, m.start()) + 1
+                findings.append(("provenance", rel, ln,
+                                 f"{len(prov)} provenance/receipt marks in a reference doc "
+                                 f"(e.g. {m.group(0)!r})"))
+
+        if nlines > DOC_MAX_LINES and not PROCESS_RE.search(base):
+            findings.append(("doc-length", rel, 1,
+                             f"{nlines} lines (> {DOC_MAX_LINES}) -- justify one file or split"))
+        for title, ln_no, count in sections(text):
+            if count > SECTION_MAX_LINES:
+                findings.append(("section-length", rel, ln_no,
+                                 f"section '{title}' is {count} lines (> {SECTION_MAX_LINES})"))
+
+        for start, para in paragraphs(text):
+            toks = content_tokens(para)
+            if len(toks) < MIN_PARA_TOKENS:
+                continue
+            pid = len(paras)
+            paras.append((rel, start, toks, para))
+            for t in toks:
+                para_index.setdefault(t, []).append(pid)
+
+    findings.extend(dup_findings(paras, para_index))
+    return findings
+
+
+def dup_findings(paras, para_index):
+    """Candidate pairs share >=4 discriminative tokens; flag high-Jaccard pairs."""
+    seen_pairs = set()
+    out = []
+    for postings in para_index.values():
+        if len(postings) > POSTINGS_CAP or len(postings) < 2:
+            continue
+        for i in range(len(postings)):
+            for j in range(i + 1, len(postings)):
+                a, b = postings[i], postings[j]
+                if (a, b) in seen_pairs:
+                    continue
+                seen_pairs.add((a, b))
+                ta, tb = paras[a][2], paras[b][2]
+                inter = len(ta & tb)
+                if inter < 4:
+                    continue
+                jac = inter / len(ta | tb)
+                if jac < RESTATEMENT:
+                    continue
+                pa, pb = paras[a], paras[b]
+                same = pa[0] == pb[0]
+                kind = "near-dup" if (jac >= NEAR_DUP or not same) else "restatement"
+                loc = f"{pb[0]}:{pb[1]}"
+                out.append((kind, pa[0], pa[1],
+                            f"~{jac:.0%} overlap with {loc}"
+                            + ("" if same else " (different doc -- pick one canonical home)")))
+    return out
+
+
+def main():
+    argv = [a for a in sys.argv[1:] if a != "--json"]
+    as_json = "--json" in sys.argv
+    root = os.path.abspath(argv[0]) if argv else os.getcwd()
+    findings = scan(root)
+
+    order = {"surface": 0, "audience": 1, "provenance": 2, "near-dup": 3,
+             "doc-length": 4, "section-length": 5, "restatement": 6}
+    findings.sort(key=lambda f: (order.get(f[0], 9), f[1], f[2]))
+
+    if as_json:
+        print(json.dumps([{"check": c, "file": f, "line": ln, "detail": d}
+                          for c, f, ln, d in findings], indent=2))
+        return 1 if findings else 0
+
+    if not findings:
+        print(f"doc-hygiene: clean ({root})")
+        return 0
+
+    counts = {}
+    for c, *_ in findings:
+        counts[c] = counts.get(c, 0) + 1
+    print(f"doc-hygiene: {len(findings)} finding(s) in {root}")
+    print("  " + ", ".join(f"{k}={v}" for k, v in sorted(counts.items())))
+    print()
+    for check, rel, ln, detail in findings:
+        print(f"  [{check}] {rel}:{ln}  {detail}")
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
