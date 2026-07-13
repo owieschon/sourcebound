@@ -4,8 +4,8 @@
 
 ## Canonical documentation
 
-- [CLEAN_DOCS_SPEC.md](CLEAN_DOCS_SPEC.md): declared canonical context; sha256: d3282d8b5adc6d716a8a966183b90605c5a2638959f0568d538331fa35322c4b
-- [README.md](README.md): bindings: manifest-reference, product-overview, supported-bindings; sha256: 573cf56bfdf030b07530bd266d39d8a72155944be9ab13657f1f8274b0c89684
+- [CLEAN_DOCS_SPEC.md](CLEAN_DOCS_SPEC.md): declared canonical context; sha256: 246f303a8fbced975643e6ca790b9d64d88b97b875abf738ec5392d3963789c6
+- [README.md](README.md): bindings: manifest-reference, product-overview, supported-bindings; sha256: 22b21dd54dc01f63836bd35e7b3d5a362d5d3c092f8d83cb9ad580e139c6ffdb
 - [SECURITY.md](SECURITY.md): declared canonical context; sha256: 9b73fcc18efa2ff39d64d8271a6c33b278de5dc625d7ac7c319587edf0c31621
 - [STANDARD.md](STANDARD.md): declared canonical context; sha256: 54cc72e038f34effb7ea79586cef274495c59b466318b4c6ac5c68db2a9d2f4f
 - [docs/CLI.md](docs/CLI.md): bindings: cli-reference; sha256: dae82eebf8e8712dce8b4c17e480f13912155078b3e34fb0159ff2f2c45510bc
@@ -13,6 +13,6 @@
 - [docs/EXTENSIONS.md](docs/EXTENSIONS.md): bindings: extension-guide, migration-guide; sha256: a1da5683da8247c11fb9bb2d6f04c3aa30961cabe7aab5ee5791b70244835d2d
 - [docs/RELEASES.md](docs/RELEASES.md): bindings: release-guide; sha256: 1bf24794b604d2707882780f3b302dcec6a980aa8d13338d896b61ca5fa8d03f
 - [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md): bindings: security-model; sha256: 29d9f2582186f19d72823e163512fa12f6d7459f4da273ca3d8be56d5befd2bf
-- [docs/SUPPORT.md](docs/SUPPORT.md): bindings: support-guide; sha256: eeb14753711c3637fac792393d114924e339c7f0951d78a23565dfaf524290e3
-- [docs/SURFACE.md](docs/SURFACE.md): bindings: repository-surface; sha256: 69a188be153292ad91bf2c04828fa51d04db3d48ccae2891d1c96582bfe82a60
+- [docs/SUPPORT.md](docs/SUPPORT.md): bindings: support-guide; sha256: c3a08fb103b9cc48e7db4fb60d458cf215c9ddd4e85e6772baddb65624ec81ee
+- [docs/SURFACE.md](docs/SURFACE.md): bindings: repository-surface; sha256: ec1273290772a4d9ceae002e6bd969f16a832459e245ddcc57539c0aaf461ac0
 - [skill/SKILL.md](skill/SKILL.md): declared canonical context; sha256: 77f0b257236a184c5b202e8327c27785f3ab4abe9c1ae9c3c082f8fa06428da9

@@ -20,7 +20,7 @@ POSTINGS_CAP = 200
 
 PROCESS_RE = re.compile(
     r"(REPORT|HANDOFF|DISPATCH|BLOCKED|STATUS|PROGRESS|RECEIPT|FINDINGS"
-    r"|WEEK\d|WAVE\d|PROTOCOL|EXECUTION_PLAN|EXECUTOR|RETRO|_AUDIT)",
+    r"|WEEK\d|WAVE\d|EXECUTION_PLAN|EXECUTOR|RETRO|_AUDIT)",
     re.IGNORECASE,
 )
 CHANGELOG_RE = re.compile(r"(CHANGELOG|DECISION_LOG|PROGRAM_REPORT|RETRO)", re.IGNORECASE)
@@ -78,6 +78,7 @@ def list_documents(root: Path) -> list[Path]:
             for path in tracked
             if "archive" not in path.relative_to(root).parts
             and path.relative_to(root).parts[:2] != ("tests", "fixtures")
+            and ".fixture." not in path.name.lower()
             and not any(
                 part.startswith(".") for part in path.relative_to(root).parts
             )
@@ -89,6 +90,7 @@ def list_documents(root: Path) -> list[Path]:
         path
         for path in root.rglob("*.md")
         if not set(path.relative_to(root).parts) & skipped
+        and ".fixture." not in path.name.lower()
         and not any(part.startswith(".") for part in path.relative_to(root).parts)
     )
 

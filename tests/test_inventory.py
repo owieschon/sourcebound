@@ -119,6 +119,48 @@ def test_typescript_package_inventory_needs_no_project_execution(tmp_path: Path)
     assert not any(item.name == "//note" for item in report.items)
 
 
+def test_node_monorepo_and_registered_mcp_tools_are_discovered_statically(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "monorepo"
+    (root / "packages/api/src").mkdir(parents=True)
+    (root / "packages/worker/runtime").mkdir(parents=True)
+    (root / "package.json").write_text(json.dumps({
+        "name": "workspace-root",
+        "private": True,
+        "workspaces": ["packages/*"],
+    }))
+    (root / "packages/api/package.json").write_text(json.dumps({
+        "name": "@fixture/api",
+        "version": "1.0.0",
+        "scripts": {"test": "vitest run"},
+    }))
+    (root / "packages/worker/runtime/package.json").write_text(json.dumps({
+        "name": "fixture-worker",
+        "version": "1.0.0",
+        "scripts": {"deploy": "worker deploy"},
+    }))
+    (root / "packages/api/src/server.ts").write_text(
+        "server.registerTool('resolve_account', {}, handler);\n"
+        "server.tool('get_account', {}, handler);\n"
+    )
+
+    report = scan_inventory(root)
+
+    assert {
+        (item.name, item.source)
+        for item in report.items
+        if item.kind == "package"
+    } == {
+        ("workspace-root", "package.json"),
+        ("@fixture/api", "packages/api/package.json"),
+        ("fixture-worker", "packages/worker/runtime/package.json"),
+    }
+    assert {
+        item.name for item in report.items if item.kind == "mcp-tool"
+    } == {"resolve_account", "get_account"}
+
+
 def test_typescript_declaration_exports_are_discovered_statically(tmp_path: Path) -> None:
     root = tmp_path / "typescript-declarations"
     root.mkdir()

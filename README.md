@@ -37,9 +37,9 @@ clean-docs check
 clean-docs verify
 ```
 
-`init` adds a compact source-surface summary, `.clean-docs.yml`, and a checked `llms.txt` projection. Run `clean-docs inventory` for the full detected catalog. The summary carries a hidden catalog digest, so `check` catches a source replacement even when its surface count stays the same. Commit the generated files with the source they describe. Use `drive` to repair recognized binding drift and `project` to refresh projections.
+`init` adds a compact source-surface summary, `.clean-docs.yml`, and a checked `llms.txt` projection. It discovers nested package manifests, proposes at most eight canonical documents, and caps machine-readable plan details while retaining the full-plan digest and counts. Run `clean-docs inventory` for the complete detected catalog. The summary carries a hidden catalog digest, so `check` catches a source replacement even when its surface count stays the same. Catalog coverage does not validate unrelated prose claims; bind those claims to their specific sources. Commit the generated files with the source they describe. Use `drive` to repair recognized binding drift and `project` to refresh projections.
 
-If existing hygiene findings block adoption, follow the [mature-repository baseline procedure](docs/SUPPORT.md#adopt-an-existing-documentation-corpus). The explicit baseline protects existing debt by exact fingerprint and still fails on new or resolved findings.
+If clean-docs cannot identify substantive authored purpose prose, `init` reports the affected page instead of marking metadata, a status line, or a feature fragment as a valid contract. If existing hygiene findings block adoption, follow the [mature-repository baseline procedure](docs/SUPPORT.md#adopt-an-existing-documentation-corpus). The explicit baseline protects existing debt by exact fingerprint and still fails on new or resolved findings.
 
 ## CLI reference
 
