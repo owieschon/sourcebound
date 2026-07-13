@@ -105,3 +105,13 @@ surfaces out of the product. The only web output is a static demonstration gener
 recorded fixture evidence, with no backend, credentials, runtime network dependency, or CLI
 telemetry. Machine-readable outcome receipts stay local or in CI artifacts. Reversible: a future
 consumer can process the same receipts without changing the core or the local default.
+
+## 11. Freeze the Version 0.1 runtime and ordering contracts (2026-07-13)
+
+Context: a release cannot claim reproducibility while its runtime and ordering behavior remain
+open. Chose CPython 3.10 through 3.14 on Linux and macOS, with every pair in required CI. Static
+Python evidence uses the standard-library syntax tree. Generated tables and lists preserve
+evidence order, while path evidence sorts lexicographically. `derive` remains preview-only unless
+`--write` is present. A static micro-repository check has a five-second ceiling; allowlisted
+commands retain their declared timeouts. Reversible: later releases may add runtimes or platforms
+without changing the Version 0.1 behavior for existing repositories.
