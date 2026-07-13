@@ -28,7 +28,7 @@ bindings:
     columns: [binding, source, output, check]
   - id: cli-reference
     type: region
-    doc: README.md
+    doc: docs/CLI.md
     region: cli-reference
     extractor: python-literal
     source:
@@ -56,6 +56,21 @@ bindings:
       symbol: EVALUATION_SCORERS
     renderer: markdown-table
     columns: [scorer, input, passes when]
+  - id: release-guide
+    type: symbol
+    doc: docs/RELEASES.md
+    anchor: grounded-release-notes
+    source: {path: src/clean_docs/release.py, symbol: build_release_report}
+  - id: extension-guide
+    type: symbol
+    doc: docs/EXTENSIONS.md
+    anchor: extension-api
+    source: {path: src/clean_docs/plugins.py, symbol: _run_plugin}
+  - id: migration-guide
+    type: symbol
+    doc: docs/EXTENSIONS.md
+    anchor: migrate-a-prior-manifest
+    source: {path: src/clean_docs/migration.py, symbol: build_migration_plan}
 projections:
   llms_txt:
     output: llms.txt

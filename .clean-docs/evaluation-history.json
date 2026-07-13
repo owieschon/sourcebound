@@ -1,6 +1,71 @@
 {
   "records": [
     {
+      "audience": "human",
+      "claim": "deterministic-command",
+      "corpus_sha256": "ba1dd736bbd6e03b690cad827bd3233604ad4e7653305242d4e87c813cfedeec",
+      "detail": "1 documented command(s) matched expected output",
+      "id": "human-quickstart",
+      "model": null,
+      "ok": true,
+      "prompt_sha256": "de871e468aebd9becaad55167f619b1181c7db82eec265980591d8013d2e89d9",
+      "record_id": "1f9c8c5471efaecbfa0fa9987b4e0ebf43b01c860662e56ed8239d3dee55c7e5",
+      "response_sha256": null,
+      "scorer": "command",
+      "scorer_sha256": "f2181116da95d6b96069b9665ef7b77072513d026dd4de66791779bdeb08828b"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
+      "corpus_sha256": "79cba29a8ee41e4678b41ed25351a96cd9baf34b227caef5fcf0dd2be55a2e7f",
+      "detail": "response states and cites the canonical limitation",
+      "id": "limitation-retrieval",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "109cd0067b5e9249e010bea7dd7cfa7b5174c0cc91e415dbdc9e41b92ffc0aa7",
+      "record_id": "255cd57588db58ec08b0cbae736217cf347e9de404be2ba21786c4e48a0b9137",
+      "response_sha256": "464ef28f67818db5d6b1195c91fdb6a8c8050f3197d83a72f0ab78f60fb0dbfe",
+      "scorer": "cited-limit",
+      "scorer_sha256": "37b1057dea54e8b36d29e16d8dadde9706c7a71bad88f14b19cbc3ed3bb0e9f3"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
+      "corpus_sha256": "be5d2aa06826a5b6daeafde2dec063c99e42737abbece6870e97777719eca65a",
+      "detail": "structured output matches exactly",
+      "id": "structured-command",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "bc32111b7663dbcf73384ed715a98f3972d11c21802fd6a06fdcdc8dbb252e9f",
+      "record_id": "2baee7fdab850084a3f26e3ed153dbfdc454fa9c6b41175697d270a6749c93d1",
+      "response_sha256": "e7f35caa3eb02a30de3263aabdfd78950084743b352aee6c9b83cdf6c80de1d3",
+      "scorer": "structured-output",
+      "scorer_sha256": "a568bd4db2835284cafe510465310b031b59201d10e97b4bc3d1cbd6e4004f1c"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
+      "corpus_sha256": "7bff1845122e2b5497d6de13008a6a3b2493d1a69f81cb713eb1ed0c3c054977",
+      "detail": "structured output matches exactly",
+      "id": "structured-command",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "586e59724fdeeb916e5d65247a0719419fc1bc6298a88ec4bc43875648918fa9",
+      "record_id": "343163960031b7818abe83b9b6780575e3864ec5843bb08d104a13c1a23670ed",
+      "response_sha256": "e7f35caa3eb02a30de3263aabdfd78950084743b352aee6c9b83cdf6c80de1d3",
+      "scorer": "structured-output",
+      "scorer_sha256": "a568bd4db2835284cafe510465310b031b59201d10e97b4bc3d1cbd6e4004f1c"
+    },
+    {
       "audience": "agent",
       "claim": "deterministic-replay",
       "corpus_sha256": "380d69387a24a842716ae6035ed21bee9c8bab3bd6d2400c30f7fdbf3285e77c",
@@ -37,6 +102,23 @@
     {
       "audience": "agent",
       "claim": "deterministic-replay",
+      "corpus_sha256": "79cba29a8ee41e4678b41ed25351a96cd9baf34b227caef5fcf0dd2be55a2e7f",
+      "detail": "configuration passes schema validation and check",
+      "id": "manifest-round-trip",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "5dde656d76d1f317eadacf64068dd2109ffbda19a087f416e50cecd43bbce969",
+      "record_id": "6de3d2658d30c13a7cab2614301917dc295c2f3fb3e2da9b9b1937196eff8ef2",
+      "response_sha256": "419da826adecee1c63ef7edd7f2cc8734533db94f1803b769e1cc201bd7a9e6b",
+      "scorer": "configuration",
+      "scorer_sha256": "ff2c7701e55c68a09f63c7dd94d3e2b350c22d5c224e9bb77a26b01869420a79"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
       "corpus_sha256": "380d69387a24a842716ae6035ed21bee9c8bab3bd6d2400c30f7fdbf3285e77c",
       "detail": "structured output matches exactly",
       "id": "structured-command",
@@ -52,6 +134,23 @@
       "scorer_sha256": "a568bd4db2835284cafe510465310b031b59201d10e97b4bc3d1cbd6e4004f1c"
     },
     {
+      "audience": "agent",
+      "claim": "deterministic-replay",
+      "corpus_sha256": "7bff1845122e2b5497d6de13008a6a3b2493d1a69f81cb713eb1ed0c3c054977",
+      "detail": "response states and cites the canonical limitation",
+      "id": "limitation-retrieval",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "adf5516e9df8015dfed299e2bcf042fff4cae40edff651443c5d12d896702f00",
+      "record_id": "74762269b039adb71d926b03eaaeeeb54875a2be3b30571b71a7434fa1c958cb",
+      "response_sha256": "464ef28f67818db5d6b1195c91fdb6a8c8050f3197d83a72f0ab78f60fb0dbfe",
+      "scorer": "cited-limit",
+      "scorer_sha256": "37b1057dea54e8b36d29e16d8dadde9706c7a71bad88f14b19cbc3ed3bb0e9f3"
+    },
+    {
       "audience": "human",
       "claim": "deterministic-command",
       "corpus_sha256": "40a2cffc9abf9485bd8cb7f0e4a06023884447b0daa4a6aab4f17ec6300cd041",
@@ -64,6 +163,37 @@
       "response_sha256": null,
       "scorer": "command",
       "scorer_sha256": "f2181116da95d6b96069b9665ef7b77072513d026dd4de66791779bdeb08828b"
+    },
+    {
+      "audience": "human",
+      "claim": "deterministic-command",
+      "corpus_sha256": "295b6252bf77ea7e1e013235674a577e554d19d1e164893d215b8bbbeca6ca8d",
+      "detail": "1 documented command(s) matched expected output",
+      "id": "human-quickstart",
+      "model": null,
+      "ok": true,
+      "prompt_sha256": "4f69b21549e754011a2658442c5d58f8ed75ec73eec7b55c273f9d90670df57a",
+      "record_id": "83878db0bb828d4b98384b3cee0b8647e7130a098898912a0be22b792fd1b413",
+      "response_sha256": null,
+      "scorer": "command",
+      "scorer_sha256": "f2181116da95d6b96069b9665ef7b77072513d026dd4de66791779bdeb08828b"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
+      "corpus_sha256": "be5d2aa06826a5b6daeafde2dec063c99e42737abbece6870e97777719eca65a",
+      "detail": "response states and cites the canonical limitation",
+      "id": "limitation-retrieval",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "58df0bf7d689a233d367a9c5f9945bc78491ddad27b0a2f72727a2b1aaebf33e",
+      "record_id": "8599dc80dfe6a5a78c3197119108e62510afa38ba68114a78d86acd3e72989ef",
+      "response_sha256": "464ef28f67818db5d6b1195c91fdb6a8c8050f3197d83a72f0ab78f60fb0dbfe",
+      "scorer": "cited-limit",
+      "scorer_sha256": "37b1057dea54e8b36d29e16d8dadde9706c7a71bad88f14b19cbc3ed3bb0e9f3"
     },
     {
       "audience": "agent",
@@ -85,6 +215,23 @@
     {
       "audience": "agent",
       "claim": "deterministic-replay",
+      "corpus_sha256": "be5d2aa06826a5b6daeafde2dec063c99e42737abbece6870e97777719eca65a",
+      "detail": "configuration passes schema validation and check",
+      "id": "manifest-round-trip",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "c554e5825e7bd71f4e063f0146fb665d367b0a448b4664cf44723971b6b6cc17",
+      "record_id": "8ca29ab9f26ec915f700c6ba3c7b7080bd87fc5f815dfe9da4ae86b58375983c",
+      "response_sha256": "419da826adecee1c63ef7edd7f2cc8734533db94f1803b769e1cc201bd7a9e6b",
+      "scorer": "configuration",
+      "scorer_sha256": "ff2c7701e55c68a09f63c7dd94d3e2b350c22d5c224e9bb77a26b01869420a79"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
       "corpus_sha256": "60a8fb6f0bcb2fe96c9bbe1170cb0e24139ab6245c8e5ed5b2f32edacd096d83",
       "detail": "structured output matches exactly",
       "id": "structured-command",
@@ -98,6 +245,74 @@
       "response_sha256": "e7f35caa3eb02a30de3263aabdfd78950084743b352aee6c9b83cdf6c80de1d3",
       "scorer": "structured-output",
       "scorer_sha256": "a568bd4db2835284cafe510465310b031b59201d10e97b4bc3d1cbd6e4004f1c"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
+      "corpus_sha256": "79cba29a8ee41e4678b41ed25351a96cd9baf34b227caef5fcf0dd2be55a2e7f",
+      "detail": "structured output matches exactly",
+      "id": "structured-command",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "e3f0bb673952b2137f69d8625e39bbd8e965a494d81cc29fed9becbac75c79db",
+      "record_id": "a0c88839bdabb3c8dc20a8fae2ee2be6d6fadf07dc94eaf00090ed334f82aaac",
+      "response_sha256": "e7f35caa3eb02a30de3263aabdfd78950084743b352aee6c9b83cdf6c80de1d3",
+      "scorer": "structured-output",
+      "scorer_sha256": "a568bd4db2835284cafe510465310b031b59201d10e97b4bc3d1cbd6e4004f1c"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
+      "corpus_sha256": "a9e44894604b4ba74e0b3cf4d414b82d826fe111a34084ab3f3fc61a1026f834",
+      "detail": "response states and cites the canonical limitation",
+      "id": "limitation-retrieval",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "6e9d8fa0f0f856f8e5b83e6859258fd1d05b7b3a43f4b1289f2e738e44e05bf9",
+      "record_id": "a2ff80066e1cd1e22d11ae86d5362cd7b9478688c4964e1cffd69a4d68f2fa1d",
+      "response_sha256": "464ef28f67818db5d6b1195c91fdb6a8c8050f3197d83a72f0ab78f60fb0dbfe",
+      "scorer": "cited-limit",
+      "scorer_sha256": "37b1057dea54e8b36d29e16d8dadde9706c7a71bad88f14b19cbc3ed3bb0e9f3"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
+      "corpus_sha256": "a9e44894604b4ba74e0b3cf4d414b82d826fe111a34084ab3f3fc61a1026f834",
+      "detail": "structured output matches exactly",
+      "id": "structured-command",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "1f2f38f9ba65649200da9a7017d75a5188db796e486ebc6ccc99e59c8f053c25",
+      "record_id": "a3a51cf817e502eb540d1082519bf8bc06efe2e69c4240ad28d43af25ae831fa",
+      "response_sha256": "e7f35caa3eb02a30de3263aabdfd78950084743b352aee6c9b83cdf6c80de1d3",
+      "scorer": "structured-output",
+      "scorer_sha256": "a568bd4db2835284cafe510465310b031b59201d10e97b4bc3d1cbd6e4004f1c"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
+      "corpus_sha256": "7bff1845122e2b5497d6de13008a6a3b2493d1a69f81cb713eb1ed0c3c054977",
+      "detail": "configuration passes schema validation and check",
+      "id": "manifest-round-trip",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "7367db660079dbda19c7b6a759fb6b8fe029dcc5e76c4cd28048bb4893a77af5",
+      "record_id": "a7e86da0db7f745e1a63ca43931ea0246ba513f943df113a507cc2e4252a281c",
+      "response_sha256": "419da826adecee1c63ef7edd7f2cc8734533db94f1803b769e1cc201bd7a9e6b",
+      "scorer": "configuration",
+      "scorer_sha256": "ff2c7701e55c68a09f63c7dd94d3e2b350c22d5c224e9bb77a26b01869420a79"
     },
     {
       "audience": "agent",
@@ -148,6 +363,37 @@
       "scorer_sha256": "f2181116da95d6b96069b9665ef7b77072513d026dd4de66791779bdeb08828b"
     },
     {
+      "audience": "agent",
+      "claim": "deterministic-replay",
+      "corpus_sha256": "a9e44894604b4ba74e0b3cf4d414b82d826fe111a34084ab3f3fc61a1026f834",
+      "detail": "configuration passes schema validation and check",
+      "id": "manifest-round-trip",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "73b0a566b9e6c8e4a1b4baa144873fddc635ec22a7133ac00aee407ea73f1e43",
+      "record_id": "b89cfd8de591cb62ab3ffb6d019151accb27cbfd188daddec5bc64e0a12126d0",
+      "response_sha256": "419da826adecee1c63ef7edd7f2cc8734533db94f1803b769e1cc201bd7a9e6b",
+      "scorer": "configuration",
+      "scorer_sha256": "ff2c7701e55c68a09f63c7dd94d3e2b350c22d5c224e9bb77a26b01869420a79"
+    },
+    {
+      "audience": "human",
+      "claim": "deterministic-command",
+      "corpus_sha256": "0e4b11acbff073543d5233d7d280c428e56a789a2f202b97680269ef9d3e466a",
+      "detail": "1 documented command(s) matched expected output",
+      "id": "human-quickstart",
+      "model": null,
+      "ok": true,
+      "prompt_sha256": "097cfc056ad36389e08410ed0c5c107241431e5710b8cbae38f4822654c21537",
+      "record_id": "d6d95000b30c9ed74cbdb5940d440f191c16561d1dcd5ebb48e3395dbec30ede",
+      "response_sha256": null,
+      "scorer": "command",
+      "scorer_sha256": "f2181116da95d6b96069b9665ef7b77072513d026dd4de66791779bdeb08828b"
+    },
+    {
       "audience": "human",
       "claim": "deterministic-command",
       "corpus_sha256": "1bcddedbdad723f150a7964c822bf54b0acde0cc65c58774588aeb59ba38fbfa",
@@ -157,6 +403,20 @@
       "ok": true,
       "prompt_sha256": "6c10ed8548b905474c50b7b4dd565210ccad33853d02e8634b6f68e3af15ca9e",
       "record_id": "db4e579f25396e98de6771881be0238a8c6a215a89231e56deb621b9b243ff33",
+      "response_sha256": null,
+      "scorer": "command",
+      "scorer_sha256": "f2181116da95d6b96069b9665ef7b77072513d026dd4de66791779bdeb08828b"
+    },
+    {
+      "audience": "human",
+      "claim": "deterministic-command",
+      "corpus_sha256": "699026bd4a377af6c259396fe08d9419d0a2e957a6d73d3536de571245c2896d",
+      "detail": "command 1 exited 1",
+      "id": "human-quickstart",
+      "model": null,
+      "ok": false,
+      "prompt_sha256": "e13f4a8ba16da4126c629f05cde78802dca68c19459471c5dbc78b17c92dafac",
+      "record_id": "dbeb87071dcf33dc4c502e7acd0a2b2bf88069cd3d40b56ee548d260f95d7087",
       "response_sha256": null,
       "scorer": "command",
       "scorer_sha256": "f2181116da95d6b96069b9665ef7b77072513d026dd4de66791779bdeb08828b"

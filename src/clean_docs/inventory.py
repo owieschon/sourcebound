@@ -37,6 +37,9 @@ TS_EXPORT = re.compile(
     r"(?:function|class|const|interface|type|enum)\s+([A-Za-z_$][\w$]*)",
     re.M,
 )
+TS_CLI_COMMAND = re.compile(r"\.command\(\s*['\"]([^'\"]+)['\"]")
+TS_CLI_OPTION = re.compile(r"\.option\(\s*['\"]([^'\"]+)['\"]")
+TS_MCP_TOOL = re.compile(r"\.tool\(\s*['\"]([^'\"]+)['\"]")
 HTTP_METHODS = {"get", "put", "post", "delete", "patch", "head", "options", "trace"}
 PYTHON_TOOLING_MODULES = {"conftest.py", "noxfile.py", "setup.py"}
 
@@ -134,6 +137,47 @@ def _python_items(path: str, text: str) -> list[dict[str, str]]:
                 decorators = [ast.unparse(item).lower() for item in node.decorator_list]
                 if any("tool" in item for item in decorators):
                     items.append(_item("mcp-tool", node.name, path, node.name, "python-ast", ast.dump(node)))
+                for decorator in node.decorator_list:
+                    if not isinstance(decorator, ast.Call) or not isinstance(
+                        decorator.func, ast.Attribute
+                    ):
+                        continue
+                    if decorator.func.attr != "command":
+                        continue
+                    command_name = node.name
+                    if (
+                        decorator.args
+                        and isinstance(decorator.args[0], ast.Constant)
+                        and isinstance(decorator.args[0].value, str)
+                    ):
+                        command_name = decorator.args[0].value
+                    items.append(
+                        _item(
+                            "cli-command",
+                            command_name,
+                            path,
+                            command_name,
+                            "python-cli-framework",
+                            ast.dump(node),
+                        )
+                    )
+            if isinstance(node, ast.ClassDef) and any(
+                "basesettings" in ast.unparse(base).lower() for base in node.bases
+            ):
+                for field in node.body:
+                    if isinstance(field, (ast.Assign, ast.AnnAssign)):
+                        target = field.target if isinstance(field, ast.AnnAssign) else field.targets[0]
+                        if isinstance(target, ast.Name) and not target.id.startswith("_"):
+                            items.append(
+                                _item(
+                                    "config-key",
+                                    target.id,
+                                    path,
+                                    f"{node.name}.{target.id}",
+                                    "python-settings-ast",
+                                    ast.dump(field),
+                                )
+                            )
     for candidate in ast.walk(tree):
         if not isinstance(candidate, ast.Call) or not isinstance(candidate.func, ast.Attribute):
             continue
@@ -196,6 +240,19 @@ def _structured_items(path: str, data: Any) -> list[dict[str, str]]:
     if "$schema" in data or path.endswith(".schema.json"):
         name = str(data.get("title") or data.get("$id") or Path(path).stem)
         items.append(_item("schema", name, path, name, "json-schema", json.dumps(data, sort_keys=True)))
+        properties = data.get("properties")
+        if isinstance(properties, dict):
+            for key, value in sorted(properties.items()):
+                items.append(
+                    _item(
+                        "config-key",
+                        str(key),
+                        path,
+                        f"properties.{key}",
+                        "json-schema",
+                        json.dumps(value, sort_keys=True),
+                    )
+                )
     return items
 
 
@@ -263,6 +320,16 @@ def scan_inventory(root: Path) -> InventoryReport:
             )
             for name in TS_EXPORT.findall(text):
                 raw_items.append(_item("api-symbol", name, relative, name, adapter, name))
+            for name in TS_CLI_COMMAND.findall(text):
+                raw_items.append(
+                    _item("cli-command", name, relative, name, "typescript-cli-framework", name)
+                )
+            for name in TS_CLI_OPTION.findall(text):
+                raw_items.append(
+                    _item("cli-option", name, relative, name, "typescript-cli-framework", name)
+                )
+            for name in TS_MCP_TOOL.findall(text):
+                raw_items.append(_item("mcp-tool", name, relative, name, "typescript-mcp", name))
         data = _structured(file_path, text)
         if data is not None:
             raw_items.extend(_structured_items(relative, data))

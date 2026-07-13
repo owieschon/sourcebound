@@ -227,3 +227,24 @@ keep their existing meaning, and the token is rejected outside the first argumen
 command extractor, and task scorer use the same resolver. A clean wheel now evaluates the same
 artifact that launched the command. Reversible: replacing the token with a literal executable
 restores ordinary process lookup without changing the manifest schema.
+
+## 22. Keep release facts separate from narrative phrasing (2026-07-13)
+
+Context: release notes need useful prose, but a generated explanation cannot become authority for
+what changed. Chose a typed delta over normalized inventory evidence extracted independently at
+two immutable refs. Added, removed, and changed records carry source, locator, adapter, and
+evidence digests; Markdown and JSON render from that record. Optional recorded narrative must
+mirror every deterministic field and citation. One omission, contradiction, duplicate, policy
+violation, or missing citation withholds the entire narrative while leaving the factual section
+unchanged. Reversible: removing narrative validation leaves the offline release skeleton intact.
+
+## 23. Run extensions as strict processes against disposable snapshots (2026-07-13)
+
+Context: ecosystem adapters must evolve without importing repository or third-party plugin code
+into the core process. Chose one API-versioned JSON protocol for extractor, discoverer, renderer,
+and policy interfaces. Each invocation receives a disposable repository copy, temporary home,
+minimal environment, timeout, and output cap. Symbolic links fail before execution; filesystem
+writes are discarded with the copy. Compatibility is validated before a command runs, and core
+code owns evidence identity, digests, and coverage state. Manifest migration remains separate:
+version 0 to 1 writes an exact backup and supports rollback to the original bytes. Reversible:
+removing a plugin declaration leaves built-in adapters and manifest v1 behavior unchanged.

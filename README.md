@@ -5,7 +5,7 @@ clean-docs is a self-driving documentation system that applies one packaged stan
 Write the standard once; clean-docs does the repository work. The finished product audits each repository, derives its factual spine from source, phrases it to the packaged standard, tests the result, and maintains it on every change. Models may phrase grounded facts; deterministic code owns the facts and gate results.
 
 <!-- clean-docs:begin product-overview -->
-Version 0.4 projects one verified documentation graph into llms.txt and named context bundles, with source refs, content digests, link verification, and freshness checks. It scores documented human commands and agent responses with replayable task fixtures and generates one accessible static demonstration from recorded drift evidence. It compares normalized public surface across git refs and reports changed binding drift, coverage gaps, and SARIF annotations. It statically inventories package, CLI, API, schema, test, and documentation surfaces and bootstraps a source-bound baseline. It audits documentation without configuration and verifies region, claim, and symbol bindings from static Python, structured data, text files, path globs, and allowlisted JSON commands. It emits manifest-derived stepwise skill packages and llms.txt indexes, and it never imports repository code. `derive` previews changes unless you pass `--write`; `audit` and `check` never write.
+Version 0.5a1 compares normalized evidence across immutable refs and renders provenance-backed release facts. Optional narrative drafts cannot change, omit, or uncite those facts. Versioned plugins add extractors, discoverers, renderers, and policy checks in disposable snapshots; manifest migration includes a byte-exact rollback. It projects one verified documentation graph into llms.txt, named context bundles, and an accessible static demonstration. It scores human commands and recorded agent responses, reports changed binding drift and coverage gaps, and bootstraps source-bound baselines. Static adapters cover Python, TypeScript, OpenAPI, JSON Schema, package metadata, and MCP tools without importing repository code. `derive` previews changes unless you pass `--write`; `audit`, `check`, and `release` never write.
 <!-- clean-docs:end product-overview -->
 ## Install and audit
 
@@ -20,28 +20,7 @@ clean-docs audit
 
 ## CLI reference
 
-This table is derived from the command registry used by the parser:
-
-<!-- clean-docs:begin cli-reference -->
-| command | job | writes |
-| --- | --- | --- |
-| audit | Inventory and check repository documentation | no |
-| inventory | List detected repository surfaces and coverage | no |
-| init | Write a source-bound documentation baseline | yes |
-| explain | Explain a finding or coverage state | no |
-| doctor | Check repository and integration readiness | no |
-| derive | Preview generated region changes | with --write |
-| drive | Repair bound regions and enforce policy | yes |
-| check | Fail on binding drift or uncovered changed surface | no |
-| project | Regenerate configured documentation projections | yes |
-| eval | Score human tasks and replayable agent round trips | with --history or live recording |
-| emit | Project the manifest into another format | yes |
-| emit stepwise-skill | Write a manifest-derived stepwise skill package | yes |
-| emit llms-txt | Write an index of source-bound documents | yes |
-| standard | Build or verify the bundled policy pack | varies |
-| standard build | Compile the canonical standard | yes |
-| standard check | Fail when the policy pack is stale | no |
-<!-- clean-docs:end cli-reference -->
+Use the [CLI reference](docs/CLI.md) to look up each command and whether it writes.
 
 ## Manifest reference
 
@@ -112,7 +91,6 @@ This table is derived from `src/clean_docs/capabilities.py` by clean-docs itself
 - Command allowlisting and timeouts are enforced. In an allowlisted `argv`, `{python}` selects the interpreter running clean-docs. Network isolation belongs to the execution environment.
 - Coverage ignores must name a detected inventory ID and carry a specific reason; `explain` reports the evidence and repair for gaps.
 - Changed checks have a published five-second median budget on each pinned dogfood repository.
-- Source constructor calls must use keyword arguments.
 - Destination markers must already exist and cannot nest.
 - Evaluation claim boundaries are defined in the [evaluation guide](docs/EVALUATION.md).
 - clean-docs reports malformed configuration as exit `2`, drift as exit `1`, and extraction failures as exit `3`.

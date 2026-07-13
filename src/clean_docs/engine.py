@@ -27,6 +27,7 @@ from clean_docs.models import (
     SymbolBinding,
 )
 from clean_docs.policy import PolicyFinding, check_documents
+from clean_docs.plugins import check_plugin_policies, extract_plugin, render_plugin
 from clean_docs.regions import atomic_write, replace_region
 from clean_docs.renderers import render
 from clean_docs.snapshot import RepositorySnapshot
@@ -127,16 +128,28 @@ def evaluate(
             results.append(_symbol_result(root, snapshot, binding))
             continue
         assert isinstance(binding, RegionBinding)
-        extractors = {
-            "file": extract_file,
-            "json": extract_json_pointer,
-            "path": extract_paths,
-            "python-literal": extract_python_literal,
-            "repository-inventory": extract_repository_inventory,
-            "structured-data": extract_structured,
-        }
-        evidence = extractors[binding.extractor](snapshot, binding)
-        rendered = render(evidence, binding)
+        if binding.extractor.startswith("plugin:"):
+            plugin_id = binding.extractor.removeprefix("plugin:")
+            plugin = next(item for item in manifest.plugins if item.id == plugin_id)
+            evidence = extract_plugin(snapshot, binding, plugin)
+        else:
+            extractors = {
+                "file": extract_file,
+                "json": extract_json_pointer,
+                "path": extract_paths,
+                "python-literal": extract_python_literal,
+                "repository-inventory": extract_repository_inventory,
+                "structured-data": extract_structured,
+            }
+            evidence = extractors[binding.extractor](snapshot, binding)
+        if binding.renderer.startswith("plugin:"):
+            renderer_id = binding.renderer.removeprefix("plugin:")
+            renderer_plugin = next(
+                item for item in manifest.plugins if item.id == renderer_id
+            )
+            rendered = render_plugin(snapshot, binding, renderer_plugin, evidence)
+        else:
+            rendered = render(evidence, binding)
         doc_path = root / binding.doc
         doc_key = binding.doc.as_posix()
         if doc_key not in documents:
@@ -202,7 +215,12 @@ def drive(
     binding_id: str | None = None,
 ) -> tuple[list[BindingResult], list[PolicyFinding]]:
     results = evaluate(root, manifest_path, ref=ref, binding_id=binding_id)
-    findings = check_documents(planned_documents(results), load_default_pack())
+    planned = planned_documents(results)
+    manifest = load_manifest(manifest_path)
+    findings = check_documents(planned, load_default_pack())
+    findings.extend(
+        check_plugin_policies(RepositorySnapshot(root, ref), manifest.plugins, planned)
+    )
     if findings:
         return results, findings
     write_results(root, results)

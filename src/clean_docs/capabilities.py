@@ -1,19 +1,16 @@
 """Public capability registry rendered into the clean-docs README."""
 
 PRODUCT_OVERVIEW = (
-    "Version 0.4 projects one verified documentation graph into llms.txt and named context "
-    "bundles, with source refs, content digests, link verification, and freshness checks. It "
-    "scores documented human commands and agent responses with replayable task fixtures and "
-    "generates one accessible static demonstration from recorded drift evidence. "
-    "It compares normalized public surface across git refs and reports changed "
-    "binding drift, coverage gaps, and SARIF annotations. It statically inventories package, "
-    "CLI, API, schema, test, and documentation surfaces and bootstraps a source-bound baseline. "
-    "It audits documentation without "
-    "configuration and verifies region, claim, and symbol bindings from static Python, "
-    "structured data, text files, path globs, and allowlisted JSON commands. It emits "
-    "manifest-derived stepwise skill packages and llms.txt indexes, and it never imports "
-    "repository code. `derive` previews changes "
-    "unless you pass `--write`; `audit` and `check` never write."
+    "Version 0.5a1 compares normalized evidence across immutable refs and renders "
+    "provenance-backed release facts. Optional narrative drafts cannot change, omit, or "
+    "uncite those facts. Versioned plugins add extractors, discoverers, renderers, and policy "
+    "checks in disposable snapshots; manifest migration includes a byte-exact rollback. It "
+    "projects one verified documentation graph into llms.txt, named context bundles, and an "
+    "accessible static demonstration. It scores human commands and recorded agent responses, "
+    "reports changed binding drift and coverage gaps, and bootstraps source-bound baselines. "
+    "Static adapters cover Python, TypeScript, OpenAPI, JSON Schema, package metadata, and MCP "
+    "tools without importing repository code. `derive` previews changes unless you pass "
+    "`--write`; `audit`, `check`, and `release` never write."
 )
 
 SUPPORTED_BINDINGS = {
@@ -48,6 +45,8 @@ CLI_REFERENCE = (
     {"command": "check", "job": "Fail on binding drift or uncovered changed surface", "writes": "no"},
     {"command": "project", "job": "Regenerate configured documentation projections", "writes": "yes"},
     {"command": "eval", "job": "Score human tasks and replayable agent round trips", "writes": "with --history or live recording"},
+    {"command": "release", "job": "Render typed release facts between immutable refs", "writes": "no"},
+    {"command": "migrate", "job": "Upgrade a prior manifest with rollback backup", "writes": "with --write or --rollback"},
     {"command": "emit", "job": "Project the manifest into another format", "writes": "yes"},
     {
         "command": "emit stepwise-skill",

@@ -15,6 +15,9 @@ from clean_docs.models import (
     ContextBundleProjection,
     LlmsTxtProjection,
     Manifest,
+    PLUGIN_API_VERSION,
+    PLUGIN_INTERFACES,
+    PluginSpec,
     ProjectionConfig,
     RegionBinding,
     Source,
@@ -22,7 +25,7 @@ from clean_docs.models import (
     StaticDemoProjection,
 )
 
-ROOT_KEYS = {"version", "bindings", "execution", "projections"}
+ROOT_KEYS = {"version", "bindings", "execution", "plugins", "projections"}
 BINDING_KEYS = {
     "id", "type", "doc", "region", "anchor", "extractor", "source", "renderer",
     "columns", "language", "command", "assertion",
@@ -39,6 +42,7 @@ PROJECTION_KEYS = {"llms_txt", "bundles", "demo"}
 LLMS_TXT_KEYS = {"output", "title", "summary"}
 BUNDLE_KEYS = {"id", "output", "include"}
 DEMO_KEYS = {"output", "evidence"}
+PLUGIN_KEYS = {"id", "api_version", "interfaces", "argv", "timeout_seconds"}
 MANIFEST_REFERENCE = (
     {
         "binding": "region",
@@ -175,6 +179,50 @@ def load_manifest(path: Path) -> Manifest:
     if not isinstance(raw_bindings, list) or not raw_bindings:
         raise ConfigurationError("manifest bindings must be a non-empty list")
 
+    plugins: list[PluginSpec] = []
+    raw_plugins = root.get("plugins", [])
+    if not isinstance(raw_plugins, list):
+        raise ConfigurationError("manifest plugins must be a list")
+    plugin_ids: set[str] = set()
+    for index, raw_plugin in enumerate(raw_plugins):
+        where = f"plugins[{index}]"
+        plugin_data = _mapping(raw_plugin, where)
+        _reject_unknown(plugin_data, PLUGIN_KEYS, where)
+        plugin_id = plugin_data.get("id")
+        if not isinstance(plugin_id, str) or not plugin_id or not plugin_id.replace("-", "").isalnum():
+            raise ConfigurationError(f"{where}.id must contain letters, numbers, and hyphens")
+        if plugin_id in plugin_ids:
+            raise ConfigurationError(f"duplicate plugin id: {plugin_id}")
+        plugin_ids.add(plugin_id)
+        api_version = plugin_data.get("api_version")
+        if api_version != PLUGIN_API_VERSION:
+            raise ConfigurationError(
+                f"plugin {plugin_id} API version {api_version} is incompatible; "
+                f"clean-docs supports {PLUGIN_API_VERSION}"
+            )
+        interfaces = plugin_data.get("interfaces")
+        if (
+            not isinstance(interfaces, list)
+            or not interfaces
+            or not all(isinstance(item, str) and item in PLUGIN_INTERFACES for item in interfaces)
+            or len(set(interfaces)) != len(interfaces)
+        ):
+            raise ConfigurationError(
+                f"{where}.interfaces must be unique values from: "
+                + ", ".join(sorted(PLUGIN_INTERFACES))
+            )
+        argv = plugin_data.get("argv")
+        if not isinstance(argv, list) or not argv or not all(
+            isinstance(item, str) and item for item in argv
+        ):
+            raise ConfigurationError(f"{where}.argv must be a non-empty string list")
+        timeout = plugin_data.get("timeout_seconds", 30)
+        if not isinstance(timeout, int) or not 1 <= timeout <= 120:
+            raise ConfigurationError(f"{where}.timeout_seconds must be 1..120")
+        plugins.append(
+            PluginSpec(plugin_id, api_version, tuple(interfaces), tuple(argv), timeout)
+        )
+
     commands: list[CommandSpec] = []
     execution = root.get("execution")
     if execution is not None:
@@ -264,21 +312,56 @@ def load_manifest(path: Path) -> Manifest:
             continue
 
         extractor = data.get("extractor")
-        if extractor not in EXTRACTORS:
+        if not isinstance(extractor, str):
+            raise ConfigurationError(f"{where}.extractor must be a non-empty string")
+        plugin_extractor = (
+            extractor.removeprefix("plugin:")
+            if extractor.startswith("plugin:")
+            else None
+        )
+        if extractor not in EXTRACTORS and plugin_extractor is None:
             raise ConfigurationError(
                 f"{where}.extractor must be one of: {', '.join(sorted(EXTRACTORS))}"
             )
+        if plugin_extractor is not None:
+            plugin_spec = next(
+                (item for item in plugins if item.id == plugin_extractor), None
+            )
+            if plugin_spec is None or "extractor" not in plugin_spec.interfaces:
+                raise ConfigurationError(
+                    f"{where}.extractor names plugin {plugin_extractor} without an extractor interface"
+                )
         renderer = data.get("renderer")
-        if renderer not in RENDERERS:
+        if not isinstance(renderer, str):
+            raise ConfigurationError(f"{where}.renderer must be a non-empty string")
+        plugin_renderer = (
+            renderer.removeprefix("plugin:")
+            if renderer.startswith("plugin:")
+            else None
+        )
+        if renderer not in RENDERERS and plugin_renderer is None:
             raise ConfigurationError(
                 f"{where}.renderer must be one of: {', '.join(sorted(RENDERERS))}"
             )
+        if plugin_renderer is not None:
+            renderer_spec = next(
+                (item for item in plugins if item.id == plugin_renderer), None
+            )
+            if renderer_spec is None or "renderer" not in renderer_spec.interfaces:
+                raise ConfigurationError(
+                    f"{where}.renderer names plugin {plugin_renderer} without a renderer interface"
+                )
 
         symbol = source_data.get("symbol")
         pointer = source_data.get("pointer")
         source_glob = source_data.get("glob")
         source_path = source_data.get("path")
-        if extractor == "python-literal":
+        if plugin_extractor is not None:
+            if any(value is not None for value in (symbol, pointer, source_glob)):
+                raise ConfigurationError(
+                    f"{where}.source.path is the only valid plugin extractor source field"
+                )
+        elif extractor == "python-literal":
             if not isinstance(symbol, str) or not symbol.isidentifier():
                 raise ConfigurationError(f"{where}.source.symbol must be a Python identifier")
             if pointer is not None or source_glob is not None:
@@ -324,7 +407,11 @@ def load_manifest(path: Path) -> Manifest:
             "repository-inventory": {"markdown-table"},
             "structured-data": {"markdown-list", "markdown-table", "scalar"},
         }
-        if renderer not in compatible[extractor]:
+        if (
+            plugin_extractor is None
+            and plugin_renderer is None
+            and renderer not in compatible[extractor]
+        ):
             raise ConfigurationError(
                 f"{where}.renderer {renderer} is incompatible with extractor {extractor}"
             )
@@ -372,5 +459,6 @@ def load_manifest(path: Path) -> Manifest:
         version=1,
         bindings=tuple(bindings),
         commands=tuple(commands),
+        plugins=tuple(plugins),
         projections=projections,
     )

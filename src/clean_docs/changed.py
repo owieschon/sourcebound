@@ -13,6 +13,7 @@ from clean_docs.inventory import InventoryItem, scan_inventory
 from clean_docs.manifest import load_manifest
 from clean_docs.models import Binding, ClaimBinding, RegionBinding
 from clean_docs.regions import atomic_write
+from clean_docs.plugins import discover_plugin_items, merge_plugin_inventory
 from clean_docs.snapshot import RepositorySnapshot
 
 
@@ -135,11 +136,19 @@ def _inventory(
                 return tuple(InventoryItem(**item) for item in raw["items"]), True
         except (OSError, json.JSONDecodeError, TypeError):
             pass
-    with RepositorySnapshot(root, ref).materialized_root() as snapshot:
+    repository_snapshot = RepositorySnapshot(root, ref)
+    with repository_snapshot.materialized_root() as snapshot:
         project_root = snapshot / project
         if not project_root.is_dir():
             raise ConfigurationError(f"project does not exist at {ref}: {project}")
-        items = scan_inventory(project_root).items
+        items = list(scan_inventory(project_root).items)
+        manifest_path = project_root / ".clean-docs.yml"
+        plugins = load_manifest(manifest_path).plugins if manifest_path.is_file() else ()
+    items = list(
+        merge_plugin_inventory(
+            tuple(items), discover_plugin_items(repository_snapshot, plugins)
+        )
+    )
     if use_cache:
         cache_path.parent.mkdir(parents=True, exist_ok=True)
         atomic_write(cache_path, json.dumps({
@@ -147,7 +156,7 @@ def _inventory(
             "key": key,
             "items": [asdict(item) for item in items],
         }, sort_keys=True, separators=(",", ":")) + "\n")
-    return items, False
+    return tuple(items), False
 
 
 def check_changed(

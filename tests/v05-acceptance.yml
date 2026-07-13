@@ -1,0 +1,15 @@
+version: 1
+release: "0.5"
+scenarios:
+  - id: factual-release-delta
+    test: tests/test_release.py::test_release_reports_added_and_removed_cli_evidence_with_provenance
+  - id: phrasing-cannot-alter-facts
+    test: tests/test_release.py::test_release_narrative_cannot_omit_or_contradict_typed_facts
+  - id: third-party-extractor
+    test: tests/test_plugins.py::test_external_extractor_participates_in_drive_check_and_release
+  - id: incompatible-plugin
+    test: tests/test_plugins.py::test_incompatible_plugin_fails_before_extraction
+  - id: schema-migration
+    test: tests/test_migration.py::test_v0_to_v1_migration_matches_golden_and_preserves_evidence
+  - id: cross-ref-isolation
+    test: tests/test_release.py::test_release_reads_each_ref_without_active_worktree_influence

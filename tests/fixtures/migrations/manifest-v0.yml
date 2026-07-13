@@ -1,0 +1,9 @@
+version: 0
+bindings:
+  - id: fact
+    type: region
+    doc: README.md
+    region: fact
+    extractor: file
+    source: {path: source.txt}
+    renderer: scalar

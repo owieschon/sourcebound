@@ -17,11 +17,17 @@ from clean_docs.engine import drive, evaluate, write_results
 from clean_docs.evaluation import run_evaluation, write_evaluation_history
 from clean_docs.errors import CleanDocsError, ConfigurationError
 from clean_docs.explain import explain
-from clean_docs.inventory import scan_inventory
+from clean_docs.plugins import scan_extended_inventory
 from clean_docs.manifest import load_manifest
 from clean_docs.models import BindingResult
+from clean_docs.migration import apply_migration, build_migration_plan, rollback_migration
 from clean_docs.phrasing import RecordedProvider
 from clean_docs.projections import evaluate_projections, write_projections
+from clean_docs.release import (
+    build_release_report,
+    render_release_markdown,
+    validate_release_narrative,
+)
 from clean_docs.standard import compile_standard, pack_matches_standard, write_pack
 
 
@@ -92,6 +98,16 @@ def _parser() -> argparse.ArgumentParser:
     evaluate_tasks.add_argument("--record-dir", type=Path)
     evaluate_tasks.add_argument("--history", type=Path)
     evaluate_tasks.add_argument("--format", choices=("text", "json"), default="text")
+    release = sub.add_parser("release", help=_command_help("release"))
+    release.add_argument("--from", dest="from_ref", required=True, help="base git ref")
+    release.add_argument("--to", dest="to_ref", required=True, help="target git ref")
+    release.add_argument("--recorded-model-response", type=Path)
+    release.add_argument("--format", choices=("markdown", "json"), default="markdown")
+    migrate = sub.add_parser("migrate", help=_command_help("migrate"))
+    migration_mode = migrate.add_mutually_exclusive_group()
+    migration_mode.add_argument("--write", action="store_true")
+    migration_mode.add_argument("--rollback", action="store_true")
+    migrate.add_argument("--format", choices=("text", "json"), default="text")
     emit = sub.add_parser("emit", help=_command_help("emit"))
     emit_sub = emit.add_subparsers(dest="target", required=True)
     stepwise = emit_sub.add_parser(
@@ -189,7 +205,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1 if report.findings else 0
     if args.command == "inventory":
         try:
-            inventory_report = scan_inventory(root)
+            inventory_report = scan_extended_inventory(root)
         except CleanDocsError as exc:
             print(f"clean-docs: {exc}", file=sys.stderr)
             return exc.exit_code
@@ -202,6 +218,57 @@ def main(argv: list[str] | None = None) -> int:
                 f"inventory: {len(inventory_report.items)} surface(s); "
                 f"{len(inventory_report.languages)} language(s)"
             )
+        return 0
+    if args.command == "release":
+        try:
+            release_report = build_release_report(root, args.from_ref, args.to_ref)
+            narrative = None
+            if args.recorded_model_response is not None:
+                response_path = args.recorded_model_response
+                if not response_path.is_absolute():
+                    response_path = root / response_path
+                try:
+                    response = response_path.read_text(encoding="utf-8")
+                except OSError as exc:
+                    raise ConfigurationError(
+                        f"cannot read recorded release narrative {response_path}"
+                    ) from exc
+                narrative = validate_release_narrative(release_report, response)
+        except CleanDocsError as exc:
+            print(f"clean-docs: {exc}", file=sys.stderr)
+            return exc.exit_code
+        if args.format == "json":
+            payload = release_report.as_dict()
+            if narrative is not None:
+                payload["narrative"] = narrative.as_dict()
+            print(json.dumps(payload, indent=2))
+        else:
+            sys.stdout.write(render_release_markdown(release_report, narrative))
+        return 0 if narrative is None or narrative.ok else 1
+    if args.command == "migrate":
+        manifest = args.manifest if args.manifest.is_absolute() else root / args.manifest
+        try:
+            if args.rollback:
+                rollback_migration(manifest)
+                print(f"migrate: restored {manifest}")
+                return 0
+            migration = build_migration_plan(manifest)
+            if args.write:
+                backup = apply_migration(manifest, migration)
+            else:
+                backup = None
+        except CleanDocsError as exc:
+            print(f"clean-docs: {exc}", file=sys.stderr)
+            return exc.exit_code
+        if args.format == "json":
+            payload = migration.as_dict()
+            payload["applied"] = args.write
+            print(json.dumps(payload, indent=2))
+        else:
+            sys.stdout.write(migration.diff)
+            state = "applied" if args.write else "planned"
+            suffix = f"; backup {backup}" if backup is not None else ""
+            print(f"migrate: {state} version 0 to 1{suffix}")
         return 0
     if args.command == "explain":
         try:
