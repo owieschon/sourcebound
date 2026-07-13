@@ -46,7 +46,7 @@ def _command(*args: str, env: dict[str, str] | None = None) -> str:
 def verify_lifecycle(candidate: Path) -> None:
     candidate = candidate.resolve()
     candidate_version = _wheel_version(candidate)
-    prior_ref = "v0.5.0"
+    prior_ref = "v0.5.0^{}"
     prior_epoch = _run("git", "show", "-s", "--format=%ct", prior_ref)
     with tempfile.TemporaryDirectory(prefix="clean-docs-lifecycle-") as temporary:
         workspace = Path(temporary)
@@ -59,18 +59,27 @@ def verify_lifecycle(candidate: Path) -> None:
         pip = venv / "bin" / "pip"
 
         _command(str(pip), "install", "--no-deps", str(prior), env=environment)
-        if _command(str(executable), "--version", env=environment) != "clean-docs 0.5.0":
-            raise RuntimeError("prior release install did not report Version 0.5.0")
+        prior_version = _command(str(executable), "--version", env=environment)
+        if prior_version != "0.5.0":
+            raise RuntimeError(
+                f"prior release install reported {prior_version!r}, expected '0.5.0'"
+            )
 
         _command(str(pip), "install", "--no-deps", "--upgrade", str(candidate), env=environment)
-        if _command(str(executable), "--version", env=environment) != (
-            f"clean-docs {candidate_version}"
-        ):
-            raise RuntimeError("candidate upgrade did not report its wheel version")
+        upgraded_version = _command(str(executable), "--version", env=environment)
+        if upgraded_version != candidate_version:
+            raise RuntimeError(
+                f"candidate upgrade reported {upgraded_version!r}, "
+                f"expected {candidate_version!r}"
+            )
 
         _command(str(pip), "install", "--no-deps", "--force-reinstall", str(prior), env=environment)
-        if _command(str(executable), "--version", env=environment) != "clean-docs 0.5.0":
-            raise RuntimeError("executable rollback did not restore Version 0.5.0")
+        rolled_back_version = _command(str(executable), "--version", env=environment)
+        if rolled_back_version != "0.5.0":
+            raise RuntimeError(
+                f"executable rollback reported {rolled_back_version!r}, "
+                "expected '0.5.0'"
+            )
 
         _command(str(pip), "install", "--no-deps", "--upgrade", str(candidate), env=environment)
         _command(str(pip), "uninstall", "--yes", "clean-docs", env=environment)
