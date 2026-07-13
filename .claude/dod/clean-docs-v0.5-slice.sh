@@ -5,7 +5,7 @@ set -eu
 root="${HOME}/dev/doc-standard"
 cd "$root"
 
-grep -q '^version = "0.5.0a1"$' pyproject.toml
+grep -q '^version = "0.5.0"$' pyproject.toml
 PYTHONPATH=src python3 -m clean_docs --root . project --check >/dev/null
 PYTHONPATH=src python3 -m clean_docs --root . eval --format json >/tmp/clean-docs-v05-eval.json
 PYTHONPATH=src python3 -m clean_docs --root . release \

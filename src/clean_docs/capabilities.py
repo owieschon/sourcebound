@@ -1,7 +1,7 @@
 """Public capability registry rendered into the clean-docs README."""
 
 PRODUCT_OVERVIEW = (
-    "Version 0.5a1 compares normalized evidence across immutable refs and renders "
+    "Version 0.5 compares normalized evidence across immutable refs and renders "
     "provenance-backed release facts. Optional narrative drafts cannot change, omit, or "
     "uncite those facts. Versioned plugins add extractors, discoverers, renderers, and policy "
     "checks in disposable snapshots; manifest migration includes a byte-exact rollback. It "
