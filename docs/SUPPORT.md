@@ -63,34 +63,50 @@ A deprecation appears in release notes and command output for at least one minor
 
 ## Install, upgrade, roll back, and uninstall
 
-Create an isolated environment before installing a release wheel:
+Create an isolated environment in a directory containing exactly one release wheel. The wildcard keeps the command valid for stable and release-candidate filenames:
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install ./clean_docs-1.0.0-py3-none-any.whl
+python -m pip install ./clean_docs-*.whl
 clean-docs --version
 ```
+
+The clean-docs wheel declares PyYAML as a runtime dependency. `pip` resolves it from the configured package index or cache. For a network-blocked installation, provide a wheelhouse containing both artifacts and pass `--no-index --find-links WHEELHOUSE`.
 
 Upgrade by installing the newer wheel and preview any requested schema migration before writing:
 
 ```bash
-python -m pip install --upgrade ./clean_docs-1.1.0-py3-none-any.whl
+python -m pip install --upgrade ./clean_docs-*.whl
 clean-docs migrate
 clean-docs migrate --write
 ```
 
 The migration writes `.clean-docs.yml.v0.bak`. Restore those exact prior bytes with `clean-docs migrate --rollback`. To roll back the executable, reinstall the prior wheel. Remove the package with `python -m pip uninstall clean-docs`; repository manifests and docs remain in place.
 
-Verify a downloaded wheel against its published provenance before installation:
+### Verify release artifacts
+
+Verify the one downloaded wheel against its published checksum without requiring every release asset to be present:
 
 ```bash
-sha256sum --check SHA256SUMS
-gh attestation verify clean_docs-1.0.0-py3-none-any.whl \
+python - <<'PY'
+from hashlib import sha256
+from pathlib import Path
+
+wheels = list(Path(".").glob("clean_docs-*.whl"))
+if len(wheels) != 1:
+    raise SystemExit(f"expected one wheel, found {len(wheels)}")
+expected = dict(line.split(maxsplit=1) for line in Path("SHA256SUMS").read_text().splitlines())
+actual = sha256(wheels[0].read_bytes()).hexdigest()
+if expected.get(wheels[0].name) != actual:
+    raise SystemExit("wheel checksum mismatch")
+print(f"{wheels[0].name}: {actual}")
+PY
+gh attestation verify ./clean_docs-*.whl \
   --repo owieschon/clean-docs
 ```
 
-Each release publishes the wheel, its SPDX 2.3 software bill of materials, checksums, and GitHub artifact attestations. The release gate installs Version 0.5, upgrades to the candidate, rolls the executable back, upgrades again, and uninstalls it.
+The checksum step is local. The attestation step needs GitHub access and can be completed outside a network-blocked execution environment. Each release publishes the wheel, its SPDX 2.3 software bill of materials, checksums, and GitHub artifact attestations. The release gate installs Version 0.5, upgrades to the candidate, rolls the executable back, upgrades again, and uninstalls it.
 
 ## Record local outcomes
 
