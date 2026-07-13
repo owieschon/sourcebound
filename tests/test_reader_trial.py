@@ -61,7 +61,7 @@ def _write_trial(root: Path) -> Path:
         })
     receipt = {
         "schema": "clean-docs.independent-reader-trial.v1",
-        "candidate": "1.0.0rc7",
+        "candidate": "1.0.0rc8",
         "candidate_commit": "a" * 40,
         "candidate_artifact_sha256": "b" * 64,
         "rubric_sha256": _sha256(rubric_bytes),
@@ -80,9 +80,9 @@ def test_reader_trial_binds_rubric_context_participants_and_task_evidence(
 
     summary = verify_reader_trial(tmp_path, "1.0.0")
 
-    assert summary["candidate"] == "1.0.0rc7"
+    assert summary["candidate"] == "1.0.0rc8"
     assert summary["participants"] == {"human": 1, "agent": 1}
-    assert summary["tasks_per_participant"] == 4
+    assert summary["tasks_per_participant"] == 5
     assert summary["receipt_sha256"] == _sha256(receipt.read_bytes())
 
 
@@ -96,7 +96,8 @@ def test_reader_trial_rejects_tampered_or_incomplete_evidence(tmp_path: Path) ->
         verify_reader_trial(tmp_path, "1.0.0")
 
     receipt = json.loads(receipt_path.read_text())
-    evidence.write_text("human passed install using published docs only\n")
+    first_task = receipt["participants"][0]["tasks"][0]["id"]
+    evidence.write_text(f"human passed {first_task} using published docs only\n")
     receipt["participants"] = [
         item for item in receipt["participants"] if item["audience"] == "human"
     ]
@@ -123,7 +124,7 @@ def test_stable_release_requires_reader_trial_while_candidate_build_does_not(
     tmp_path: Path,
 ) -> None:
     project = tmp_path / "pyproject.toml"
-    project.write_text('[project]\nname = "fixture"\nversion = "1.0.0rc7"\n')
+    project.write_text('[project]\nname = "fixture"\nversion = "1.0.0rc8"\n')
     assert verify_release_reader_trial(tmp_path) == {"required": False}
 
     project.write_text('[project]\nname = "fixture"\nversion = "1.0.0"\n')
@@ -141,7 +142,7 @@ def test_stable_release_requires_reader_trial_while_candidate_build_does_not(
 
 def test_candidate_gate_does_not_import_yaml(tmp_path: Path) -> None:
     project = tmp_path / "pyproject.toml"
-    project.write_text('[project]\nname = "fixture"\nversion = "1.0.0rc7"\n')
+    project.write_text('[project]\nname = "fixture"\nversion = "1.0.0rc8"\n')
     script = (
         "import json, pathlib, sys; "
         "sys.modules['yaml'] = None; "

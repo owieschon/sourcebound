@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import NoReturn
 
 import pytest
+import yaml
 
 from clean_docs.bootstrap import apply_bootstrap_plan, build_bootstrap_plan
 from clean_docs.engine import drive, evaluate
@@ -418,5 +419,16 @@ def test_independent_reader_release_requires_receipts_and_published_tasks_work(
     rubric = release_gate / ".clean-docs/reader-trial-rubric.yml"
     rubric.parent.mkdir(parents=True)
     shutil.copyfile(PROJECT / ".clean-docs/reader-trial-rubric.yml", rubric)
+    reader_trial = yaml.safe_load(rubric.read_text())
+    assert [task["id"] for task in reader_trial["tasks"]] == [
+        "identify-purpose",
+        "install",
+        "protect-fixture",
+        "repair-drift",
+        "explain-limitation",
+    ]
+    purpose_task = reader_trial["tasks"][0]
+    assert "README's first body block" in purpose_task["instruction"]
+    assert "code-to-documentation drift" in purpose_task["passes_when"]
     with pytest.raises(ReaderTrialError, match="cannot read independent-reader receipt"):
         verify_release_reader_trial(release_gate)
