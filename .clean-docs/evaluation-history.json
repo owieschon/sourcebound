@@ -3,6 +3,23 @@
     {
       "audience": "agent",
       "claim": "deterministic-replay",
+      "corpus_sha256": "380d69387a24a842716ae6035ed21bee9c8bab3bd6d2400c30f7fdbf3285e77c",
+      "detail": "response states and cites the canonical limitation",
+      "id": "limitation-retrieval",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "e8824df2af642ca6041500c41a49523b86498971a45b7de2395d4b4d3209ae38",
+      "record_id": "3d54bba620fb436c0e8b163fd3c6e0c1d8393e0df541841fa239672acac3391e",
+      "response_sha256": "464ef28f67818db5d6b1195c91fdb6a8c8050f3197d83a72f0ab78f60fb0dbfe",
+      "scorer": "cited-limit",
+      "scorer_sha256": "37b1057dea54e8b36d29e16d8dadde9706c7a71bad88f14b19cbc3ed3bb0e9f3"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
       "corpus_sha256": "61d804c2a1e611158edd1a44b0ae1011a5b2c40f3d87cbb57402e16ef97287eb",
       "detail": "response states and cites the canonical limitation",
       "id": "limitation-retrieval",
@@ -16,6 +33,23 @@
       "response_sha256": "464ef28f67818db5d6b1195c91fdb6a8c8050f3197d83a72f0ab78f60fb0dbfe",
       "scorer": "cited-limit",
       "scorer_sha256": "37b1057dea54e8b36d29e16d8dadde9706c7a71bad88f14b19cbc3ed3bb0e9f3"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
+      "corpus_sha256": "380d69387a24a842716ae6035ed21bee9c8bab3bd6d2400c30f7fdbf3285e77c",
+      "detail": "structured output matches exactly",
+      "id": "structured-command",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "53c48ad5be47ec367316867270ccd974bf9c7e4687899513d8f9f94109c33199",
+      "record_id": "737703df3e7f4c5ed270ac89aab16c854ca25ea203064980107325241d9d3b81",
+      "response_sha256": "e7f35caa3eb02a30de3263aabdfd78950084743b352aee6c9b83cdf6c80de1d3",
+      "scorer": "structured-output",
+      "scorer_sha256": "a568bd4db2835284cafe510465310b031b59201d10e97b4bc3d1cbd6e4004f1c"
     },
     {
       "audience": "human",
@@ -114,6 +148,20 @@
       "scorer_sha256": "f2181116da95d6b96069b9665ef7b77072513d026dd4de66791779bdeb08828b"
     },
     {
+      "audience": "human",
+      "claim": "deterministic-command",
+      "corpus_sha256": "1bcddedbdad723f150a7964c822bf54b0acde0cc65c58774588aeb59ba38fbfa",
+      "detail": "1 documented command(s) matched expected output",
+      "id": "human-quickstart",
+      "model": null,
+      "ok": true,
+      "prompt_sha256": "6c10ed8548b905474c50b7b4dd565210ccad33853d02e8634b6f68e3af15ca9e",
+      "record_id": "db4e579f25396e98de6771881be0238a8c6a215a89231e56deb621b9b243ff33",
+      "response_sha256": null,
+      "scorer": "command",
+      "scorer_sha256": "f2181116da95d6b96069b9665ef7b77072513d026dd4de66791779bdeb08828b"
+    },
+    {
       "audience": "agent",
       "claim": "deterministic-replay",
       "corpus_sha256": "61d804c2a1e611158edd1a44b0ae1011a5b2c40f3d87cbb57402e16ef97287eb",
@@ -129,6 +177,23 @@
       "response_sha256": "e7f35caa3eb02a30de3263aabdfd78950084743b352aee6c9b83cdf6c80de1d3",
       "scorer": "structured-output",
       "scorer_sha256": "a568bd4db2835284cafe510465310b031b59201d10e97b4bc3d1cbd6e4004f1c"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
+      "corpus_sha256": "380d69387a24a842716ae6035ed21bee9c8bab3bd6d2400c30f7fdbf3285e77c",
+      "detail": "configuration passes schema validation and check",
+      "id": "manifest-round-trip",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "581c8aa8c13f2c44baff3ec5b7471016d34589076ab912438b369b7da6bd8c8d",
+      "record_id": "fd4744e881ea1047e05585d1e95bead77542bd2759c08b29a313e8042e98c0ed",
+      "response_sha256": "419da826adecee1c63ef7edd7f2cc8734533db94f1803b769e1cc201bd7a9e6b",
+      "scorer": "configuration",
+      "scorer_sha256": "ff2c7701e55c68a09f63c7dd94d3e2b350c22d5c224e9bb77a26b01869420a79"
     }
   ],
   "schema": "clean-docs.evaluation-history.v1"
