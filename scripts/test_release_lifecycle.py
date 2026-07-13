@@ -58,14 +58,14 @@ def verify_lifecycle(candidate: Path) -> None:
         executable = venv / "bin" / "clean-docs"
         pip = venv / "bin" / "pip"
 
-        _command(str(pip), "install", "--no-deps", str(prior), env=environment)
+        _command(str(pip), "install", str(prior), env=environment)
         prior_version = _command(str(executable), "--version", env=environment)
         if prior_version != "0.5.0":
             raise RuntimeError(
                 f"prior release install reported {prior_version!r}, expected '0.5.0'"
             )
 
-        _command(str(pip), "install", "--no-deps", "--upgrade", str(candidate), env=environment)
+        _command(str(pip), "install", "--upgrade", str(candidate), env=environment)
         upgraded_version = _command(str(executable), "--version", env=environment)
         if upgraded_version != candidate_version:
             raise RuntimeError(
@@ -73,7 +73,7 @@ def verify_lifecycle(candidate: Path) -> None:
                 f"expected {candidate_version!r}"
             )
 
-        _command(str(pip), "install", "--no-deps", "--force-reinstall", str(prior), env=environment)
+        _command(str(pip), "install", "--force-reinstall", str(prior), env=environment)
         rolled_back_version = _command(str(executable), "--version", env=environment)
         if rolled_back_version != "0.5.0":
             raise RuntimeError(
@@ -81,7 +81,7 @@ def verify_lifecycle(candidate: Path) -> None:
                 "expected '0.5.0'"
             )
 
-        _command(str(pip), "install", "--no-deps", "--upgrade", str(candidate), env=environment)
+        _command(str(pip), "install", "--upgrade", str(candidate), env=environment)
         _command(str(pip), "uninstall", "--yes", "clean-docs", env=environment)
         if executable.exists():
             raise RuntimeError("uninstall left the clean-docs executable installed")
