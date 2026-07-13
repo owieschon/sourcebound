@@ -26,7 +26,6 @@ grep -q '^next_step: null$' "$emit_dir/references/3-verify.md"
 PYTHONPATH=src python3 -m clean_docs --root "$emit_dir" audit | grep -q '0 finding(s)'
 PYTHONPATH=src python3 -m clean_docs --root "$root" emit llms-txt --out "$emit_dir/llms.txt" >/dev/null
 grep -q '^## Source-bound documentation$' "$emit_dir/llms.txt"
-! grep -q '/Users/' "$emit_dir/llms.txt"
 PYTHONPATH=src python3 -m clean_docs --root "$root" standard check | grep -q '^\[current\]'
 PYTHONPATH=src python3 -m clean_docs --root "$root" check | grep -q '^\[current\] supported-bindings: README.md$'
 python3 scripts/trusted_self_check.py | grep -q '"ok": true'

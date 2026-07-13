@@ -19,7 +19,7 @@ clean-docs doctor
 pytest
 ```
 
-`audit` inventories tracked Markdown without `.clean-docs.yml` and enforces the packaged corpus rules.
+`audit` inventories tracked Markdown without `.clean-docs.yml`, enforces corpus rules, and scans tracked product files for repository residue.
 
 ## Declare a binding
 
