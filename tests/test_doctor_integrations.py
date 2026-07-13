@@ -65,3 +65,8 @@ def test_distribution_integrations_are_strict() -> None:
     dogfood = ci["jobs"]["public-dogfood"]
     assert dogfood["needs"] == "test"
     assert dogfood["steps"][-1]["run"] == "python scripts/dogfood_public_repos.py"
+    acceptance = ci["jobs"]["acceptance-v0-1"]
+    assert acceptance["needs"] == "test"
+    receipt = acceptance["steps"][-1]
+    assert receipt["if"] == "always()"
+    assert receipt["with"]["if-no-files-found"] == "error"

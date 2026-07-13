@@ -23,9 +23,13 @@ def _repo(tmp_path: Path) -> Path:
     root = tmp_path / "repo"
     (root / "src").mkdir(parents=True)
     (root / "scripts").mkdir()
-    (root / "README.md").write_text("# Fixture\n\n## Testing\n\nTwo tests.\n\n## Architecture\n\nSee `sweep`.\n")
+    (root / "README.md").write_text(
+        "# Fixture\n\n## Testing\n\n340 records.\n\n## Architecture\n\nSee `sweep`.\n"
+    )
     (root / "src/service.py").write_text("def sweep():\n    return True\n")
-    (root / "scripts/count.py").write_text('import json\nprint(json.dumps({"collected": 2}))\n')
+    (root / "scripts/count.py").write_text(
+        'import json\nprint(json.dumps({"collected": 340}))\n'
+    )
     (root / ".clean-docs.yml").write_text(f"""\
 version: 1
 execution:
@@ -45,7 +49,7 @@ bindings:
     assertion:
       json_path: $.collected
       operator: equals
-      expected: 2
+      expected: 340
   - id: sweep-symbol
     type: symbol
     doc: README.md
@@ -54,6 +58,15 @@ bindings:
       path: src/service.py
       symbol: sweep
 """)
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+    subprocess.run(
+        [
+            "git", "-C", str(root), "-c", "user.name=Fixture", "-c",
+            "user.email=fixture@example.test", "commit", "-qm", "baseline",
+        ],
+        check=True,
+    )
     return root
 
 
@@ -61,14 +74,16 @@ def test_claim_drift_is_read_only_and_reports_values(tmp_path: Path) -> None:
     root = _repo(tmp_path)
     assert _run(root, "check").returncode == 0
     before = (root / "README.md").read_text()
-    (root / "scripts/count.py").write_text('import json\nprint(json.dumps({"collected": 3}))\n')
+    (root / "scripts/count.py").write_text(
+        'import json\nprint(json.dumps({"collected": 341}))\n'
+    )
 
     checked = _run(root, "check", "--format", "json")
 
     assert checked.returncode == 1
     result = json.loads(checked.stdout)["results"][0]
     assert result["status"] == "drift"
-    assert "expected 2, observed 3" in result["diff"]
+    assert "expected 340, observed 341" in result["diff"]
     assert (root / "README.md").read_text() == before
 
 
@@ -87,7 +102,9 @@ def test_symbol_rename_is_documentation_drift(tmp_path: Path) -> None:
 
 def test_drive_does_not_claim_to_repair_assertion_drift(tmp_path: Path) -> None:
     root = _repo(tmp_path)
-    (root / "scripts/count.py").write_text('import json\nprint(json.dumps({"collected": 3}))\n')
+    (root / "scripts/count.py").write_text(
+        'import json\nprint(json.dumps({"collected": 341}))\n'
+    )
 
     driven = _run(root, "drive", "--format", "json")
 
@@ -99,20 +116,13 @@ def test_drive_does_not_claim_to_repair_assertion_drift(tmp_path: Path) -> None:
 
 def test_command_claim_reads_immutable_ref_without_worktree_mutation(tmp_path: Path) -> None:
     root = _repo(tmp_path)
-    subprocess.run(["git", "init", "-q", str(root)], check=True)
-    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
-    subprocess.run(
-        ["git", "-C", str(root), "-c", "user.name=Fixture", "-c",
-         "user.email=fixture@example.test", "commit", "-qm", "baseline"],
-        check=True,
-    )
     baseline = subprocess.run(
         ["git", "-C", str(root), "rev-parse", "HEAD"],
         text=True,
         capture_output=True,
         check=True,
     ).stdout.strip()
-    changed = 'import json\nprint(json.dumps({"collected": 3}))\n'
+    changed = 'import json\nprint(json.dumps({"collected": 341}))\n'
     (root / "scripts/count.py").write_text(changed)
 
     assert _run(root, "check").returncode == 1

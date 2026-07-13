@@ -1,0 +1,21 @@
+version: 1
+release: "0.1"
+scenarios:
+  - id: ultra-csm-capability-drift
+    test: tests/test_e2e_region.py::test_tenth_action_drift_is_detected_and_repaired
+  - id: command-claim
+    test: tests/test_claim_symbol.py::test_claim_drift_is_read_only_and_reports_values
+  - id: symbol-removal
+    test: tests/test_claim_symbol.py::test_symbol_rename_is_documentation_drift
+  - id: unrelated-prose-preservation
+    test: tests/test_e2e_region.py::test_two_region_repair_preserves_every_unbound_byte
+  - id: ref-purity
+    test: tests/test_static_extractors.py::test_static_extractors_render_and_remain_ref_pure
+  - id: ci-behavior
+    test: tests/test_e2e_region.py::test_ci_evidence_fails_on_drift_and_passes_after_regeneration
+  - id: version-zero-policy-parity
+    test: tests/test_v0_policy_parity.py::test_corpus_policy_matches_frozen_version_zero_golden
+  - id: known-false-positive-regressions
+    test: tests/test_v0_policy_parity.py::test_prior_false_positive_repairs_are_preserved
+  - id: self-hosting-checker-tampering
+    test: tests/test_trusted_self_check.py::test_candidate_checker_bypass_cannot_override_trusted_failure

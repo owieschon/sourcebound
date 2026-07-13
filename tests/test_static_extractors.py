@@ -5,6 +5,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from clean_docs.engine import evaluate
+
 
 def _run(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
     env = dict(os.environ)
@@ -108,8 +110,32 @@ def test_static_extractors_render_and_remain_ref_pure(tmp_path: Path) -> None:
     (root / "pyproject.toml").write_text('[project]\nversion = "2.0.0"\n')
     (root / "guides/advanced.md").write_text("# Advanced\n")
     before = (root / "pyproject.toml").read_text()
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+    subprocess.run(
+        ["git", "-C", str(root), "-c", "user.name=Fixture", "-c",
+         "user.email=fixture@example.test", "commit", "-qm", "changed"],
+        check=True,
+    )
+    changed_ref = subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "HEAD"],
+        text=True,
+        capture_output=True,
+        check=True,
+    ).stdout.strip()
 
     assert _run(root, "check").returncode == 1
     pinned = _run(root, "check", "--ref", baseline)
     assert pinned.returncode == 0, pinned.stderr
+    forward = (
+        evaluate(root, root / ".clean-docs.yml", ref=baseline),
+        evaluate(root, root / ".clean-docs.yml", ref=changed_ref),
+    )
+    reverse = (
+        evaluate(root, root / ".clean-docs.yml", ref=changed_ref),
+        evaluate(root, root / ".clean-docs.yml", ref=baseline),
+    )
+    assert forward[0] == reverse[1]
+    assert forward[1] == reverse[0]
+    assert "1.2.3" in forward[0][0].expected
+    assert "2.0.0" in forward[1][0].expected
     assert (root / "pyproject.toml").read_text() == before

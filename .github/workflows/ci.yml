@@ -72,3 +72,23 @@ jobs:
             dist/SHA256SUMS
             dist/release.json
           if-no-files-found: error
+
+  acceptance-v0-1:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install ".[dev]"
+      - run: python scripts/run_acceptance.py --out clean-docs-v01-acceptance.json
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clean-docs-v0.1-acceptance-${{ github.sha }}
+          path: clean-docs-v01-acceptance.json
+          if-no-files-found: error
