@@ -137,6 +137,46 @@ def test_changed_new_public_surface_is_a_separate_gap(
     assert "serve" in result["gaps"][0]["message"]
 
 
+def test_changed_first_install_accepts_derived_repository_overview(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "existing-repository"
+    source = root / "src/package"
+    source.mkdir(parents=True)
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
+    for index in range(40):
+        (source / f"module_{index}.py").write_text(
+            f"def surface_{index}():\n    return {index}\n"
+        )
+    (root / "README.md").write_text("# Existing repository\n")
+    base = _commit(root, "existing repository")
+
+    (root / "README.md").write_text(
+        "# Existing repository\n\n## Repository surface\n\n"
+        "<!-- clean-docs:begin repository-surface -->\n"
+        "<!-- clean-docs:end repository-surface -->\n"
+    )
+    (root / ".clean-docs.yml").write_text("""\
+version: 1
+bindings:
+  - id: repository-surface
+    type: region
+    doc: README.md
+    region: repository-surface
+    extractor: repository-overview
+    source: {path: .}
+    renderer: markdown-fragment
+""")
+    assert main(["--root", str(root), "derive", "--write"]) == 0
+    head = _commit(root, "install clean-docs")
+
+    report = check_changed(root, root / ".clean-docs.yml", base=base, head=head)
+
+    assert report.ok
+    assert report.required == ()
+    assert report.gaps == ()
+
+
 def test_changed_private_refactor_stays_quiet(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

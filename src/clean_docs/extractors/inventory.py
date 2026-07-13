@@ -25,7 +25,7 @@ INCLUDED_KINDS = {
 
 def _inventory_rows(root: Path) -> list[dict[str, str]]:
     report = scan_inventory(root)
-    return [
+    rows = [
         {
             "kind": item.kind,
             "name": item.name,
@@ -37,6 +37,17 @@ def _inventory_rows(root: Path) -> list[dict[str, str]]:
         for item in report.items
         if item.kind in INCLUDED_KINDS
     ]
+    return sorted(
+        rows,
+        key=lambda item: (
+            item["kind"],
+            item["name"],
+            item["source"],
+            item["locator"],
+            item["adapter"],
+            item["digest"],
+        ),
+    )
 
 
 def extract_repository_inventory(
