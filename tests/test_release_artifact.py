@@ -31,7 +31,7 @@ def test_published_wheel_checksum_command_accepts_matching_artifact(tmp_path: Pa
 
     support = (ROOT / "docs/SUPPORT.md").read_text()
     section = support.split("### Verify release artifacts", maxsplit=1)[1]
-    match = re.search(r"```bash\npython - <<'PY'\n(.*?)\nPY\n", section, re.DOTALL)
+    match = re.search(r"```bash\npython3 - <<'PY'\n(.*?)\nPY\n", section, re.DOTALL)
     assert match is not None
 
     result = subprocess.run(
