@@ -2,14 +2,15 @@
 
 **This specification defines the final clean-docs product, the releases that build it, and the executable evidence required to ship each release.**
 
-clean-docs audits a software repository, produces accurate and readable documentation from repository evidence, and keeps the documentation current as the repository changes. Humans and agents consume the same canonical documentation through different generated indexes and context bundles.
+Write a documentation standard once. clean-docs audits a software repository, drives its documentation to that standard, and keeps it clean, current, and usable as the repository changes. Humans and agents consume the same canonical documentation through different generated indexes and context bundles.
 
 This file stays whole despite its length because it has one job: bind the product contract to the release claims, E2E tests, and definitions of done that prove it. Splitting the roadmap from the product contract would let implementation scope and acceptance drift apart.
 
 The product combines two workflows over one evidence model:
 
-1. `clean-docs init` brings an existing repository to a documented baseline.
-2. `clean-docs check` protects that baseline on every change.
+1. `clean-docs init` brings an existing repository to the declared standard.
+2. `clean-docs drive` regenerates and repairs documentation after repository changes.
+3. `clean-docs check` enforces the standard and source bindings in CI.
 
 Generation is the setup path. Continuous verification is the compounding product value. Both paths must share the same evidence graph, bindings, extractors, and renderers. A generator and a checker with separate interpretations of the repository would reproduce the drift clean-docs exists to prevent.
 
@@ -21,10 +22,10 @@ A repository using clean-docs has a documentation surface that is:
 | --- | --- | --- |
 | Accurate | Bound facts are derived from code, commands, schemas, tests, and repository metadata. | `clean-docs check` re-evaluates each binding and fails on drift. |
 | Current | Pull requests cannot merge while protected facts differ from their sources. | Required CI check and a deliberate source-change test. |
-| Clean | Pages follow the writing standard and the corpus has a deliberate information architecture. | Deterministic style and corpus checks, plus reviewable advisory findings. |
+| Clean | Pages follow the writing standard and the corpus has a deliberate information architecture. | Policy checks and standard-constrained generation. |
 | Human-readable | Pages define the subject first, explain constraints plainly, and use the medium that matches the reader's task. | Task-based human E2E tests and blind comprehension tests. |
 | Agent-readable | The same pages are indexed and packaged for retrieval without maintaining a second copy. | Generated `llms.txt`, context bundles, and agent round-trip tests. |
-| Honest | The product distinguishes proved facts, advisory judgments, and uncovered surfaces. | Every finding and generated claim reports its evidence class and provenance. |
+| Bounded | The product distinguishes derived facts, standard-constrained phrasing, and uncovered surfaces. | Every generated claim reports its evidence class and provenance. |
 
 ### Product promise
 
@@ -34,7 +35,7 @@ clean-docs can guarantee that a bound fact does not silently drift. It can detec
 
 Use this public claim:
 
-> clean-docs keeps the documented spine of a repository synchronized with its sources and flags changes that may require new documentation.
+> Write your documentation standard once. clean-docs drives every repository to it and keeps the result current for humans and agents.
 
 Do not claim that documentation can never become stale.
 
@@ -42,15 +43,15 @@ Do not claim that documentation can never become stale.
 
 ### Maintainer
 
-The maintainer wants to establish useful documentation without manually reconstructing the repository. They run `clean-docs init`, review the proposed information architecture and bindings, then commit the accepted result.
+The maintainer writes or selects a documentation standard. They run `clean-docs init`; the product audits the repository, builds the evidence graph and bindings, writes the documentation, and verifies the result against the standard.
 
 ### Contributor
 
-The contributor changes code and needs an exact answer about documentation impact. They run `clean-docs check --changed`, update or regenerate affected pages, and receive actionable failures tied to source and destination.
+The contributor changes code without manually tracing documentation impact. `clean-docs drive --changed` regenerates affected documentation, and `clean-docs check --changed` proves that the committed result matches the source and standard.
 
-### Reviewer
+### Repository operator
 
-The reviewer needs to know whether documentation changed with the code and whether the changes are grounded. A pull-request report shows changed sources, affected documentation, regenerated regions, failed claims, and uncovered changes.
+The operator needs autonomous maintenance with inspectable evidence. A run report shows changed sources, affected documentation, regenerated facts and prose, standard checks, and uncovered surfaces. Inspection is available but is not a required change gate.
 
 ### Human reader
 
@@ -62,16 +63,17 @@ The agent needs compact, current context with stable identifiers and source link
 
 ## 3. Product principles
 
-1. **Repository evidence outranks authored claims.** Generate factual content from evidence when a deterministic source exists.
-2. **One evidence model serves every mode.** Audit, render, check, release notes, and agent packaging call the same extractor interface.
-3. **The gate is deterministic.** Models may propose mappings and prose. They do not decide whether CI passes.
-4. **One corpus serves humans and agents.** Agent projections index and package canonical pages. They do not fork the facts.
-5. **Every failure carries a repair path.** Name the source, document, binding, observed value, expected value, and command that repairs or accepts the change.
-6. **Coverage is explicit.** Report bound, unbound, ignored, and advisory surfaces separately.
-7. **Generated regions stay bounded.** clean-docs owns marked factual regions. Authors own surrounding explanation.
-8. **No executable source by default.** Static extractors parse source. Command extractors require explicit allowlisting and run with declared timeouts.
-9. **The product dogfoods itself.** clean-docs generates and verifies its own CLI, configuration, and capability references.
-10. **The repository contains product truth only.** Private planning, unrelated project context, and publication residue stay outside product code, docs, tests, issues, examples, and metadata.
+1. **The standard is the human-authored input.** It captures the judgment clean-docs applies across repositories and changes.
+2. **Repository evidence owns factual content.** Derive facts from deterministic sources when they exist.
+3. **Models phrase; they do not decide.** A model may turn an evidence-backed content plan into readable prose under the standard. Deterministic code owns facts, scope, validation, and gate results.
+4. **One evidence model serves every mode.** Audit, render, check, release notes, and agent packaging call the same extractor interface.
+5. **One corpus serves humans and agents.** Agent projections index and package canonical pages. They do not fork the facts.
+6. **Maintenance is autonomous.** Once a standard is configured, no per-change approval is required for bound facts or standard-constrained prose.
+7. **Every failure carries an automatic repair path.** Name the source, document, observed value, expected value, and `drive` action.
+8. **Coverage is explicit.** Report bound, unbound, ignored, and standard-gap surfaces separately.
+9. **No executable source by default.** Static extractors parse source. Command extractors require explicit allowlisting and run with declared timeouts.
+10. **The product dogfoods itself.** clean-docs generates and verifies its own CLI, configuration, and capability references.
+11. **The repository contains product truth only.** Private planning, unrelated project context, and publication residue stay outside product code, docs, tests, issues, examples, and metadata.
 
 ## 4. Existing foundation
 
@@ -82,7 +84,7 @@ clean-docs starts from a working documentation-standard system. Version 0 preser
 | `STANDARD.md` | Defines sentence voice, medium choice, page shape, corpus structure, and the boundary between checks and judgment. | Becomes the default `clean-docs` policy profile and the canonical authoring standard. |
 | `quality-gate.py` | Blocks high-confidence language, engineering-claim, code, and secret patterns before Claude Code writes a file. | Its portable rules move into `policy`; the Claude Code hook remains one adapter. |
 | `doc-hygiene.py` | Checks process artifacts, agent-addressed docs, provenance, length, duplication, and restatement across tracked Markdown. | Its tested rules move into `policy` with stable finding identifiers, configuration, and regression fixtures. |
-| `scrub.py` | Detects identity residue, cross-project leakage, and publication-process tells with a reviewed baseline. | Its portable rules move into `policy`; personal patterns stay outside the distributable default profile. |
+| `scrub.py` | Detects identity residue, cross-project leakage, and publication-process tells with an explicit baseline. | Its portable rules move into `policy`; personal patterns stay outside the distributable default profile. |
 | `skill/SKILL.md` | Runs residue and corpus checks during one agent's pre-publish workflow. | Remains a distribution adapter. Equivalent CLI, CI, Codex, Claude Code, editor, and hosting adapters call the same core. |
 | `DECISION_LOG.md` | Records why archive handling and several noisy patterns were changed after real-repo triage. | Seeds regression cases and architecture decisions. |
 | `ultra-csm-findings.json` and `ultra-csm-before-after.md` | Preserve the 280-finding baseline and the docs-only cleanup evidence. | Seed corpus-policy fixtures and the first dogfood case. |
@@ -102,7 +104,7 @@ clean-docs starts from a working documentation-standard system. Version 0 preser
 
 - The existing scripts do not share a package, configuration schema, finding model, or CLI.
 - The write gate is coupled to Claude Code.
-- The hygiene linter detects but does not propose or apply a reviewed baseline.
+- The hygiene linter detects but does not generate or maintain a compliant baseline.
 - No source binding, generated region, claim assertion, coverage model, or ref-aware evidence graph exists in code.
 - No `llms.txt`, context bundle, release delta, or task-evaluation runner exists.
 - The ultra-csm cleanup improved navigation but left justified findings and did not prove documentation accuracy.
@@ -116,13 +118,13 @@ These are the starting conditions for the version plan. Existing artifacts remai
 - Repository discovery across common languages and build systems.
 - Documentation inventory and information-architecture analysis.
 - Evidence extraction from source, schemas, CLI output, tests, and repository metadata.
-- Initial documentation generation and existing-document repair proposals.
+- Automatic initial documentation generation and existing-document repair.
 - Continuous drift checks on bound facts.
 - Change-impact detection for new or removed public surface.
 - Human-readable Markdown rendering.
 - Agent projections, including `llms.txt` and scoped context bundles.
 - Deterministic style and corpus hygiene checks.
-- Advisory language and structure review.
+- Standard-constrained language and structure generation with deterministic validation.
 - Grounded release-note skeletons from evidence deltas.
 - Local CLI, pre-commit integration, and GitHub Actions integration.
 - A documented extractor and renderer extension API.
@@ -132,9 +134,9 @@ These are the starting conditions for the version plan. Existing artifacts remai
 - Replacing a documentation site generator or hosting platform.
 - Treating an LLM judgment as a merge gate.
 - Executing arbitrary repository code during discovery.
-- Rewriting all author-owned prose on each change.
+- Rewriting unaffected prose on each change.
 - Inferring product intent that the repository does not encode.
-- Promising complete documentation coverage without an accepted coverage policy.
+- Promising complete documentation coverage beyond the configured standard and adapters.
 - Maintaining separate human and agent copies of the same facts.
 
 ## 6. System model
@@ -145,12 +147,12 @@ The system has one pipeline with two enforcement classes.
 repository at git ref
         |
         v
-  discovery adapters ------> uncovered-surface report (advisory)
+  discovery adapters ------> standard and adapter coverage-gap signal
         |
         v
   normalized evidence graph
         |
-        +------> bindings ------> renderers ------> canonical docs
+        +------> content plan --> standard-constrained phraser --> canonical docs
         |             |                              |
         |             +------> deterministic check --+
         |
@@ -159,7 +161,7 @@ repository at git ref
         +------> evaluators ---> hygiene / human tasks / agent round trips
 ```
 
-The deterministic enforcement class includes schema validation, extraction, rendering, binding comparison, claim assertions, symbol checks, link checks, and approved command checks. The advisory class includes proposed coverage, prose rewrites, information-architecture suggestions, and semantic change review.
+The deterministic enforcement class includes schema validation, extraction, content planning, binding comparison, claim assertions, symbol checks, policy checks, link checks, and approved command checks. The model receives the standard and grounded content plan, then phrases documentation. Its output must preserve cited facts and pass deterministic validation before clean-docs writes it.
 
 ### 6.1 Core packages
 
@@ -167,11 +169,11 @@ The deterministic enforcement class includes schema validation, extraction, rend
 | --- | --- |
 | `core` | Load configuration, resolve git refs, build the execution plan, and aggregate results. |
 | `evidence` | Store normalized evidence values and provenance. |
-| `discover` | Inventory code and docs, identify public surfaces, and propose evidence candidates. |
+| `discover` | Inventory code and docs, identify public surfaces, and produce evidence candidates. |
 | `extractors` | Convert one source at one git ref into a typed evidence value. |
 | `bindings` | Map evidence to a generated region, claim, symbol reference, or coverage expectation. |
 | `renderers` | Convert typed evidence into stable Markdown or machine-readable output. |
-| `docs` | Parse marked regions, apply patches, and preserve author-owned prose. |
+| `docs` | Parse pages and marked regions, apply targeted repairs, and preserve unaffected prose. |
 | `policy` | Run deterministic style, corpus, link, and coverage rules. |
 | `projections` | Produce `llms.txt`, context bundles, and release deltas from canonical evidence and docs. |
 | `reporters` | Present terminal, JSON, SARIF, and GitHub pull-request output. |
@@ -202,12 +204,12 @@ Ref-aware extraction is required from the first release. The same extractor must
 
 ### 6.3 Binding types
 
-| Binding | Authoring behavior | Check behavior | Typical source |
+| Binding | Documentation behavior | Check behavior | Typical source |
 | --- | --- | --- | --- |
 | `region` | clean-docs renders a marked block. | Re-render and compare normalized output. | Registry, enum, schema, CLI, routes, MCP tools. |
-| `claim` | An author writes prose and declares a machine-checkable assertion. | Evaluate the assertion and compare the typed result. | Test count, coverage floor, package count, compatibility range. |
-| `symbol` | An author cites a path, symbol, endpoint, or anchor. | Resolve it at the target ref. | Source files, functions, routes, config keys. |
-| `coverage` | A policy declares which public surfaces require documentation. | Compare discovered public surface with accepted bindings or ignores. | Packages, exported symbols, CLI commands, endpoints. |
+| `claim` | The content plan pairs phrased prose with a machine-checkable assertion. | Evaluate the assertion and compare the typed result. | Test count, coverage floor, package count, compatibility range. |
+| `symbol` | Generated prose cites a path, symbol, endpoint, or anchor. | Resolve it at the target ref. | Source files, functions, routes, config keys. |
+| `coverage` | The standard declares which public surfaces require documentation. | Compare discovered public surface with bindings or explicit ignores. | Packages, exported symbols, CLI commands, endpoints. |
 
 Generated regions are preferred because the document cannot misstate a value that it does not own. Claims and symbol references cover facts that read better in prose. Coverage bindings expose the product's honest seam: new surface is reported even when no existing binding could have drifted.
 
@@ -296,21 +298,22 @@ Markers carry a stable binding identifier. Generated content never nests.
 
 | Command | Reader's task | Gate class |
 | --- | --- | --- |
-| `clean-docs init` | Audit a repository and create a reviewable baseline proposal. | Advisory until accepted. |
-| `clean-docs inventory` | List docs, public surfaces, evidence candidates, and coverage. | Deterministic inventory with advisory classifications. |
+| `clean-docs init` | Audit a repository, create bindings and information architecture, write the baseline, and verify it against the standard. | Self-driving; `--dry-run` previews without becoming a gate. |
+| `clean-docs inventory` | List docs, public surfaces, evidence candidates, and coverage. | Deterministic inventory with standard and adapter gaps. |
 | `clean-docs derive [--binding ID] [--check]` | Render bound documentation or show the diff without writing. | Deterministic. |
-| `clean-docs check [--changed]` | Verify bindings, policy, links, projections, and declared coverage. | Deterministic failures plus separated advisory findings. |
+| `clean-docs drive [--changed]` | Regenerate facts and prose affected by repository changes, then run required checks. | Self-driving. |
+| `clean-docs check [--changed]` | Verify bindings, policy, links, projections, and declared coverage. | Deterministic failures plus separated coverage gaps. |
 | `clean-docs doctor` | Verify configuration, dependencies, isolation support, provider access, and required tool versions before a run. | Deterministic and fail closed for required checks. |
 | `clean-docs explain ID` | Show why a finding exists and how to repair it. | Deterministic. |
 | `clean-docs project` | Regenerate `llms.txt` and context bundles. | Deterministic. |
 | `clean-docs eval` | Run human-task fixtures and agent round-trip evaluations. | Deterministic scoring over recorded outputs; model execution is opt-in. |
-| `clean-docs release --from REF --to REF` | Produce a grounded factual change skeleton. | Deterministic facts; narrative remains author-owned. |
+| `clean-docs release --from REF --to REF` | Produce grounded release notes phrased to the standard. | Deterministic facts with standard-constrained phrasing. |
 
 ### Exit codes
 
 | Code | Meaning |
 | --- | --- |
-| `0` | All required checks passed. Advisory findings may exist. |
+| `0` | All required checks passed. Non-blocking coverage gaps may exist. |
 | `1` | Documentation drift or policy failure. |
 | `2` | Invalid configuration or usage. |
 | `3` | Extractor or allowed-command execution failed. |
@@ -320,18 +323,18 @@ JSON and SARIF output must carry the same result identifiers and evidence as ter
 
 ## 8. Repository onboarding workflow
 
-`clean-docs init` produces a proposal, not an unreviewed rewrite.
+`clean-docs init` turns the configured standard and repository evidence into a verified documentation baseline.
 
 1. Inventory languages, build systems, public surfaces, docs, links, and current claims.
 2. Run deterministic hygiene and duplication checks.
 3. Build an evidence-candidate graph from static adapters and explicitly allowed commands.
-4. Propose the reader-facing information architecture and one canonical home for each fact.
-5. Propose bindings for facts with deterministic evidence.
-6. Draft or repair author-owned prose with evidence citations. If a model is enabled, label every model-produced change as advisory.
-7. Generate a patch, manifest, coverage report, and acceptance checklist.
-8. Require a human to accept bindings and prose before `check` treats them as baseline truth.
+4. Build the reader-facing information architecture and one canonical home for each fact under the standard.
+5. Create bindings for facts with deterministic evidence.
+6. Build a grounded content plan whose facts and allowed claims are machine-readable.
+7. Phrase or repair prose under the standard. The model may choose wording, not facts or scope.
+8. Write the docs, manifest, projections, and coverage state, then run the required checks.
 
-The no-model path must still inventory, lint, propose deterministic bindings, and render bound regions. A model improves classification and prose drafting. It is not required for the freshness gate.
+The no-model path still inventories, checks, creates deterministic bindings, and renders factual regions. A configured phrasing provider is required only for prose that cannot be rendered deterministically. The freshness gate never requires a model.
 
 ## 9. Continuous freshness workflow
 
@@ -345,7 +348,7 @@ The no-model path must still inventory, lint, propose deterministic bindings, an
 6. Compare discovered public surfaces at base and head.
 7. Regenerate affected projections.
 8. Run hygiene, link, and configured coverage policies.
-9. Emit required failures and advisory findings in separate sections.
+9. Apply safe repairs or fail with required findings and coverage gaps.
 
 A failed binding report must answer five questions in one screen:
 
@@ -353,7 +356,7 @@ A failed binding report must answer five questions in one screen:
 - Which documentation is affected?
 - What value was committed?
 - What value exists now?
-- Which command repairs or accepts the result?
+- Which `drive` action repairs the result?
 
 ## 10. Human and agent accessibility
 
@@ -392,9 +395,9 @@ Repository content is untrusted input.
 
 - Static parsing is the default.
 - Discovery never imports repository Python or JavaScript modules.
-- Command extractors run only named `argv` arrays from the accepted manifest.
+- Command extractors run only named `argv` arrays from the configured manifest.
 - Shell interpolation is unsupported.
-- Network access is denied unless an accepted command explicitly enables it.
+- Network access is denied unless a configured command explicitly enables it.
 - Commands have time, output, and process-count limits.
 - Temporary checkouts are isolated from the user's working tree.
 - Secrets are redacted from logs and generated output.
@@ -403,7 +406,7 @@ Repository content is untrusted input.
 - Model prompts exclude ignored paths, detected secrets, and files beyond configured size limits.
 - Model prompts are assembled deterministically from declared inputs and record content digests.
 - Secret values resolve outside model context and never enter prompts or provider logs.
-- Repository text is scanned for prompt-injection patterns before it enters an advisory model context.
+- Repository text is scanned for prompt-injection patterns before it enters a phrasing-model context.
 - Provider health checks fail closed before model-assisted work starts.
 - CI pins clean-docs and third-party extractor versions.
 
@@ -416,7 +419,7 @@ No single score represents documentation quality. clean-docs reports separate me
 | Measure | Definition |
 | --- | --- |
 | Binding freshness | Passing bindings divided by evaluated bindings. Required target: 100%. |
-| Surface coverage | Required public surfaces with accepted bindings or explicit ignores. |
+| Surface coverage | Required public surfaces with bindings or explicit ignores. |
 | Projection freshness | Generated projections matching the canonical corpus. Required target: 100%. |
 | Hygiene findings | Deterministic sentence and corpus findings, by rule. |
 | Human task success | Completed human E2E tasks divided by attempted tasks. |
@@ -434,7 +437,7 @@ Each release proves one product claim before the next release broadens it. A lat
 
 ### Version 0: Proven local foundation, complete
 
-**Claim:** the existing standard, write gate, and corpus linter mechanize part of documentation quality and expose where human judgment remains necessary.
+**Claim:** the existing standard captures the human judgment; the write gate and corpus linter prove that part of it can already execute as policy.
 
 Existing receipts:
 
@@ -496,7 +499,7 @@ Version 0 preservation work at the start of Version 0.1:
    - Given a cited source path or Python symbol.
    - When the symbol is renamed at head.
    - Then `check` exits `1` with the missing locator and affected document anchor.
-4. **author prose preservation**
+4. **unrelated prose preservation**
    - Given text before and after two generated regions.
    - When both regions are derived.
    - Then byte comparison proves that all bytes outside the markers are unchanged.
@@ -511,7 +514,7 @@ Version 0 preservation work at the start of Version 0.1:
 7. **Version 0 policy parity**
    - Given the frozen Version 0 fixture corpus and gate payloads.
    - When the packaged policy engine and existing scripts run.
-   - Then normalized findings match, except for differences named in an accepted migration file.
+   - Then normalized findings match, except for differences named in a declared migration file.
 8. **known false-positive regressions**
    - Given archived docs, `IF/THEN` decision records, and technical `byte-identical` claims from the prior triage.
    - When corpus policy runs.
@@ -534,7 +537,7 @@ Version 0 preservation work at the start of Version 0.1:
 
 ### Version 0.2: Repository audit and baseline generation
 
-**Claim:** clean-docs can bring an unfamiliar repository to a reviewable documentation baseline without turning model output into accepted truth.
+**Claim:** clean-docs can drive an unfamiliar repository to the configured documentation standard without turning model output into factual authority.
 
 #### Build
 
@@ -542,55 +545,55 @@ Version 0 preservation work at the start of Version 0.1:
 - Language, package, CLI, API, schema, test, and documentation inventory interfaces.
 - Initial adapters for Python packaging, argparse, MCP tools, OpenAPI, JSON Schema, Markdown links, and common test runners.
 - Additional policy configuration and finding explanations beyond the Version 0 rules packaged in Version 0.1.
-- Evidence-candidate graph and accepted/ignored/unresolved states.
-- Patch-plan output with proposed information architecture, bindings, moves, deletions, and prose changes.
+- Evidence graph and bound/ignored/standard-gap states.
+- Automatic information architecture, bindings, moves, deletions, and prose repairs, with `--dry-run` diff output.
 - Optional model provider for classification and prose drafts.
 - Deterministic prompt builder, provider interface, recorded response fixtures, and mock provider.
 - Prompt-injection scan over repository content selected for model context.
-- Human acceptance workflow that writes the manifest and baseline.
+- Deterministic acceptance rules that reject unsupported claims and invalid mappings before writing.
 - `--no-model` mode.
 
 #### Functional E2E tests
 
-1. **unfamiliar Python repository audit**
+1. **unfamiliar Python repository baseline**
    - Given a fixture with a package, argparse CLI, tests, stale README command list, duplicate docs, and a process handoff under `docs/`.
    - When `clean-docs init --no-model` runs.
-   - Then the proposal inventories the public CLI, detects the stale list, identifies the duplicate and process artifact, and proposes deterministic bindings without editing files.
-2. **reviewed bootstrap**
-   - Given an accepted subset of the proposal.
-   - When `clean-docs init --apply acceptance.yml` runs.
-   - Then it writes only accepted docs, markers, ignores, and bindings. A following `check` passes.
+   - Then clean-docs inventories the public CLI, repairs the stale list, removes the duplicate and process artifact from the reader surface, creates deterministic bindings, and passes `check`.
+2. **standard-once bootstrap**
+   - Given a repository and a configured documentation standard.
+   - When `clean-docs init` runs without interactive input.
+   - Then it writes the baseline, manifest, and projections; every generated fact has evidence; and a following `check` passes.
 3. **model boundary**
    - Given a model response containing an unsupported capability claim.
-   - When the proposal is built.
-   - Then the claim is marked unsupported and cannot enter an accepted generated region without evidence or explicit author-owned classification.
+   - When the content plan is built.
+   - Then the unsupported claim is rejected and cannot enter generated documentation.
 4. **no-model completeness**
    - Given model credentials are absent.
    - When `init --no-model` runs.
-   - Then deterministic inventory, hygiene, binding proposals, and patch output still complete.
+   - Then deterministic inventory, hygiene, bindings, and factual-region generation still complete.
 5. **idempotent rerun**
-   - Given an accepted baseline with no repository changes.
+   - Given a generated baseline with no repository changes.
    - When `init` reruns.
-   - Then it proposes no factual change and preserves stable binding identifiers.
+   - Then it produces no factual change and preserves stable binding identifiers.
 6. **multi-language fixture**
    - Given a small TypeScript service with `package.json`, CLI help, OpenAPI, and Markdown docs.
    - When inventory runs.
    - Then adapters produce normalized evidence without executing project modules.
-7. **hostile advisory context**
+7. **hostile phrasing context**
    - Given repository prose containing instructions to override the system, disclose secrets, or modify required findings.
    - When model-assisted classification runs against a mock provider.
    - Then the scan marks the input, secrets remain absent, deterministic findings stay unchanged, and the response cannot alter gate results.
 
 #### Definition of done
 
-- All seven E2E scenarios pass in CI with recorded proposal artifacts.
-- `init` is dry-run by default and requires an acceptance file or interactive confirmation to write.
-- Every proposed factual statement links to evidence or carries an `author-owned` label.
+- All seven E2E scenarios pass in CI with recorded content plans and evidence.
+- `init` writes and verifies by default; `--dry-run` provides optional inspection without changing the autonomous contract.
+- Every generated factual statement links to evidence. Unsupported claims fail before writing.
 - Model-off tests pass with network disabled.
 - Model-on E2E tests use the mock provider in required CI; optional live-provider tests never gate a release.
 - Secret fixtures prove that detected credentials never enter prompts, logs, or output.
-- Re-running the accepted baseline produces an empty patch.
-- Audit results distinguish required failures, advisory findings, and unresolved coverage.
+- Re-running the generated baseline produces an empty patch.
+- Audit results distinguish required failures and standard or adapter coverage gaps.
 - The bootstrap succeeds on one Python and one TypeScript dogfood repository.
 
 ### Version 0.3: Change-impact and pull-request gate
@@ -601,12 +604,12 @@ Version 0 preservation work at the start of Version 0.1:
 
 - `check --changed --base REF --head REF`.
 - Dependency map from files and symbols to evidence, bindings, documents, and projections.
-- `coverage` bindings and accepted ignore records.
+- `coverage` bindings and explicit ignore records.
 - Base-to-head public-surface diff.
 - Required GitHub check with annotations and summary.
 - SARIF output and stable finding identifiers.
 - Cache keyed by ref, extractor version, parameters, and source digest.
-- Repair commands and acceptance workflow for new coverage.
+- Automatic repair actions for recognized new coverage and exact gap reports for unsupported surfaces.
 - Monorepo project selection.
 
 #### Functional E2E tests
@@ -623,8 +626,8 @@ Version 0 preservation work at the start of Version 0.1:
    - Given a pull request changes private implementation without changing normalized evidence or public surface.
    - When `check --changed` runs.
    - Then required checks pass and no documentation update is requested.
-4. **accepted ignore remains explicit**
-   - Given a new internal command matches an accepted ignore with a reason.
+4. **declared ignore remains explicit**
+   - Given a new internal command matches a declared ignore with a reason.
    - When coverage runs.
    - Then the result passes, reports the ignore, and fails if the ignore no longer matches any surface.
 5. **cache correctness**
@@ -639,9 +642,9 @@ Version 0 preservation work at the start of Version 0.1:
 #### Definition of done
 
 - All six E2E scenarios pass against a local GitHub workflow fixture or equivalent action harness.
-- Required and advisory results appear in separate report sections and machine-readable fields.
-- A new public surface cannot disappear through a baseline update without an accepted binding, accepted ignore, or recorded removal.
-- Stable finding identifiers preserve review state across reruns.
+- Required results and standard or adapter gaps appear in separate report sections and machine-readable fields.
+- A new public surface cannot disappear through a baseline update without an automatic binding, declared ignore, or recorded removal.
+- Stable finding identifiers preserve finding identity across reruns.
 - Cached and uncached runs return byte-identical normalized results.
 - Median changed-file check time meets the published budget on dogfood repositories.
 - The GitHub Action pins dependencies and requires read-only repository permissions unless posting a report is enabled.
@@ -653,14 +656,14 @@ Version 0 preservation work at the start of Version 0.1:
 #### Build
 
 - `project` command.
-- `llms.txt` generation from the accepted documentation graph.
+- `llms.txt` generation from the verified documentation graph.
 - Named context bundles with provenance and content digests.
 - Link and anchor verification across canonical docs and projections.
 - Human task fixture format.
 - Agent round-trip fixture format with provider adapters and recorded replay mode.
 - Deterministic scorers for structured outputs, commands, configuration, and cited limits.
 - Evaluation history that records corpus digest, model, prompt, scorer, and result.
-- Accessibility advisory checks tied to the writing standard.
+- Standard-constrained accessibility generation and deterministic structural checks.
 - Task-first documentation templates with intended-reader, value, prerequisites, procedure, limits, and next-step slots.
 
 #### Functional E2E tests
@@ -709,7 +712,7 @@ Version 0 preservation work at the start of Version 0.1:
 - `release --from REF --to REF`.
 - Typed evidence diff for added, removed, and changed values.
 - Release-note skeleton renderer with provenance links.
-- Optional advisory narrative draft over the factual delta.
+- Standard-constrained narrative phrasing over the factual delta.
 - Versioned extractor, discoverer, renderer, and policy plugin interfaces.
 - Plugin isolation and compatibility checks.
 - First-party adapters for CLI frameworks, OpenAPI, JSON Schema, environment/config schemas, package metadata, and MCP tools across Python and TypeScript.
@@ -721,8 +724,8 @@ Version 0 preservation work at the start of Version 0.1:
    - Given two refs where a CLI command is added and an option is removed.
    - When `release` runs.
    - Then the skeleton reports both changes with source provenance and no unsupported explanation.
-2. **narrative cannot alter facts**
-   - Given an advisory model draft omits or contradicts a typed delta.
+2. **phrasing cannot alter facts**
+   - Given a model response omits or contradicts a typed delta.
    - When the release artifact is assembled.
    - Then the factual section remains unchanged and the conflicting draft is flagged.
 3. **third-party extractor**
@@ -749,7 +752,7 @@ Version 0 preservation work at the start of Version 0.1:
 - The plugin contract is documented, versioned, and exercised by an external fixture package.
 - Schema migration has golden tests and a rollback path.
 - First-party adapters share normalized evidence types and identical ref semantics.
-- Advisory narrative is clearly separated from deterministic facts in every output format.
+- Narrative phrasing preserves and cites deterministic facts in every output format.
 
 ### Version 1.0: Supported product
 
@@ -771,8 +774,8 @@ Version 0 preservation work at the start of Version 0.1:
 
 1. **empty-to-protected repository**
    - Given an undocumented supported repository.
-   - When a maintainer inventories, reviews, accepts, derives, and enables CI.
-   - Then the repo reaches a passing protected baseline without manual manifest editing for discovered standard surfaces.
+   - When a maintainer supplies the standard and runs `clean-docs init`.
+   - Then the repo reaches a passing protected baseline without manual document or manifest editing for discovered standard surfaces.
 2. **full change lifecycle**
    - Given a protected repo and a pull request that changes, adds, and removes public behavior.
    - When the contributor follows repair output.
@@ -788,7 +791,7 @@ Version 0 preservation work at the start of Version 0.1:
 5. **upgrade compatibility**
    - Given repositories pinned to the prior supported minor release.
    - When clean-docs upgrades to 1.0.
-   - Then manifests migrate or fail with an exact action, and accepted evidence does not silently change.
+   - Then manifests migrate or fail with an exact action, and bound evidence does not silently change.
 6. **independent reader success**
    - Given new human and agent users with only published clean-docs docs.
    - When they install the tool, protect a fixture repo, repair deliberate drift, and explain one limitation.
@@ -812,13 +815,13 @@ Version 0 preservation work at the start of Version 0.1:
 Functional E2E tests use real temporary git repositories, not mocks of git behavior. Each fixture declares:
 
 - Initial files and commit.
-- Manifest and accepted policy.
+- Manifest and configured standard.
 - User action or source change.
 - Command under test.
 - Expected exit code.
 - Expected file diff.
 - Expected finding identifiers and evidence.
-- Forbidden side effects, including working-tree mutation, network, secret output, and author-prose changes.
+- Forbidden side effects, including undeclared working-tree mutation, network, secret output, and unrelated prose changes.
 
 Keep four fixture classes:
 
@@ -852,11 +855,11 @@ Each version follows the same delivery sequence:
 - The product name is `clean-docs`. The CLI is `clean-docs`. The manifest is `.clean-docs.yml`.
 - `STANDARD.md`, `quality-gate.py`, and `doc-hygiene.py` are inherited product inputs, not disposable prototypes.
 - The deterministic freshness gate is the product center.
-- The repository bootstrapper is part of the final product, but it does not delay the first gate release.
-- Models may draft and classify during bootstrap. They do not run in required freshness checks.
+- The repository bootstrapper is the self-driving setup path, but it does not delay the first gate release.
+- Models may classify and phrase grounded content. They do not select facts, expand scope, or decide required checks.
 - Claim grounding means evaluating a declared source. It does not mean asking a model whether prose sounds supported.
 - Derive, check, release, and projections use ref-aware extractors.
-- New undocumented surface is a coverage finding, not proof that existing bindings drifted.
+- Recognized new surface is documented automatically. Unsupported new surface is a standard or adapter coverage gap that names the missing capability.
 - Human and agent documentation share canonical pages.
 - Round-trip evaluation measures task completion, not stylistic resemblance.
 - Skills for Codex, Claude Code hooks, editor extensions, and hosting integrations are distribution adapters. None defines the product architecture.
