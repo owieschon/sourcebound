@@ -16,7 +16,7 @@ The same verified graph produces `llms.txt`, named context bundles, grounded rel
 
 ## How the pieces fit
 
-![clean-docs architecture: repository sources become typed evidence, source bindings, and verified documentation outcomes](docs/assets/architecture.svg)
+![clean-docs architecture: repository sources become typed evidence, source bindings, and verified documentation outcomes](docs/assets/clean-docs-system-map.svg)
 
 Repository sources such as code, schemas, commands, package metadata, and API metadata become typed
 evidence through static extraction or declared, bounded execution. Source bindings connect that

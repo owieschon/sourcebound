@@ -1,13 +1,13 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `f03f3cce7e79ba8d58f77a62b0d33059fc9d61e9f0f305f3fdfb341c07427641`
+- Corpus sha256: `1fc099ab53678bd5c4bbe3ad9d7250dd6c2e79393533c423876e2c1bd8cfa4b8`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `c47efc0cb031b7c2abc070edfd1a9ada5b4da81131068e87874f6b9bae5a87bb`
+- Content sha256: `ab2fc7606e77c47cd4a62d2711f809097f94c316c5d08c91ce459e46008003ef`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
@@ -28,7 +28,7 @@ The same verified graph produces `llms.txt`, named context bundles, grounded rel
 
 ## How the pieces fit
 
-![clean-docs architecture: repository sources become typed evidence, source bindings, and verified documentation outcomes](docs/assets/architecture.svg)
+![clean-docs architecture: repository sources become typed evidence, source bindings, and verified documentation outcomes](docs/assets/clean-docs-system-map.svg)
 
 Repository sources such as code, schemas, commands, package metadata, and API metadata become typed
 evidence through static extraction or declared, bounded execution. Source bindings connect that
