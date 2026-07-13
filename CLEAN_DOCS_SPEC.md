@@ -122,7 +122,7 @@ These are the starting conditions for the version plan. Existing artifacts remai
 - Continuous drift checks on bound facts.
 - Change-impact detection for new or removed public surface.
 - Human-readable Markdown rendering.
-- Agent projections, including `llms.txt` and scoped context bundles.
+- Agent projections, including `llms.txt`, scoped context bundles, and stepwise skill packages.
 - Deterministic style and corpus hygiene checks.
 - Standard-constrained language and structure generation with deterministic validation.
 - Grounded release-note skeletons from evidence deltas.
@@ -175,7 +175,7 @@ The deterministic enforcement class includes schema validation, extraction, cont
 | `renderers` | Convert typed evidence into stable Markdown or machine-readable output. |
 | `docs` | Parse pages and marked regions, apply targeted repairs, and preserve unaffected prose. |
 | `policy` | Run deterministic style, corpus, link, and coverage rules. |
-| `projections` | Produce `llms.txt`, context bundles, and release deltas from canonical evidence and docs. |
+| `projections` | Produce `llms.txt`, context bundles, stepwise skill packages, and release deltas from canonical evidence and docs. |
 | `reporters` | Present terminal, JSON, SARIF, and GitHub pull-request output. |
 
 ### 6.2 Extractor contract
@@ -312,6 +312,8 @@ Markers carry a stable binding identifier. Generated content never nests.
 | `clean-docs doctor` | Verify configuration, dependencies, isolation support, provider access, and required tool versions before a run. | Deterministic and fail closed for required checks. |
 | `clean-docs explain ID` | Show why a finding exists and how to repair it. | Deterministic. |
 | `clean-docs project` | Regenerate `llms.txt` and context bundles. | Deterministic. |
+| `clean-docs emit llms-txt` | Emit a manifest-derived index of bound documents with content digests. | Deterministic. |
+| `clean-docs emit stepwise-skill` | Project the manifest and maintenance workflow into an interoperable stepwise skill package. | Deterministic. |
 | `clean-docs eval` | Run human-task fixtures and agent round-trip evaluations. | Deterministic scoring over recorded outputs; model execution is opt-in. |
 | `clean-docs release --from REF --to REF` | Produce grounded release notes phrased to the standard. | Deterministic facts with standard-constrained phrasing. |
 
@@ -681,6 +683,8 @@ Version 0 preservation work at the start of Version 0.1:
 - Evaluation history that records corpus digest, model, prompt, scorer, and result.
 - Standard-constrained accessibility generation and deterministic structural checks.
 - Task-first documentation templates with intended-reader, value, prerequisites, procedure, limits, and next-step slots.
+- Manifest-derived stepwise skill projection with strict configuration, ordered reference files,
+  explicit navigation, and skill or command CLI roles.
 
 #### Functional E2E tests
 
@@ -708,16 +712,24 @@ Version 0 preservation work at the start of Version 0.1:
    - Given a saved agent response and corpus digest.
    - When evaluation reruns without network.
    - Then the scorer reproduces the same result.
+7. **stepwise skill projection**
+   - Given a manifest with bound documents and the recorded stepwise package schema.
+   - When `emit stepwise-skill` runs twice.
+   - Then the output is byte-stable, names the real bound documents, validates against the schema,
+     chains every reference through `next_step`, and its audit, drive, and check commands pass in a
+     temporary repository.
 
 #### Definition of done
 
-- All six E2E scenarios pass, with networked agent runs separated from replayable scoring.
+- All seven E2E scenarios pass, with networked agent runs separated from replayable scoring.
 - Projections contain canonical content or references only, plus generated metadata.
 - Every bundle records a source ref and digest.
 - Human and agent task scores are reported separately from hygiene findings.
 - At least three task types use deterministic scorers.
 - A projection drift test fails before repair and passes after repair.
 - The public docs state which evaluation claims are model-specific and which are deterministic.
+- The stepwise package is a projection of the manifest and canonical workflow; it carries no
+  independent factual copy of repository documentation.
 
 ### Version 0.5: Grounded release workflow and extension API
 
