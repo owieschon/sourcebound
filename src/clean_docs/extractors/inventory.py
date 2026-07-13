@@ -17,6 +17,7 @@ INCLUDED_KINDS = {
     "mcp-tool",
     "package",
     "package-script",
+    "runtime-constraint",
     "schema",
     "test-runner",
     "test-suite",

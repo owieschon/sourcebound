@@ -21,6 +21,8 @@ def _python_repo(tmp_path: Path) -> Path:
     (root / "docs").mkdir()
     (root / "pyproject.toml").write_text(
         '[project]\nname = "baseline-service"\nversion = "1.0.0"\n'
+        'requires-python = ">=3.11"\n'
+        '[project.scripts]\nbaseline = "service.cli:main"\n'
     )
     (root / "src/service/cli.py").write_text("""\
 def build_parser():
@@ -105,8 +107,9 @@ def test_init_dry_run_is_read_only_then_default_init_writes_and_verifies(
     assert readme.count("<!-- clean-docs:end purpose -->") == 1
     assert "Author-owned introduction." in readme
     assert "obsolete-command" not in readme
-    assert "| cli-command | 2 | `inspect`, `serve` |" in readme
+    assert "| cli-command | 3 | `baseline`, `inspect`, `serve` |" in readme
     assert "| package | 1 | `baseline-service` |" in readme
+    assert "| runtime-constraint | 1 | `Python >=3.11` |" in readme
     assert "<!-- clean-docs:inventory-sha256 " in readme
     assert "Keep this author-owned procedure." in readme
     assert (root / ".clean-docs.yml").is_file()
@@ -136,6 +139,8 @@ def test_typescript_repository_bootstraps_without_python_metadata(
         "version": "1.0.0",
         "bin": {"typed": "dist/index.js"},
         "scripts": {"test": "vitest run"},
+        "type": "module",
+        "engines": {"node": ">=20"},
     }))
     (root / "src/index.ts").write_text("export function start() { return true }\n")
     (root / "openapi.json").write_text(json.dumps({
@@ -153,6 +158,7 @@ def test_typescript_repository_bootstraps_without_python_metadata(
     assert "| cli-command | 1 | `typed` |" in readme
     assert "| api-symbol | 1 | `start` |" in readme
     assert "| api-endpoint | 1 | `GET /health` |" in readme
+    assert "| runtime-constraint | 2 | `ES modules`, `node >=20` |" in readme
     assert main(["--root", str(root), "check"]) == 0
 
 

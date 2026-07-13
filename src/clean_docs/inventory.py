@@ -227,10 +227,59 @@ def _structured_items(path: str, data: Any) -> list[dict[str, str]]:
         name = str(project.get("name", "Python package"))
         version = str(project.get("version", "unknown"))
         items.append(_item("package", name, path, "project", "python-package", f"{name}:{version}"))
+        scripts = project.get("scripts")
+        if isinstance(scripts, dict):
+            for command, target in sorted(scripts.items()):
+                items.append(
+                    _item(
+                        "cli-command",
+                        str(command),
+                        path,
+                        f"project.scripts.{command}",
+                        "python-package",
+                        str(target),
+                    )
+                )
+        requires_python = project.get("requires-python")
+        if isinstance(requires_python, str):
+            items.append(
+                _item(
+                    "runtime-constraint",
+                    f"Python {requires_python}",
+                    path,
+                    "project.requires-python",
+                    "python-package",
+                    requires_python,
+                )
+            )
     if path == "package.json":
         name = str(data.get("name", "JavaScript package"))
         version = str(data.get("version", "unknown"))
         items.append(_item("package", name, path, "package", "node-package", f"{name}:{version}"))
+        if data.get("type") == "module":
+            items.append(
+                _item(
+                    "runtime-constraint",
+                    "ES modules",
+                    path,
+                    "type",
+                    "node-package",
+                    "module",
+                )
+            )
+        engines = data.get("engines")
+        if isinstance(engines, dict):
+            for runtime, constraint in sorted(engines.items()):
+                items.append(
+                    _item(
+                        "runtime-constraint",
+                        f"{runtime} {constraint}",
+                        path,
+                        f"engines.{runtime}",
+                        "node-package",
+                        str(constraint),
+                    )
+                )
         scripts = data.get("scripts")
         if isinstance(scripts, dict):
             for script, command in sorted(scripts.items()):
