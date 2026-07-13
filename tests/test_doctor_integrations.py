@@ -54,6 +54,10 @@ def test_distribution_integrations_are_strict() -> None:
     trigger = workflow[True]["workflow_call"]
     assert trigger["inputs"]["package-ref"]["required"] is True
     steps = workflow["jobs"]["clean-docs"]["steps"]
+    setup_python = next(
+        step for step in steps if step["uses"].startswith("actions/setup-python@")
+    )
+    assert setup_python["with"] == {"python-version": "3.12"}
     gate = next(step for step in steps if step.get("name") == "Evaluate documentation gate")
     assert "clean-docs audit --format json > clean-docs-audit.json" in gate["run"]
     assert "clean-docs check --format json > clean-docs-check.json" in gate["run"]
