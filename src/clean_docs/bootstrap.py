@@ -33,6 +33,9 @@ from clean_docs.write_gate import redact_secrets
 
 
 REFERENCE_REGION = "repository-surface"
+PLAN_FACT_LIMIT = 100
+PLAN_DIFF_LIMIT = 4000
+CANONICAL_DOCUMENT_LIMIT = 8
 REFERENCE_SECTION = re.compile(
     r"^## (?:Commands|CLI|Repository surface)\s*\n.*?(?=^## |\Z)", re.MULTILINE | re.DOTALL
 )
@@ -61,6 +64,7 @@ class BootstrapPlan:
     gaps: tuple[str, ...]
     model: ModelRecord | None
     digest: str
+    canonical_documents: tuple[str, ...] = ()
     accept_hygiene_baseline: bool = False
 
     def as_dict(self) -> dict[str, object]:
@@ -70,18 +74,23 @@ class BootstrapPlan:
                 field: redact_secrets(value)[0] if isinstance(value, str) else value
                 for field, value in asdict(item).items()
             })
+        serialized_facts = facts[:PLAN_FACT_LIMIT]
         return {
             "schema": "clean-docs.content-plan.v1",
             "ok": not self.gaps,
             "digest": self.digest,
-            "facts": facts,
+            "fact_count": len(facts),
+            "facts": serialized_facts,
+            "facts_omitted": len(facts) - len(serialized_facts),
+            "canonical_documents": list(self.canonical_documents),
             "operations": [
                 {
                     "action": "write",
                     "path": write.path,
                     "content": None,
                     "reason": write.reason,
-                    "diff": redact_secrets(write.diff)[0],
+                    "diff": redact_secrets(write.diff[:PLAN_DIFF_LIMIT])[0],
+                    "diff_truncated": len(write.diff) > PLAN_DIFF_LIMIT,
                 }
                 for write in self.writes
             ] + [
@@ -108,7 +117,15 @@ def _readme_path(root: Path) -> str:
     return candidates[0] if candidates else "README.md"
 
 
-def _manifest_text(document: str = "README.md") -> str:
+def _manifest_text(
+    document: str = "README.md", canonical_documents: tuple[str, ...] = ()
+) -> str:
+    declared = tuple(path for path in canonical_documents if path != document)
+    include = ""
+    if declared:
+        include = "    include:\n" + "".join(
+            f"      - {json.dumps(path)}\n" for path in declared
+        )
     return f"""\
 version: 1
 bindings:
@@ -123,7 +140,8 @@ projections:
   llms_txt:
     output: llms.txt
     title: Repository documentation
-    summary: Source-bound repository documentation.
+    summary: Bound facts and explicitly declared canonical repository context.
+{include}
 """
 
 
@@ -144,7 +162,20 @@ def _reference_document(
 ) -> str:
     readme = root / document
     current = readme.read_text(encoding="utf-8") if readme.exists() else "# Repository\n"
-    current = ensure_purpose_contract(current)
+    current = ensure_purpose_contract(current, fallback=False)
+    if "<!-- clean-docs:purpose -->" not in current:
+        lines = current.splitlines()
+        heading = next((index for index, line in enumerate(lines) if line.startswith("# ")), 0)
+        purpose = [
+            "<!-- clean-docs:purpose -->",
+            "Use this repository guide when you need to run or change this project. Without a "
+            "source-bound overview, entry points and public surfaces can drift from the "
+            "implementation; after reading, you can locate the detected surfaces and verify "
+            "their current sources.",
+            "<!-- clean-docs:end purpose -->",
+        ]
+        lines[heading + 1:heading + 1] = ["", *purpose]
+        current = "\n".join(lines).rstrip() + "\n"
     binding = _binding(document)
     evidence = extract_repository_overview(RepositorySnapshot(root), binding)
     generated = render(evidence, binding)
@@ -155,7 +186,10 @@ def _reference_document(
         ) + "\n\n"
     section = (
         "## Repository surface\n\n"
-        "This summary is generated from statically detected package, CLI, API, schema, and test surfaces. Run `clean-docs inventory` for the full catalog.\n\n"
+        "This summary is a static catalog of detected package, CLI, API, schema, and test "
+        "surfaces. It does not validate existing prose claims. Direct manifest bindings are "
+        "the accuracy boundary; run `clean-docs inventory` for coverage state and the full "
+        "catalog.\n\n"
         f"{highlights}"
         f"<!-- clean-docs:begin {REFERENCE_REGION} -->\n"
         f"{generated}\n"
@@ -212,6 +246,36 @@ def _archive_moves(root: Path) -> list[PlannedMove]:
     return sorted(moves.values(), key=lambda item: item.source)
 
 
+def _canonical_documents(
+    root: Path, readme_path: str, excluded: set[str]
+) -> tuple[str, ...]:
+    documents = {
+        path.relative_to(root).as_posix()
+        for path in list_documents(root)
+        if path.relative_to(root).as_posix() not in excluded
+    }
+    documents.add(readme_path)
+    named_priority = {
+        "ARCHITECTURE.MD": 1,
+        "DEPLOYMENT.MD": 2,
+        "ROADMAP.MD": 3,
+    }
+
+    def priority(path: str) -> tuple[int, int, str]:
+        candidate = Path(path)
+        if path == readme_path:
+            return (0, 0, path)
+        if candidate.name.upper() in named_priority:
+            return (named_priority[candidate.name.upper()], len(candidate.parts), path)
+        if candidate.name.lower() == "readme.md":
+            return (4, len(candidate.parts), path)
+        if candidate.parts[:2] == ("docs", "adr"):
+            return (5, len(candidate.parts), path)
+        return (6, len(candidate.parts), path)
+
+    return tuple(sorted(documents, key=priority)[:CANONICAL_DOCUMENT_LIMIT])
+
+
 def build_bootstrap_plan(
     root: Path,
     provider: PhrasingProvider | None = None,
@@ -222,8 +286,13 @@ def build_bootstrap_plan(
     if not root.is_dir():
         raise ConfigurationError(f"repository root does not exist or is not a directory: {root}")
     readme_path = _readme_path(root)
+    archive_candidates = _archive_moves(root)
+    moves = [] if accept_hygiene_baseline else archive_candidates
+    canonical_documents = _canonical_documents(
+        root, readme_path, {item.source for item in archive_candidates}
+    )
     existing_manifest = root / ".clean-docs.yml"
-    manifest_text = _manifest_text(readme_path)
+    manifest_text = _manifest_text(readme_path, canonical_documents)
     if existing_manifest.exists() and existing_manifest.read_text(encoding="utf-8") != manifest_text:
         raise ConfigurationError(
             "init cannot replace an existing manifest; remove it or run inventory and add bindings"
@@ -232,7 +301,6 @@ def build_bootstrap_plan(
     facts = tuple(item for item in report.items if item.kind in INCLUDED_KINDS)
     model = build_model_record(root, facts, provider) if provider else None
     readme = _reference_document(root, readme_path, model.drafts if model else ())
-    moves = [] if accept_hygiene_baseline else _archive_moves(root)
     moved = {item.source for item in moves}
     manifest = Manifest(
         path=root / ".clean-docs.yml",
@@ -242,18 +310,27 @@ def build_bootstrap_plan(
             llms_txt=LlmsTxtProjection(
                 Path("llms.txt"),
                 "Repository documentation",
-                "Source-bound repository documentation.",
+                "Bound facts and explicitly declared canonical repository context.",
+                tuple(Path(path) for path in canonical_documents if path != readme_path),
             )
         ),
     )
     assert manifest.projections is not None
     llms_config = manifest.projections.llms_txt
     assert llms_config is not None
+    indexed_documents = {
+        path: (
+            readme.encode("utf-8")
+            if path == readme_path
+            else (root / path).read_bytes()
+        )
+        for path in canonical_documents
+    }
     llms = render_llms_txt(
         manifest,
         title=llms_config.title,
         summary=llms_config.summary,
-        documents={readme_path: readme.encode("utf-8")},
+        documents=indexed_documents,
         output_path=root / llms_config.output,
     )
     writes = [
@@ -263,12 +340,18 @@ def build_bootstrap_plan(
             _planned_write(root, "llms.txt", llms, "index the source-bound documentation"),
         ) if item is not None
     ]
+    purpose_gaps: list[str] = []
     for path in list_documents(root):
         relative = path.relative_to(root).as_posix()
         if relative == readme_path or relative in moved:
             continue
         current = path.read_text(encoding="utf-8")
-        updated = ensure_purpose_contract(current)
+        updated = ensure_purpose_contract(current, fallback=False)
+        if "<!-- clean-docs:purpose -->" not in updated:
+            purpose_gaps.append(
+                f"purpose contract needs authored judgment: {relative}"
+            )
+            continue
         planned = _planned_write(
             root,
             relative,
@@ -277,12 +360,34 @@ def build_bootstrap_plan(
         )
         if planned is not None:
             writes.append(planned)
+    planned_content = {write.path: write.content for write in writes}
+    indexed_documents = {
+        path: (
+            planned_content[path]
+            if path in planned_content
+            else (root / path).read_text(encoding="utf-8")
+        ).encode("utf-8")
+        for path in canonical_documents
+    }
+    final_llms = render_llms_txt(
+        manifest,
+        title=llms_config.title,
+        summary=llms_config.summary,
+        documents=indexed_documents,
+        output_path=root / llms_config.output,
+    )
+    writes = [write for write in writes if write.path != "llms.txt"]
+    llms_write = _planned_write(root, "llms.txt", final_llms, "index the canonical documentation")
+    if llms_write is not None:
+        writes.append(llms_write)
     supported = {"Python", "TypeScript", "JavaScript"}
     gaps = tuple(
         f"language adapter missing: {language}"
         for language in report.languages
         if language not in supported
     )
+    if not accept_hygiene_baseline:
+        gaps += tuple(purpose_gaps)
     introduced_secret = False
     for item in writes:
         target = root / item.path
@@ -301,6 +406,7 @@ def build_bootstrap_plan(
         "gaps": gaps,
         "model": model.as_dict() if model else None,
         "accept_hygiene_baseline": accept_hygiene_baseline,
+        "canonical_documents": canonical_documents,
     }, sort_keys=True, separators=(",", ":"))
     return BootstrapPlan(
         facts,
@@ -309,6 +415,7 @@ def build_bootstrap_plan(
         gaps,
         model,
         hashlib.sha256(payload.encode()).hexdigest(),
+        canonical_documents,
         accept_hygiene_baseline,
     )
 

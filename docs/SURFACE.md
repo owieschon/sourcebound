@@ -16,5 +16,5 @@ The catalog binding catches additions, removals, and replacements across the det
 | runtime-constraint | 1 | `Python >=3.10` |
 | test-suite | 46 | `scripts/test_release_lifecycle.py`, `tests/test_audit.py`, `tests/test_changed_check.py`, and 43 more |
 
-<!-- clean-docs:inventory-sha256 a2430790a12cf9feb33ee44bfdc4ab375906abc8a70ca1047719b9da3f87f2e3 -->
+<!-- clean-docs:inventory-sha256 35cafdb10f56803b01bde658179334efa2335d0a194b753d53d4377effcea766 -->
 <!-- clean-docs:end repository-surface -->

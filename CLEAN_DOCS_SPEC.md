@@ -830,6 +830,9 @@ Version 0 preservation work at the start of Version 0.1:
 - Upgrade and deprecation policy.
 - Exact, reviewable hygiene baselines for adopting repositories with existing documentation debt.
 - Compact bootstrap summaries that preserve a deterministic digest of the full detected catalog.
+- Nested workspace and package discovery, including package manifests outside the root workspace glob.
+- Conservative onboarding that leaves weak purpose openings unresolved instead of certifying metadata or boilerplate.
+- Bounded canonical-document selection for `llms.txt`, with bound facts distinguished from declared context.
 - Public documentation generated and checked by clean-docs.
 - A compiled voice and BLUF purpose contract used by bootstrap, audit, and phrasing prompts.
 - Public source repository under the MIT license from the first supported release.
@@ -843,6 +846,9 @@ Version 0 preservation work at the start of Version 0.1:
    - Then the repo reaches a passing protected baseline without manual document or manifest editing for discovered standard surfaces.
    - Every active Markdown page opens with a purpose contract; existing author prose remains byte-for-byte inside its markers, and a second init has no patch.
    - Given an existing corpus with hygiene debt, the explicit adoption mode records exact findings, fails on new findings, and requires baseline pruning when debt is resolved.
+   - Given metadata, a status line, or a feature fragment where purpose prose should be, deterministic init leaves the page unchanged and names the authored-judgment gap.
+   - Given a mature monorepo, the plan discovers nested packages and registered tools, excludes explicit Markdown fixtures, keeps ambiguous operational documents active, caps serialized facts and diffs, and proposes no more than eight canonical documents.
+   - A source-bound registered-tool count changes when the registration source changes; a repository catalog never reports unrelated prose as directly bound.
 2. **full change lifecycle**
    - Given a protected repo and a pull request that changes, adds, and removes public behavior.
    - When the contributor follows repair output.

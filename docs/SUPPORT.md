@@ -3,6 +3,7 @@
 <!-- clean-docs:purpose -->
 Use this guide when adopting, upgrading, rolling back, diagnosing, or requesting help for clean-docs. It prevents unsupported assumptions from entering a production gate and gives operators the exact compatibility, evidence, and recovery procedures for a supported installation.
 <!-- clean-docs:end purpose -->
+<!-- clean-docs:allow doc-length reason="One canonical lifecycle guide keeps adoption and recovery procedures together" -->
 ## Supported environments
 
 | Surface | Supported contract |
@@ -32,7 +33,7 @@ The workflow rejects tags, branches, abbreviated commits, and non-hexadecimal in
 
 ## Adopt an existing documentation corpus
 
-`init` is strict by default. It rolls back every bootstrap write when the current corpus has a hygiene finding. A mature repository can preserve that behavior for future changes while recording its current debt:
+`init` is strict by default. It rolls back every bootstrap write when the current corpus has a hygiene finding. It also stops before writing when a page has no substantive authored opening that can be marked as its purpose contract. Metadata, status labels, feature fragments, and generated title boilerplate do not satisfy that boundary. A mature repository can preserve strict future checks while recording its current debt:
 
 ```bash
 clean-docs init --no-model --accept-hygiene-baseline
@@ -40,7 +41,9 @@ git diff -- .clean-docs/audit-baseline.json
 clean-docs audit
 ```
 
-The committed baseline records each exact rule, path, line, detail, and fingerprint. Adoption mode does not archive or move existing documents. It does not ignore a rule or reader-facing directory. Hidden configuration trees are outside the documentation corpus. `audit` fails when a new finding appears. It also fails with `stale-baseline` when a recorded finding is resolved, because the baseline must shrink to match current debt.
+The committed baseline records each exact rule, path, line, detail, and fingerprint, including unresolved purpose-contract findings. Adoption mode does not archive or move existing documents. Ambiguous names such as `DEPLOYMENT_PLAN.md` and `ARCHITECTURE_NOTES.md` remain active documentation; only unambiguous process artifacts and exact duplicates are archive candidates outside adoption mode. Files named `*.fixture.md` are explicit test inputs rather than reader documentation. Hidden configuration trees are outside the documentation corpus. `audit` fails when a new finding appears. It also fails with `stale-baseline` when a recorded finding is resolved, because the baseline must shrink to match current debt.
+
+The JSON content plan emits at most 100 representative facts and 4,000 bytes of diff per operation. `fact_count`, `facts_omitted`, `diff_truncated`, the full-plan digest, and the proposed `canonical_documents` preserve the review boundary without printing a repository-sized response. `llms.txt` indexes those declared canonical documents and distinguishes pages with bindings from declared context.
 
 After reviewing intentional documentation repairs, replace the baseline with the current exact findings:
 

@@ -149,6 +149,40 @@ def test_hidden_configuration_markdown_is_not_reader_documentation(tmp_path: Pat
     assert report.ignored_documents == (".agent/commands/STATUS.md",)
 
 
+def test_fixture_markdown_and_ambiguous_operational_names_are_not_process_history(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    scripts = root / "scripts"
+    scripts.mkdir()
+    (root / "README.md").write_text(
+        "# Project\n\nUse this guide when changing the project. Without its constraints, "
+        "a change can drift; after reading, maintainers can verify the supported path.\n"
+    )
+    (root / "ARCHITECTURE_NOTES.md").write_text(
+        "# Architecture constraints\n\nUse these notes before changing deployment boundaries. "
+        "Without the active constraints, a change can break isolation; after reading, "
+        "operators can verify the safe topology.\n"
+    )
+    (root / "DEPLOYMENT_PLAN.md").write_text(
+        "# Deployment plan\n\nUse this plan when preparing a deployment. Without its current "
+        "gates, an unsafe release can proceed; after reading, operators can verify readiness.\n"
+    )
+    (scripts / "links.fixture.md").write_text(
+        "Negative control: `scripts/does-not-exist.py`\n"
+    )
+    _track(root)
+
+    report = audit(root)
+
+    assert report.ok
+    assert report.documents == (
+        "ARCHITECTURE_NOTES.md",
+        "DEPLOYMENT_PLAN.md",
+        "README.md",
+    )
+
+
 def test_exact_baseline_fails_on_new_and_resolved_findings(tmp_path: Path) -> None:
     root = _repo(tmp_path)
     readme = root / "README.md"
