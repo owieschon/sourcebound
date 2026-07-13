@@ -1,26 +1,103 @@
 from __future__ import annotations
 
 import difflib
+import hashlib
+import json
+import re
 from pathlib import Path
 
-from clean_docs.errors import ConfigurationError
-from clean_docs.extractors import extract_json_pointer, extract_python_literal
+from clean_docs.errors import ConfigurationError, ExtractionError
+from clean_docs.extractors import extract_command, extract_json_pointer, extract_python_literal
 from clean_docs.manifest import load_manifest
-from clean_docs.models import BindingResult, RegionBinding
+from clean_docs.models import (
+    Binding,
+    BindingResult,
+    ClaimBinding,
+    Manifest,
+    Provenance,
+    RegionBinding,
+    SymbolBinding,
+)
 from clean_docs.policy import PolicyFinding, check_documents
 from clean_docs.regions import atomic_write, replace_region
 from clean_docs.renderers import render_markdown_table
 from clean_docs.snapshot import RepositorySnapshot
 from clean_docs.standard import load_default_pack
+from clean_docs.symbols import resolve_symbol
 
 
-def _select(bindings: tuple[RegionBinding, ...], binding_id: str | None) -> list[RegionBinding]:
+def _select(bindings: tuple[Binding, ...], binding_id: str | None) -> list[Binding]:
     if binding_id is None:
         return list(bindings)
     selected = [binding for binding in bindings if binding.id == binding_id]
     if not selected:
         raise ConfigurationError(f"unknown binding id: {binding_id}")
     return selected
+
+
+def _document(root: Path, binding: Binding) -> str:
+    try:
+        return (root / binding.doc).read_text(encoding="utf-8")
+    except OSError as exc:
+        raise ConfigurationError(f"cannot read bound document {binding.doc}: {exc}") from exc
+
+
+def _has_anchor(document: str, anchor: str) -> bool:
+    for line in document.splitlines():
+        match = re.match(r"^#{1,6}\s+(.+?)\s*$", line)
+        if match:
+            slug = re.sub(r"[^a-z0-9 -]", "", match.group(1).lower()).replace(" ", "-")
+            if slug == anchor:
+                return True
+    return False
+
+
+def _claim_result(root: Path, snapshot: RepositorySnapshot, manifest: Manifest, binding: ClaimBinding) -> BindingResult:
+    document = _document(root, binding)
+    if not _has_anchor(document, binding.anchor):
+        raise ConfigurationError(f"document anchor not found: {binding.doc}#{binding.anchor}")
+    command = next(item for item in manifest.commands if item.id == binding.command)
+    evidence = extract_command(snapshot, command, binding.assertion.path)
+    changed = evidence.value != binding.assertion.expected
+    expected = json.dumps(binding.assertion.expected, sort_keys=True)
+    observed = json.dumps(evidence.value, sort_keys=True)
+    diff = "" if not changed else (
+        f"claim {binding.doc}#{binding.anchor}: expected {expected}, observed {observed}\n"
+    )
+    return BindingResult(
+        binding.id, binding.doc.as_posix(), changed, expected, observed, diff,
+        evidence.provenance, "claim",
+    )
+
+
+def _symbol_result(root: Path, snapshot: RepositorySnapshot, binding: SymbolBinding) -> BindingResult:
+    document = _document(root, binding)
+    if not _has_anchor(document, binding.anchor):
+        raise ConfigurationError(f"document anchor not found: {binding.doc}#{binding.anchor}")
+    try:
+        evidence = resolve_symbol(snapshot, binding)
+        changed = False
+        observed = "exists"
+        provenance = evidence.provenance
+        diff = ""
+    except ExtractionError as exc:
+        if "not found" not in str(exc) and "cannot read source" not in str(exc):
+            raise
+        changed = True
+        observed = "missing"
+        locator = binding.source.symbol or binding.source.path.as_posix()
+        provenance = Provenance(
+            snapshot.label,
+            binding.source.path.as_posix(),
+            locator,
+            "symbol@1",
+            hashlib.sha256(locator.encode()).hexdigest(),
+        )
+        diff = f"symbol {locator} referenced by {binding.doc}#{binding.anchor} is missing\n"
+    return BindingResult(
+        binding.id, binding.doc.as_posix(), changed, "exists", observed, diff,
+        provenance, "symbol",
+    )
 
 
 def evaluate(
@@ -35,6 +112,13 @@ def evaluate(
     results: list[BindingResult] = []
     documents: dict[str, str] = {}
     for binding in _select(manifest.bindings, binding_id):
+        if isinstance(binding, ClaimBinding):
+            results.append(_claim_result(root, snapshot, manifest, binding))
+            continue
+        if isinstance(binding, SymbolBinding):
+            results.append(_symbol_result(root, snapshot, binding))
+            continue
+        assert isinstance(binding, RegionBinding)
         evidence = (
             extract_python_literal(snapshot, binding)
             if binding.extractor == "python-literal"
@@ -74,6 +158,8 @@ def evaluate(
 def write_results(root: Path, results: list[BindingResult]) -> None:
     by_doc: dict[str, str] = {}
     for result in results:
+        if result.binding_type != "region":
+            continue
         current = by_doc.get(result.doc)
         if current is not None and current != result.observed:
             raise ConfigurationError(
@@ -87,6 +173,8 @@ def write_results(root: Path, results: list[BindingResult]) -> None:
 def planned_documents(results: list[BindingResult]) -> dict[str, str]:
     documents: dict[str, str] = {}
     for result in results:
+        if result.binding_type != "region":
+            continue
         current = documents.get(result.doc)
         if current is not None and current != result.observed:
             raise ConfigurationError(f"binding plan for {result.doc} is not sequential")
@@ -107,6 +195,6 @@ def drive(
         return results, findings
     write_results(root, results)
     remaining = evaluate(root, manifest_path, ref=ref, binding_id=binding_id)
-    if any(result.changed for result in remaining):
+    if any(result.changed for result in remaining if result.binding_type == "region"):
         raise ConfigurationError("drive wrote documentation but drift remains")
     return results, []

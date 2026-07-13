@@ -46,7 +46,7 @@ def test_loads_json_pointer_binding(tmp_path: Path) -> None:
         ("version: 1", "unknown key"),
         ("version: 2", "version must be 1"),
         ("doc: ../README.md", "stay inside"),
-        ("type: claim", "must be region"),
+        ("type: coverage", "must be region, claim, or symbol"),
         ("docs: {}", "unknown key"),
     ],
 )
