@@ -1,5 +1,14 @@
 version: 1
 bindings:
+  - id: product-overview
+    type: region
+    doc: README.md
+    region: product-overview
+    extractor: python-literal
+    source:
+      path: src/clean_docs/capabilities.py
+      symbol: PRODUCT_OVERVIEW
+    renderer: scalar
   - id: supported-bindings
     type: region
     doc: README.md

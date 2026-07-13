@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from clean_docs.errors import ConfigurationError
+from clean_docs.manifest import load_manifest
 from clean_docs.policy import check_document
 from clean_docs.standard import compile_standard, load_default_pack, load_pack, pack_matches_standard
 
@@ -53,3 +54,12 @@ def test_rejects_modified_policy_pack(tmp_path: Path) -> None:
     path.write_text(json.dumps(pack))
     with pytest.raises(ConfigurationError, match="integrity"):
         load_pack(path)
+
+
+def test_first_screen_capability_summary_is_self_derived() -> None:
+    manifest = load_manifest(ROOT / ".clean-docs.yml")
+
+    assert {binding.id for binding in manifest.bindings} >= {
+        "product-overview",
+        "supported-bindings",
+    }
