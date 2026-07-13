@@ -102,15 +102,16 @@ This table is derived from `src/clean_docs/capabilities.py` by clean-docs itself
 | binding | source | output | check |
 | --- | --- | --- | --- |
 | claim | Allowlisted JSON command | Assertion at a document anchor | Compare typed expected and observed values |
-| region | Static Python assignment or JSON Pointer | Markdown table | Re-render and compare |
+| region | Static Python, structured data, text, or paths | Table, list, scalar, or fenced text | Re-render and compare |
 | symbol | Static path or Python symbol | Reference at a document anchor | Resolve the cited locator |
 <!-- clean-docs:end supported-bindings -->
 
 ## Current limits
 
 - Manifest version 1 accepts `region`, `claim`, and `symbol` bindings.
-- Regions support `python-literal` and `json` extractors with the `markdown-table` renderer.
+- Regions support static Python, JSON, YAML, TOML, text files, and path globs with typed renderers.
 - Claims consume JSON from an allowlisted command; symbols resolve static paths or Python names.
+- Command allowlisting and timeouts are enforced; network isolation belongs to the execution environment.
 - Source constructor calls must use keyword arguments.
 - Destination markers must already exist and cannot nest.
 - clean-docs reports malformed configuration as exit `2`, drift as exit `1`, and extraction failures as exit `3`.

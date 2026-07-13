@@ -95,3 +95,28 @@ def test_drive_does_not_claim_to_repair_assertion_drift(tmp_path: Path) -> None:
     report = json.loads(driven.stdout.split("\ndrive:", 1)[0])
     assert report["ok"] is False
     assert report["results"][0]["status"] == "drift"
+
+
+def test_command_claim_reads_immutable_ref_without_worktree_mutation(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+    subprocess.run(
+        ["git", "-C", str(root), "-c", "user.name=Fixture", "-c",
+         "user.email=fixture@example.test", "commit", "-qm", "baseline"],
+        check=True,
+    )
+    baseline = subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "HEAD"],
+        text=True,
+        capture_output=True,
+        check=True,
+    ).stdout.strip()
+    changed = 'import json\nprint(json.dumps({"collected": 3}))\n'
+    (root / "scripts/count.py").write_text(changed)
+
+    assert _run(root, "check").returncode == 1
+    pinned = _run(root, "check", "--ref", baseline, "--format", "json")
+    assert pinned.returncode == 0, pinned.stderr
+    assert json.loads(pinned.stdout)["results"][0]["provenance"]["ref"] == baseline
+    assert (root / "scripts/count.py").read_text() == changed

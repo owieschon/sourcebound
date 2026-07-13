@@ -10,6 +10,7 @@ class Source:
     path: Path
     symbol: str | None = None
     pointer: str | None = None
+    glob: str | None = None
 
 
 @dataclass(frozen=True)
@@ -21,6 +22,7 @@ class RegionBinding:
     source: Source
     renderer: str
     columns: tuple[str, ...]
+    language: str | None = None
 
 
 @dataclass(frozen=True)

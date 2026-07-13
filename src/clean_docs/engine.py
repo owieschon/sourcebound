@@ -7,7 +7,14 @@ import re
 from pathlib import Path
 
 from clean_docs.errors import ConfigurationError, ExtractionError
-from clean_docs.extractors import extract_command, extract_json_pointer, extract_python_literal
+from clean_docs.extractors import (
+    extract_command,
+    extract_file,
+    extract_json_pointer,
+    extract_paths,
+    extract_python_literal,
+    extract_structured,
+)
 from clean_docs.manifest import load_manifest
 from clean_docs.models import (
     Binding,
@@ -20,7 +27,7 @@ from clean_docs.models import (
 )
 from clean_docs.policy import PolicyFinding, check_documents
 from clean_docs.regions import atomic_write, replace_region
-from clean_docs.renderers import render_markdown_table
+from clean_docs.renderers import render
 from clean_docs.snapshot import RepositorySnapshot
 from clean_docs.standard import load_default_pack
 from clean_docs.symbols import resolve_symbol
@@ -119,12 +126,15 @@ def evaluate(
             results.append(_symbol_result(root, snapshot, binding))
             continue
         assert isinstance(binding, RegionBinding)
-        evidence = (
-            extract_python_literal(snapshot, binding)
-            if binding.extractor == "python-literal"
-            else extract_json_pointer(snapshot, binding)
-        )
-        rendered = render_markdown_table(evidence, binding)
+        extractors = {
+            "file": extract_file,
+            "json": extract_json_pointer,
+            "path": extract_paths,
+            "python-literal": extract_python_literal,
+            "structured-data": extract_structured,
+        }
+        evidence = extractors[binding.extractor](snapshot, binding)
+        rendered = render(evidence, binding)
         doc_path = root / binding.doc
         doc_key = binding.doc.as_posix()
         if doc_key not in documents:

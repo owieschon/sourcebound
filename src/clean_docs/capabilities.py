@@ -9,8 +9,8 @@ SUPPORTED_BINDINGS = {
     },
     "region": {
         "binding": "region",
-        "source": "Static Python assignment or JSON Pointer",
-        "output": "Markdown table",
+        "source": "Static Python, structured data, text, or paths",
+        "output": "Table, list, scalar, or fenced text",
         "check": "Re-render and compare",
     },
     "symbol": {

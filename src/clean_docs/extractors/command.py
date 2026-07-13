@@ -23,19 +23,18 @@ def _select(value: Any, path: str) -> Any:
 def extract_command(
     snapshot: RepositorySnapshot, command: CommandSpec, json_path: str
 ) -> EvidenceValue:
-    if snapshot.ref is not None:
-        raise ExtractionError("command extraction at an immutable ref is not implemented")
     env = {key: value for key, value in os.environ.items() if key in {"HOME", "PATH", "TMPDIR"}}
     try:
-        proc = subprocess.run(
-            list(command.argv),
-            cwd=snapshot.root,
-            env=env,
-            text=True,
-            capture_output=True,
-            timeout=command.timeout_seconds,
-            check=False,
-        )
+        with snapshot.materialized_root() as command_root:
+            proc = subprocess.run(
+                list(command.argv),
+                cwd=command_root,
+                env=env,
+                text=True,
+                capture_output=True,
+                timeout=command.timeout_seconds,
+                check=False,
+            )
     except (OSError, subprocess.SubprocessError) as exc:
         raise ExtractionError(f"command {command.id} failed to run: {exc}") from exc
     if proc.returncode != 0:

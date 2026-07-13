@@ -20,10 +20,11 @@ from clean_docs.models import (
 ROOT_KEYS = {"version", "bindings", "execution"}
 BINDING_KEYS = {
     "id", "type", "doc", "region", "anchor", "extractor", "source", "renderer",
-    "columns", "command", "assertion",
+    "columns", "language", "command", "assertion",
 }
-SOURCE_KEYS = {"path", "symbol", "pointer"}
-EXTRACTORS = {"json", "python-literal"}
+SOURCE_KEYS = {"path", "symbol", "pointer", "glob"}
+EXTRACTORS = {"file", "json", "path", "python-literal", "structured-data"}
+RENDERERS = {"fenced-text", "markdown-list", "markdown-table", "scalar"}
 EXECUTION_KEYS = {"commands", "allowed_commands"}
 COMMAND_KEYS = {"argv", "timeout_seconds", "network"}
 ASSERTION_KEYS = {"json_path", "operator", "expected"}
@@ -154,45 +155,92 @@ def load_manifest(path: Path) -> Manifest:
             raise ConfigurationError(
                 f"{where}.extractor must be one of: {', '.join(sorted(EXTRACTORS))}"
             )
-        if data.get("renderer") != "markdown-table":
-            raise ConfigurationError(f"{where}.renderer must be markdown-table in this release")
+        renderer = data.get("renderer")
+        if renderer not in RENDERERS:
+            raise ConfigurationError(
+                f"{where}.renderer must be one of: {', '.join(sorted(RENDERERS))}"
+            )
 
         symbol = source_data.get("symbol")
         pointer = source_data.get("pointer")
+        source_glob = source_data.get("glob")
+        source_path = source_data.get("path")
         if extractor == "python-literal":
             if not isinstance(symbol, str) or not symbol.isidentifier():
                 raise ConfigurationError(f"{where}.source.symbol must be a Python identifier")
-            if pointer is not None:
-                raise ConfigurationError(f"{where}.source.pointer is only valid for json")
-        else:
+            if pointer is not None or source_glob is not None:
+                raise ConfigurationError(f"{where}.source has fields invalid for python-literal")
+        elif extractor == "json":
             if symbol is not None:
                 raise ConfigurationError(f"{where}.source.symbol is only valid for python-literal")
             if not isinstance(pointer, str) or not pointer.startswith("/"):
                 raise ConfigurationError(
                     f"{where}.source.pointer must be a JSON Pointer starting with /"
                 )
+        elif extractor == "structured-data":
+            if pointer is not None and (
+                not isinstance(pointer, str) or not pointer.startswith("/")
+            ):
+                raise ConfigurationError(f"{where}.source.pointer must start with /")
+            if symbol is not None or source_glob is not None:
+                raise ConfigurationError(f"{where}.source has fields invalid for structured-data")
+        elif extractor == "file":
+            if any(value is not None for value in (symbol, pointer, source_glob)):
+                raise ConfigurationError(f"{where}.source.path is the only valid file source field")
+        else:
+            if not isinstance(source_glob, str) or not source_glob:
+                raise ConfigurationError(f"{where}.source.glob must be non-empty")
+            glob_path = Path(source_glob)
+            if glob_path.is_absolute() or ".." in glob_path.parts:
+                raise ConfigurationError(f"{where}.source.glob must stay inside the repository")
+            if any(value is not None for value in (symbol, pointer, source_path)):
+                raise ConfigurationError(f"{where}.source.glob is the only valid path source field")
+
+        compatible = {
+            "file": {"fenced-text", "scalar"},
+            "json": {"markdown-table"},
+            "path": {"markdown-list"},
+            "python-literal": {"markdown-table"},
+            "structured-data": {"markdown-list", "markdown-table", "scalar"},
+        }
+        if renderer not in compatible[extractor]:
+            raise ConfigurationError(
+                f"{where}.renderer {renderer} is incompatible with extractor {extractor}"
+            )
+        language = data.get("language")
+        if language is not None and (
+            renderer != "fenced-text" or not isinstance(language, str)
+        ):
+            raise ConfigurationError(f"{where}.language is only valid for fenced-text")
         region = data.get("region")
         if not isinstance(region, str) or not region.strip():
             raise ConfigurationError(f"{where}.region must be a non-empty string")
-        columns = data.get("columns")
-        if (
-            not isinstance(columns, list)
-            or not columns
-            or not all(isinstance(column, str) and column for column in columns)
-            or len(set(columns)) != len(columns)
-        ):
-            raise ConfigurationError(f"{where}.columns must be unique non-empty strings")
+        columns = data.get("columns", [])
+        if renderer == "markdown-table":
+            if (
+                not isinstance(columns, list)
+                or not columns
+                or not all(isinstance(column, str) and column for column in columns)
+                or len(set(columns)) != len(columns)
+            ):
+                raise ConfigurationError(f"{where}.columns must be unique non-empty strings")
+        elif columns:
+            raise ConfigurationError(f"{where}.columns is only valid for markdown-table")
         bindings.append(RegionBinding(
             id=binding_id,
             doc=_relative_path(data.get("doc"), f"{where}.doc"),
             region=region,
             extractor=extractor,
             source=Source(
-                path=_relative_path(source_data.get("path"), f"{where}.source.path"),
+                path=Path(".") if extractor == "path" else _relative_path(
+                    source_path, f"{where}.source.path"
+                ),
                 symbol=symbol,
                 pointer=pointer,
+                glob=source_glob,
             ),
-            renderer=data["renderer"],
+            renderer=renderer,
             columns=tuple(columns),
+            language=language,
         ))
     return Manifest(path=path, version=1, bindings=tuple(bindings), commands=tuple(commands))
