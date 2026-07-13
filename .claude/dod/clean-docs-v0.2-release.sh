@@ -6,7 +6,7 @@ root="${HOME}/dev/doc-standard"
 cd "$root"
 
 sh .claude/dod/clean-docs-v0.1-slice.sh
-PYTHONPATH=src python3 -m clean_docs --version | grep -q '^0.2.0$'
+git show v0.2.0:pyproject.toml | grep -q '^version = "0.2.0"$'
 python3 scripts/run_acceptance.py \
   --registry tests/v02-acceptance.yml \
   --out /tmp/clean-docs-v02-acceptance.json >/dev/null
