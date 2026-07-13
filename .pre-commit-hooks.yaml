@@ -1,0 +1,14 @@
+- id: clean-docs-check
+  name: clean-docs check
+  description: Reject documentation drift.
+  entry: clean-docs check
+  language: python
+  pass_filenames: false
+  always_run: true
+- id: clean-docs-audit
+  name: clean-docs audit
+  description: Reject documentation corpus findings.
+  entry: clean-docs audit
+  language: python
+  pass_filenames: false
+  always_run: true

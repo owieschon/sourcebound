@@ -28,4 +28,5 @@ jobs:
       - run: python -m ruff check src tests
       - run: python scripts/check_doc_names.py
       - run: clean-docs --root . audit
+      - run: clean-docs --root . doctor
       - run: python scripts/trusted_self_check.py

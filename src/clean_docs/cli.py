@@ -8,6 +8,7 @@ from pathlib import Path
 
 from clean_docs import __version__
 from clean_docs.audit import audit
+from clean_docs.doctor import diagnose
 from clean_docs.engine import drive, evaluate, write_results
 from clean_docs.errors import CleanDocsError
 from clean_docs.models import BindingResult
@@ -24,6 +25,8 @@ def _parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
     audit_parser = sub.add_parser("audit", help="inventory and check documentation without a manifest")
     audit_parser.add_argument("--format", choices=("text", "json"), default="text")
+    doctor_parser = sub.add_parser("doctor", help="check repository and integration readiness")
+    doctor_parser.add_argument("--format", choices=("text", "json"), default="text")
     derive = sub.add_parser("derive", help="preview or write generated documentation regions")
     derive.add_argument("--write", action="store_true", help="write derived regions atomically")
     derive.add_argument("--check", action="store_true", help="exit 1 when a region would change")
@@ -113,6 +116,18 @@ def main(argv: list[str] | None = None) -> int:
                 f"{len(report.ignored_documents)} archived, {len(report.findings)} finding(s)"
             )
         return 1 if report.findings else 0
+    if args.command == "doctor":
+        manifest = args.manifest if args.manifest.is_absolute() else root / args.manifest
+        checks = diagnose(root, manifest)
+        if args.format == "json":
+            print(json.dumps({
+                "ok": all(check.ok for check in checks),
+                "checks": [asdict(check) for check in checks],
+            }, indent=2))
+        else:
+            for check in checks:
+                print(f"[{'ok' if check.ok else 'fail'}] {check.name}: {check.detail}")
+        return 0 if all(check.ok for check in checks) else 1
     if args.command == "standard":
         source = args.source if args.source.is_absolute() else root / args.source
         output = args.output if args.output.is_absolute() else root / args.output
