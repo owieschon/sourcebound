@@ -90,6 +90,20 @@ def test_first_screen_capability_summary_is_self_derived() -> None:
     }
 
 
+def test_readme_and_standard_define_themselves_before_describing_value() -> None:
+    readme = (ROOT / "README.md").read_text()
+    standard = (ROOT / "STANDARD.md").read_text()
+
+    readme_opening = readme.split(PURPOSE_BEGIN, 1)[1].split(PURPOSE_END, 1)[0].strip()
+    standard_opening = standard.split(PURPOSE_BEGIN, 1)[1].split(PURPOSE_END, 1)[0].strip()
+    assert readme_opening.startswith(
+        "clean-docs is a source-bound documentation engine and CLI"
+    )
+    assert standard_opening.startswith(
+        "STANDARD.md is the canonical writing and documentation policy"
+    )
+
+
 def test_product_overview_does_not_duplicate_release_version() -> None:
     assert re.search(r"\bVersion \d+\.\d+", PRODUCT_OVERVIEW) is None
 

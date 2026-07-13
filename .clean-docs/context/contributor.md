@@ -1,19 +1,19 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `1fc099ab53678bd5c4bbe3ad9d7250dd6c2e79393533c423876e2c1bd8cfa4b8`
+- Corpus sha256: `45aa4e6afa0812f21abe954ec769bfe16df2a92eebbfe2342c9a4a30b0478b8d`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `ab2fc7606e77c47cd4a62d2711f809097f94c316c5d08c91ce459e46008003ef`
+- Content sha256: `3188b3f2e5aecef1610bc864a40f8e86d1eb2757f82ea21f47b9b9d038e85c73`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
 
 <!-- clean-docs:purpose -->
-Use clean-docs when code changes faster than its documentation and reviewers cannot tell which claims are stale. It gives maintainers a local, deterministic path from source change to repaired, verified docs; models may phrase facts, but they never decide the facts or gate results.
+clean-docs is a source-bound documentation engine and CLI for maintainers whose code changes faster than its documentation. It identifies stale claims and provides a local, deterministic path from source change to repaired, verified docs; models may phrase facts, but they never choose the facts or gate results.
 <!-- clean-docs:end purpose -->
 <!-- clean-docs:allow doc-length reason="The canonical overview keeps installation, first protection, manifest shape, and current boundaries in one reader path" -->
 <!-- clean-docs:begin product-overview -->
