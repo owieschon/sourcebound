@@ -409,6 +409,9 @@ Repository content is untrusted input.
 - Repository text is scanned for prompt-injection patterns before it enters a phrasing-model context.
 - Provider health checks fail closed before model-assisted work starts.
 - CI pins clean-docs and third-party extractor versions.
+- A clean-docs candidate cannot be its own release authority. The last trusted commit
+  checks the candidate tree independently, and trust-pin promotion is a separate release
+  operation after candidate tests and dogfood proofs pass.
 
 The initial local implementation may rely on operating-system process controls. The public v1.0 claim requires a documented isolation model and adversarial tests for repository-controlled configuration and content.
 
@@ -483,7 +486,9 @@ Version 0 preservation work at the start of Version 0.1:
 - `check`, terminal output, and JSON output.
 - Pre-commit example and reusable GitHub Actions workflow.
 - `doctor` command for configuration, dependency, and isolation readiness.
-- Dogfood manifests for ultra-csm and bank-mcp.
+- Pinned dogfood manifests for ultra-csm and agent-governance-lab.
+- A dual self-hosting gate that runs both the candidate and a verifier extracted from a
+  pinned trusted ancestor without importing candidate clean-docs code.
 
 #### Functional E2E tests
 
@@ -519,15 +524,21 @@ Version 0 preservation work at the start of Version 0.1:
    - Given archived docs, `IF/THEN` decision records, and technical `byte-identical` claims from the prior triage.
    - When corpus policy runs.
    - Then the archived content is skipped in directory scans and the two technical phrases do not create the previous false positives.
+9. **self-hosting checker tampering**
+   - Given stale generated documentation and a candidate checker changed to always pass.
+   - When the dual self-hosting gate runs.
+   - Then the candidate result passes, the pinned trusted verifier fails on the stale binding, and the combined gate exits nonzero.
 
 #### Definition of done
 
-- All eight E2E scenarios run in CI from temporary git repositories.
+- All nine E2E scenarios run in CI from temporary git repositories.
 - The packaged policy engine passes Version 0 parity before the binding engine replaces any live script.
 - Unit and integration tests cover schema rejection, marker corruption, extractor failure, and exit-code contracts.
 - `clean-docs check` invokes no model and performs no network request.
 - Both dogfood repositories pass at pinned commits with different binding types.
 - A deliberate drift commit fails in each dogfood repository.
+- A candidate checker cannot override a trusted-verifier failure, and CI fetches the
+  pinned ancestor required to run that verifier.
 - The generic file, structured-data, command, and path bindings require no Python project metadata.
 - Installation from a clean environment and `clean-docs --help` succeed on supported Python versions.
 - The README CLI and manifest reference are generated and verified by clean-docs itself.
