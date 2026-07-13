@@ -63,8 +63,11 @@ def test_llms_index_follows_format_and_tracks_document_content(tmp_path: Path) -
     text = output.read_text()
     assert text.startswith("# Fixture docs\n\n> Bound documentation index.\n")
     assert "## Source-bound documentation" in text
-    assert "[README.md](README.md): bindings: overview; sha256:" in text
-    assert "[docs/REFERENCE.md](docs/REFERENCE.md): bindings: settings; sha256:" in text
+    assert "[README.md](../repo/README.md): bindings: overview; sha256:" in text
+    assert (
+        "[docs/REFERENCE.md](../repo/docs/REFERENCE.md): bindings: settings; sha256:"
+        in text
+    )
     assert str(root) not in text
     assert len(re.findall(r"sha256: [0-9a-f]{64}", text)) == 2
 

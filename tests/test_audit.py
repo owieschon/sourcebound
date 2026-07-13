@@ -64,3 +64,23 @@ def test_audit_runs_corpus_rules_and_accepts_named_reasoned_allowances(tmp_path:
     assert [(finding.rule, finding.line) for finding in report.findings] == [
         ("provenance", 6),
     ]
+
+
+def test_generated_context_bundles_are_not_canonical_corpus_pages(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    (root / "README.md").write_text(
+        "# Project\n\nCanonical factual guidance with enough distinct words for corpus analysis.\n"
+    )
+    bundle = root / ".clean-docs/context/contributor.md"
+    bundle.parent.mkdir(parents=True)
+    bundle.write_text(
+        "# Context bundle\n\n"
+        "Canonical factual guidance with enough distinct words for corpus analysis.\n"
+    )
+    _track(root)
+
+    report = audit(root)
+
+    assert report.findings == ()
+    assert report.documents == ("README.md",)
+    assert report.ignored_documents == (".clean-docs/context/contributor.md",)

@@ -1,3 +1,15 @@
+# Context bundle: contributor
+
+- Source ref: `WORKTREE`
+- Corpus sha256: `9b0f44ab9d2459b272c8d8b4b119bdf845ed9de3685d831a2db4f1cb623d3327`
+- Content: exact canonical document bytes
+
+## Canonical document: README.md
+
+- Source: [README.md](../../README.md)
+- Content sha256: `e16df9176309811b9485eb48954fce2c2f771082d921bfc35437547adf81dc12`
+
+<!-- clean-docs:canonical README.md begin -->
 # clean-docs
 
 clean-docs is a self-driving documentation system that applies one packaged standard and keeps repository documentation current for humans and agents.
@@ -118,3 +130,4 @@ This table is derived from `src/clean_docs/capabilities.py` by clean-docs itself
 - clean-docs reports malformed configuration as exit `2`, drift as exit `1`, and extraction failures as exit `3`.
 
 The full product contract and version plan live in [`CLEAN_DOCS_SPEC.md`](CLEAN_DOCS_SPEC.md).
+<!-- clean-docs:canonical README.md end -->

@@ -15,6 +15,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any
 
+import yaml
+
 
 TRUST_KEYS = {"schema_version", "channel", "commit", "package_version", "required_checks"}
 CHECKS = {
@@ -121,6 +123,28 @@ def _candidate_command(root: Path, args: tuple[str, ...]) -> tuple[list[str], di
     return [sys.executable, "-m", "clean_docs", "--root", str(root), *args], env
 
 
+def _trusted_manifest(root: Path, destination: Path) -> Path:
+    """Write the manifest subset understood by the pinned verifier."""
+    manifest = root / ".clean-docs.yml"
+    try:
+        raw = yaml.safe_load(manifest.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError) as exc:
+        raise RuntimeError(f"cannot prepare trusted manifest view: {exc}") from exc
+    if not isinstance(raw, dict):
+        raise RuntimeError("cannot prepare trusted manifest view: root must be a mapping")
+    required = {"version", "bindings"}
+    if not required <= set(raw):
+        raise RuntimeError("cannot prepare trusted manifest view: version or bindings missing")
+    legacy = {
+        key: raw[key]
+        for key in ("version", "bindings", "execution")
+        if key in raw
+    }
+    output = destination / "trusted-manifest.yml"
+    output.write_text(yaml.safe_dump(legacy, sort_keys=False), encoding="utf-8")
+    return output
+
+
 def verify(root: Path, trust_path: Path | None = None) -> dict[str, Any]:
     root = root.resolve()
     trust_file = trust_path or root / ".clean-docs-trust.json"
@@ -128,10 +152,17 @@ def verify(root: Path, trust_path: Path | None = None) -> dict[str, Any]:
     _validate_commit(root, trust)
     results: list[CheckResult] = []
     with tempfile.TemporaryDirectory(prefix="clean-docs-trusted-") as temporary:
-        source = _extract_trusted_source(root, trust["commit"], Path(temporary))
+        temp_root = Path(temporary)
+        source = _extract_trusted_source(root, trust["commit"], temp_root)
+        trusted_manifest = _trusted_manifest(root, temp_root)
         for check in trust["required_checks"]:
             args = CHECKS[check]
-            trusted = _command(_trusted_command(source, root, args), cwd=root)
+            trusted_args = (
+                ("--manifest", str(trusted_manifest), *args)
+                if check == "bindings"
+                else args
+            )
+            trusted = _command(_trusted_command(source, root, trusted_args), cwd=root)
             results.append(CheckResult(
                 authority="trusted",
                 check=check,

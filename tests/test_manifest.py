@@ -40,6 +40,51 @@ def test_loads_json_pointer_binding(tmp_path: Path) -> None:
     assert binding.source.symbol is None
 
 
+def test_loads_strict_projection_contract(tmp_path: Path) -> None:
+    path = tmp_path / ".clean-docs.yml"
+    path.write_text(VALID + """\
+projections:
+  llms_txt:
+    output: llms.txt
+    title: Fixture documentation
+  bundles:
+    - id: contributor
+      output: .clean-docs/context/contributor.md
+      include: [README.md]
+""")
+
+    projections = load_manifest(path).projections
+
+    assert projections is not None
+    assert projections.llms_txt is not None
+    assert projections.llms_txt.output == Path("llms.txt")
+    assert projections.bundles[0].include == (Path("README.md"),)
+
+
+@pytest.mark.parametrize(
+    ("projection", "message"),
+    [
+        ("bundles: []", "configure llms_txt or at least one bundle"),
+        (
+            "bundles:\n    - id: contributor\n      output: context.md\n"
+            "      include: [docs/UNBOUND.md]",
+            "unbound document",
+        ),
+        (
+            "llms_txt: {output: llms.txt}\n  unknown: true",
+            "unknown key",
+        ),
+    ],
+)
+def test_rejects_invalid_projection_contract(
+    tmp_path: Path, projection: str, message: str
+) -> None:
+    path = tmp_path / ".clean-docs.yml"
+    path.write_text(VALID + f"projections:\n  {projection}\n")
+    with pytest.raises(ConfigurationError, match=message):
+        load_manifest(path)
+
+
 @pytest.mark.parametrize(
     "replacement, message",
     [

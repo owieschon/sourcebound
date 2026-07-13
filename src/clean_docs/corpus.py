@@ -68,8 +68,15 @@ def list_documents(root: Path) -> list[Path]:
         return [root]
     tracked = _git_tracked_markdown(root)
     if tracked is not None:
-        return [path for path in tracked if "archive" not in path.relative_to(root).parts]
-    skipped = {"node_modules", ".venv", ".git", ".pytest_cache", "archive"}
+        return [
+            path
+            for path in tracked
+            if "archive" not in path.relative_to(root).parts
+            and path.relative_to(root).parts[:1] != (".clean-docs",)
+        ]
+    skipped = {
+        "node_modules", ".venv", ".git", ".pytest_cache", "archive", ".clean-docs"
+    }
     return sorted(
         path
         for path in root.rglob("*.md")
