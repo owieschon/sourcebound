@@ -3,9 +3,11 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from dataclasses import asdict
 from pathlib import Path
 
 from clean_docs import __version__
+from clean_docs.audit import audit
 from clean_docs.engine import drive, evaluate, write_results
 from clean_docs.errors import CleanDocsError
 from clean_docs.models import BindingResult
@@ -20,6 +22,8 @@ def _parser() -> argparse.ArgumentParser:
         "--manifest", type=Path, default=Path(".clean-docs.yml"), help="manifest path"
     )
     sub = parser.add_subparsers(dest="command", required=True)
+    audit_parser = sub.add_parser("audit", help="inventory and check documentation without a manifest")
+    audit_parser.add_argument("--format", choices=("text", "json"), default="text")
     derive = sub.add_parser("derive", help="preview or write generated documentation regions")
     derive.add_argument("--write", action="store_true", help="write derived regions atomically")
     derive.add_argument("--check", action="store_true", help="exit 1 when a region would change")
@@ -84,6 +88,26 @@ def _text(results: list[BindingResult], *, repaired: bool = False) -> str:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     root = args.root.resolve()
+    if args.command == "audit":
+        report = audit(root)
+        if args.format == "json":
+            print(json.dumps({
+                "ok": not report.findings,
+                "documents": list(report.documents),
+                "ignored_documents": list(report.ignored_documents),
+                "findings": [asdict(finding) for finding in report.findings],
+            }, indent=2))
+        else:
+            for audit_finding in report.findings:
+                print(
+                    f"[{audit_finding.rule}] {audit_finding.path}:{audit_finding.line} "
+                    f"{audit_finding.detail}"
+                )
+            print(
+                f"audit: {len(report.documents)} active document(s), "
+                f"{len(report.ignored_documents)} archived, {len(report.findings)} finding(s)"
+            )
+        return 1 if report.findings else 0
     if args.command == "standard":
         source = args.source if args.source.is_absolute() else root / args.source
         output = args.output if args.output.is_absolute() else root / args.output
@@ -118,10 +142,10 @@ def main(argv: list[str] | None = None) -> int:
             )
             sys.stdout.write(output)
             if findings:
-                for finding in findings:
+                for policy_finding in findings:
                     print(
-                        f"[policy] {finding.doc}:{finding.line} "
-                        f"{finding.rule}: {finding.detail}",
+                        f"[policy] {policy_finding.doc}:{policy_finding.line} "
+                        f"{policy_finding.rule}: {policy_finding.detail}",
                         file=sys.stderr,
                     )
                 return 1

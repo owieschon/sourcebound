@@ -1,5 +1,7 @@
 # Documentation style guide: clean, grounded developer docs
 
+<!-- clean-docs:allow doc-length reason="The four documentation tiers form one canonical standard and must be evaluated together" -->
+
 This is the single reference for documentation voice across every project. It stays one file
 over the 120-line threshold on purpose: its four tiers (sentence voice, single-doc medium
 boundary, corpus, and grounding) are read as one system, and splitting them would break the

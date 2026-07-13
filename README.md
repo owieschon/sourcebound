@@ -4,23 +4,19 @@ clean-docs is a self-driving documentation system that applies one packaged stan
 
 Write the standard once; clean-docs does the repository work. The finished product audits each repository, derives its factual spine from source, phrases it to the packaged standard, tests the result, and maintains it on every change. Models may phrase grounded facts; deterministic code owns the facts and gate results.
 
-The current alpha implements the first deterministic slice. It reads a static Python assignment or JSON Pointer, renders a marked Markdown table, and checks the committed table against the source. It never imports repository code. `derive` previews changes unless you pass `--write`; `check` never writes.
+The current alpha audits documentation without configuration, reads a static Python assignment or JSON Pointer, renders a marked Markdown table, and checks the committed table against the source. It never imports repository code. `derive` previews changes unless you pass `--write`; `audit` and `check` never write.
 
-## Install the alpha
-
-Install the package in an isolated environment:
+## Install and audit
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
-```
-
-Run its tests:
-
-```bash
+clean-docs audit
 pytest
 ```
+
+`audit` inventories tracked Markdown without requiring `.clean-docs.yml`.
 
 ## Declare a binding
 
@@ -52,6 +48,8 @@ Mark the generated region in the destination document:
 <!-- clean-docs:end actions -->
 ```
 
+## Preview, repair, and check
+
 Preview the derived diff:
 
 ```bash
@@ -79,6 +77,8 @@ clean-docs check
 Use `--format json` for machine-readable results and `--ref <git-ref>` to read sources from an immutable commit.
 
 Repositories do not configure a standard path. clean-docs bundles a versioned policy pack compiled from [`STANDARD.md`](STANDARD.md). CI fails if the authored standard changes without rebuilding that pack.
+
+## Verify public and self-hosted behavior
 
 Run the pinned public-repository dogfood proof with:
 

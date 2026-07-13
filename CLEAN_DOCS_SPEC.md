@@ -2,6 +2,8 @@
 
 **This specification defines the final clean-docs product, the releases that build it, and the executable evidence required to ship each release.**
 
+<!-- clean-docs:allow doc-length reason="The release contract and inherited E2E requirements must remain one versioned reference" -->
+
 Write a documentation standard once. clean-docs audits a software repository, drives its documentation to that standard, and keeps it clean, current, and usable as the repository changes. Humans and agents consume the same canonical documentation through different generated indexes and context bundles.
 
 This file stays whole despite its length because it has one job: bind the product contract to the release claims, E2E tests, and definitions of done that prove it. Splitting the roadmap from the product contract would let implementation scope and acceptance drift apart.
@@ -81,14 +83,12 @@ clean-docs starts from a working documentation-standard system. Version 0 preser
 
 | Existing artifact | Proven behavior | Product destination |
 | --- | --- | --- |
-| `STANDARD.md` | Defines sentence voice, medium choice, page shape, corpus structure, and the boundary between checks and judgment. | Becomes the default `clean-docs` policy profile and the canonical authoring standard. |
-| `quality-gate.py` | Blocks high-confidence language, engineering-claim, code, and secret patterns before an agent writes a file. | Its portable rules move into `policy`; the pre-write hook remains one adapter. |
-| `doc-hygiene.py` | Checks process artifacts, agent-addressed docs, provenance, length, duplication, and restatement across tracked Markdown. | Its tested rules move into `policy` with stable finding identifiers, configuration, and regression fixtures. |
-| `scrub.py` | Detects identity residue, cross-project leakage, and publication-process tells with an explicit baseline. | Its portable rules move into `policy`; personal patterns stay outside the distributable default profile. |
-| `skill/SKILL.md` | Runs residue and corpus checks during one agent's pre-publish workflow. | Remains a distribution adapter. Equivalent CLI, CI, agent, editor, and hosting adapters call the same core. |
-| `DECISION_LOG.md` | Records why archive handling and several noisy patterns were changed after real-repo triage. | Seeds regression cases and architecture decisions. |
-| `ultra-csm-findings.json` and `ultra-csm-before-after.md` | Preserve the 280-finding baseline and the docs-only cleanup evidence. | Seed corpus-policy fixtures and the first dogfood case. |
-| `README_ACCESSIBILITY_TEST.md` | Establishes separate mechanical and blind-task gates, then exposes that accessible prose can still be factually incomplete. | Seeds human and agent task-evaluation formats. |
+| [`STANDARD.md`](STANDARD.md) | Defines sentence voice, medium choice, page shape, corpus structure, and the boundary between checks and judgment. | Becomes the default `clean-docs` policy profile and the canonical authoring standard. |
+| [`quality-gate.py`](quality-gate.py) | Blocks high-confidence language, engineering-claim, code, and secret patterns before an agent writes a file. | Its portable rules move into `policy`; the pre-write hook remains one adapter. |
+| [`doc-hygiene.py`](doc-hygiene.py) | Checks process artifacts, agent-addressed docs, provenance, length, duplication, and restatement across tracked Markdown. | Its tested rules move into `policy` with stable finding identifiers, configuration, and regression fixtures. |
+| [`skill/SKILL.md`](skill/SKILL.md) | Runs residue and corpus checks during one agent's pre-publish workflow. | Remains a distribution adapter. Equivalent CLI, CI, agent, editor, and hosting adapters call the same core. |
+| [`DECISION_LOG.md`](DECISION_LOG.md) | Records why archive handling and several noisy patterns were changed after real-repo triage. | Seeds regression cases and architecture decisions. |
+| [`docs/archive/v0/ultra-csm-findings.json`](docs/archive/v0/ultra-csm-findings.json) and [`docs/archive/v0/ultra-csm-before-after.md`](docs/archive/v0/ultra-csm-before-after.md) | Preserve the 280-finding baseline and the docs-only cleanup evidence. | Seed corpus-policy fixtures and the first dogfood case. |
 | Prior product brief | Defines ref-aware extraction, region/claim/symbol bindings, derive/check symmetry, and a no-model CI gate. | Supplies the binding engine contract in this specification under the final `clean-docs` name. |
 
 ### What the existing proof establishes
@@ -217,7 +217,13 @@ Generated regions are preferred because the document cannot misstate a value tha
 
 This section keeps the complete example together because readers need to see how execution policy, bindings, coverage, and projections share one repository contract.
 
+#### Manifest contract
+
 The canonical file is `.clean-docs.yml`. Paths are repository-relative. Unknown keys fail schema validation.
+
+#### Complete example
+
+<!-- clean-docs:allow section-length reason="The manifest example must show one coherent repository contract" -->
 
 ```yaml
 version: 1
@@ -455,8 +461,7 @@ Version 0 preservation work at the start of Version 0.1:
 1. Capture golden outputs for the current scripts before refactoring.
 2. Turn every decision-log false positive into a named regression fixture.
 3. Capture the original and tuned ultra-csm finding sets as corpus-policy acceptance data.
-4. Capture the README blind-test prompt, response schema, and known accuracy failure as an evaluation fixture.
-5. Keep the standalone scripts runnable until the packaged policy engine proves parity or an intentional difference is recorded.
+4. Keep the standalone scripts runnable until the packaged policy engine proves parity or an intentional difference is recorded.
 
 #### Definition of done
 
