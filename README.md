@@ -15,15 +15,45 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 clean-docs audit
-clean-docs doctor
-pytest
 ```
 
 `audit` inventories tracked Markdown without `.clean-docs.yml`, enforces corpus rules, and scans tracked product files for repository residue.
 
-## Declare a binding
+## CLI reference
 
-Create `.clean-docs.yml` at the repository root:
+This table is derived from the command registry used by the parser:
+
+<!-- clean-docs:begin cli-reference -->
+| command | job | writes |
+| --- | --- | --- |
+| audit | Inventory and check repository documentation | no |
+| doctor | Check repository and integration readiness | no |
+| derive | Preview generated region changes | with --write |
+| drive | Repair bound regions and enforce policy | yes |
+| check | Fail when a binding has drifted | no |
+| emit | Project the manifest into another format | yes |
+| emit stepwise-skill | Write a manifest-derived stepwise skill package | yes |
+| emit llms-txt | Write an index of source-bound documents | yes |
+| standard | Build or verify the bundled policy pack | varies |
+| standard build | Compile the canonical standard | yes |
+| standard check | Fail when the policy pack is stale | no |
+<!-- clean-docs:end cli-reference -->
+
+Use `--format json` for machine-readable results and `--ref <git-ref>` to read sources from an immutable commit.
+
+## Manifest reference
+
+This table is derived from the binding types accepted by the manifest validator:
+
+<!-- clean-docs:begin manifest-reference -->
+| binding | required | verifies |
+| --- | --- | --- |
+| region | id, type, doc, region, extractor, source, renderer | Generated content matches source evidence |
+| claim | id, type, doc, anchor, command, assertion | Observed command value matches the assertion |
+| symbol | id, type, doc, anchor, source | A source path or Python symbol still exists |
+<!-- clean-docs:end manifest-reference -->
+
+Create `.clean-docs.yml` at the repository root and declare the source for each protected fact:
 
 ```yaml
 version: 1
@@ -40,44 +70,14 @@ bindings:
     columns: [name, tier]
 ```
 
-The source assignment may be a list of dictionaries or a dictionary whose values are records. Constructor calls are read as keyword records. clean-docs parses the syntax tree and does not execute the module.
-
-## Mark the destination
-
-Mark the generated region in the destination document:
+Mark the generated destination in the document:
 
 ```markdown
 <!-- clean-docs:begin actions -->
 <!-- clean-docs:end actions -->
 ```
 
-## Preview, repair, and check
-
-Preview the derived diff:
-
-```bash
-clean-docs derive
-```
-
-Write the region atomically:
-
-```bash
-clean-docs derive --write
-```
-
-Repair every bound region and run the implemented checks from the bundled default standard:
-
-```bash
-clean-docs drive
-```
-
-Fail when the committed region is stale:
-
-```bash
-clean-docs check
-```
-
-Use `--format json` for machine-readable results and `--ref <git-ref>` to read sources from an immutable commit.
+The source assignment may be a list of dictionaries or a dictionary whose values are records. Constructor calls are read as keyword records. clean-docs parses the syntax tree and does not execute the module.
 
 Repositories do not configure a standard path. clean-docs bundles a versioned policy pack compiled from [`STANDARD.md`](STANDARD.md). CI fails if the authored standard changes without rebuilding that pack.
 

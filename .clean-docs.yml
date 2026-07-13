@@ -19,3 +19,23 @@ bindings:
       symbol: SUPPORTED_BINDINGS
     renderer: markdown-table
     columns: [binding, source, output, check]
+  - id: cli-reference
+    type: region
+    doc: README.md
+    region: cli-reference
+    extractor: python-literal
+    source:
+      path: src/clean_docs/capabilities.py
+      symbol: CLI_REFERENCE
+    renderer: markdown-table
+    columns: [command, job, writes]
+  - id: manifest-reference
+    type: region
+    doc: README.md
+    region: manifest-reference
+    extractor: python-literal
+    source:
+      path: src/clean_docs/manifest.py
+      symbol: MANIFEST_REFERENCE
+    renderer: markdown-table
+    columns: [binding, required, verifies]

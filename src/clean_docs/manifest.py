@@ -28,6 +28,23 @@ RENDERERS = {"fenced-text", "markdown-list", "markdown-table", "scalar"}
 EXECUTION_KEYS = {"commands", "allowed_commands"}
 COMMAND_KEYS = {"argv", "timeout_seconds", "network"}
 ASSERTION_KEYS = {"json_path", "operator", "expected"}
+MANIFEST_REFERENCE = (
+    {
+        "binding": "region",
+        "required": "id, type, doc, region, extractor, source, renderer",
+        "verifies": "Generated content matches source evidence",
+    },
+    {
+        "binding": "claim",
+        "required": "id, type, doc, anchor, command, assertion",
+        "verifies": "Observed command value matches the assertion",
+    },
+    {
+        "binding": "symbol",
+        "required": "id, type, doc, anchor, source",
+        "verifies": "A source path or Python symbol still exists",
+    },
+)
 
 
 def _mapping(value: Any, where: str) -> dict[str, Any]:
@@ -102,7 +119,7 @@ def load_manifest(path: Path) -> Manifest:
             raise ConfigurationError(f"duplicate binding id: {binding_id}")
         ids.add(binding_id)
         binding_type = data.get("type")
-        if binding_type not in {"region", "claim", "symbol"}:
+        if binding_type not in {item["binding"] for item in MANIFEST_REFERENCE}:
             raise ConfigurationError(f"{where}.type must be region, claim, or symbol")
         if binding_type == "claim":
             if data.get("extractor") != "command":

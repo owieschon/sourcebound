@@ -8,6 +8,7 @@ from pathlib import Path
 
 from clean_docs import __version__
 from clean_docs.audit import audit
+from clean_docs.capabilities import CLI_REFERENCE
 from clean_docs.doctor import diagnose
 from clean_docs.emit import emit_llms_txt, emit_stepwise_skill
 from clean_docs.engine import drive, evaluate, write_results
@@ -15,6 +16,10 @@ from clean_docs.errors import CleanDocsError
 from clean_docs.manifest import load_manifest
 from clean_docs.models import BindingResult
 from clean_docs.standard import compile_standard, pack_matches_standard, write_pack
+
+
+def _command_help(command: str) -> str:
+    return next(item["job"] for item in CLI_REFERENCE if item["command"] == command)
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -25,28 +30,28 @@ def _parser() -> argparse.ArgumentParser:
         "--manifest", type=Path, default=Path(".clean-docs.yml"), help="manifest path"
     )
     sub = parser.add_subparsers(dest="command", required=True)
-    audit_parser = sub.add_parser("audit", help="inventory and check documentation without a manifest")
+    audit_parser = sub.add_parser("audit", help=_command_help("audit"))
     audit_parser.add_argument("--format", choices=("text", "json"), default="text")
-    doctor_parser = sub.add_parser("doctor", help="check repository and integration readiness")
+    doctor_parser = sub.add_parser("doctor", help=_command_help("doctor"))
     doctor_parser.add_argument("--format", choices=("text", "json"), default="text")
-    derive = sub.add_parser("derive", help="preview or write generated documentation regions")
+    derive = sub.add_parser("derive", help=_command_help("derive"))
     derive.add_argument("--write", action="store_true", help="write derived regions atomically")
     derive.add_argument("--check", action="store_true", help="exit 1 when a region would change")
     derive.add_argument("--binding", help="evaluate one binding id")
     derive.add_argument("--ref", help="read bound sources from an immutable git ref")
     derive.add_argument("--format", choices=("text", "json"), default="text")
-    drive_parser = sub.add_parser("drive", help="repair bound docs and enforce the default standard")
+    drive_parser = sub.add_parser("drive", help=_command_help("drive"))
     drive_parser.add_argument("--binding", help="repair one binding id")
     drive_parser.add_argument("--ref", help="read bound sources from an immutable git ref")
     drive_parser.add_argument("--format", choices=("text", "json"), default="text")
-    check = sub.add_parser("check", help="fail when generated documentation has drifted")
+    check = sub.add_parser("check", help=_command_help("check"))
     check.add_argument("--binding", help="evaluate one binding id")
     check.add_argument("--ref", help="read bound sources from an immutable git ref")
     check.add_argument("--format", choices=("text", "json"), default="text")
-    emit = sub.add_parser("emit", help="project the manifest into an interoperable skill package")
+    emit = sub.add_parser("emit", help=_command_help("emit"))
     emit_sub = emit.add_subparsers(dest="target", required=True)
     stepwise = emit_sub.add_parser(
-        "stepwise-skill", help="emit a manifest-derived stepwise skill package"
+        "stepwise-skill", help=_command_help("emit stepwise-skill")
     )
     stepwise.add_argument("--out", type=Path, default=Path("dist/stepwise-skill"))
     stepwise.add_argument("--display-name", default="Keep documentation true")
@@ -54,15 +59,15 @@ def _parser() -> argparse.ArgumentParser:
     stepwise.add_argument("--parent-command")
     stepwise.add_argument("--command", dest="command_name")
     llms = emit_sub.add_parser(
-        "llms-txt", help="emit an llms.txt index of the manifest's source-bound docs"
+        "llms-txt", help=_command_help("emit llms-txt")
     )
     llms.add_argument("--out", type=Path, default=Path("llms.txt"))
     llms.add_argument("--title", default="Repository documentation")
     llms.add_argument("--summary")
-    standard = sub.add_parser("standard", help="build or verify the bundled default policy pack")
+    standard = sub.add_parser("standard", help=_command_help("standard"))
     standard_sub = standard.add_subparsers(dest="standard_command", required=True)
     for command in ("build", "check"):
-        item = standard_sub.add_parser(command)
+        item = standard_sub.add_parser(command, help=_command_help(f"standard {command}"))
         item.add_argument("--source", type=Path, default=Path("STANDARD.md"))
         item.add_argument(
             "--output", type=Path, default=Path("src/clean_docs/standards/default.json")

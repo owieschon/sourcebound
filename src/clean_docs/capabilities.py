@@ -28,3 +28,25 @@ SUPPORTED_BINDINGS = {
         "check": "Resolve the cited locator",
     },
 }
+
+CLI_REFERENCE = (
+    {"command": "audit", "job": "Inventory and check repository documentation", "writes": "no"},
+    {"command": "doctor", "job": "Check repository and integration readiness", "writes": "no"},
+    {"command": "derive", "job": "Preview generated region changes", "writes": "with --write"},
+    {"command": "drive", "job": "Repair bound regions and enforce policy", "writes": "yes"},
+    {"command": "check", "job": "Fail when a binding has drifted", "writes": "no"},
+    {"command": "emit", "job": "Project the manifest into another format", "writes": "yes"},
+    {
+        "command": "emit stepwise-skill",
+        "job": "Write a manifest-derived stepwise skill package",
+        "writes": "yes",
+    },
+    {
+        "command": "emit llms-txt",
+        "job": "Write an index of source-bound documents",
+        "writes": "yes",
+    },
+    {"command": "standard", "job": "Build or verify the bundled policy pack", "writes": "varies"},
+    {"command": "standard build", "job": "Compile the canonical standard", "writes": "yes"},
+    {"command": "standard check", "job": "Fail when the policy pack is stale", "writes": "no"},
+)
