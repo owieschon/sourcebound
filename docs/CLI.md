@@ -12,7 +12,7 @@ The table is generated from the command registry used by the parser:
 | audit | Inventory and check repository documentation | with --update-baseline | clean-docs audit --format json |
 | inventory | List detected repository surfaces and coverage | no | clean-docs inventory --format json |
 | init | Write a source-bound documentation baseline | yes | clean-docs init --no-model |
-| explain | Explain a finding or coverage state | no | clean-docs explain --format json |
+| explain | Explain a finding or coverage state | no | clean-docs explain purpose-contract --format json |
 | doctor | Check repository and integration readiness | with --bundle | clean-docs doctor --bundle doctor.json |
 | verify | Write a local deterministic outcome receipt | with --out | clean-docs verify --out outcome.json |
 | benchmark | Measure changed-check time and memory budgets | with --out | clean-docs benchmark --base HEAD~1 --head HEAD |
@@ -20,7 +20,7 @@ The table is generated from the command registry used by the parser:
 | drive | Repair bound regions and enforce policy | yes | clean-docs drive |
 | check | Fail on binding drift or uncovered changed surface | no | clean-docs check --base origin/main --head HEAD |
 | project | Regenerate configured documentation projections | yes | clean-docs project --check |
-| eval | Score human tasks and replayable agent round trips | with --history or live recording | clean-docs eval evals/tasks.yml |
+| eval | Score human tasks and replayable agent round trips | with --history or live recording | clean-docs eval --fixtures .clean-docs/eval.yml |
 | release | Render typed release facts between immutable refs | no | clean-docs release --from v0.9.0 --to HEAD |
 | migrate | Upgrade a prior manifest with rollback backup | with --write or --rollback | clean-docs migrate --write |
 | emit | Project the manifest into another format | yes | clean-docs emit --help |
