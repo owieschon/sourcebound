@@ -1,13 +1,13 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `bf2d90bcfe4cbef02b6e9c6586e8518465d5e625ed2c61e3b57c7638c9be4d53`
+- Corpus sha256: `ee0630372b56db1c4be776c86e8dc9d9bc38edfb5a1b72132990dfe0f9fac63f`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `feb2f540bda7be1a1e209f6191e9b05ee4822bc0c4ccd4211ea5b10b6345c584`
+- Content sha256: `d0ab9a4f8363bf6354ed7ea222577caff46aa5cbb87ab5f428c2ddf01aa03dc0`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
@@ -17,7 +17,7 @@ clean-docs is a self-driving documentation system that applies one packaged stan
 Write the standard once; clean-docs does the repository work. The finished product audits each repository, derives its factual spine from source, phrases it to the packaged standard, tests the result, and maintains it on every change. Models may phrase grounded facts; deterministic code owns the facts and gate results.
 
 <!-- clean-docs:begin product-overview -->
-Version 1.0rc3 protects Python and TypeScript repository documentation through local, pre-commit, and pull-request workflows. It compares normalized evidence across immutable refs and renders provenance-backed release facts. Optional narrative drafts cannot change, omit, or uncite those facts. Versioned plugins add extractors, discoverers, renderers, and policy checks in disposable snapshots; manifest migration includes a byte-exact rollback. It projects one verified documentation graph into llms.txt, named context bundles, and an accessible static demonstration. It scores human commands and recorded agent responses, reports changed binding drift and coverage gaps, and bootstraps source-bound baselines. Mature repositories can commit an exact existing-debt baseline that fails on new and resolved findings until explicitly refreshed. Static adapters cover Python, TypeScript, OpenAPI, JSON Schema, package metadata, and MCP tools without importing repository code. Declared processes run in disposable copies with bounded I/O and minimal environments. Local outcome, performance, and diagnostic receipts make checks inspectable without telemetry. `derive` previews changes unless you pass `--write`; `audit`, `check`, `verify`, and `release` never change documentation.
+Version 1.0rc4 protects Python and TypeScript repository documentation through local, pre-commit, and pull-request workflows. It compares normalized evidence across immutable refs and renders provenance-backed release facts. Optional narrative drafts cannot change, omit, or uncite those facts. Versioned plugins add extractors, discoverers, renderers, and policy checks in disposable snapshots; manifest migration includes a byte-exact rollback. It projects one verified documentation graph into llms.txt, named context bundles, and an accessible static demonstration. It scores human commands and recorded agent responses, reports changed binding drift and coverage gaps, and bootstraps source-bound baselines. Mature repositories can commit an exact existing-debt baseline that fails on new and resolved findings until explicitly refreshed. Static adapters cover Python, TypeScript, OpenAPI, JSON Schema, package metadata, and MCP tools without importing repository code. Declared processes run in disposable copies with bounded I/O and minimal environments. Local outcome, performance, and diagnostic receipts make checks inspectable without telemetry. `derive` previews changes unless you pass `--write`; `audit`, `check`, `verify`, and `release` never change documentation.
 <!-- clean-docs:end product-overview -->
 ## Install and audit
 
