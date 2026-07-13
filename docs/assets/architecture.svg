@@ -1,69 +1,146 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 760" role="img" aria-labelledby="title desc">
   <title id="title">How clean-docs turns repository sources into verified documentation</title>
-  <desc id="desc">Repository sources become typed evidence, which source bindings connect to the clean-docs engine. The packaged writing standard also feeds the engine. The engine repairs documentation, fails continuous integration on drift, and produces verified context and release projections.</desc>
+  <desc id="desc">Inside the clean-docs system, repository sources pass through typed evidence and source bindings into the clean-docs engine. A versioned writing standard also enters the engine. The engine repairs documentation, rejects stale changes in continuous integration, and projects verified context.</desc>
   <defs>
-    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
-      <path d="M0 0L10 5L0 10Z" fill="#53606d"/>
+    <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.5" fill="#adc1de"/>
+    </pattern>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M0 0L12 6L0 12Z" fill="#26245f"/>
     </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#26355e" flood-opacity="0.14"/>
+    </filter>
     <style>
-      .eyebrow { font: 700 14px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .08em; text-transform: uppercase; }
-      .title { font: 700 20px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #17212b; }
-      .body { font: 500 15px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #53606d; }
-      .flow { fill: none; stroke: #53606d; stroke-width: 2; marker-end: url(#arrow); }
-      .box { stroke: #c9d1d9; stroke-width: 1.5; }
+      .system-label { font: 700 15px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .09em; fill: #26245f; }
+      .group-label { font: 700 14px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .08em; fill: #514eb0; }
+      .card-title { font: 750 21px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #17163f; }
+      .output-title { font: 750 18px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #17163f; }
+      .card-body { font: 500 15px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #454467; }
+      .engine-title { font: 750 25px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #ffffff; }
+      .engine-body { font: 550 15px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #e4e8ff; }
+      .chip { font: 650 13px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #26245f; }
+      .connector { fill: none; stroke: #26245f; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; marker-end: url(#arrow); }
+      .port { fill: #ffffff; stroke: #26245f; stroke-width: 3; }
+      .card { fill: #ffffff; stroke: #343179; stroke-width: 2.5; }
     </style>
   </defs>
 
-  <rect width="960" height="500" rx="20" fill="#f7f8fa"/>
+  <rect width="1120" height="760" fill="#edf6ff"/>
+  <rect width="1120" height="760" fill="url(#grid)"/>
+  <rect x="28" y="28" width="1064" height="704" rx="18" fill="#edf6ff" fill-opacity="0.84" stroke="#26245f" stroke-width="2.5" stroke-dasharray="7 7"/>
 
-  <text x="48" y="47" class="eyebrow" fill="#53606d">Evidence path</text>
+  <rect x="54" y="50" width="34" height="34" rx="6" fill="#26245f"/>
+  <path d="M64 60h14v14H64zM68 56v22M74 56v22" fill="none" stroke="#ffffff" stroke-width="2"/>
+  <text x="102" y="71" class="card-title">clean-docs system</text>
+  <text x="102" y="91" class="card-body">Source-bound documentation pipeline</text>
 
-  <rect class="box" x="48" y="74" width="230" height="112" rx="12" fill="#ffffff"/>
-  <text x="72" y="110" class="title">Repository sources</text>
-  <text x="72" y="140" class="body">Code · schemas · commands</text>
-  <text x="72" y="164" class="body">Package and API metadata</text>
+  <rect x="66" y="116" width="988" height="190" rx="16" fill="#dcecff" fill-opacity="0.78" stroke="#7773c7" stroke-width="2"/>
+  <text x="90" y="145" class="group-label">EVIDENCE PIPELINE</text>
 
-  <path class="flow" d="M278 130H342"/>
+  <g filter="url(#shadow)">
+    <rect class="card" x="90" y="164" width="266" height="112" rx="12"/>
+    <rect x="110" y="184" width="38" height="38" rx="7" fill="#d9e7ff" stroke="#343179" stroke-width="2"/>
+    <path d="M119 196h20M119 203h14M119 210h17" stroke="#343179" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="162" y="199" class="card-title">Repository sources</text>
+    <text x="162" y="222" class="card-body">Code · schemas · commands</text>
+    <text x="110" y="253" class="card-body">Package and API metadata</text>
+  </g>
 
-  <rect class="box" x="344" y="74" width="230" height="112" rx="12" fill="#ffffff"/>
-  <text x="368" y="110" class="title">Typed evidence</text>
-  <text x="368" y="140" class="body">Static extraction</text>
-  <text x="368" y="164" class="body">Declared, bounded execution</text>
+  <path class="connector" d="M356 220H422"/>
+  <circle class="port" cx="356" cy="220" r="7"/>
 
-  <path class="flow" d="M574 130H638"/>
+  <g filter="url(#shadow)">
+    <rect class="card" x="424" y="164" width="266" height="112" rx="12"/>
+    <rect x="444" y="184" width="38" height="38" rx="7" fill="#e8e5ff" stroke="#343179" stroke-width="2"/>
+    <path d="M452 193h22l-5 10 5 10h-22l5-10z" fill="none" stroke="#343179" stroke-width="2.5" stroke-linejoin="round"/>
+    <text x="496" y="199" class="card-title">Typed evidence</text>
+    <text x="496" y="222" class="card-body">Static extraction</text>
+    <text x="444" y="253" class="card-body">Declared, bounded execution</text>
+  </g>
 
-  <rect class="box" x="640" y="74" width="272" height="112" rx="12" fill="#ffffff"/>
-  <text x="664" y="110" class="title">Source bindings</text>
-  <text x="664" y="140" class="body">Regions · claims · symbols</text>
-  <text x="664" y="164" class="body">Facts keep a canonical owner</text>
+  <path class="connector" d="M690 220H756"/>
+  <circle class="port" cx="690" cy="220" r="7"/>
 
-  <path class="flow" d="M776 186V233"/>
+  <g filter="url(#shadow)">
+    <rect class="card" x="758" y="164" width="266" height="112" rx="12"/>
+    <rect x="778" y="184" width="38" height="38" rx="7" fill="#ddf3ec" stroke="#343179" stroke-width="2"/>
+    <circle cx="789" cy="203" r="4" fill="#343179"/>
+    <circle cx="805" cy="195" r="4" fill="#343179"/>
+    <circle cx="805" cy="211" r="4" fill="#343179"/>
+    <path d="M793 201l8-4M793 205l8 4" stroke="#343179" stroke-width="2"/>
+    <text x="830" y="199" class="card-title">Source bindings</text>
+    <text x="830" y="222" class="card-body">Regions · claims · symbols</text>
+    <text x="778" y="253" class="card-body">Facts keep a canonical owner</text>
+  </g>
 
-  <rect class="box" x="48" y="234" width="230" height="100" rx="12" fill="#fff7d6" stroke="#d6a900"/>
-  <text x="72" y="270" class="title">Writing standard</text>
-  <text x="72" y="300" class="body">Versioned policy for form</text>
-  <text x="72" y="322" class="body">and reader experience</text>
+  <path class="connector" d="M891 276V355H754"/>
+  <circle class="port" cx="891" cy="276" r="7"/>
+  <rect x="816" y="315" width="114" height="28" rx="6" fill="#ffffff" stroke="#343179" stroke-width="2"/>
+  <text x="873" y="334" text-anchor="middle" class="chip">supplies facts</text>
 
-  <path class="flow" d="M278 284H342"/>
+  <g filter="url(#shadow)">
+    <rect class="card" x="90" y="339" width="274" height="126" rx="12"/>
+    <rect x="110" y="359" width="38" height="38" rx="7" fill="#fff1b8" stroke="#343179" stroke-width="2"/>
+    <path d="M120 368h18M120 375h18M120 382h12" stroke="#343179" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="162" y="376" class="card-title">Writing standard</text>
+    <text x="162" y="399" class="card-body">Versioned policy for form</text>
+    <text x="110" y="436" class="card-body">Defines the reader experience</text>
+  </g>
 
-  <rect x="344" y="234" width="568" height="100" rx="12" fill="#17212b"/>
-  <text x="368" y="270" class="eyebrow" fill="#80e6c3">Deterministic core</text>
-  <text x="368" y="306" style="font: 700 24px ui-sans-serif, system-ui, sans-serif; fill: #ffffff;">clean-docs engine</text>
-  <text x="584" y="306" style="font: 500 15px ui-sans-serif, system-ui, sans-serif; fill: #c9d1d9;">derive · check · verify · project</text>
+  <path class="connector" d="M364 402H432"/>
+  <circle class="port" cx="364" cy="402" r="7"/>
+  <rect x="370" y="367" width="62" height="28" rx="6" fill="#ffffff" stroke="#343179" stroke-width="2"/>
+  <text x="401" y="386" text-anchor="middle" class="chip">sets form</text>
 
-  <path class="flow" d="M628 334V378H190V398"/>
-  <path class="flow" d="M628 334V378H480V398"/>
-  <path class="flow" d="M628 334V378H770V398"/>
+  <g filter="url(#shadow)">
+    <rect x="434" y="339" width="320" height="126" rx="12" fill="#26245f" stroke="#17163f" stroke-width="3"/>
+    <rect x="454" y="359" width="38" height="38" rx="7" fill="#ffffff"/>
+    <path d="M463 378h20M473 368v20" stroke="#26245f" stroke-width="3" stroke-linecap="round"/>
+    <text x="506" y="376" class="engine-title">clean-docs engine</text>
+    <text x="506" y="401" class="engine-body">Deterministic core</text>
+    <text x="454" y="436" class="engine-body">derive · check · verify · project</text>
+  </g>
 
-  <rect class="box" x="48" y="400" width="274" height="68" rx="12" fill="#e9fbf5" stroke="#20a67a"/>
-  <text x="72" y="429" class="title">Repair documentation</text>
-  <text x="72" y="453" class="body">Update declared regions</text>
+  <circle class="port" cx="514" cy="465" r="7"/>
+  <circle class="port" cx="594" cy="465" r="7"/>
+  <circle class="port" cx="674" cy="465" r="7"/>
 
-  <rect class="box" x="344" y="400" width="272" height="68" rx="12" fill="#fff0ed" stroke="#dc5a42"/>
-  <text x="368" y="429" class="title">Reject stale changes</text>
-  <text x="368" y="453" class="body">Read-only CI gate</text>
+  <path class="connector" d="M514 472V516H221V548"/>
+  <path class="connector" d="M594 472V548"/>
+  <path class="connector" d="M674 472V516H899V548"/>
 
-  <rect class="box" x="638" y="400" width="274" height="68" rx="12" fill="#edf4ff" stroke="#4a7fc4"/>
-  <text x="662" y="429" class="title">Project verified context</text>
-  <text x="662" y="453" class="body">llms.txt · bundles · release facts</text>
+  <rect x="147" y="500" width="146" height="28" rx="6" fill="#ffffff" stroke="#343179" stroke-width="2"/>
+  <text x="220" y="519" text-anchor="middle" class="chip">writes declared regions</text>
+  <rect x="527" y="500" width="134" height="28" rx="6" fill="#ffffff" stroke="#343179" stroke-width="2"/>
+  <text x="594" y="519" text-anchor="middle" class="chip">fails on drift</text>
+  <rect x="828" y="500" width="142" height="28" rx="6" fill="#ffffff" stroke="#343179" stroke-width="2"/>
+  <text x="899" y="519" text-anchor="middle" class="chip">publishes context</text>
+
+  <g filter="url(#shadow)">
+    <rect class="card" x="90" y="550" width="266" height="126" rx="12"/>
+    <rect x="110" y="570" width="38" height="38" rx="7" fill="#d9f3e9" stroke="#343179" stroke-width="2"/>
+    <path d="M118 589l7 7 15-18" fill="none" stroke="#186d54" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="162" y="587" class="output-title">Repair documentation</text>
+    <text x="162" y="610" class="card-body">Update bound regions</text>
+    <text x="110" y="647" class="card-body">Source and docs change together</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect class="card" x="427" y="550" width="266" height="126" rx="12"/>
+    <rect x="447" y="570" width="38" height="38" rx="7" fill="#ffe1df" stroke="#343179" stroke-width="2"/>
+    <path d="M457 580l18 18M475 580l-18 18" stroke="#a82f38" stroke-width="3.5" stroke-linecap="round"/>
+    <text x="499" y="587" class="output-title">Reject stale changes</text>
+    <text x="499" y="610" class="card-body">Read-only CI gate</text>
+    <text x="447" y="647" class="card-body">Exit nonzero before merge</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect class="card" x="764" y="550" width="266" height="126" rx="12"/>
+    <rect x="784" y="570" width="38" height="38" rx="7" fill="#e6e4ff" stroke="#343179" stroke-width="2"/>
+    <path d="M793 580h20v18h-20zM788 585v18h20" fill="none" stroke="#343179" stroke-width="2.5" stroke-linejoin="round"/>
+    <text x="836" y="587" class="output-title">Project verified context</text>
+    <text x="836" y="610" class="card-body">llms.txt · bundles</text>
+    <text x="784" y="647" class="card-body">Grounded release facts</text>
+  </g>
 </svg>
