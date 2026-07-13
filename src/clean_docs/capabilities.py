@@ -1,7 +1,7 @@
 """Public capability registry rendered into the clean-docs README."""
 
 PRODUCT_OVERVIEW = (
-    "Version 0.3 alpha compares normalized public surface across git refs and reports changed "
+    "Version 0.3 compares normalized public surface across git refs and reports changed "
     "binding drift, coverage gaps, and SARIF annotations. It statically inventories package, "
     "CLI, API, schema, test, and documentation surfaces and bootstraps a source-bound baseline. "
     "It audits documentation without "
