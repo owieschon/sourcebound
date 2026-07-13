@@ -5,7 +5,7 @@ set -eu
 root="${HOME}/dev/doc-standard"
 cd "$root"
 
-grep -q '^version = "1.0.0rc10"$' pyproject.toml
+grep -q '^version = "1.0.0rc11"$' pyproject.toml
 python3 scripts/check_doc_names.py
 python3 -m pytest -q
 python3 -m mypy src/clean_docs
