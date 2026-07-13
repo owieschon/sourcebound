@@ -10,6 +10,7 @@ from clean_docs import __version__
 from clean_docs.audit import audit
 from clean_docs.bootstrap import apply_bootstrap_plan, build_bootstrap_plan
 from clean_docs.capabilities import CLI_REFERENCE
+from clean_docs.changed import check_changed, render_sarif
 from clean_docs.doctor import diagnose
 from clean_docs.emit import emit_llms_txt, emit_stepwise_skill
 from clean_docs.engine import drive, evaluate, write_results
@@ -70,7 +71,10 @@ def _parser() -> argparse.ArgumentParser:
     check = sub.add_parser("check", help=_command_help("check"))
     check.add_argument("--binding", help="evaluate one binding id")
     check.add_argument("--ref", help="read bound sources from an immutable git ref")
-    check.add_argument("--format", choices=("text", "json"), default="text")
+    check.add_argument("--changed", action="store_true", help="check base-to-head impact")
+    check.add_argument("--base", help="base git ref for --changed")
+    check.add_argument("--head", help="head git ref for --changed")
+    check.add_argument("--format", choices=("text", "json", "sarif"), default="text")
     emit = sub.add_parser("emit", help=_command_help("emit"))
     emit_sub = emit.add_subparsers(dest="target", required=True)
     stepwise = emit_sub.add_parser(
@@ -318,6 +322,32 @@ def main(argv: list[str] | None = None) -> int:
             return 1 if any(
                 result.changed and result.binding_type != "region" for result in results
             ) else 0
+        if args.command == "check" and args.changed:
+            if args.binding or args.ref:
+                raise ConfigurationError(
+                    "check --changed cannot be combined with --binding or --ref"
+                )
+            changed_report = check_changed(
+                root,
+                manifest,
+                base=args.base,
+                head=args.head,
+            )
+            if args.format == "json":
+                print(json.dumps(changed_report.as_dict(), indent=2))
+            elif args.format == "sarif":
+                sys.stdout.write(render_sarif(changed_report))
+            else:
+                print(f"changed: {changed_report.base}..{changed_report.head}")
+                for section, section_findings in (
+                    ("required", changed_report.required),
+                    ("gap", changed_report.gaps),
+                    ("ignored", changed_report.ignored),
+                ):
+                    for finding in section_findings:
+                        print(f"[{section}] {finding.id} {finding.message}")
+                        print(f"repair: {finding.repair}")
+            return 0 if changed_report.ok else 1
         results = evaluate(
             root,
             manifest,

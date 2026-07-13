@@ -157,3 +157,13 @@ and repair. Chose a versioned ignore schema with known IDs, unique entries, and 
 includes adapter, source, locator, and digest evidence. Invalid policy exits as configuration
 error instead of changing coverage implicitly. Reversible: new policy fields require a schema
 version change; existing valid reasoned ignores retain their meaning.
+
+## 16. Compare normalized surfaces across refs before filtering by changed files (2026-07-13)
+
+Context: file diffs alone cannot tell whether a change created a public surface or only modified
+private implementation. Chose to inventory immutable base and head snapshots, compare stable
+surface identifiers, and evaluate deterministic bindings at head. Existing binding drift is a
+required result; newly added unbound surface is a separate coverage gap; reasoned ignores remain
+visible. Finding identity hashes the rule, document, source, and locator, and the same identifier
+is carried into SARIF fingerprints. Reversible: later dependency filtering and caching can reduce
+work without changing the normalized report contract.

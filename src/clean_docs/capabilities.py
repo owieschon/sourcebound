@@ -1,8 +1,10 @@
 """Public capability registry rendered into the clean-docs README."""
 
 PRODUCT_OVERVIEW = (
-    "Version 0.2 statically inventories package, CLI, API, schema, test, and documentation "
-    "surfaces and bootstraps a source-bound baseline. It audits documentation without "
+    "Version 0.3 alpha compares normalized public surface across git refs and reports changed "
+    "binding drift, coverage gaps, and SARIF annotations. It statically inventories package, "
+    "CLI, API, schema, test, and documentation surfaces and bootstraps a source-bound baseline. "
+    "It audits documentation without "
     "configuration and verifies region, claim, and symbol bindings from static Python, "
     "structured data, text files, path globs, and allowlisted JSON commands. It emits "
     "manifest-derived stepwise skill packages and llms.txt indexes, and it never imports "
@@ -39,7 +41,7 @@ CLI_REFERENCE = (
     {"command": "doctor", "job": "Check repository and integration readiness", "writes": "no"},
     {"command": "derive", "job": "Preview generated region changes", "writes": "with --write"},
     {"command": "drive", "job": "Repair bound regions and enforce policy", "writes": "yes"},
-    {"command": "check", "job": "Fail when a binding has drifted", "writes": "no"},
+    {"command": "check", "job": "Fail on binding drift or uncovered changed surface", "writes": "no"},
     {"command": "emit", "job": "Project the manifest into another format", "writes": "yes"},
     {
         "command": "emit stepwise-skill",
