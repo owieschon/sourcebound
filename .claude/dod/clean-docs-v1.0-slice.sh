@@ -47,6 +47,7 @@ PYTHONPATH=src python3 scripts/record_demo.py \
 cmp .clean-docs/demo/evidence.json /tmp/clean-docs-demo-evidence.json
 python3 scripts/trusted_self_check.py | grep -q '"ok": true'
 
+rm -rf /tmp/clean-docs-v10-dist
 python3 scripts/build_release.py --out /tmp/clean-docs-v10-dist >/dev/null
 python3 scripts/test_release_lifecycle.py \
   --wheel /tmp/clean-docs-v10-dist/*.whl
