@@ -8,7 +8,8 @@ from typing import Any
 @dataclass(frozen=True)
 class Source:
     path: Path
-    symbol: str
+    symbol: str | None = None
+    pointer: str | None = None
 
 
 @dataclass(frozen=True)

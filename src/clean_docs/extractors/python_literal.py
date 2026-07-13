@@ -66,6 +66,8 @@ def _rows(value: Any) -> list[dict[str, Any]]:
 def extract_python_literal(
     snapshot: RepositorySnapshot, binding: RegionBinding
 ) -> EvidenceValue:
+    if binding.source.symbol is None:
+        raise ExtractionError("python-literal source requires a symbol")
     text = snapshot.read_text(binding.source.path)
     try:
         tree = ast.parse(text, filename=binding.source.path.as_posix())

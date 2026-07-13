@@ -29,6 +29,17 @@ def test_loads_strict_region_binding(tmp_path: Path) -> None:
     assert manifest.bindings[0].source.symbol == "ACTIONS"
 
 
+def test_loads_json_pointer_binding(tmp_path: Path) -> None:
+    path = tmp_path / ".clean-docs.yml"
+    path.write_text(VALID.replace(
+        "extractor: python-literal\n    source:\n      path: src/actions.py\n      symbol: ACTIONS",
+        "extractor: json\n    source:\n      path: experiment/corpus.json\n      pointer: /cases",
+    ))
+    binding = load_manifest(path).bindings[0]
+    assert binding.source.pointer == "/cases"
+    assert binding.source.symbol is None
+
+
 @pytest.mark.parametrize(
     "replacement, message",
     [

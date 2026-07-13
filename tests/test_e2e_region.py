@@ -147,3 +147,26 @@ def test_drive_does_not_write_a_policy_failure(tmp_path: Path) -> None:
     assert driven.returncode == 1
     assert "prohibited-booster" in driven.stderr
     assert (root / "README.md").read_text() == original
+
+
+def test_json_pointer_binding_repairs_realistic_corpus_table(tmp_path: Path) -> None:
+    root = tmp_path / "json-repo"
+    (root / "experiment").mkdir(parents=True)
+    (root / ".clean-docs.yml").write_text(MANIFEST.replace(
+        "extractor: python-literal\n    source:\n      path: src/actions.py\n      symbol: ACTIONS",
+        "extractor: json\n    source:\n      path: experiment/corpus.json\n      pointer: /cases",
+    ).replace("columns: [name, tier, external]", "columns: [name, tier, external]"))
+    (root / "experiment/corpus.json").write_text(json.dumps({"cases": [
+        {"name": "clean-baseline", "tier": 0, "external": False},
+        {"name": "stale-evidence", "tier": 3, "external": True},
+    ]}))
+    (root / "README.md").write_text(README.replace(
+        "| recommend | 1 | false |\n| draft | 2 | true |",
+        "Not generated yet.",
+    ))
+
+    driven = _run(root, "drive", "--format", "json")
+
+    assert driven.returncode == 0, driven.stderr
+    assert "| stale-evidence | 3 | true |" in (root / "README.md").read_text()
+    assert _run(root, "check").returncode == 0
