@@ -248,3 +248,12 @@ writes are discarded with the copy. Compatibility is validated before a command 
 code owns evidence identity, digests, and coverage state. Manifest migration remains separate:
 version 0 to 1 writes an exact backup and supports rollback to the original bytes. Reversible:
 removing a plugin declaration leaves built-in adapters and manifest v1 behavior unchanged.
+
+## 24. Reject extension evidence identity collisions (2026-07-13)
+
+Context: an extension could otherwise emit the same kind, source, and locator as first-party or
+another extension's evidence, causing a dictionary merge to replace the earlier record. Chose to
+make duplicate extension IDs and collisions with first-party inventory hard extraction failures.
+Inventory, changed checks, and release comparison use the same merge rule, so no output path can
+silently pick a different authority. Reversible: a future namespaced identity schema can replace
+the collision rule through a versioned plugin API migration.
