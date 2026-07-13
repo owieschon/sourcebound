@@ -122,3 +122,28 @@ def test_reads_source_from_immutable_ref_without_mutation(tmp_path: Path) -> Non
     report = json.loads(check.stdout)
     assert report["results"][0]["provenance"]["ref"] == baseline
     assert (root / "src/actions.py").read_text() == before
+
+
+def test_drive_repairs_drift_and_returns_passing_state(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    (root / "src/actions.py").write_text(SOURCE_THREE)
+
+    driven = _run(root, "drive", "--format", "json")
+    assert driven.returncode == 0, driven.stderr
+    report = json.loads(driven.stdout.split("\ndrive:", 1)[0])
+    assert report["ok"] is True
+    assert report["results"][0]["status"] == "repaired"
+    assert "| call | 3 | true |" in (root / "README.md").read_text()
+    assert _run(root, "check").returncode == 0
+
+
+def test_drive_does_not_write_a_policy_failure(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    original = README.replace("Author-owned introduction.", "A powerful introduction.")
+    (root / "README.md").write_text(original)
+    (root / "src/actions.py").write_text(SOURCE_THREE)
+
+    driven = _run(root, "drive")
+    assert driven.returncode == 1
+    assert "prohibited-booster" in driven.stderr
+    assert (root / "README.md").read_text() == original
