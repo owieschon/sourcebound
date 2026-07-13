@@ -46,6 +46,16 @@ EXPECTED_IDS_BY_RELEASE = {
         "cache-correctness",
         "monorepo-isolation",
     },
+    "0.4": {
+        "single-source-projection",
+        "stale-projection-gate",
+        "human-quickstart-task",
+        "agent-configuration-round-trip",
+        "limitation-retrieval",
+        "recorded-replay",
+        "stepwise-skill-projection",
+        "static-demonstration",
+    },
 }
 
 

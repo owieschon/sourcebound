@@ -18,6 +18,7 @@ from clean_docs.models import (
     RegionBinding,
     Source,
     SymbolBinding,
+    StaticDemoProjection,
 )
 
 ROOT_KEYS = {"version", "bindings", "execution", "projections"}
@@ -33,9 +34,10 @@ RENDERERS = {"fenced-text", "markdown-list", "markdown-table", "scalar"}
 EXECUTION_KEYS = {"commands", "allowed_commands"}
 COMMAND_KEYS = {"argv", "timeout_seconds", "network"}
 ASSERTION_KEYS = {"json_path", "operator", "expected"}
-PROJECTION_KEYS = {"llms_txt", "bundles"}
+PROJECTION_KEYS = {"llms_txt", "bundles", "demo"}
 LLMS_TXT_KEYS = {"output", "title", "summary"}
 BUNDLE_KEYS = {"id", "output", "include"}
+DEMO_KEYS = {"output", "evidence"}
 MANIFEST_REFERENCE = (
     {
         "binding": "region",
@@ -137,9 +139,23 @@ def _load_projections(raw: Any, bound_docs: set[Path]) -> ProjectionConfig | Non
         if output in include:
             raise ConfigurationError(f"{where}.output cannot also be a source document")
         bundles.append(ContextBundleProjection(bundle_id, output, include))
-    if llms_txt is None and not bundles:
-        raise ConfigurationError("projections must configure llms_txt or at least one bundle")
-    return ProjectionConfig(llms_txt=llms_txt, bundles=tuple(bundles))
+    demo = None
+    raw_demo = data.get("demo")
+    if raw_demo is not None:
+        item = _mapping(raw_demo, "projections.demo")
+        _reject_unknown(item, DEMO_KEYS, "projections.demo")
+        output = _relative_path(item.get("output"), "projections.demo.output")
+        evidence = _relative_path(item.get("evidence"), "projections.demo.evidence")
+        if output.suffix.lower() != ".html":
+            raise ConfigurationError("projections.demo.output must be an HTML file")
+        if output in outputs:
+            raise ConfigurationError(f"duplicate projection output: {output}")
+        demo = StaticDemoProjection(output, evidence)
+    if llms_txt is None and not bundles and demo is None:
+        raise ConfigurationError(
+            "projections must configure llms_txt, a bundle, or a demo"
+        )
+    return ProjectionConfig(llms_txt=llms_txt, bundles=tuple(bundles), demo=demo)
 
 
 def load_manifest(path: Path) -> Manifest:

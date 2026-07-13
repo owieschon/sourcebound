@@ -1,0 +1,58 @@
+{
+  "intended_reader": "Maintainers who want to see the local failure and repair path before adding a CI gate.",
+  "limits": [
+    "This page replays recorded deterministic evidence; it does not execute in the browser.",
+    "The fixture proves one region-binding workflow, not every supported extractor."
+  ],
+  "next_step": {
+    "href": "https://github.com/owieschon/clean-docs#install-and-audit",
+    "label": "Run the local quickstart"
+  },
+  "prerequisites": [
+    "No account, credentials, backend, or database.",
+    "The outputs below come from a generated temporary repository."
+  ],
+  "schema": "clean-docs.demo-evidence.v1",
+  "states": [
+    {
+      "id": "before",
+      "label": "1. Current",
+      "steps": [
+        {
+          "command": "clean-docs check",
+          "exit_code": 0,
+          "output": "[current] public-command: README.md"
+        }
+      ]
+    },
+    {
+      "id": "drift",
+      "label": "2. Drift caught",
+      "steps": [
+        {
+          "command": "clean-docs check",
+          "exit_code": 1,
+          "output": "[drift] public-command: README.md\n--- README.md\n+++ README.md (derived)\n@@ -3,5 +3,5 @@\n ## Command\n \n <!-- clean-docs:begin public-command -->\n-clean-docs check\n+clean-docs check --changed\n <!-- clean-docs:end public-command -->"
+        }
+      ]
+    },
+    {
+      "id": "repaired",
+      "label": "3. Repaired and verified",
+      "steps": [
+        {
+          "command": "clean-docs drive",
+          "exit_code": 0,
+          "output": "[repaired] public-command: README.md\n--- README.md\n+++ README.md (derived)\n@@ -3,5 +3,5 @@\n ## Command\n \n <!-- clean-docs:begin public-command -->\n-clean-docs check\n+clean-docs check --changed\n <!-- clean-docs:end public-command -->\ndrive: repaired 1 document(s); implemented policy checks passed"
+        },
+        {
+          "command": "clean-docs check",
+          "exit_code": 0,
+          "output": "[current] public-command: README.md"
+        }
+      ]
+    }
+  ],
+  "title": "Documentation drift, caught before it ships",
+  "value": "The same deterministic binding reports a current page, catches a source change, repairs only its declared region, and passes the final check."
+}

@@ -65,3 +65,6 @@ projections:
     - id: contributor
       output: .clean-docs/context/contributor.md
       include: [README.md, docs/EVALUATION.md]
+  demo:
+    output: docs/demo/index.html
+    evidence: .clean-docs/demo/evidence.json

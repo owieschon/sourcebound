@@ -1,0 +1,19 @@
+version: 1
+release: "0.4"
+scenarios:
+  - id: single-source-projection
+    test: tests/test_projections.py::test_single_source_projection_changes_every_affected_output
+  - id: stale-projection-gate
+    test: tests/test_projections.py::test_stale_projection_fails_check_and_project_repairs_it
+  - id: human-quickstart-task
+    test: tests/test_v04_acceptance.py::test_human_quickstart_installs_and_runs_from_declared_docs
+  - id: agent-configuration-round-trip
+    test: tests/test_v04_acceptance.py::test_agent_configuration_round_trip_uses_only_contributor_bundle
+  - id: limitation-retrieval
+    test: tests/test_v04_acceptance.py::test_limitation_retrieval_cites_canonical_limit_without_inference
+  - id: recorded-replay
+    test: tests/test_evaluation.py::test_recorded_replay_reproduces_the_same_report_without_provider_execution
+  - id: stepwise-skill-projection
+    test: tests/test_emit_stepwise.py::test_stepwise_projection_is_idempotent_and_its_commands_pass
+  - id: static-demonstration
+    test: tests/test_demo.py::test_static_demo_is_byte_stable_accessible_and_runtime_free

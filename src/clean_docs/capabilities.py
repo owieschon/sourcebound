@@ -3,7 +3,8 @@
 PRODUCT_OVERVIEW = (
     "Version 0.4a1 projects one verified documentation graph into llms.txt and named context "
     "bundles, with source refs, content digests, link verification, and freshness checks. It "
-    "scores documented human commands and agent responses with replayable task fixtures. "
+    "scores documented human commands and agent responses with replayable task fixtures and "
+    "generates one accessible static demonstration from recorded drift evidence. "
     "It compares normalized public surface across git refs and reports changed "
     "binding drift, coverage gaps, and SARIF annotations. It statically inventories package, "
     "CLI, API, schema, test, and documentation surfaces and bootstraps a source-bound baseline. "

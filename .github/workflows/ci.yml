@@ -34,6 +34,10 @@ jobs:
       - run: clean-docs --root . emit stepwise-skill --out /tmp/clean-docs-stepwise
       - run: clean-docs --root /tmp/clean-docs-stepwise audit
       - run: clean-docs --root . emit llms-txt --out /tmp/clean-docs-llms.txt
+      - run: clean-docs --root . project --check
+      - run: clean-docs --root . eval --format json
+      - run: python scripts/record_demo.py --out /tmp/clean-docs-demo-evidence.json
+      - run: cmp .clean-docs/demo/evidence.json /tmp/clean-docs-demo-evidence.json
       - run: python scripts/trusted_self_check.py
 
   public-dogfood:
@@ -66,6 +70,8 @@ jobs:
       - run: /tmp/clean-docs-release/bin/pip install dist/*.whl
       - run: /tmp/clean-docs-release/bin/clean-docs --help
       - run: /tmp/clean-docs-release/bin/clean-docs --root . audit
+      - run: /tmp/clean-docs-release/bin/clean-docs --root . project --check
+      - run: /tmp/clean-docs-release/bin/clean-docs --root . eval --format json
       - uses: actions/upload-artifact@v4
         with:
           name: clean-docs-release-${{ github.sha }}
@@ -139,4 +145,27 @@ jobs:
         with:
           name: clean-docs-v0.3-acceptance-${{ github.sha }}
           path: clean-docs-v03-acceptance.json
+          if-no-files-found: error
+
+  acceptance-v0-4:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install ".[dev]"
+      - run: >-
+          python scripts/run_acceptance.py
+          --registry tests/v04-acceptance.yml
+          --out clean-docs-v04-acceptance.json
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clean-docs-v0.4-acceptance-${{ github.sha }}
+          path: clean-docs-v04-acceptance.json
           if-no-files-found: error

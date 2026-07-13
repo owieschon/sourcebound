@@ -76,9 +76,16 @@ class ContextBundleProjection:
 
 
 @dataclass(frozen=True)
+class StaticDemoProjection:
+    output: Path
+    evidence: Path
+
+
+@dataclass(frozen=True)
 class ProjectionConfig:
     llms_txt: LlmsTxtProjection | None = None
     bundles: tuple[ContextBundleProjection, ...] = ()
+    demo: StaticDemoProjection | None = None
 
 
 @dataclass(frozen=True)

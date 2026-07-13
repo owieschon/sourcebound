@@ -1,40 +1,9 @@
 {
   "records": [
     {
-      "audience": "human",
-      "claim": "deterministic-command",
-      "corpus_sha256": "d3d96dc07df30b20f28b724c19463b1726a09db2f3129deb237f38506a7a2f4a",
-      "detail": "1 documented command(s) matched expected output",
-      "id": "human-quickstart",
-      "model": null,
-      "ok": true,
-      "prompt_sha256": "a96581e87594684eb60f73d345ba9ce7b8f5093f7246e2ce37e27d9a81ab84fe",
-      "record_id": "1a025dd38f60bca431fe977956e733598d1432ddd2aaf5a69aca673a69681ebd",
-      "response_sha256": null,
-      "scorer": "command",
-      "scorer_sha256": "f2181116da95d6b96069b9665ef7b77072513d026dd4de66791779bdeb08828b"
-    },
-    {
       "audience": "agent",
       "claim": "deterministic-replay",
-      "corpus_sha256": "7e071efe091b6125f6eb5885cca6a2cbf61776ef8d876cdcded5f345a5f63027",
-      "detail": "structured output matches exactly",
-      "id": "structured-command",
-      "model": {
-        "adapter": "recorded",
-        "name": "recorded-fixture"
-      },
-      "ok": true,
-      "prompt_sha256": "cba7f1b7b6f1ee8cc3ca8d9c893ebc0ae466a6e82364f70da12761670ee8f2a4",
-      "record_id": "31f0f5eec431ac7883b7ebe5825a9be5d1936e5ba193b47d0149d23877b3772c",
-      "response_sha256": "e7f35caa3eb02a30de3263aabdfd78950084743b352aee6c9b83cdf6c80de1d3",
-      "scorer": "structured-output",
-      "scorer_sha256": "a568bd4db2835284cafe510465310b031b59201d10e97b4bc3d1cbd6e4004f1c"
-    },
-    {
-      "audience": "agent",
-      "claim": "deterministic-replay",
-      "corpus_sha256": "7e071efe091b6125f6eb5885cca6a2cbf61776ef8d876cdcded5f345a5f63027",
+      "corpus_sha256": "61d804c2a1e611158edd1a44b0ae1011a5b2c40f3d87cbb57402e16ef97287eb",
       "detail": "response states and cites the canonical limitation",
       "id": "limitation-retrieval",
       "model": {
@@ -42,16 +11,30 @@
         "name": "recorded-fixture"
       },
       "ok": true,
-      "prompt_sha256": "5087e80925edc162fc5a60b085633167afc1858b069b896a0321cfa8e4b1b931",
-      "record_id": "765b5bb4a59cfc3a00078dee37e8acfdc84921815c19dc577d2b834efa15ede6",
+      "prompt_sha256": "ae9889275a533d2ea724115ee950821d1c138c750a71ff0c59adb06a82b5a883",
+      "record_id": "66c290919aec2b86748040a7be1f198506d60ea2fddf1a0ff7a2b81fb09e5886",
       "response_sha256": "464ef28f67818db5d6b1195c91fdb6a8c8050f3197d83a72f0ab78f60fb0dbfe",
       "scorer": "cited-limit",
       "scorer_sha256": "37b1057dea54e8b36d29e16d8dadde9706c7a71bad88f14b19cbc3ed3bb0e9f3"
     },
     {
+      "audience": "human",
+      "claim": "deterministic-command",
+      "corpus_sha256": "40a2cffc9abf9485bd8cb7f0e4a06023884447b0daa4a6aab4f17ec6300cd041",
+      "detail": "1 documented command(s) matched expected output",
+      "id": "human-quickstart",
+      "model": null,
+      "ok": true,
+      "prompt_sha256": "b8a742ae175bc61be1ad38633285af5c42bc2978ad2197d0a1412405d8110c47",
+      "record_id": "75c566c41ef2886220ce4340333f22aa7510efdb3dccdc63dc8b3c1eb779d362",
+      "response_sha256": null,
+      "scorer": "command",
+      "scorer_sha256": "f2181116da95d6b96069b9665ef7b77072513d026dd4de66791779bdeb08828b"
+    },
+    {
       "audience": "agent",
       "claim": "deterministic-replay",
-      "corpus_sha256": "7e071efe091b6125f6eb5885cca6a2cbf61776ef8d876cdcded5f345a5f63027",
+      "corpus_sha256": "61d804c2a1e611158edd1a44b0ae1011a5b2c40f3d87cbb57402e16ef97287eb",
       "detail": "configuration passes schema validation and check",
       "id": "manifest-round-trip",
       "model": {
@@ -59,11 +42,28 @@
         "name": "recorded-fixture"
       },
       "ok": true,
-      "prompt_sha256": "f6d58815ace80944bd196d79fbccd86b617388080dcd55d5dac3891aeb685442",
-      "record_id": "90f8b0fad59bac6ac9c6c57b168e13054a12c612221ece22284b74153ccc37d1",
+      "prompt_sha256": "fd9819ae4c0cb94b81967679bb127bdcfdb7d211a2796264530e0ead73b180fd",
+      "record_id": "ae4057ed6a881af921938b419cccf17d22323ac10e4659be0f147882a8503835",
       "response_sha256": "419da826adecee1c63ef7edd7f2cc8734533db94f1803b769e1cc201bd7a9e6b",
       "scorer": "configuration",
       "scorer_sha256": "ff2c7701e55c68a09f63c7dd94d3e2b350c22d5c224e9bb77a26b01869420a79"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
+      "corpus_sha256": "61d804c2a1e611158edd1a44b0ae1011a5b2c40f3d87cbb57402e16ef97287eb",
+      "detail": "structured output matches exactly",
+      "id": "structured-command",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "a8a5917c2ba1b618622c9bb89427f960318da0ea27542382c78db295570e1f17",
+      "record_id": "fad3a7a678359cc3b1116bb287fa047bd65b05e83e81fefe7631d5ef8d2dc30c",
+      "response_sha256": "e7f35caa3eb02a30de3263aabdfd78950084743b352aee6c9b83cdf6c80de1d3",
+      "scorer": "structured-output",
+      "scorer_sha256": "a568bd4db2835284cafe510465310b031b59201d10e97b4bc3d1cbd6e4004f1c"
     }
   ],
   "schema": "clean-docs.evaluation-history.v1"

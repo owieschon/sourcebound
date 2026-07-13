@@ -64,7 +64,7 @@ projections:
 @pytest.mark.parametrize(
     ("projection", "message"),
     [
-        ("bundles: []", "configure llms_txt or at least one bundle"),
+        ("bundles: []", "configure llms_txt, a bundle, or a demo"),
         (
             "bundles:\n    - id: contributor\n      output: context.md\n"
             "      include: [docs/UNBOUND.md]",
@@ -83,6 +83,19 @@ def test_rejects_invalid_projection_contract(
     path.write_text(VALID + f"projections:\n  {projection}\n")
     with pytest.raises(ConfigurationError, match=message):
         load_manifest(path)
+
+
+def test_loads_static_demo_projection(tmp_path: Path) -> None:
+    path = tmp_path / ".clean-docs.yml"
+    path.write_text(VALID + """\
+projections:
+  demo:
+    output: docs/demo/index.html
+    evidence: .clean-docs/demo/evidence.json
+""")
+    projections = load_manifest(path).projections
+    assert projections is not None and projections.demo is not None
+    assert projections.demo.output == Path("docs/demo/index.html")
 
 
 @pytest.mark.parametrize(

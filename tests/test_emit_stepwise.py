@@ -92,10 +92,17 @@ def test_emits_schema_valid_manifest_derived_package(tmp_path: Path) -> None:
     assert sorted(path.name for path in (output / "references").iterdir()) == [
         "1-audit.md", "2-repair.md", "3-verify.md",
     ]
-    assert (output / "references/1-audit.md").read_text().startswith(
-        "---\nnext_step: 2-repair.md\n---"
-    )
-    assert "next_step: null" in (output / "references/3-verify.md").read_text()
+    expected_chain = {
+        "1-audit.md": "2-repair.md",
+        "2-repair.md": "3-verify.md",
+        "3-verify.md": None,
+    }
+    for name, next_step in expected_chain.items():
+        content = (output / "references" / name).read_text()
+        frontmatter = yaml.safe_load(content.split("---", 2)[1])
+        assert frontmatter == {"next_step": next_step}
+        if next_step:
+            assert f"read `{next_step}`" in content
     assert "`README.md`" in (output / "description.md").read_text()
 
 

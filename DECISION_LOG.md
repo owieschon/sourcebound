@@ -203,3 +203,16 @@ outcomes model-specific, split human and agent scores from hygiene findings, and
 prompt, response, model, scorer, and result digests in a deduplicated history. Human command tasks
 must name an allowlisted command and an excerpt present in their supplied docs. Reversible: new
 provider adapters can implement the same response protocol without entering deterministic gates.
+
+## 20. Generate one static demonstration from recorded evidence (2026-07-13)
+
+Context: the product needs a showable drift workflow, but a web application would add state,
+accounts, storage, and runtime trust without improving the local gate. Chose one HTML projection
+from a strict three-state evidence record. The recorder runs a temporary repository through
+current, drifted, repaired, and verified states; `project` renders those exact commands and
+outputs. The renderer requires task-first reader slots, one heading hierarchy, labeled landmarks,
+a skip link, local fragment integrity, and no scripts or external runtime assets. A Pages workflow
+uploads only the generated file after `project --check`; the CLI remains local and emits no
+telemetry. Desktop and 390-pixel viewport checks caught and fixed digest overflow before publish.
+Reversible: deleting the demo projection and deployment workflow leaves every CLI and evaluation
+contract intact.

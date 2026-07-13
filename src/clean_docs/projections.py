@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import unquote
 
+from clean_docs.demo import load_demo_evidence, render_static_demo
 from clean_docs.emit import render_llms_txt
 from clean_docs.errors import ConfigurationError
 from clean_docs.models import BindingResult, ContextBundleProjection, Manifest, Provenance
@@ -17,6 +18,7 @@ from clean_docs.regions import atomic_write
 
 
 LINK = re.compile(r"\[[^\]]+\]\(([^)\s]+)(?:\s+[^)]*)?\)")
+HTML_LINK = re.compile(r'href="([^"]+)"')
 HEADING = re.compile(r"^#{1,6}\s+(.+?)\s*$")
 CANONICAL_BLOCK = re.compile(
     r"<!-- clean-docs:canonical .+? begin -->.*?"
@@ -30,6 +32,7 @@ class ProjectionSet:
     source_ref: str
     corpus_digest: str
     files: dict[Path, str]
+    digests: dict[Path, str]
 
 
 def _read_documents(root: Path, manifest: Manifest) -> dict[str, bytes]:
@@ -115,6 +118,7 @@ def _anchors(content: str) -> set[str]:
         count = counts.get(base, 0)
         counts[base] = count + 1
         anchors.add(base if count == 0 else f"{base}-{count}")
+    anchors.update(re.findall(r'\bid="([^"]+)"', content))
     return anchors
 
 
@@ -124,7 +128,8 @@ def _verify_links(root: Path, files: dict[Path, str]) -> None:
         # Embedded canonical bytes retain links relative to their original page. The original
         # page is checked separately; generated bundle metadata is checked at the bundle path.
         checked_content = CANONICAL_BLOCK.sub("", content)
-        for match in LINK.finditer(checked_content):
+        matches = [*LINK.finditer(checked_content), *HTML_LINK.finditer(checked_content)]
+        for match in matches:
             raw = unquote(match.group(1))
             if raw.startswith(("http://", "https://", "mailto:")):
                 continue
@@ -166,6 +171,7 @@ def render_projections(root: Path, manifest: Manifest) -> ProjectionSet:
     corpus_digest = _corpus_digest(documents)
     source_ref = _source_ref()
     files: dict[Path, str] = {}
+    digests: dict[Path, str] = {}
     llms = manifest.projections.llms_txt
     if llms:
         files[llms.output] = render_llms_txt(
@@ -175,14 +181,21 @@ def render_projections(root: Path, manifest: Manifest) -> ProjectionSet:
             documents=documents,
             output_path=root / llms.output,
         )
+        digests[llms.output] = corpus_digest
     for bundle in manifest.projections.bundles:
         files[bundle.output] = _render_bundle(
             root, bundle, documents, source_ref, corpus_digest
         )
+        digests[bundle.output] = corpus_digest
+    demo = manifest.projections.demo
+    if demo:
+        evidence = load_demo_evidence(root / demo.evidence)
+        files[demo.output] = render_static_demo(evidence, demo.output)
+        digests[demo.output] = evidence.digest
     combined = {Path(path): content.decode("utf-8") for path, content in documents.items()}
     combined.update(files)
     _verify_links(root, combined)
-    return ProjectionSet(source_ref, corpus_digest, files)
+    return ProjectionSet(source_ref, corpus_digest, files, digests)
 
 
 def evaluate_projections(root: Path, manifest: Manifest) -> list[BindingResult]:
@@ -213,7 +226,7 @@ def evaluate_projections(root: Path, manifest: Manifest) -> list[BindingResult]:
                 path=path.as_posix(),
                 locator="documentation-graph",
                 extractor="projection",
-                digest=projection_set.corpus_digest,
+                digest=projection_set.digests[path],
             ),
             binding_type="projection",
         ))

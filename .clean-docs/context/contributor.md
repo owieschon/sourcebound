@@ -1,13 +1,13 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `c52f17dc778d69e3e9b0cf9609175a9333c46e6ba540fb7d4fb817de1bc87416`
+- Corpus sha256: `9176cfdfaf5cc7caf1404ef34ac4adb1815d4338e279223e52bc9d92ed93ecbf`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `95912a970ca4eb90ec2058879e0ef6b60d73804329b31760b5a0c7b053c17f73`
+- Content sha256: `d0110fa01e1310dfa2ba30bbda281ec7bd604b30db5f453bd8adf11694178b52`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
@@ -17,7 +17,7 @@ clean-docs is a self-driving documentation system that applies one packaged stan
 Write the standard once; clean-docs does the repository work. The finished product audits each repository, derives its factual spine from source, phrases it to the packaged standard, tests the result, and maintains it on every change. Models may phrase grounded facts; deterministic code owns the facts and gate results.
 
 <!-- clean-docs:begin product-overview -->
-Version 0.4a1 projects one verified documentation graph into llms.txt and named context bundles, with source refs, content digests, link verification, and freshness checks. It scores documented human commands and agent responses with replayable task fixtures. It compares normalized public surface across git refs and reports changed binding drift, coverage gaps, and SARIF annotations. It statically inventories package, CLI, API, schema, test, and documentation surfaces and bootstraps a source-bound baseline. It audits documentation without configuration and verifies region, claim, and symbol bindings from static Python, structured data, text files, path globs, and allowlisted JSON commands. It emits manifest-derived stepwise skill packages and llms.txt indexes, and it never imports repository code. `derive` previews changes unless you pass `--write`; `audit` and `check` never write.
+Version 0.4a1 projects one verified documentation graph into llms.txt and named context bundles, with source refs, content digests, link verification, and freshness checks. It scores documented human commands and agent responses with replayable task fixtures and generates one accessible static demonstration from recorded drift evidence. It compares normalized public surface across git refs and reports changed binding drift, coverage gaps, and SARIF annotations. It statically inventories package, CLI, API, schema, test, and documentation surfaces and bootstraps a source-bound baseline. It audits documentation without configuration and verifies region, claim, and symbol bindings from static Python, structured data, text files, path globs, and allowlisted JSON commands. It emits manifest-derived stepwise skill packages and llms.txt indexes, and it never imports repository code. `derive` previews changes unless you pass `--write`; `audit` and `check` never write.
 <!-- clean-docs:end product-overview -->
 ## Install and audit
 
@@ -129,7 +129,7 @@ This table is derived from `src/clean_docs/capabilities.py` by clean-docs itself
 - Evaluation claim boundaries are defined in the [evaluation guide](docs/EVALUATION.md).
 - clean-docs reports malformed configuration as exit `2`, drift as exit `1`, and extraction failures as exit `3`.
 
-Use the [evaluation guide](docs/EVALUATION.md) for task fixtures. The full product contract and version plan live in [`CLEAN_DOCS_SPEC.md`](CLEAN_DOCS_SPEC.md).
+See the [recorded drift demonstration](https://owieschon.github.io/clean-docs/) and use the [evaluation guide](docs/EVALUATION.md) for task fixtures. The full product contract and version plan live in [`CLEAN_DOCS_SPEC.md`](CLEAN_DOCS_SPEC.md).
 <!-- clean-docs:canonical README.md end -->
 
 ## Canonical document: docs/EVALUATION.md
