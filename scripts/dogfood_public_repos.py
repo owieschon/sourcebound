@@ -49,7 +49,9 @@ bindings:
         document="""\
 # CSM action registry
 
-This page is generated from the repository's action registry.
+<!-- clean-docs:purpose -->
+Use this registry when checking which customer-success actions the repository exposes and what each action permits. It gives maintainers a source-bound table that changes when the implementation changes.
+<!-- clean-docs:end purpose -->
 
 <!-- clean-docs:begin csm-actions -->
 Not generated yet.
@@ -77,6 +79,10 @@ bindings:
 """,
         document="""\
 # Comparison policy registry
+
+<!-- clean-docs:purpose -->
+Use this registry when checking where comparison policy identifiers are defined. It gives maintainers one source symbol whose removal must fail the documentation gate.
+<!-- clean-docs:end purpose -->
 
 ## Policy registry
 
