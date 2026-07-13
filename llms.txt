@@ -4,15 +4,15 @@
 
 ## Canonical documentation
 
-- [CLEAN_DOCS_SPEC.md](CLEAN_DOCS_SPEC.md): declared canonical context; sha256: b12064c9bd40cdb7ec6d838aa0c357e24d658cfbc2f34b24dc8d0c5755e3c446
+- [CLEAN_DOCS_SPEC.md](CLEAN_DOCS_SPEC.md): declared canonical context; sha256: 1eb9ee346edd4595ee35e087c50ed54115cef4538287dbfd51584a1b69b972f3
 - [README.md](README.md): bindings: manifest-reference, product-overview, supported-bindings; sha256: 22b21dd54dc01f63836bd35e7b3d5a362d5d3c092f8d83cb9ad580e139c6ffdb
 - [SECURITY.md](SECURITY.md): declared canonical context; sha256: 9b73fcc18efa2ff39d64d8271a6c33b278de5dc625d7ac7c319587edf0c31621
 - [STANDARD.md](STANDARD.md): declared canonical context; sha256: 54cc72e038f34effb7ea79586cef274495c59b466318b4c6ac5c68db2a9d2f4f
 - [docs/CLI.md](docs/CLI.md): bindings: cli-reference; sha256: dae82eebf8e8712dce8b4c17e480f13912155078b3e34fb0159ff2f2c45510bc
 - [docs/EVALUATION.md](docs/EVALUATION.md): bindings: evaluation-scorers; sha256: aaf5640377fc0aca3fc046eed8f3c2e6d06b89f3b4e6ae56f610b796bedd8b70
 - [docs/EXTENSIONS.md](docs/EXTENSIONS.md): bindings: extension-guide, migration-guide; sha256: a1da5683da8247c11fb9bb2d6f04c3aa30961cabe7aab5ee5791b70244835d2d
-- [docs/RELEASES.md](docs/RELEASES.md): bindings: release-guide; sha256: 15c64644a2a2428f86a72fc97376470ac16bc0d089e91bce0b99666cc3ec781e
+- [docs/RELEASES.md](docs/RELEASES.md): bindings: release-guide; sha256: 0c9024977bca84b77106d85b91a756bf97124638ed65601cdc79cc90bf007161
 - [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md): bindings: security-model; sha256: 29d9f2582186f19d72823e163512fa12f6d7459f4da273ca3d8be56d5befd2bf
 - [docs/SUPPORT.md](docs/SUPPORT.md): bindings: support-guide; sha256: c3a08fb103b9cc48e7db4fb60d458cf215c9ddd4e85e6772baddb65624ec81ee
-- [docs/SURFACE.md](docs/SURFACE.md): bindings: repository-surface; sha256: af6f558478b217bd24ffd735c26aae889b2e1173078d0a019c6336f3526278c8
+- [docs/SURFACE.md](docs/SURFACE.md): bindings: repository-surface; sha256: f6b88797cb28bc7ad7aa0e6e6c1aaa2ec8e2c84b2ddae83fca1e8f87232f365c
 - [skill/SKILL.md](skill/SKILL.md): declared canonical context; sha256: 77f0b257236a184c5b202e8327c27785f3ab4abe9c1ae9c3c082f8fa06428da9

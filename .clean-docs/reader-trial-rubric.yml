@@ -11,12 +11,12 @@ profiles:
   - id: anthropic-sonnet-5
     provider: anthropic
     model: Sonnet 5
-  - id: codex-gpt-5-5-pro
+  - id: codex-gpt-5-5-high
     provider: codex
-    model: GPT 5.5 Pro
-  - id: codex-gpt-6-5-pro
+    model: GPT 5.5 High
+  - id: codex-gpt-5-6-sol-high
     provider: codex
-    model: GPT 6.5 Pro
+    model: GPT 5.6 Sol High
 tasks:
   - id: identify-purpose
     instruction: Read only the README's first body block, then state who clean-docs applies to, the problem it addresses, and the capability it gives that reader.

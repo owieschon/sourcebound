@@ -423,8 +423,8 @@ def test_independent_reader_release_requires_receipts_and_published_tasks_work(
     assert [profile["id"] for profile in reader_trial["profiles"]] == [
         "anthropic-opus-4-8",
         "anthropic-sonnet-5",
-        "codex-gpt-5-5-pro",
-        "codex-gpt-6-5-pro",
+        "codex-gpt-5-5-high",
+        "codex-gpt-5-6-sol-high",
     ]
     assert [task["id"] for task in reader_trial["tasks"]] == [
         "identify-purpose",

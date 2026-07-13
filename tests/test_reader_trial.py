@@ -85,8 +85,8 @@ def test_reader_trial_binds_rubric_context_participants_and_task_evidence(
     assert summary["participants"] == {
         "anthropic-opus-4-8": 1,
         "anthropic-sonnet-5": 1,
-        "codex-gpt-5-5-pro": 1,
-        "codex-gpt-6-5-pro": 1,
+        "codex-gpt-5-5-high": 1,
+        "codex-gpt-5-6-sol-high": 1,
     }
     assert summary["tasks_per_participant"] == 5
     assert summary["receipt_sha256"] == _sha256(receipt.read_bytes())
@@ -165,8 +165,8 @@ def test_stable_release_requires_reader_trial_while_candidate_build_does_not(
     assert set(summary["participants"]) == {
         "anthropic-opus-4-8",
         "anthropic-sonnet-5",
-        "codex-gpt-5-5-pro",
-        "codex-gpt-6-5-pro",
+        "codex-gpt-5-5-high",
+        "codex-gpt-5-6-sol-high",
     }
 
 
