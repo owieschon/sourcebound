@@ -409,6 +409,63 @@ def test_failed_post_write_policy_check_restores_the_repository(
     assert after == before
 
 
+def test_mature_repository_requires_explicit_exact_hygiene_baseline(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    root = tmp_path / "mature-repo"
+    root.mkdir()
+    (root / "pyproject.toml").write_text(
+        '[project]\nname = "mature-service"\nversion = "1.0.0"\n'
+    )
+    (root / "README.md").write_text(
+        "# Mature service\n\n" + "\n".join(f"Existing line {index}" for index in range(130))
+    )
+    (root / "STATUS.md").write_text("# Existing status\n")
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    assert main(["--root", str(root), "init", "--no-model"]) == 1
+    capsys.readouterr()
+    assert not (root / ".clean-docs.yml").exists()
+    assert not (root / ".clean-docs/audit-baseline.json").exists()
+
+    assert main([
+        "--root",
+        str(root),
+        "init",
+        "--no-model",
+        "--accept-hygiene-baseline",
+        "--format",
+        "json",
+    ]) == 0
+    plan = json.loads(capsys.readouterr().out)
+    assert any(
+        operation["path"] == ".clean-docs/audit-baseline.json"
+        for operation in plan["operations"]
+    )
+    report = audit(root)
+    assert report.ok
+    assert report.findings == ()
+    assert [item.rule for item in report.baselined_findings] == [
+        "doc-length",
+        "process-artifact",
+    ]
+    assert (root / "STATUS.md").is_file()
+    assert not (root / "docs/archive/clean-docs-init/STATUS.md").exists()
+
+    readme = root / "README.md"
+    readme.write_text(
+        readme.read_text().replace(
+            "# Mature service\n",
+            "# Mature service\n\n"
+            '<!-- clean-docs:allow doc-length reason="Existing reference remains one page" -->\n',
+        )
+    )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+    assert main(["--root", str(root), "audit"]) == 1
+    assert "stale-baseline" in capsys.readouterr().out
+
+
 def test_init_rejects_a_missing_repository_root(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

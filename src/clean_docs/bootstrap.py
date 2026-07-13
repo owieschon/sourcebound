@@ -8,7 +8,7 @@ import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from clean_docs.audit import PROCESS_NAME, audit
+from clean_docs.audit import AUDIT_BASELINE_PATH, PROCESS_NAME, audit, write_audit_baseline
 from clean_docs.emit import render_llms_txt
 from clean_docs.engine import evaluate
 from clean_docs.errors import ConfigurationError, PolicyError
@@ -59,6 +59,7 @@ class BootstrapPlan:
     gaps: tuple[str, ...]
     model: ModelRecord | None
     digest: str
+    accept_hygiene_baseline: bool = False
 
     def as_dict(self) -> dict[str, object]:
         facts = []
@@ -83,7 +84,13 @@ class BootstrapPlan:
                 for write in self.writes
             ] + [
                 {"action": "move", **asdict(move)} for move in self.moves
-            ],
+            ] + ([{
+                "action": "write",
+                "path": AUDIT_BASELINE_PATH.as_posix(),
+                "content": None,
+                "reason": "record exact existing documentation debt after bootstrap",
+                "diff": None,
+            }] if self.accept_hygiene_baseline else []),
             "gaps": list(self.gaps),
             "model": self.model.as_dict() if self.model else None,
         }
@@ -204,7 +211,10 @@ def _archive_moves(root: Path) -> list[PlannedMove]:
 
 
 def build_bootstrap_plan(
-    root: Path, provider: PhrasingProvider | None = None
+    root: Path,
+    provider: PhrasingProvider | None = None,
+    *,
+    accept_hygiene_baseline: bool = False,
 ) -> BootstrapPlan:
     root = root.resolve()
     if not root.is_dir():
@@ -257,13 +267,14 @@ def build_bootstrap_plan(
     )
     if any(redact_secrets(item.content)[1] for item in writes):
         gaps += ("secret detected in generated documentation",)
-    moves = _archive_moves(root)
+    moves = [] if accept_hygiene_baseline else _archive_moves(root)
     payload = json.dumps({
         "facts": [item.id + ":" + item.digest for item in facts],
         "writes": [(item.path, hashlib.sha256(item.content.encode()).hexdigest()) for item in writes],
         "moves": [(item.source, item.path) for item in moves],
         "gaps": gaps,
         "model": model.as_dict() if model else None,
+        "accept_hygiene_baseline": accept_hygiene_baseline,
     }, sort_keys=True, separators=(",", ":"))
     return BootstrapPlan(
         facts,
@@ -272,6 +283,7 @@ def build_bootstrap_plan(
         gaps,
         model,
         hashlib.sha256(payload.encode()).hexdigest(),
+        accept_hygiene_baseline,
     )
 
 
@@ -283,6 +295,12 @@ def apply_bootstrap_plan(root: Path, plan: BootstrapPlan) -> None:
         write.path: (root / write.path).read_bytes() if (root / write.path).exists() else None
         for write in plan.writes
     }
+    baseline_key = AUDIT_BASELINE_PATH.as_posix()
+    if plan.accept_hygiene_baseline and baseline_key not in originals:
+        baseline_path = root / AUDIT_BASELINE_PATH
+        originals[baseline_key] = (
+            baseline_path.read_bytes() if baseline_path.exists() else None
+        )
     completed_moves: list[PlannedMove] = []
     try:
         for move in plan.moves:
@@ -298,11 +316,18 @@ def apply_bootstrap_plan(root: Path, plan: BootstrapPlan) -> None:
         results = evaluate(root, root / ".clean-docs.yml")
         if any(result.changed for result in results):
             raise ConfigurationError("init wrote a baseline that does not pass binding checks")
+        if plan.accept_hygiene_baseline:
+            write_audit_baseline(root)
         report = audit(root)
-        if report.findings:
+        if not report.ok:
             details = "; ".join(
                 f"{finding.path}:{finding.line} {finding.rule}" for finding in report.findings[:5]
             )
+            if report.stale_baseline:
+                details = (details + "; " if details else "") + "; ".join(
+                    f"{finding.path}:{finding.line} stale-baseline"
+                    for finding in report.stale_baseline[:5]
+                )
             raise PolicyError(f"init baseline has policy findings: {details}")
         manifest = load_manifest(root / ".clean-docs.yml")
         if any(result.changed for result in evaluate_projections(root, manifest)):
@@ -314,6 +339,11 @@ def apply_bootstrap_plan(root: Path, plan: BootstrapPlan) -> None:
                 target.unlink(missing_ok=True)
             else:
                 atomic_write(target, content.decode("utf-8"))
+        if plan.accept_hygiene_baseline:
+            try:
+                (root / AUDIT_BASELINE_PATH).parent.rmdir()
+            except OSError:
+                pass
         for move in reversed(completed_moves):
             source = root / move.source
             destination = root / move.path

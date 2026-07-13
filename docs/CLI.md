@@ -7,7 +7,7 @@ The table is generated from the command registry used by the parser:
 <!-- clean-docs:begin cli-reference -->
 | command | job | writes |
 | --- | --- | --- |
-| audit | Inventory and check repository documentation | no |
+| audit | Inventory and check repository documentation | with --update-baseline |
 | inventory | List detected repository surfaces and coverage | no |
 | init | Write a source-bound documentation baseline | yes |
 | explain | Explain a finding or coverage state | no |

@@ -319,6 +319,30 @@ def test_independent_reader_commands_complete_the_published_rubric(
     assert _run(root, "--version").returncode == 0
     assert _run(root, "init", "--no-model").returncode == 0
     assert _run(root, "verify").returncode == 0
+
+    mature = tmp_path / "mature"
+    mature.mkdir()
+    subprocess.run(["git", "init", "-q", str(mature)], check=True)
+    (mature / "pyproject.toml").write_text(
+        '[project]\nname = "mature-reader"\nversion = "1.0.0"\n'
+    )
+    (mature / "README.md").write_text(
+        "# Mature reader\n\n" + "\n".join(
+            f"Existing reference line {index}" for index in range(130)
+        )
+    )
+    subprocess.run(["git", "-C", str(mature), "add", "."], check=True)
+    strict = _run(mature, "init", "--no-model")
+    adopted = _run(
+        mature,
+        "init",
+        "--no-model",
+        "--accept-hygiene-baseline",
+    )
+    assert strict.returncode == 1
+    assert adopted.returncode == 0, adopted.stderr
+    assert _run(mature, "audit").returncode == 0
+    assert (mature / ".clean-docs/audit-baseline.json").is_file()
     (root / "cli.py").write_text(
         "parser.add_parser('serve')\nparser.add_parser('reader-drift')\n"
     )

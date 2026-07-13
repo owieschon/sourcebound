@@ -7,7 +7,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from clean_docs import __version__
-from clean_docs.audit import audit
+from clean_docs.audit import AUDIT_BASELINE_PATH, audit, write_audit_baseline
 from clean_docs.bootstrap import apply_bootstrap_plan, build_bootstrap_plan
 from clean_docs.capabilities import CLI_REFERENCE
 from clean_docs.changed import check_changed, render_sarif
@@ -48,6 +48,11 @@ def _parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
     audit_parser = sub.add_parser("audit", help=_command_help("audit"))
     audit_parser.add_argument("--format", choices=("text", "json"), default="text")
+    audit_parser.add_argument(
+        "--update-baseline",
+        action="store_true",
+        help="replace the exact existing-debt baseline with current findings",
+    )
     inventory_parser = sub.add_parser("inventory", help=_command_help("inventory"))
     inventory_parser.add_argument("--format", choices=("text", "json"), default="text")
     init_parser = sub.add_parser("init", help=_command_help("init"))
@@ -62,6 +67,11 @@ def _parser() -> argparse.ArgumentParser:
     )
     init_parser.add_argument(
         "--dry-run", action="store_true", help="print the content plan without writing"
+    )
+    init_parser.add_argument(
+        "--accept-hygiene-baseline",
+        action="store_true",
+        help="record exact existing findings so mature repositories can adopt the gate",
     )
     init_parser.add_argument("--format", choices=("text", "json"), default="text")
     explain_parser = sub.add_parser("explain", help=_command_help("explain"))
@@ -196,16 +206,24 @@ def main(argv: list[str] | None = None) -> int:
     root = args.root.resolve()
     if args.command == "audit":
         try:
+            if args.update_baseline:
+                write_audit_baseline(root)
             report = audit(root)
         except CleanDocsError as exc:
             print(f"clean-docs: {exc}", file=sys.stderr)
             return exc.exit_code
         if args.format == "json":
             print(json.dumps({
-                "ok": not report.findings,
+                "ok": report.ok,
                 "documents": list(report.documents),
                 "ignored_documents": list(report.ignored_documents),
                 "findings": [asdict(finding) for finding in report.findings],
+                "baselined_findings": [
+                    asdict(finding) for finding in report.baselined_findings
+                ],
+                "stale_baseline": [
+                    asdict(finding) for finding in report.stale_baseline
+                ],
             }, indent=2))
         else:
             for audit_finding in report.findings:
@@ -213,11 +231,21 @@ def main(argv: list[str] | None = None) -> int:
                     f"[{audit_finding.rule}] {audit_finding.path}:{audit_finding.line} "
                     f"{audit_finding.detail}"
                 )
+            for stale_finding in report.stale_baseline:
+                print(
+                    f"[stale-baseline] {stale_finding.path}:{stale_finding.line} "
+                    f"{stale_finding.rule}: finding was resolved; update the baseline"
+                )
+            if args.update_baseline:
+                print(f"[updated] {AUDIT_BASELINE_PATH}")
             print(
                 f"audit: {len(report.documents)} active document(s), "
-                f"{len(report.ignored_documents)} archived, {len(report.findings)} finding(s)"
+                f"{len(report.ignored_documents)} archived, "
+                f"{len(report.findings)} finding(s); "
+                f"{len(report.baselined_findings)} baselined; "
+                f"{len(report.stale_baseline)} stale"
             )
-        return 1 if report.findings else 0
+        return 0 if report.ok else 1
     if args.command == "inventory":
         try:
             inventory_report = scan_extended_inventory(root)
@@ -317,7 +345,11 @@ def main(argv: list[str] | None = None) -> int:
                     raise ConfigurationError(
                         f"cannot read recorded model response {response_path}"
                     ) from exc
-            plan = build_bootstrap_plan(root, provider)
+            plan = build_bootstrap_plan(
+                root,
+                provider,
+                accept_hygiene_baseline=args.accept_hygiene_baseline,
+            )
             if not args.dry_run:
                 apply_bootstrap_plan(root, plan)
         except CleanDocsError as exc:
@@ -331,8 +363,15 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"[{state}] write {write.path}: {write.reason}")
             for move in plan.moves:
                 print(f"[{state}] move {move.source} -> {move.path}: {move.reason}")
+            if plan.accept_hygiene_baseline:
+                print(
+                    f"[{state}] write {AUDIT_BASELINE_PATH}: "
+                    "record exact existing documentation debt after bootstrap"
+                )
             print(
-                f"init: {state} {len(plan.writes) + len(plan.moves)} operation(s); "
+                f"init: {state} "
+                f"{len(plan.writes) + len(plan.moves) + int(plan.accept_hygiene_baseline)} "
+                "operation(s); "
                 f"{len(plan.facts)} grounded fact(s)"
             )
         return 0

@@ -111,3 +111,16 @@ def test_project_rejects_broken_canonical_anchor(tmp_path: Path) -> None:
     assert result.returncode == 2
     assert "broken projection anchor: README.md -> #missing" in result.stderr
     assert not (root / "llms.txt").exists()
+
+
+def test_project_accepts_an_existing_repository_directory_link(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    (root / "schemas").mkdir()
+    (root / "schemas/item.json").write_text("{}\n")
+    readme = (root / "README.md").read_text()
+    (root / "README.md").write_text(readme + "\n[Schema directory](schemas/)\n")
+
+    result = _run(root, "project")
+
+    assert result.returncode == 0, result.stderr
+    assert (root / "llms.txt").is_file()
