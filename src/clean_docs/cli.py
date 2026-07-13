@@ -74,6 +74,8 @@ def _parser() -> argparse.ArgumentParser:
     check.add_argument("--changed", action="store_true", help="check base-to-head impact")
     check.add_argument("--base", help="base git ref for --changed")
     check.add_argument("--head", help="head git ref for --changed")
+    check.add_argument("--project", type=Path, default=Path("."), help="monorepo project path")
+    check.add_argument("--no-cache", action="store_true", help="bypass immutable-ref cache")
     check.add_argument("--format", choices=("text", "json", "sarif"), default="text")
     emit = sub.add_parser("emit", help=_command_help("emit"))
     emit_sub = emit.add_subparsers(dest="target", required=True)
@@ -327,11 +329,16 @@ def main(argv: list[str] | None = None) -> int:
                 raise ConfigurationError(
                     "check --changed cannot be combined with --binding or --ref"
                 )
+            changed_manifest = manifest
+            if args.project != Path(".") and args.manifest == Path(".clean-docs.yml"):
+                changed_manifest = root / args.project / args.manifest
             changed_report = check_changed(
                 root,
-                manifest,
+                changed_manifest,
                 base=args.base,
                 head=args.head,
+                use_cache=not args.no_cache,
+                project=args.project,
             )
             if args.format == "json":
                 print(json.dumps(changed_report.as_dict(), indent=2))

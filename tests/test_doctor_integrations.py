@@ -57,10 +57,19 @@ def test_distribution_integrations_are_strict() -> None:
     gate = next(step for step in steps if step.get("name") == "Evaluate documentation gate")
     assert "clean-docs audit --format json > clean-docs-audit.json" in gate["run"]
     assert "clean-docs check --format json > clean-docs-check.json" in gate["run"]
+    assert "clean-docs check --changed --base \"$base\" --head \"$head\"" in gate["run"]
+    assert "--format sarif > clean-docs-changed.sarif" in gate["run"]
+    annotations = next(
+        step for step in steps if step.get("name") == "Publish changed-surface annotations"
+    )
+    assert "GITHUB_STEP_SUMMARY" in annotations["run"]
+    assert "command_property" in annotations["run"]
     upload = next(step for step in steps if step.get("name") == "Upload clean-docs evidence")
     assert upload["if"] == "always()"
     assert upload["uses"] == "actions/upload-artifact@v4"
     assert upload["with"]["if-no-files-found"] == "error"
+    assert "clean-docs-*.sarif" in upload["with"]["path"]
+    assert workflow[True]["workflow_call"]["inputs"]["base-ref"]["required"] is False
     ci = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
     matrix = ci["jobs"]["test"]["strategy"]["matrix"]
     assert matrix["os"] == ["ubuntu-latest", "macos-latest"]
@@ -81,3 +90,7 @@ def test_distribution_integrations_are_strict() -> None:
     v02_receipt = acceptance_v02["steps"][-1]
     assert v02_receipt["if"] == "always()"
     assert v02_receipt["with"]["if-no-files-found"] == "error"
+    acceptance_v03 = ci["jobs"]["acceptance-v0-3"]
+    assert acceptance_v03["needs"] == "test"
+    assert "--registry tests/v03-acceptance.yml" in acceptance_v03["steps"][-2]["run"]
+    assert acceptance_v03["steps"][-1]["with"]["if-no-files-found"] == "error"

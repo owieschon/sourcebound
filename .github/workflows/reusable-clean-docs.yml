@@ -7,6 +7,16 @@ on:
         description: Immutable clean-docs commit or tag to install.
         required: true
         type: string
+      base-ref:
+        description: Base commit for changed-surface checks. Defaults to the pull request base.
+        required: false
+        default: ""
+        type: string
+      head-ref:
+        description: Head commit for changed-surface checks. Defaults to the pull request head.
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: read
@@ -16,6 +26,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
@@ -31,12 +43,51 @@ jobs:
           audit_status=$?
           clean-docs check --format json > clean-docs-check.json
           check_status=$?
+          base="${{ inputs.base-ref || github.event.pull_request.base.sha }}"
+          head="${{ inputs.head-ref || github.event.pull_request.head.sha }}"
+          changed_status=0
+          if [ -n "$base" ] && [ -n "$head" ]; then
+            clean-docs check --changed --base "$base" --head "$head" \
+              --format json > clean-docs-changed.json
+            changed_status=$?
+            clean-docs check --changed --base "$base" --head "$head" \
+              --format sarif > clean-docs-changed.sarif
+          fi
           set -e
-          test "$audit_status" -eq 0 && test "$check_status" -eq 0
+          test "$audit_status" -eq 0 && test "$check_status" -eq 0 && \
+            test "$changed_status" -eq 0
+      - name: Publish changed-surface annotations
+        if: always() && hashFiles('clean-docs-changed.json') != ''
+        run: |
+          python - <<'PY'
+          import json
+          import os
+
+          report = json.load(open("clean-docs-changed.json", encoding="utf-8"))
+          def command_data(value):
+              return str(value).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+
+          def command_property(value):
+              return command_data(value).replace(":", "%3A").replace(",", "%2C")
+
+          summary = ["## clean-docs changed-surface report", ""]
+          summary.append(f"Required: {len(report['required'])}")
+          summary.append(f"Coverage gaps: {len(report['gaps'])}")
+          summary.append(f"Reasoned ignores: {len(report['ignored'])}")
+          for section, level in (("required", "error"), ("gaps", "warning")):
+              for finding in report[section]:
+                  path = finding["doc"] or finding["source"]
+                  message = f"{finding['id']}: {finding['message']}. Repair: {finding['repair']}"
+                  print(f"::{level} file={command_property(path)}::{command_data(message)}")
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as handle:
+              handle.write("\n".join(summary) + "\n")
+          PY
       - name: Upload clean-docs evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: clean-docs-evidence
-          path: clean-docs-*.json
+          path: |
+            clean-docs-*.json
+            clean-docs-*.sarif
           if-no-files-found: error

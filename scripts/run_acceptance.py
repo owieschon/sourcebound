@@ -38,6 +38,14 @@ EXPECTED_IDS_BY_RELEASE = {
         "multi-language-fixture",
         "hostile-phrasing-context",
     },
+    "0.3": {
+        "bound-change-blocks-merge",
+        "new-public-surface-is-flagged",
+        "private-refactor-stays-quiet",
+        "declared-ignore-remains-explicit",
+        "cache-correctness",
+        "monorepo-isolation",
+    },
 }
 
 

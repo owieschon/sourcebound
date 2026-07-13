@@ -1,0 +1,15 @@
+version: 1
+release: "0.3"
+scenarios:
+  - id: bound-change-blocks-merge
+    test: tests/test_changed_check.py::test_changed_bound_evidence_has_stable_required_finding_and_sarif
+  - id: new-public-surface-is-flagged
+    test: tests/test_changed_check.py::test_changed_new_public_surface_is_a_separate_gap
+  - id: private-refactor-stays-quiet
+    test: tests/test_changed_check.py::test_changed_private_refactor_stays_quiet
+  - id: declared-ignore-remains-explicit
+    test: tests/test_changed_check.py::test_changed_reasoned_ignore_is_visible_and_stale_ignore_fails
+  - id: cache-correctness
+    test: tests/test_changed_check.py::test_changed_cache_reuses_base_and_preserves_normalized_output
+  - id: monorepo-isolation
+    test: tests/test_changed_check.py::test_changed_monorepo_project_selection_isolates_other_manifests

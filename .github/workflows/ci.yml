@@ -117,3 +117,26 @@ jobs:
           name: clean-docs-v0.2-acceptance-${{ github.sha }}
           path: clean-docs-v02-acceptance.json
           if-no-files-found: error
+
+  acceptance-v0-3:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install ".[dev]"
+      - run: >-
+          python scripts/run_acceptance.py
+          --registry tests/v03-acceptance.yml
+          --out clean-docs-v03-acceptance.json
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clean-docs-v0.3-acceptance-${{ github.sha }}
+          path: clean-docs-v03-acceptance.json
+          if-no-files-found: error

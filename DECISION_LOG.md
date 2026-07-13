@@ -167,3 +167,14 @@ required result; newly added unbound surface is a separate coverage gap; reasone
 visible. Finding identity hashes the rule, document, source, and locator, and the same identifier
 is carried into SARIF fingerprints. Reversible: later dependency filtering and caching can reduce
 work without changing the normalized report contract.
+
+## 17. Cache immutable inventory outside the worktree (2026-07-13)
+
+Context: changed checks repeatedly inventory the same base ref, but cache metadata must not alter
+repository content or normalized results. Chose content-addressed inventory entries under the Git
+metadata directory, keyed by extractor version, project parameters, and commit SHA. Cache hit and
+miss diagnostics stay outside the machine-readable report. A new head reuses base inventory and
+invalidates head inventory; cached and uncached reports must be byte-identical after normalized
+serialization. The reusable action retains read-only permissions and publishes escaped workflow
+annotations, a step summary, JSON, and SARIF artifacts. Reversible: deleting the cache directory
+only removes an optimization.
