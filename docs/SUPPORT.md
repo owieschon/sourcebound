@@ -96,7 +96,12 @@ from pathlib import Path
 wheels = list(Path(".").glob("clean_docs-*.whl"))
 if len(wheels) != 1:
     raise SystemExit(f"expected one wheel, found {len(wheels)}")
-expected = dict(line.split(maxsplit=1) for line in Path("SHA256SUMS").read_text().splitlines())
+expected = {
+    filename: digest
+    for digest, filename in (
+        line.split(maxsplit=1) for line in Path("SHA256SUMS").read_text().splitlines()
+    )
+}
 actual = sha256(wheels[0].read_bytes()).hexdigest()
 if expected.get(wheels[0].name) != actual:
     raise SystemExit("wheel checksum mismatch")
