@@ -28,10 +28,17 @@ def test_candidate_checker_bypass_cannot_override_trusted_failure(tmp_path: Path
     )
     shutil.copyfile(ROOT / ".clean-docs-trust.json", clone / ".clean-docs-trust.json")
     capabilities = clone / "src/clean_docs/capabilities.py"
-    capabilities.write_text(capabilities.read_text().replace(
-        "Static Python assignment or JSON Pointer",
-        "Changed source surface",
-    ))
+    source = capabilities.read_text()
+    marker = "SUPPORTED_BINDINGS = {"
+    assert source.count(marker) == 1
+    capabilities.write_text(source.replace(marker, """\
+SUPPORTED_BINDINGS = {
+    "tampered": {
+        "binding": "tampered",
+        "source": "Changed source surface",
+        "output": "Changed output",
+        "check": "Changed check",
+    },""", 1))
     (clone / "src/clean_docs/cli.py").write_text(
         "def main(argv=None):\n    return 0\n"
     )
