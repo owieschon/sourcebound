@@ -13,6 +13,26 @@ The same verified graph produces `llms.txt`, named context bundles, grounded rel
 
 `derive` previews changes unless you pass `--write`. `audit`, `check`, `verify`, and `release` never change documentation.
 <!-- clean-docs:end product-overview -->
+
+## How the pieces fit
+
+```mermaid
+flowchart LR
+    S["Repository sources<br/>code · schemas · commands"] --> E["Typed evidence<br/>static extraction · declared execution"]
+    E --> B["Source bindings<br/>region · claim · symbol"]
+    P["Packaged writing standard"] --> D["Documentation engine"]
+    B --> D
+    D --> R["Repaired docs"]
+    D --> G["Read-only CI gate"]
+    D --> X["llms.txt · context bundles · release facts"]
+```
+
+clean-docs extracts typed evidence from repository sources, connects that evidence to declared
+documentation bindings, and applies the packaged writing standard at the documentation engine. The
+same engine repairs bound regions, checks drift without writing, and projects the verified corpus
+into machine-readable outputs. Models may phrase supplied evidence outside the deterministic path;
+they do not choose facts or decide whether the gate passes.
+
 ## Install and audit
 
 Create an isolated environment, install the project, and audit the current repository:

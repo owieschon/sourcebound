@@ -78,13 +78,13 @@ def record() -> dict[str, object]:
         raise RuntimeError(f"demo fixture returned unexpected exit codes: {expected}")
     return {
         "schema": "clean-docs.demo-evidence.v1",
-        "title": "Documentation drift, caught before it ships",
+        "title": "A source change should break stale docs.",
         "intended_reader": (
-            "Maintainers who want to see the local failure and repair path before adding a CI gate."
+            "Maintainers deciding whether source-bound documentation is worth adding to a repository."
         ),
         "value": (
-            "The same deterministic binding reports a current page, catches a source change, "
-            "repairs only its declared region, and passes the final check."
+            "One binding connects a command in source to its README claim. When the source changes "
+            "alone, the check fails with the exact stale region; repair rewrites that region and nothing else."
         ),
         "prerequisites": [
             "No account, credentials, backend, or database.",

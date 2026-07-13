@@ -1,5 +1,5 @@
 {
-  "intended_reader": "Maintainers who want to see the local failure and repair path before adding a CI gate.",
+  "intended_reader": "Maintainers deciding whether source-bound documentation is worth adding to a repository.",
   "limits": [
     "This page replays recorded deterministic evidence; it does not execute in the browser.",
     "The fixture proves one region-binding workflow, not every supported extractor."
@@ -53,6 +53,6 @@
       ]
     }
   ],
-  "title": "Documentation drift, caught before it ships",
-  "value": "The same deterministic binding reports a current page, catches a source change, repairs only its declared region, and passes the final check."
+  "title": "A source change should break stale docs.",
+  "value": "One binding connects a command in source to its README claim. When the source changes alone, the check fails with the exact stale region; repair rewrites that region and nothing else."
 }

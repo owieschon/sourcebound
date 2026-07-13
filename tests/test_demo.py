@@ -13,6 +13,9 @@ from clean_docs.templates import TaskPage, render_task_markdown, validate_task_m
 from scripts.record_demo import record
 
 
+ROOT = Path(__file__).parents[1]
+
+
 def _evidence(tmp_path: Path, *, next_href: str = "README.md#command") -> Path:
     payload = record()
     payload["next_step"]["href"] = next_href  # type: ignore[index]
@@ -57,6 +60,17 @@ def test_static_demo_is_byte_stable_accessible_and_runtime_free(tmp_path: Path) 
     assert "fetch(" not in first
     assert "https://" not in first
     assert "Evidence sha256:" in first
+
+
+def test_readme_architecture_precedes_the_install_path_and_has_text_equivalent() -> None:
+    readme = (ROOT / "README.md").read_text()
+
+    architecture = readme.index("## How the pieces fit")
+    install = readme.index("## Install and audit")
+    assert architecture < install
+    assert 'S["Repository sources' in readme
+    assert 'D["Documentation engine"]' in readme
+    assert "clean-docs extracts typed evidence" in readme
 
 
 def test_static_demo_structure_rejects_inaccessible_or_runtime_content(

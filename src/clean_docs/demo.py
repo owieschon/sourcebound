@@ -246,6 +246,11 @@ def render_static_demo(evidence: DemoEvidence, output: Path) -> str:
 
     prerequisite_items = "".join(f"<li>{esc(item)}</li>" for item in evidence.prerequisites)
     limit_items = "".join(f"<li>{esc(item)}</li>" for item in evidence.limits)
+    state_explanations = {
+        "before": "Source and README agree. The gate has nothing to repair.",
+        "drift": "The source changed; the README did not. The gate names the stale binding.",
+        "repaired": "The declared region is regenerated, then the same check passes.",
+    }
     state_cards = []
     for state in evidence.states:
         steps = []
@@ -258,7 +263,9 @@ def render_static_demo(evidence: DemoEvidence, output: Path) -> str:
             )
         state_cards.append(
             f'<article class="state {esc(state.id)}" aria-labelledby="state-{esc(state.id)}">'
-            f'<h3 id="state-{esc(state.id)}">{esc(state.label)}</h3>'
+            f'<div class="state-heading"><span class="state-index">0{len(state_cards) + 1}</span>'
+            f'<h3 id="state-{esc(state.id)}">{esc(state.label.split(". ", 1)[-1])}</h3></div>'
+            f'<p class="state-explanation">{esc(state_explanations[state.id])}</p>'
             + "".join(steps)
             + "</article>"
         )
@@ -270,44 +277,90 @@ def render_static_demo(evidence: DemoEvidence, output: Path) -> str:
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{esc(evidence.title)}</title>
   <style>
-    :root {{ color-scheme: light; --ink: #18211b; --muted: #58635b; --paper: #f7f5ef; --line: #c9cec8; --good: #286344; --bad: #a43f32; --repair: #7a5717; }}
+    :root {{ color-scheme: light; --ink: #102238; --muted: #5b6b7d; --paper: #f4f8fb; --panel: #ffffff; --line: #c9d5df; --source: #116b78; --bad: #d4473f; --good: #177245; --signal: #f4b942; --code: #0b1726; }}
     * {{ box-sizing: border-box; }}
-    body {{ margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; }}
-    a {{ color: inherit; text-underline-offset: .2em; }}
-    .skip {{ position: absolute; left: 1rem; top: -4rem; background: var(--ink); color: white; padding: .7rem; }}
+    html {{ scroll-behavior: smooth; }}
+    body {{ margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.6 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }}
+    a {{ color: inherit; text-underline-offset: .22em; }}
+    .skip {{ position: absolute; left: 1rem; top: -5rem; z-index: 5; background: var(--ink); color: white; padding: .7rem 1rem; }}
     .skip:focus {{ top: 1rem; }}
-    header, main {{ width: min(74rem, calc(100% - 2rem)); margin: 0 auto; }}
-    header {{ padding: 5rem 0 2rem; border-bottom: 1px solid var(--line); }}
-    h1 {{ max-width: 18ch; font: 700 clamp(2.5rem, 8vw, 5.5rem)/.96 Georgia, serif; margin: .2rem 0 1.5rem; letter-spacing: -.04em; }}
-    h2 {{ margin-top: 3.5rem; font: 700 2rem/1.1 Georgia, serif; }}
-    h3 {{ margin-top: 0; }}
-    .eyebrow, .digest {{ color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-size: .78rem; }}
-    .digest {{ overflow-wrap: anywhere; }}
-    .states {{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }}
-    .state {{ border-top: .45rem solid var(--line); background: white; padding: 1.1rem; min-width: 0; }}
-    .state.before {{ border-color: var(--good); }} .state.drift {{ border-color: var(--bad); }} .state.repaired {{ border-color: var(--repair); }}
-    code, pre {{ font: .88rem/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; }}
-    pre {{ overflow: auto; padding: .9rem; background: #101512; color: #edf2ed; white-space: pre-wrap; }}
-    .step span {{ float: right; color: var(--muted); }}
-    .next {{ display: inline-block; margin: 0 0 5rem; padding: .8rem 1rem; border: 2px solid var(--ink); text-decoration: none; }}
-    @media (max-width: 760px) {{ .states {{ grid-template-columns: 1fr; }} header {{ padding-top: 3.5rem; }} }}
+    .wrap, main {{ width: min(76rem, calc(100% - 2.5rem)); margin: 0 auto; }}
+    header {{ overflow: hidden; background: var(--ink); color: #f7fbff; }}
+    .hero {{ display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(25rem, .95fr); gap: clamp(2rem, 6vw, 6rem); align-items: center; min-height: 42rem; padding: 5rem 0; }}
+    h1 {{ max-width: 12ch; margin: .6rem 0 1.5rem; font: 760 clamp(3.1rem, 7vw, 6.8rem)/.91 ui-sans-serif, system-ui, sans-serif; letter-spacing: -.065em; }}
+    h2 {{ margin: 0 0 1rem; font-size: clamp(2rem, 4vw, 3.4rem); line-height: 1.02; letter-spacing: -.045em; }}
+    h3 {{ margin: 0; font-size: 1.35rem; letter-spacing: -.025em; }}
+    .eyebrow, .digest, .state-index, .node-label {{ font: 700 .75rem/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .1em; text-transform: uppercase; }}
+    .eyebrow {{ color: #8ed4dc; }}
+    .hero-copy {{ min-width: 0; }}
+    .hero-copy > p:not(.eyebrow):not(.digest) {{ max-width: 39rem; color: #c5d2df; font-size: 1.08rem; overflow-wrap: anywhere; }}
+    .digest {{ margin-top: 2rem; color: #8294a8; overflow-wrap: anywhere; word-break: break-all; text-transform: none; letter-spacing: .02em; }}
+    .binding {{ position: relative; padding: 1.2rem; border: 1px solid #38506a; background: #132a43; box-shadow: 1.1rem 1.1rem 0 #091522; }}
+    .binding-title {{ margin: 0 0 1.2rem; color: #9fb1c4; font-size: .85rem; }}
+    .node {{ padding: 1rem; border: 1px solid #49627d; background: #0d1d30; }}
+    .node-label {{ display: block; margin-bottom: .65rem; color: #8ed4dc; }}
+    .node code {{ display: block; overflow-x: auto; color: #f7fbff; font-size: .9rem; }}
+    .tether {{ display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: .7rem; margin: .8rem 0; color: #f7c85f; }}
+    .tether::before, .tether::after {{ content: ""; border-top: 2px dashed currentColor; }}
+    .tether span {{ padding: .3rem .55rem; border: 1px solid currentColor; font: 700 .72rem/1 ui-monospace, monospace; text-transform: uppercase; letter-spacing: .08em; }}
+    .mismatch {{ color: #ff8178; }}
+    main {{ padding: 5rem 0 2rem; }}
+    .intro-grid {{ display: grid; grid-template-columns: 1.2fr .8fr; gap: 4rem; padding-bottom: 4rem; border-bottom: 1px solid var(--line); }}
+    .intro-grid p {{ max-width: 44rem; font-size: 1.15rem; }}
+    .prerequisites {{ margin: 0; padding: 1.3rem 1.3rem 1.3rem 2.5rem; background: #e7f1f5; }}
+    .section-kicker {{ margin: 0 0 .8rem; color: var(--source); font: 700 .78rem/1.2 ui-monospace, monospace; letter-spacing: .1em; text-transform: uppercase; }}
+    .procedure {{ padding: 5rem 0; }}
+    .procedure-lead {{ max-width: 43rem; margin-bottom: 2rem; color: var(--muted); }}
+    .states {{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--line); background: var(--line); gap: 1px; }}
+    .state {{ position: relative; background: var(--panel); padding: 1.5rem; min-width: 0; }}
+    .state::before {{ content: ""; position: absolute; inset: 0 auto auto 0; width: 100%; height: .35rem; background: var(--source); }}
+    .state.drift::before {{ background: var(--bad); }} .state.repaired::before {{ background: var(--good); }}
+    .state-heading {{ display: flex; align-items: baseline; gap: .75rem; margin-bottom: 1rem; }}
+    .state-index {{ color: var(--muted); }}
+    .state-explanation {{ min-height: 5.1rem; color: var(--muted); }}
+    .step {{ margin-top: 1.2rem; }}
+    .step > p {{ margin: 0; padding: .7rem .85rem; border: 1px solid var(--line); border-bottom: 0; background: #eef3f6; }}
+    .step span {{ float: right; color: var(--muted); font: 700 .75rem/1.8 ui-monospace, monospace; text-transform: uppercase; }}
+    code, pre {{ font: .84rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }}
+    pre {{ min-height: 8rem; margin: 0; overflow: auto; padding: 1rem; background: var(--code); color: #dbe9f4; white-space: pre-wrap; }}
+    .proof {{ display: grid; grid-template-columns: .75fr 1.25fr; gap: 4rem; padding: 4rem 0; border-top: 1px solid var(--line); }}
+    .proof ul {{ margin: 0; padding-left: 1.2rem; }}
+    .proof li + li {{ margin-top: .8rem; }}
+    .next-section {{ display: flex; justify-content: space-between; align-items: center; gap: 2rem; margin-top: 2rem; padding: 2rem; background: #dceaf0; }}
+    .next-section h2 {{ max-width: 15ch; font-size: 2rem; }}
+    .next {{ flex: none; display: inline-block; padding: .9rem 1.2rem; border: 2px solid var(--ink); background: var(--ink); color: white; font-weight: 750; text-decoration: none; }}
+    .next:hover {{ background: transparent; color: var(--ink); }}
+    @media (max-width: 900px) {{ .hero {{ grid-template-columns: 1fr; min-height: auto; }} .binding {{ max-width: 38rem; }} .states {{ grid-template-columns: 1fr; }} .state-explanation {{ min-height: 0; }} .intro-grid, .proof {{ grid-template-columns: 1fr; gap: 1.5rem; }} }}
+    @media (max-width: 560px) {{ .wrap, main {{ width: min(100% - 2rem, 76rem); }} .hero {{ padding: 3.5rem 0; }} h1 {{ font-size: 3rem; }} .binding {{ padding: .8rem; box-shadow: .55rem .55rem 0 #091522; }} .next-section {{ align-items: flex-start; flex-direction: column; }} }}
     @media (prefers-reduced-motion: reduce) {{ *, *::before, *::after {{ scroll-behavior: auto !important; }} }}
   </style>
 </head>
 <body>
   <a class="skip" href="#main">Skip to demonstration</a>
   <header>
-    <p class="eyebrow">Recorded local evidence</p>
-    <h1>{esc(evidence.title)}</h1>
-    <p>{esc(evidence.value)}</p>
-    <p class="digest">Evidence sha256: {evidence.digest}</p>
+    <div class="wrap hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Recorded, deterministic proof</p>
+        <h1>{esc(evidence.title)}</h1>
+        <p>{esc(evidence.value)}</p>
+        <p class="digest">Evidence sha256: {evidence.digest}</p>
+      </div>
+      <div class="binding" aria-label="A source command no longer matches its README claim">
+        <p class="binding-title">Binding: <code>public-command</code></p>
+        <div class="node"><span class="node-label">Source · command.txt</span><code>clean-docs check --changed</code></div>
+        <div class="tether mismatch"><span>mismatch</span></div>
+        <div class="node"><span class="node-label">Document · README.md</span><code>clean-docs check</code></div>
+      </div>
+    </div>
   </header>
   <main id="main">
-    <section aria-labelledby="intended-reader"><h2 id="intended-reader">Intended reader</h2><p>{esc(evidence.intended_reader)}</p></section>
-    <section aria-labelledby="prerequisites"><h2 id="prerequisites">Prerequisites</h2><ul>{prerequisite_items}</ul></section>
-    <section aria-labelledby="procedure"><h2 id="procedure">Procedure</h2><div class="states">{''.join(state_cards)}</div></section>
-    <section aria-labelledby="limits"><h2 id="limits">Limits</h2><ul>{limit_items}</ul></section>
-    <section aria-labelledby="next-step"><h2 id="next-step">Next step</h2><a class="next" href="{esc(next_href)}">{esc(evidence.next_step_label)}</a></section>
+    <section class="intro-grid" aria-labelledby="intended-reader">
+      <div><p class="section-kicker">Why this demonstration exists</p><h2 id="intended-reader">See the failure before adding the gate.</h2><p>{esc(evidence.intended_reader)}</p></div>
+      <div><p class="section-kicker" id="prerequisites">What is running</p><ul class="prerequisites" aria-labelledby="prerequisites">{prerequisite_items}</ul></div>
+    </section>
+    <section class="procedure" aria-labelledby="procedure"><p class="section-kicker">The complete loop</p><h2 id="procedure">One binding. Three observable states.</h2><p class="procedure-lead">The source changes in state two. The document is left untouched until the declared repair runs in state three.</p><div class="states">{''.join(state_cards)}</div></section>
+    <section class="proof" aria-labelledby="limits"><div><p class="section-kicker">Evidence boundary</p><h2 id="limits">What this proves.</h2></div><ul>{limit_items}</ul></section>
+    <section class="next-section" aria-labelledby="next-step"><h2 id="next-step">Try the same loop in a repository.</h2><a class="next" href="{esc(next_href)}">{esc(evidence.next_step_label)}</a></section>
   </main>
 </body>
 </html>

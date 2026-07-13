@@ -1,13 +1,13 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `fa44a92a28319a186455d800f950de653c14151d92966741fc8450b505a07968`
+- Corpus sha256: `ece63cc2cd672638665c20c96c945ef31993bcdeb256060c491c00239c7e12ca`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `af7b8457faa4a01ff33d8adc9d122e4602188f4af48fa214e998eb40ae1e0dd4`
+- Content sha256: `a373ccfa10e314b4f67b0dd954ecaf5a558a8e26f41025c17a055f58e62b3e6a`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
@@ -25,6 +25,26 @@ The same verified graph produces `llms.txt`, named context bundles, grounded rel
 
 `derive` previews changes unless you pass `--write`. `audit`, `check`, `verify`, and `release` never change documentation.
 <!-- clean-docs:end product-overview -->
+
+## How the pieces fit
+
+```mermaid
+flowchart LR
+    S["Repository sources<br/>code · schemas · commands"] --> E["Typed evidence<br/>static extraction · declared execution"]
+    E --> B["Source bindings<br/>region · claim · symbol"]
+    P["Packaged writing standard"] --> D["Documentation engine"]
+    B --> D
+    D --> R["Repaired docs"]
+    D --> G["Read-only CI gate"]
+    D --> X["llms.txt · context bundles · release facts"]
+```
+
+clean-docs extracts typed evidence from repository sources, connects that evidence to declared
+documentation bindings, and applies the packaged writing standard at the documentation engine. The
+same engine repairs bound regions, checks drift without writing, and projects the verified corpus
+into machine-readable outputs. Models may phrase supplied evidence outside the deterministic path;
+they do not choose facts or decide whether the gate passes.
+
 ## Install and audit
 
 Create an isolated environment, install the project, and audit the current repository:
