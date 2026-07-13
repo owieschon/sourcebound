@@ -14,5 +14,5 @@
 - [docs/RELEASES.md](docs/RELEASES.md): bindings: release-guide; sha256: 1bf24794b604d2707882780f3b302dcec6a980aa8d13338d896b61ca5fa8d03f
 - [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md): bindings: security-model; sha256: 29d9f2582186f19d72823e163512fa12f6d7459f4da273ca3d8be56d5befd2bf
 - [docs/SUPPORT.md](docs/SUPPORT.md): bindings: support-guide; sha256: eeb14753711c3637fac792393d114924e339c7f0951d78a23565dfaf524290e3
-- [docs/SURFACE.md](docs/SURFACE.md): bindings: repository-surface; sha256: e48a77a2f12189c882dc92a4c9950beb76cb7b1bd601d915d595fc9e781abdfc
+- [docs/SURFACE.md](docs/SURFACE.md): bindings: repository-surface; sha256: 69a188be153292ad91bf2c04828fa51d04db3d48ccae2891d1c96582bfe82a60
 - [skill/SKILL.md](skill/SKILL.md): declared canonical context; sha256: 77f0b257236a184c5b202e8327c27785f3ab4abe9c1ae9c3c082f8fa06428da9
