@@ -1,7 +1,7 @@
 """Public capability registry rendered into the clean-docs README."""
 
 PRODUCT_OVERVIEW = (
-    "Version 0.2 alpha statically inventories package, CLI, API, schema, test, and documentation "
+    "Version 0.2 statically inventories package, CLI, API, schema, test, and documentation "
     "surfaces and bootstraps a source-bound baseline. It audits documentation without "
     "configuration and verifies region, claim, and symbol bindings from static Python, "
     "structured data, text files, path globs, and allowlisted JSON commands. It emits "
