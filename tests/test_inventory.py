@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 from pathlib import Path
@@ -73,6 +74,10 @@ def test_python_inventory_is_static_typed_and_deterministic(tmp_path: Path) -> N
     assert all(item.coverage == "standard-gap" for item in first.items)
     assert all(len(item.digest) == 64 for item in first.items)
     assert not any(item.name == "internal_build_task" for item in first.items)
+    public_api = next(item for item in first.items if item.name == "public_api")
+    assert public_api.digest == hashlib.sha256(
+        b"def public_api():\n    return True"
+    ).hexdigest()
 
 
 def test_typescript_package_inventory_needs_no_project_execution(tmp_path: Path) -> None:

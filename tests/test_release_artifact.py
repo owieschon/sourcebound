@@ -73,7 +73,7 @@ def test_stable_release_accepts_only_reader_candidate_version_and_receipts(
 ) -> None:
     subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
     project = tmp_path / "pyproject.toml"
-    project.write_text('[project]\nname = "fixture"\nversion = "1.0.0rc8"\n')
+    project.write_text('[project]\nname = "fixture"\nversion = "1.0.0rc9"\n')
     (tmp_path / "product.py").write_text("VALUE = 1\n")
     subprocess.run(["git", "-C", str(tmp_path), "add", "."], check=True)
     subprocess.run(

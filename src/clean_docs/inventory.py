@@ -122,6 +122,20 @@ def _item(
     }
 
 
+def _python_evidence(text: str, node: ast.AST) -> str:
+    """Return source-bound evidence that is stable across CPython AST versions."""
+    parts = []
+    decorators = getattr(node, "decorator_list", ())
+    for decorator in decorators:
+        segment = ast.get_source_segment(text, decorator)
+        if segment is not None:
+            parts.append(segment)
+    segment = ast.get_source_segment(text, node)
+    if segment is not None:
+        parts.append(segment)
+    return "\n".join(parts)
+
+
 def _python_items(path: str, text: str) -> list[dict[str, str]]:
     try:
         tree = ast.parse(text, filename=path)
@@ -132,11 +146,11 @@ def _python_items(path: str, text: str) -> list[dict[str, str]]:
     if not is_test and Path(path).name not in PYTHON_TOOLING_MODULES:
         for node in tree.body:
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and not node.name.startswith("_"):
-                items.append(_item("api-symbol", node.name, path, node.name, "python-ast", ast.dump(node)))
+                items.append(_item("api-symbol", node.name, path, node.name, "python-ast", _python_evidence(text, node)))
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 decorators = [ast.unparse(item).lower() for item in node.decorator_list]
                 if any("tool" in item for item in decorators):
-                    items.append(_item("mcp-tool", node.name, path, node.name, "python-ast", ast.dump(node)))
+                    items.append(_item("mcp-tool", node.name, path, node.name, "python-ast", _python_evidence(text, node)))
                 for decorator in node.decorator_list:
                     if not isinstance(decorator, ast.Call) or not isinstance(
                         decorator.func, ast.Attribute
@@ -158,7 +172,7 @@ def _python_items(path: str, text: str) -> list[dict[str, str]]:
                             path,
                             command_name,
                             "python-cli-framework",
-                            ast.dump(node),
+                            _python_evidence(text, node),
                         )
                     )
             if isinstance(node, ast.ClassDef) and any(
@@ -175,7 +189,7 @@ def _python_items(path: str, text: str) -> list[dict[str, str]]:
                                     path,
                                     f"{node.name}.{target.id}",
                                     "python-settings-ast",
-                                    ast.dump(field),
+                                    _python_evidence(text, field),
                                 )
                             )
     for candidate in ast.walk(tree):
@@ -185,9 +199,9 @@ def _python_items(path: str, text: str) -> list[dict[str, str]]:
             continue
         value = candidate.args[0].value
         if candidate.func.attr == "add_parser":
-            items.append(_item("cli-command", value, path, value, "argparse-ast", ast.dump(candidate)))
+            items.append(_item("cli-command", value, path, value, "argparse-ast", _python_evidence(text, candidate)))
         elif candidate.func.attr == "add_argument" and value.startswith("-"):
-            items.append(_item("cli-option", value, path, value, "argparse-ast", ast.dump(candidate)))
+            items.append(_item("cli-option", value, path, value, "argparse-ast", _python_evidence(text, candidate)))
     return items
 
 
