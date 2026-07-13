@@ -1,0 +1,55 @@
+participant: 906A29D0-6C1B-4A0D-88B1-3E7A2E6E1FCA
+profile: anthropic-opus-4-8
+independent: true
+context: published-docs-only
+completed_at: 2026-07-13T22:42:40Z
+result: PASS
+task: explain-limitation
+candidate: clean-docs 1.0.0rc16
+
+evidence:
+  QUESTION: Does clean-docs revoke host network access from every process on
+  the machine?
+
+  ANSWER: No. clean-docs does not revoke host network access from every
+  process on the machine, and it does not revoke network access even from
+  the declared processes it launches. It is not an operating-system-level
+  network control.
+
+  What clean-docs does is narrower and applies ONLY to a declared command or
+  plugin that it runs: it gives that process a copied repository, a
+  temporary HOME, a temporary directory, PATH, and NO_COLOR (and no other
+  environment variables), runs it without a shell, rejects repository
+  symlinks, stops it at a timeout or 1 MB combined I/O limit, rejects
+  secret-like output, and discards the copy afterward. Those controls do not
+  include network isolation, and they have no effect on other, unrelated
+  processes on the machine. Network isolation is assigned to the execution
+  environment (the surrounding runner / OS), which is why the docs direct you
+  to run untrusted declared code inside a network-blocked container or
+  equivalent OS sandbox.
+
+  CITATIONS (exact document and section):
+
+  1. docs/SECURITY_MODEL.md -- section "## Host boundary" (line 26):
+     "The process controls are not an operating-system sandbox. A declared
+      executable can open a network connection or address an absolute host
+      path if the surrounding runner permits it. Run untrusted declared code
+      in a network-blocked container or equivalent OS sandbox. Keep local
+      manifests limited to commands and plugins you would run directly."
+
+  2. README.md -- section "## Current limits" (line 135):
+     "Network isolation belongs to the execution environment; the [security
+      model](docs/SECURITY_MODEL.md) defines the remaining OS boundary."
+
+  Supporting scope (what the controls actually cover), docs/SECURITY_MODEL.md
+  -- section "## Process controls" (line 20):
+     "Every declared process receives a copied repository, temporary home,
+      temporary directory, PATH, and NO_COLOR. clean-docs does not pass
+      other environment variables. ... discards the copy after the result is
+      parsed."
+
+  These sections jointly establish that clean-docs neither claims nor
+  provides machine-wide network revocation; that responsibility belongs to
+  the host / execution environment.
+
+documentation_gaps: none

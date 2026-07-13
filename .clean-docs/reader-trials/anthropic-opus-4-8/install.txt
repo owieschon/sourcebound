@@ -1,0 +1,66 @@
+participant: 906A29D0-6C1B-4A0D-88B1-3E7A2E6E1FCA
+profile: anthropic-opus-4-8
+independent: true
+context: published-docs-only
+completed_at: 2026-07-13T22:40:27Z
+result: PASS
+task: install
+candidate: clean-docs 1.0.0rc16
+
+evidence:
+  STEP 1 -- verify wheel against SHA256SUMS (docs/SUPPORT.md, "Verify release
+  artifacts", the local checksum step; run from the profile root exactly as
+  published -- rc16 uses `python3`):
+
+    $ python3 - <<'PY' ... PY
+      clean_docs-1.0.0rc16-py3-none-any.whl: d172a67420575d190a403b9d33dd12a854c8fdb8cbbee6e1dbbd46ab84b16032
+      checksum_exit=0
+
+    Matches published SHA256SUMS entry:
+      d172a67420575d190a403b9d33dd12a854c8fdb8cbbee6e1dbbd46ab84b16032  clean_docs-1.0.0rc16-py3-none-any.whl
+
+    The attestation step (`gh attestation verify`) was deliberately NOT run:
+    it requires network/GitHub access, forbidden by the trial (rule 8); the
+    doc itself scopes it to outside a network-blocked environment.
+
+  STEP 2 -- install in a fresh venv under workspace (docs/SUPPORT.md,
+  "Install, upgrade, roll back, and uninstall"; network-blocked bundle form):
+
+    Documented command:
+      python -m pip install --no-index --find-links ./wheelhouse ./clean_docs-*.whl
+
+    As executed (venv under workspace per isolation rule 9; wheelhouse and
+    wheel referenced by ABSOLUTE path because rule 3 forbids ".." and the
+    artifacts live at the profile root -- a path adaptation only, no artifact
+    NAME substituted):
+
+    cwd: workspace/
+    $ python3 -m venv .venv
+      venv_exit=0
+    $ .venv/bin/python -m pip install --no-index \
+        --find-links /Users/.../anthropic-opus-4-8/wheelhouse \
+        /Users/.../anthropic-opus-4-8/clean_docs-*.whl
+      Looking in links: .../wheelhouse
+      Processing .../clean_docs-1.0.0rc16-py3-none-any.whl
+      Processing .../wheelhouse/pyyaml-6.0.3-cp314-cp314-macosx_11_0_arm64.whl (from clean-docs==1.0.0rc16)
+      Installing collected packages: PyYAML, clean-docs
+      Successfully installed PyYAML-6.0.3 clean-docs-1.0.0rc16
+      install_exit=0
+      (--no-index => no package index contacted; PyYAML resolved from the
+       bundled wheelhouse. Consistent with rule 8, no network.)
+
+  STEP 3 -- version:
+    $ .venv/bin/clean-docs --version
+      1.0.0rc16
+      version_exit=0
+    Matches the wheel filename clean_docs-1.0.0rc16-py3-none-any.whl, as
+    docs/SUPPORT.md requires.
+
+  Runtime: CPython 3.14.3 (supported per docs/SUPPORT.md).
+
+documentation_gaps: none
+  (The rc15 checksum-snippet defect -- it invoked `python`, absent on hosts
+  with only `python3` -- is FIXED in rc16: docs/SUPPORT.md "Verify release
+  artifacts" now uses `python3 - <<'PY'`, which ran cleanly here with exit 0.
+  The install step's `python -m pip ...` runs after `source .venv/bin/
+  activate`, where the venv provides `python`, so it is unaffected.)

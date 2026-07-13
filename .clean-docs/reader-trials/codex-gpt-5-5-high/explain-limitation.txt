@@ -1,0 +1,18 @@
+participant: 92258FAD-2026-46D4-93C0-61EB50A0504C
+profile: codex-gpt-5-5-high
+independent: true
+context: published-docs-only
+completed_at: 2026-07-13T22:40:32Z
+result: PASS
+task: explain-limitation
+evidence:
+  Answer before grading:
+  clean-docs does not revoke host network access for every host process. Its declared-process controls are not an operating-system sandbox. Network isolation belongs to the surrounding execution environment, so a declared executable can open a network connection if the runner permits it.
+
+  Citation:
+  README.md, section "Current limits" states that declared commands and plugins run in disposable repository copies with minimal environments, active I/O limits, and timeouts, and that network isolation belongs to the execution environment.
+
+  Citation:
+  docs/SECURITY_MODEL.md, section "Host boundary" states that the process controls are not an operating-system sandbox and that a declared executable can open a network connection or address an absolute host path if the surrounding runner permits it. The same section says to run untrusted declared code in a network-blocked container or equivalent OS sandbox.
+documentation_gaps: none
+

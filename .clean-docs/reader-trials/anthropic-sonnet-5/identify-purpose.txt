@@ -1,0 +1,34 @@
+participant: 05d6179a-3e58-470c-9140-248f9cb5435e
+profile: anthropic-sonnet-5
+independent: true
+context: published-docs-only
+completed_at: 2026-07-13T22:39:57Z
+result: PASS
+task: identify-purpose
+
+evidence:
+Source read: README.md, first body block only (text between the
+<!-- clean-docs:purpose --> and <!-- clean-docs:end purpose --> markers,
+lines 3-5):
+
+"Use clean-docs when code changes faster than its documentation and
+reviewers cannot tell which claims are stale. It gives maintainers a
+local, deterministic path from source change to repaired, verified
+docs; models may phrase facts, but they never decide the facts or gate
+results."
+
+Audience: maintainers of a repository whose documentation and code have
+drifted apart -- specifically reviewers/maintainers who can no longer
+tell which documentation claims still match the source.
+
+Reader problem: code changes faster than its documentation, so a
+reviewer cannot tell which documentation claims are stale versus still
+accurate. Undetected drift lets docs silently misrepresent the code.
+
+Resulting capability: a local, deterministic path from a source change
+to repaired and verified documentation. Any model involved may only
+phrase the resulting facts in prose; it never decides what the facts
+are and never gates the pass/fail outcome -- that stays deterministic
+and local (no network calls, no model-gated results).
+
+documentation_gaps: none

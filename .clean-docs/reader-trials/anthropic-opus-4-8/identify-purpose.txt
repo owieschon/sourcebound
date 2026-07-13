@@ -1,0 +1,35 @@
+participant: 906A29D0-6C1B-4A0D-88B1-3E7A2E6E1FCA
+profile: anthropic-opus-4-8
+independent: true
+context: published-docs-only
+completed_at: 2026-07-13T22:40:27Z
+result: PASS
+task: identify-purpose
+candidate: clean-docs 1.0.0rc16
+
+evidence:
+  SOURCE (README.md first body block, the <!-- clean-docs:purpose --> block,
+  lines 3-5), read verbatim:
+    "Use clean-docs when code changes faster than its documentation and
+     reviewers cannot tell which claims are stale. It gives maintainers a
+     local, deterministic path from source change to repaired, verified
+     docs; models may phrase facts, but they never decide the facts or gate
+     results."
+
+  ANSWER:
+  - Who clean-docs is for:
+      Maintainers of a repository whose code changes faster than its
+      documentation, together with the reviewers reading that documentation.
+  - What problem leaves that reader stuck:
+      Code-to-documentation drift -- the docs fall behind the source and
+      reviewers cannot tell which documented claims have gone stale.
+  - What capability clean-docs provides:
+      A local, deterministic path from a source change to repaired and
+      verified documentation, where the source (and the checks) own the
+      facts -- models may phrase facts but never decide them or gate the
+      result.
+
+  No commands are required for this reading task; the answer is taken solely
+  from the README's first body block and precedes any grading.
+
+documentation_gaps: none

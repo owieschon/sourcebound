@@ -1,0 +1,71 @@
+participant: 906A29D0-6C1B-4A0D-88B1-3E7A2E6E1FCA
+profile: anthropic-opus-4-8
+independent: true
+context: published-docs-only
+completed_at: 2026-07-13T22:42:22Z
+result: PASS
+task: repair-drift
+candidate: clean-docs 1.0.0rc16
+
+evidence:
+  SUPPORTED MANIFEST PATTERN ADDED (README "Manifest reference" example: a
+  region binding, python-literal extractor over a module symbol, rendered as
+  a markdown-table):
+
+    - id: commands
+      type: region
+      doc: README.md
+      region: commands
+      extractor: python-literal
+      source: {path: src/widgetkit/core.py, symbol: COMMANDS}
+      renderer: markdown-table
+      columns: [name, summary]
+
+    with the documented destination markers in README.md:
+      <!-- clean-docs:begin commands --> ... <!-- clean-docs:end commands -->
+
+  BASELINE PASSES (render region, refresh projection, then check):
+    $ clean-docs drive      drive_exit=0
+    $ clean-docs project    project_exit=0
+    $ clean-docs check
+        [current] repository-surface / commands / projection:llms.txt
+        baseline_check_exit=0
+    $ git commit ...        commit_exit=0   (baseline at 8975308)
+
+  WHAT CHANGED (bound source edit to make the docs stale):
+    $ git diff -- src/widgetkit/core.py
+      -    {"name": "report", "summary": "Write the deterministic normalized report"},
+      +    {"name": "publish", "summary": "Publish the deterministic normalized report"},
+
+  FIRST CHECK FAILS (README repair step 1: "exits 1 and names the stale
+  binding"):
+    $ clean-docs check
+      [current] repository-surface: README.md
+      [drift] commands: README.md
+        -| report | Write the deterministic normalized report |
+        +| publish | Publish the deterministic normalized report |
+      [current] projection:llms.txt: llms.txt
+      check1_exit=1        (drift == exit 1, per README "Current limits")
+
+  PUBLISHED REPAIR PROCEDURE (README "Protect a repository": the exact
+  documented sequence check -> drive -> project -> verify, including the
+  projection refresh because README feeds llms.txt):
+    $ clean-docs drive      drive_exit=0    ([repaired] commands: report -> publish)
+    $ clean-docs project    project_exit=0  ([projected] llms.txt)
+    $ clean-docs verify     verify_exit=0   (ok=true; bindings 2/2 current; projections 1/1 current; network_requests 0)
+
+  THE DECLARED REGION CHANGED (git diff vs baseline):
+    README.md commands region row: report -> publish
+    llms.txt README sha256: 28ce2cd2...c38b1c0a7 -> 17e34523...4ee7bf75
+
+  FINAL CHECK PASSES:
+    $ clean-docs check
+      [current] repository-surface / commands / projection:llms.txt
+      check2_exit=0
+
+  Repaired state committed at 6717ed2. All exit codes: baseline_check=0,
+  check1=1, drive=0, project=0, verify=0, check2=0.
+
+documentation_gaps: none
+  (The README repair sequence executed exactly as published and produced the
+  documented exit contract at every step.)

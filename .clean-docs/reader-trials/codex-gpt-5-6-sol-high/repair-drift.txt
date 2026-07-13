@@ -1,0 +1,140 @@
+participant: 2B1AE0F7-FC8C-409F-8FF5-2678FF4820C9
+profile: codex-gpt-5-6-sol-high
+independent: true
+context: published-docs-only
+completed_at: 2026-07-13T22:42:07Z
+result: PASS
+task: repair-drift
+evidence:
+  Published procedure citation: README.md, "Manifest reference" for the python-literal/markdown-table region shape and "Protect a repository" for the bound-source repair sequence.
+  Added supported binding:
+    id: actions
+    type: region
+    doc: README.md
+    region: actions
+    extractor: python-literal
+    source: {path: src/widget.py, symbol: ACTIONS}
+    renderer: markdown-table
+    columns: [name, tier]
+  Added destination markers:
+    <!-- clean-docs:begin actions -->
+    <!-- clean-docs:end actions -->
+  Initial bound-region command: ../install-venv/bin/clean-docs drive
+  Output:
+    [current] repository-surface: README.md
+    [repaired] actions: README.md
+    --- README.md
+    +++ README.md (derived)
+    @@ -11,6 +11,9 @@
+     ## Supported actions
+
+     <!-- clean-docs:begin actions -->
+    +| name | tier |
+    +| --- | --- |
+    +| inspect | stable |
+     <!-- clean-docs:end actions -->
+
+     ## Repository surface
+    drive: repaired 1 document(s); implemented policy checks passed
+  Exit code: 0
+  Initial projection command: ../install-venv/bin/clean-docs project
+  Output:
+    [projected] llms.txt
+    project: wrote 1 file(s)
+  Exit code: 0
+  Clean-bound-baseline command: ../install-venv/bin/clean-docs check
+  Output:
+    [current] repository-surface: README.md
+    [current] actions: README.md
+    [current] projection:llms.txt: llms.txt
+  Exit code: 0
+  Clean-bound-baseline verification: ../install-venv/bin/clean-docs verify
+  Output summary: schema clean-docs.outcome.v1; version 1.0.0rc16; "ok": true; bindings total 2/current 2/drifted 0; projections total 1/current 1/stale 0; network_requests 0.
+  Exit code: 0
+  Source-only change: appended {"name": "publish", "tier": "preview"} to ACTIONS in src/widget.py without changing README.md.
+  Pre-repair command: ../install-venv/bin/clean-docs check
+  Output:
+    [current] repository-surface: README.md
+    [drift] actions: README.md
+    --- README.md
+    +++ README.md (derived)
+    @@ -14,6 +14,7 @@
+     | name | tier |
+     | --- | --- |
+     | inspect | stable |
+    +| publish | preview |
+     <!-- clean-docs:end actions -->
+
+     ## Repository surface
+    [current] projection:llms.txt: llms.txt
+  Exit code: 1
+  Observed pre-repair result: check failed and named the stale actions binding before repair.
+  Repair command: ../install-venv/bin/clean-docs drive
+  Output:
+    [current] repository-surface: README.md
+    [repaired] actions: README.md
+    --- README.md
+    +++ README.md (derived)
+    @@ -14,6 +14,7 @@
+     | name | tier |
+     | --- | --- |
+     | inspect | stable |
+    +| publish | preview |
+     <!-- clean-docs:end actions -->
+
+     ## Repository surface
+    drive: repaired 1 document(s); implemented policy checks passed
+  Exit code: 0
+  Projection regeneration command: ../install-venv/bin/clean-docs project
+  Output:
+    [projected] llms.txt
+    project: wrote 1 file(s)
+  Exit code: 0
+  Final command: ../install-venv/bin/clean-docs check
+  Output:
+    [current] repository-surface: README.md
+    [current] actions: README.md
+    [current] projection:llms.txt: llms.txt
+  Exit code: 0
+  Final command: ../install-venv/bin/clean-docs verify
+  Output:
+    {
+      "schema": "clean-docs.outcome.v1",
+      "version": "1.0.0rc16",
+      "ref": "WORKTREE",
+      "ok": true,
+      "outcomes": {
+        "protected_baseline_current": true,
+        "coverage_complete": true,
+        "direct_coverage_complete": false,
+        "drift_caught_before_merge": 0
+      },
+      "documentation": {
+        "active": 1,
+        "archived": 0,
+        "hygiene_findings": 0,
+        "baselined_hygiene_findings": 0
+      },
+      "coverage": {
+        "total": 2,
+        "bound": 0,
+        "cataloged": 2,
+        "ignored": 0,
+        "standard_gaps": 0
+      },
+      "bindings": {
+        "total": 2,
+        "current": 2,
+        "drifted": 0
+      },
+      "projections": {
+        "total": 1,
+        "current": 1,
+        "stale": 0
+      },
+      "changed": null,
+      "network_requests": 0
+    }
+  Exit code: 0
+  Observed final result: the documented drive/project repair restored the generated region and projection; final check and verification passed.
+documentation_gaps: none
