@@ -200,7 +200,7 @@ def load_manifest(path: Path) -> Manifest:
             "file": {"fenced-text", "scalar"},
             "json": {"markdown-table"},
             "path": {"markdown-list"},
-            "python-literal": {"markdown-table"},
+            "python-literal": {"markdown-table", "scalar"},
             "structured-data": {"markdown-list", "markdown-table", "scalar"},
         }
         if renderer not in compatible[extractor]:
