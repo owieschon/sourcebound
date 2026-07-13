@@ -29,6 +29,5 @@ grep -q '^## Source-bound documentation$' "$emit_dir/llms.txt"
 PYTHONPATH=src python3 -m clean_docs --root "$root" standard check | grep -q '^\[current\]'
 PYTHONPATH=src python3 -m clean_docs --root "$root" check | grep -q '^\[current\] supported-bindings: README.md$'
 python3 scripts/trusted_self_check.py | grep -q '"ok": true'
-
-! rg -n 'requests|httpx|urllib|openai|anthropic' src/clean_docs tests
+python3 -m pytest -q tests/test_offline_check.py
 git diff --check
