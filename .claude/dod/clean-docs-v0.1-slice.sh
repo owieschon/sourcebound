@@ -8,6 +8,7 @@ cd "$root"
 test -f LICENSE
 test -f SECURITY.md
 test -f .github/workflows/ci.yml
+python3 scripts/check_doc_names.py
 python3 -m pytest -q
 PYTHONPATH=src python3 -m clean_docs --version | grep -q '^0.1.0a1$'
 PYTHONPATH=src python3 -m clean_docs --help | grep -q 'derive'

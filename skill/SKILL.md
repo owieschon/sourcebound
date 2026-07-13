@@ -7,7 +7,7 @@ description: Scan a repo for identity/company residue, cross-project leakage, an
 
 Generalized from `ultra-csm/scripts/hygiene_scan.py` (same detect+baseline design,
 proven there) into a portable, config-driven tool at
-`~/.claude/skills/scrub/scrub.py` — stdlib-only Python, no dependencies, runs
+`~/.config/clean-docs/scrub.py` — stdlib-only Python, no dependencies, runs
 against any repo regardless of its own language/stack.
 
 ## What it checks (three categories)
@@ -17,7 +17,7 @@ against any repo regardless of its own language/stack.
 2. **wrong-domain** — terms that belong to a *different* one of Owen's projects
    leaking into this one (e.g. `sku`/`fulfillment` terms leaking into a repo
    that isn't sku-resolution-engine). Repo-specific — comes from
-   `<repo>/.claude/scrub-config.json`, `wrong_domain_terms: [...]`. Empty/no
+   `<repo>/.clean-docs/scrub-config.json`, `wrong_domain_terms: [...]`. Empty/no
    config just means this category returns nothing, never an error.
 3. **meta-residue** — AI-authorship / hiring-prep tells (universal, built in):
    "load-bearing", "killer scenario", "portfolio", "the trap", etc.
@@ -25,15 +25,15 @@ against any repo regardless of its own language/stack.
 ## Usage
 
 ```
-python3 ~/.claude/skills/scrub/scrub.py <repo_root>              # scan, exit 1 if findings
-python3 ~/.claude/skills/scrub/scrub.py <repo_root> --no-baseline # ignore baseline, show everything
-python3 ~/.claude/skills/scrub/scrub.py <repo_root> --refresh-baseline  # grandfather current findings
+python3 ~/.config/clean-docs/scrub.py <repo_root>              # scan, exit 1 if findings
+python3 ~/.config/clean-docs/scrub.py <repo_root> --no-baseline # ignore baseline, show everything
+python3 ~/.config/clean-docs/scrub.py <repo_root> --refresh-baseline  # grandfather current findings
 ```
 
 ## Baseline (don't silently delete pre-existing stuff)
 
 Findings are fingerprinted (path:line:kind:line-hash) into
-`<repo>/.claude/scrub-baseline.txt`. A finding already in the baseline doesn't
+`<repo>/.clean-docs/scrub-baseline.txt`. A finding already in the baseline doesn't
 block — this is how the tool honors "mention pre-existing issues, don't
 silently fix or delete them": review what `--refresh-baseline` would grandfather
 before running it, so genuine pre-existing residue isn't accidentally excused,
@@ -44,12 +44,12 @@ only deliberately deferred.
 This finds residue; it does not rewrite files. Once findings are reported,
 fix them by hand (or hand the list to an agent) — auto-rewriting file content
 across an unfamiliar repo is a bigger blast radius than this tool is scoped
-for. Config and baseline files under `.claude/` are excluded from their own
+for. Config and baseline files under `.clean-docs/` are excluded from their own
 scan by construction — confirmed by test, not assumed.
 
 ## Extending per repo
 
-Add `<repo>/.claude/scrub-config.json`:
+Add `<repo>/.clean-docs/scrub-config.json`:
 ```json
 {
   "wrong_domain_terms": ["sku", "fulfillment"],
@@ -66,7 +66,7 @@ same entity-migration list hardcoded in three separate command files).
 
 Residue is one axis; document sprawl is another. As part of the pre-publish
 sweep, also run the doc-hygiene linter — it enforces the corpus-level rules in
-`~/.claude/writing-style.md` that neither this residue scan nor the per-write
+the canonical writing standard that neither this residue scan nor the per-write
 quality gate can see:
 
 ```

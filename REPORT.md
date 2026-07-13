@@ -72,18 +72,18 @@ judge-by-pattern check for a judgment call misfires in both directions.
 
 The tuned files live only in `~/dev/doc-standard/`. Propagating them edits the global config that
 every future session reads, so it is Owen's call, not this pass's. Blast radius: `writing-style.md`
-is loaded into every Claude Code and Codex session through the `CLAUDE.md` and `AGENTS.md`
-registers, so its register governs all future writing; `doc-hygiene.py` runs inside the scrub
+is loaded into agent sessions through global instruction registers, so its register governs
+future writing; `doc-hygiene.py` runs inside the scrub
 skill and the pre-publish sweep, so its opinions govern what every future scan flags. Diff before
 copying.
 
 ```bash
 # review first
-diff ~/.claude/writing-style.md ~/dev/doc-standard/STANDARD.md
+diff "$CLEAN_DOCS_STANDARD" ~/dev/doc-standard/STANDARD.md
 diff ~/scripts/doc-hygiene.py   ~/dev/doc-standard/doc-hygiene.py
 
 # then, if the diffs read right, replace the live copies
-cp ~/dev/doc-standard/STANDARD.md    ~/.claude/writing-style.md
+cp ~/dev/doc-standard/STANDARD.md    "$CLEAN_DOCS_STANDARD"
 cp ~/dev/doc-standard/doc-hygiene.py ~/scripts/doc-hygiene.py
 ```
 

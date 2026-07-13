@@ -5,6 +5,7 @@ set -eu
 spec="${HOME}/dev/doc-standard/CLEAN_DOCS_SPEC.md"
 
 test -f "$spec"
+python3 "${HOME}/dev/doc-standard/scripts/check_doc_names.py" "${HOME}/dev/doc-standard"
 grep -q '^# clean-docs product specification$' "$spec"
 grep -q '^## 4\. Existing foundation$' "$spec"
 grep -q '^### Version 0: Proven local foundation, complete$' "$spec"

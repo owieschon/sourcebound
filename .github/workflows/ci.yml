@@ -24,4 +24,5 @@ jobs:
       - run: python -m pytest
       - run: python -m mypy src/clean_docs
       - run: python -m ruff check src tests
+      - run: python scripts/check_doc_names.py
       - run: clean-docs --root . check

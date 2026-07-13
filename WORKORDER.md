@@ -17,16 +17,16 @@ The system is nine files across two homes. The four that carry real, shareable v
 
 | File | Role |
 | --- | --- |
-| `~/.claude/writing-style.md` (~223 lines) | The standard. Three tiers: sentence voice, single-doc medium boundary, corpus. Single source of truth. |
+| Global writing-standard file (~223 lines) | The standard. Three tiers: sentence voice, single-doc medium boundary, corpus. Single source of truth. |
 | `~/scripts/doc-hygiene.py` (~253 lines) | The corpus linter (tier 3). Seven deterministic checks, stdlib only, exit 1 on findings, `--json`. |
-| `~/scripts/quality-gate.py` (~153 lines) | The write gate (tier 1). Blocks sentence-level tells on every Claude Code write. |
-| `~/.claude/skills/scrub/SKILL.md` | Runs doc-hygiene as a companion in the pre-publish sweep. |
+| `~/scripts/quality-gate.py` (~153 lines) | The write gate (tier 1). Blocks sentence-level tells on every agent write. |
+| Global scrub adapter | Runs doc-hygiene as a companion in the pre-publish sweep. |
 
 The other five are personal wiring you should read for context but not repackage: the
-`~/.claude/CLAUDE.md` "Documentation register" clause and `~/AGENTS.md` "Writing register"
-clause (load the standard into Claude Code and Codex), the `reference_writing_style_standard`
+the global documentation-register clause and `~/AGENTS.md` "Writing register"
+clause (load the standard into agent runtimes), the `reference_writing_style_standard`
 memory, the `~/second-brain/agentic-eng/wiki/owen-documentation-precision.md` brain pointer,
-and the hook registration in `~/.claude/settings.json` (quality-gate on PreToolUse, dod-gate
+and the hook registration in the global agent settings (quality-gate on PreToolUse, dod-gate
 on Stop).
 
 Prior grounding you can rely on: a full audit of ultra-csm ran this session and reported a
@@ -36,8 +36,8 @@ slice. ultra-csm's working tree has uncommitted UI edits and 175 branches; treat
 
 ## Boundaries (do not cross)
 
-- **The live global config keeps running.** Do not edit `~/.claude/writing-style.md`,
-  `~/scripts/*.py`, or `~/.claude/settings.json` in place during tuning. Consolidate and tune
+- **The live global config keeps running.** Do not edit the global writing standard,
+  `~/scripts/*.py`, or global agent settings in place during tuning. Consolidate and tune
   COPIES in this workspace. Propagating tuned versions back to the live config is a separate,
   Owen-approved step you only recommend, never perform (it changes every future session).
 - **ultra-csm: documentation only, on a branch.** Never modify `src/`, `tests/`, or any
@@ -55,7 +55,7 @@ slice. ultra-csm's working tree has uncommitted UI edits and 175 branches; treat
 2. Run the linters as-is to see current behavior before changing them:
    ```bash
    python3 ~/scripts/doc-hygiene.py ~/dev/ultra-csm            # baseline finding count
-   python3 ~/scripts/doc-hygiene.py ~/.claude/writing-style.md # does the standard pass itself?
+   python3 ~/scripts/doc-hygiene.py "$CLEAN_DOCS_STANDARD" # does the standard pass itself?
    ```
 3. Write a two-paragraph "current state" note in `~/dev/doc-standard/NOTES.md`: what the system
    is, and the baseline ultra-csm finding count. Do not change anything yet.
@@ -119,7 +119,7 @@ slice. ultra-csm's working tree has uncommitted UI edits and 175 branches; treat
 1. Write `~/dev/doc-standard/REPORT.md` (to the standard): what the system caught on ultra-csm,
    what you tuned and why, the before/after numbers, and the honest seam that remains.
 2. Recommend, do not perform, the propagation back to live config: which tuned files should
-   replace `~/.claude/writing-style.md` and `~/scripts/*.py`, and the exact commands, for Owen
+   replace the global writing standard and `~/scripts/*.py`, and the exact commands, for Owen
    to run. Flag the global blast radius.
 3. List the next repos to run on in priority order (Alice/job-search has PII, so note it needs a
    scrub-and-slice first; bank-mcp and reter-public are clean). Do not run them; ultra-csm is the
@@ -138,7 +138,7 @@ five repos. The sequence, in order:
 1. **llms.txt generator (next; small and real).** One command over the cleaned doc tree emits an
    agent-addressable index of the same docs a human reads. It is the concrete proof that the human
    surface and the agent surface are one source with two projections, not two hand-written copies.
-   The Claude Code docs ship exactly this (`llms.txt`); it is a small tool, not an engine.
+   The source documentation corpus ships exactly this (`llms.txt`); it is a small tool, not an engine.
 2. **Round-trip eval (the differentiator; treat as the headline).** Give an agent only a doc and
    have it answer questions or reconstruct the interface the doc describes, then score whether it
    could. This measures the real goal directly: is the doc usable context for an agent. It is a
@@ -170,7 +170,7 @@ guarantee.
 - `STANDARD.md` passes its own section 7 pre-publish checklist (walked by hand, recorded).
 - ultra-csm changes are documentation only: `git -C ~/dev/ultra-csm diff --name-only main...docs/hygiene-pass-1 | grep -vE '\.(md|txt|rst)$'` returns nothing.
 - The ultra-csm uncommitted UI files from Phase 2 step 1 are unchanged by you.
-- Nothing was pushed; no public repo exists; the live `~/.claude` and `~/scripts` files are
+- Nothing was pushed; no public repo exists; the live agent configuration and `~/scripts` files are
   unmodified (only workspace copies changed).
 - `REPORT.md`, `DECISION_LOG.md`, and `ultra-csm-before-after.md` exist and are written to the
   standard.

@@ -82,10 +82,10 @@ clean-docs starts from a working documentation-standard system. Version 0 preser
 | Existing artifact | Proven behavior | Product destination |
 | --- | --- | --- |
 | `STANDARD.md` | Defines sentence voice, medium choice, page shape, corpus structure, and the boundary between checks and judgment. | Becomes the default `clean-docs` policy profile and the canonical authoring standard. |
-| `quality-gate.py` | Blocks high-confidence language, engineering-claim, code, and secret patterns before Claude Code writes a file. | Its portable rules move into `policy`; the Claude Code hook remains one adapter. |
+| `quality-gate.py` | Blocks high-confidence language, engineering-claim, code, and secret patterns before an agent writes a file. | Its portable rules move into `policy`; the pre-write hook remains one adapter. |
 | `doc-hygiene.py` | Checks process artifacts, agent-addressed docs, provenance, length, duplication, and restatement across tracked Markdown. | Its tested rules move into `policy` with stable finding identifiers, configuration, and regression fixtures. |
 | `scrub.py` | Detects identity residue, cross-project leakage, and publication-process tells with an explicit baseline. | Its portable rules move into `policy`; personal patterns stay outside the distributable default profile. |
-| `skill/SKILL.md` | Runs residue and corpus checks during one agent's pre-publish workflow. | Remains a distribution adapter. Equivalent CLI, CI, Codex, Claude Code, editor, and hosting adapters call the same core. |
+| `skill/SKILL.md` | Runs residue and corpus checks during one agent's pre-publish workflow. | Remains a distribution adapter. Equivalent CLI, CI, agent, editor, and hosting adapters call the same core. |
 | `DECISION_LOG.md` | Records why archive handling and several noisy patterns were changed after real-repo triage. | Seeds regression cases and architecture decisions. |
 | `ultra-csm-findings.json` and `ultra-csm-before-after.md` | Preserve the 280-finding baseline and the docs-only cleanup evidence. | Seed corpus-policy fixtures and the first dogfood case. |
 | `README_ACCESSIBILITY_TEST.md` | Establishes separate mechanical and blind-task gates, then exposes that accessible prose can still be factually incomplete. | Seeds human and agent task-evaluation formats. |
@@ -103,7 +103,7 @@ clean-docs starts from a working documentation-standard system. Version 0 preser
 ### What remains unbuilt
 
 - The existing scripts do not share a package, configuration schema, finding model, or CLI.
-- The write gate is coupled to Claude Code.
+- The write gate is coupled to one agent runtime.
 - The hygiene linter detects but does not generate or maintain a compliant baseline.
 - No source binding, generated region, claim assertion, coverage model, or ref-aware evidence graph exists in code.
 - No `llms.txt`, context bundle, release delta, or task-evaluation runner exists.
@@ -442,7 +442,7 @@ Each release proves one product claim before the next release broadens it. A lat
 Existing receipts:
 
 - `STANDARD.md` is live as the canonical local writing standard and has been checked against its own rules.
-- `quality-gate.py` is registered as a Claude Code pre-write hook.
+- `quality-gate.py` is registered as a pre-write hook in the original runtime.
 - `doc-hygiene.py` runs as a standalone detect-only corpus linter with JSON output and nonzero findings exit.
 - ultra-csm triage reduced 280 findings to 73 justified findings through documentation-only changes and three evidence-driven false-positive fixes.
 - The accessibility experiment demonstrated a real comprehension gain and then exposed a stale capability description, which caused the product to pivot from prose cleanup to source-grounded freshness.
@@ -459,7 +459,7 @@ Version 0 preservation work at the start of Version 0.1:
 
 - The receipts above exist at the paths named in section 4 and remain readable.
 - Current `quality-gate.py` and `doc-hygiene.py` execute with their documented exit behavior.
-- The live `STANDARD.md` and workspace copy are byte-identical at the Version 0 baseline commit.
+- The project `STANDARD.md` preserves the four-tier baseline while using product-neutral provenance and examples.
 - Every known false-positive fix in `DECISION_LOG.md` has a regression-case specification.
 - The Version 0 limitation is stated without qualification: it detects hygiene problems but does not keep documentation facts synchronized with code.
 
@@ -472,7 +472,7 @@ Version 0 preservation work at the start of Version 0.1:
 - Python package and `clean-docs` CLI.
 - Packaged standard, write-gate rules, and corpus-hygiene rules behind a shared policy result model.
 - Packaged residue and cross-project leakage rules with neutral defaults and repository-owned configuration.
-- Compatibility wrappers for the existing standalone scripts and Claude Code hook.
+- Compatibility wrappers for the existing standalone scripts and pre-write hook.
 - Versioned `.clean-docs.yml` schema with strict validation.
 - Immutable git snapshot abstraction.
 - Evidence value and provenance model.
@@ -862,7 +862,7 @@ Each version follows the same delivery sequence:
 - Recognized new surface is documented automatically. Unsupported new surface is a standard or adapter coverage gap that names the missing capability.
 - Human and agent documentation share canonical pages.
 - Round-trip evaluation measures task completion, not stylistic resemblance.
-- Skills for Codex, Claude Code hooks, editor extensions, and hosting integrations are distribution adapters. None defines the product architecture.
+- Agent skills, pre-write hooks, editor extensions, and hosting integrations are distribution adapters. None defines the product architecture.
 
 ## 17. Open decisions before Version 0.1 implementation
 

@@ -1,14 +1,14 @@
-# Documentation style guide: the Claude Code docs voice
+# Documentation style guide: clean, grounded developer docs
 
 This is the single reference for documentation voice across every project. It stays one file
-over the 120-line threshold on purpose: its three tiers (sentence voice, single-doc medium
-boundary, corpus) are read as one system, and splitting them would break the one-canonical-home
-rule this doc itself teaches.
+over the 120-line threshold on purpose: its four tiers (sentence voice, single-doc medium
+boundary, corpus, and grounding) are read as one system, and splitting them would break the
+one-canonical-home rule this doc itself teaches.
 
-Derived from a close reading of the Claude Code documentation (overview, quickstart,
-common-workflows, best-practices, memory, hooks, mcp, sub-agents, settings, cli-reference).
-Every rule below traces to an observed, repeated convention in that corpus. The global
-`CLAUDE.md` and `~/AGENTS.md` registers point here; this is the canonical reference.
+Derived from a close reading of a developer-documentation corpus spanning overview,
+quickstart, workflows, best practices, memory, hooks, integrations, settings, and CLI
+reference pages. Every rule below traces to an observed, repeated convention in that corpus.
+clean-docs packages this file as its canonical default standard.
 
 ## The one principle everything else follows
 
@@ -36,7 +36,7 @@ Prose is for cause and effect: anything with a *because* in it. It always comes 
 code, never after as cleanup. Precedence rules, tradeoffs, and mechanism are prose (or a
 numbered list), never a table, because they're an *ordering*, not a *lookup*.
 
-> "Claude stops when the work looks done. Without a check it can run, 'looks done' is the
+> "An agent stops when the work looks done. Without a check it can run, 'looks done' is the
 > only signal available, and you become the verification loop: every mistake waits for you
 > to notice it."
 
@@ -53,13 +53,13 @@ The escalation ladder inside a single block is a signature move. It goes abstrac
 real named instance, then the complication:
 ```bash
 # Basic syntax
-claude mcp add --transport http <name> <url>
+docs-tool integration add --transport http <name> <url>
 
 # Real example: Connect to Notion
-claude mcp add --transport http notion https://mcp.notion.com/mcp
+docs-tool integration add --transport http notes https://api.example.com/integration
 
 # Example with Bearer token
-claude mcp add --transport http secure-api https://api.example.com/mcp \
+docs-tool integration add --transport http secure-api https://api.example.com/integration \
   --header "Authorization: Bearer your-token"
 ```
 Placeholders (`<name>`, `YOUR_TOKEN`, `/path/to/x`) and real recognizable values (Notion,
@@ -86,9 +86,9 @@ Reserved for lifecycles and decision trees, and always *after* prose has describ
 The diagram confirms a sequence already stated in words; it never carries the first explanation.
 
 ### Screenshots: used almost never
-The Claude Code docs contain essentially zero screenshots. A text interface is taught with
-text: "You'll see the Claude Code prompt with the version, current model, and working
-directory shown above it." Reach for an image only when the thing is inherently visual (a
+The source documentation corpus contains essentially zero screenshots. A text interface is
+taught with text: "You'll see the prompt with the version, current model, and working directory
+shown above it." Reach for an image only when the thing is inherently visual (a
 rendered UI layout, a graph) and prose would be longer and worse. Default to describing.
 
 ---
@@ -97,13 +97,13 @@ rendered UI layout, a graph) and prose would be longer and worse. Default to des
 
 - **Second person + imperative for the reader's actions.** "Open your terminal." "Set to
   `true` to disable." Not "one can" or "users should."
-- **Name the system as an actor** so behavior reads as fact, not promise: "Claude Code skips
+- **Name the system as an actor** so behavior reads as fact, not promise: "The tool skips
   that server and reports the error." Behavior is stated, not sold, which is why the docs
   never read as marketing.
 - **One claim per sentence.** Couple two tightly-related facts with a semicolon; otherwise
   use a period. "Undefined = no restrictions, empty array = lockdown. Denylist takes precedence."
 - **Plain, concrete verbs.** Things fill, skip, block, load, collide. Never "leverage", "utilize", "seamlessly", "powerful", "simply", or "comprehensive". <!-- slop-ok: naming banned booster words as negative examples -->
-- **State facts without hedging.** "Claude Code always asks for permission before modifying
+- **State facts without hedging.** "The tool always asks for permission before modifying
   files" is absolute, not "usually." When advice is *genuinely* situational, mark the
   uncertainty explicitly ("Sometimes you *should* let context accumulate…") rather than blur it.
 - **Contractions are fine** ("you'll", "won't", "let's"); the register is a helpful senior
@@ -113,17 +113,21 @@ rendered UI layout, a graph) and prose would be longer and worse. Default to des
 
 ## 3. How to explain something technical simply (the actual techniques)
 
-The docs stay accessible on hard topics because of specific, repeatable moves:
+The bar: a competent reader who has never seen this system grasps what it is and does from the
+first screen. Concretely, the first sentence is a plain definition ("X is a Y that does A, B, C"),
+every abstraction is grounded on first use or cut, and each sentence carries one claim. The
+measure is a blind read: hand the doc to a reader with no prior context and check whether they can
+state back what the system is. The docs hit that bar with specific, repeatable moves:
 
 1. **Open with a definition, then the one constraint that explains everything downstream.**
-   Best-practices names it once ("Claude's context window fills up fast, and performance
+   Best-practices names it once ("The context window fills up fast, and performance
    degrades as it fills") and refers back to it for the rest of the page. Find your page's
    single governing constraint and name it early.
 2. **Restate the mechanism as a plain cause-and-effect chain with the reader as the actor,
-   *then* show code.** "When an event fires and a matcher matches, Claude Code passes JSON to
+   *then* show code.** "When an event fires and a matcher matches, the tool passes JSON to
    your hook handler… Your handler can then inspect the input, take action, and return a decision."
 3. **Hand over a testable heuristic instead of an abstract rule.** "For each line, ask: 'Would
-   removing this cause Claude to make mistakes?' If not, cut it." A question the reader can run
+   removing this cause the agent to make mistakes?' If not, cut it." A question the reader can run
    beats a principle they have to interpret.
 4. **Teach terms in use, not in a glossary.** New terms ("matcher", "scope") first appear
    inside a working sentence that makes their meaning obvious from context.
@@ -142,7 +146,7 @@ The docs stay accessible on hard topics because of specific, repeatable moves:
   ignored."
 - **Tier by severity:** reasoned platform gotchas stay inline mid-paragraph; the non-obvious
   thing that silently bites goes in a `Warning`; recurring behavioral mistakes get *named* and
-  collected ("The kitchen sink session", "The over-specified CLAUDE.md") with a `Fix:` under each.
+  collected ("The kitchen sink session", "The over-specified agent instructions") with a `Fix:` under each.
 
 ---
 
@@ -229,7 +233,34 @@ cannot make. Read every mechanical pass as the floor you start from, never the s
 
 ---
 
-## 7. Pre-publish checklist
+## 7. Grounding: the doc must be true to the code (and stay true)
+
+A doc can be perfectly voiced, well structured, and accessible and still be wrong, because the
+code moved and the prose did not. The other tiers check how a doc reads; grounding checks whether
+it matches the system. It is the truth tier.
+
+- **Derive the factual spine from source; do not paraphrase it.** Capability lists, CLI flags,
+  config options, routes, counts, and version facts each have a source of truth in the code (a
+  registry, a signature, a test). Render them from that source. A human paraphrasing an old draft
+  is how a doc goes stale.
+- **A factual defect is fixed at the code, not in a better sentence.** When a doc misstates what
+  the system does, re-derive the claim from the code. Editing the prose is the wrong altitude.
+- **Verify a claim against its source, never against a commit message or narrative.** "24 of 24
+  tests pass" is checked by running the tests. A changelog entry comes from the code delta, not
+  from what a commit said it did.
+- **Bind a factual claim to its source so drift is detectable:** a generated region re-renders and
+  diffs, a claim assertion re-runs, a cited symbol is checked to still exist.
+- **State the honest boundary.** Grounding makes the derivable spine drift-proof. It does not make
+  the judgment prose (the why, the framing, the positioning) drift-proof; that stays a human or
+  advisory-review concern, never a silent gate. Claim "the documented spine cannot silently
+  drift," never "the doc can never be stale."
+
+This tier is the newest, added after a real doc described a nine-action system as one that "drafts
+customer emails." No amount of voice or structure work catches that; only grounding does.
+
+---
+
+## 8. Pre-publish checklist
 
 Run this against any doc before shipping. Each line is a fail/pass check.
 
@@ -254,3 +285,7 @@ Run this against any doc before shipping. Each line is a fail/pass check.
 - [ ] No sentence restates a prior sentence; each section leads with its takeaway.
 - [ ] Each doc names its one job in its first line; docs >120 lines and sections >40 lines
       justify staying whole or split.
+- [ ] Every factual claim (capabilities, flags, counts, routes) traces to a source in the code,
+      not to memory or an old draft.
+- [ ] The first screen defines what the system is and does; a reader with no context could state
+      it back.

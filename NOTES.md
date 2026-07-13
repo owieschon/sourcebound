@@ -10,7 +10,7 @@ The system is a three-tier documentation standard plus two detectors. Tier 1 is 
 gate (`quality-gate.py`, PreToolUse) that blocks sentence-level slop before a file exists. Tier
 3 is a corpus linter (`doc-hygiene.py`) that finds process artifacts, agent-addressed docs,
 provenance-as-canon, over-length docs and sections, and near-duplicate paragraphs across a
-tracked doc tree. The standard itself (`STANDARD.md`, from `~/.claude/writing-style.md`) is the
+tracked doc tree. The packaged project standard (`STANDARD.md`) is the
 single reference both detectors enforce, and the scrub skill runs the corpus linter as a
 companion in the pre-publish sweep. Both detectors are detect-only: they report, a human fixes.
 
