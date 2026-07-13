@@ -85,6 +85,23 @@
     {
       "audience": "agent",
       "claim": "deterministic-replay",
+      "corpus_sha256": "a46547e7f2051ea4b801081d23fba38482a3b1459b7bd26c9df9c1bc8a9bbe8b",
+      "detail": "structured output matches exactly",
+      "id": "structured-command",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "15ca9826c553855d762e884a83b01861e35e883bdd8f2c167525955856ace049",
+      "record_id": "6688231f36d369b474dbadcc8bd1bbcaf3f00216a73ebbdc355a84e3d2b030f8",
+      "response_sha256": "e7f35caa3eb02a30de3263aabdfd78950084743b352aee6c9b83cdf6c80de1d3",
+      "scorer": "structured-output",
+      "scorer_sha256": "a568bd4db2835284cafe510465310b031b59201d10e97b4bc3d1cbd6e4004f1c"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
       "corpus_sha256": "61d804c2a1e611158edd1a44b0ae1011a5b2c40f3d87cbb57402e16ef97287eb",
       "detail": "response states and cites the canonical limitation",
       "id": "limitation-retrieval",
@@ -211,6 +228,37 @@
       "response_sha256": "419da826adecee1c63ef7edd7f2cc8734533db94f1803b769e1cc201bd7a9e6b",
       "scorer": "configuration",
       "scorer_sha256": "ff2c7701e55c68a09f63c7dd94d3e2b350c22d5c224e9bb77a26b01869420a79"
+    },
+    {
+      "audience": "human",
+      "claim": "deterministic-command",
+      "corpus_sha256": "d796bbf6dbbe95cb8f8599a73c75ae97800a82a33050278337fc30c082e02b28",
+      "detail": "1 documented command(s) matched expected output",
+      "id": "human-quickstart",
+      "model": null,
+      "ok": true,
+      "prompt_sha256": "f1b3792b349f8ff85463fc3298635495b8c259110e679011adb8e1cc027464f2",
+      "record_id": "8bdea1ef8781b54ff39b70736c1810300a74a459c64e0e490a8c1c2091ec71fd",
+      "response_sha256": null,
+      "scorer": "command",
+      "scorer_sha256": "f2181116da95d6b96069b9665ef7b77072513d026dd4de66791779bdeb08828b"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
+      "corpus_sha256": "a46547e7f2051ea4b801081d23fba38482a3b1459b7bd26c9df9c1bc8a9bbe8b",
+      "detail": "response states and cites the canonical limitation",
+      "id": "limitation-retrieval",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "f89d7f15d58d8701d546045e1e1d9f0bc9f19f73b3a400e69f54c36eda131d70",
+      "record_id": "8be1e244a4bca33232c4d7901e18a61fd552ecf0eb4252152d38d7a03b9fdb00",
+      "response_sha256": "464ef28f67818db5d6b1195c91fdb6a8c8050f3197d83a72f0ab78f60fb0dbfe",
+      "scorer": "cited-limit",
+      "scorer_sha256": "37b1057dea54e8b36d29e16d8dadde9706c7a71bad88f14b19cbc3ed3bb0e9f3"
     },
     {
       "audience": "agent",
@@ -420,6 +468,23 @@
       "response_sha256": null,
       "scorer": "command",
       "scorer_sha256": "f2181116da95d6b96069b9665ef7b77072513d026dd4de66791779bdeb08828b"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
+      "corpus_sha256": "a46547e7f2051ea4b801081d23fba38482a3b1459b7bd26c9df9c1bc8a9bbe8b",
+      "detail": "configuration passes schema validation and check",
+      "id": "manifest-round-trip",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "a3588e0aac73cc1ced111bcdc457cca5db8995c0b2a35c30c17072a29ec0a770",
+      "record_id": "f50783961c4fab6fd99b38eb99e7f58e686f3848ff8070fd80b41c1071bd498d",
+      "response_sha256": "419da826adecee1c63ef7edd7f2cc8734533db94f1803b769e1cc201bd7a9e6b",
+      "scorer": "configuration",
+      "scorer_sha256": "ff2c7701e55c68a09f63c7dd94d3e2b350c22d5c224e9bb77a26b01869420a79"
     },
     {
       "audience": "agent",

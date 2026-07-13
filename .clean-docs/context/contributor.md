@@ -1,13 +1,13 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `f136af371d76553f24aea3991290139da0bb411e0bea8bb3020b3ea380265910`
+- Corpus sha256: `f5d4b7c453d36df7373a80b92565f4729a7b6b4d9f5e53b90ba800b110e03d43`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `ce0a2553432faae51cec1a392f78dcc603ead4ef36cf2f018f1aec9597e35abc`
+- Content sha256: `d1c0fc5f12654275285bc5bb2672c4020df795859d7633b85f1fecddac36e3f8`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
@@ -17,7 +17,7 @@ clean-docs is a self-driving documentation system that applies one packaged stan
 Write the standard once; clean-docs does the repository work. The finished product audits each repository, derives its factual spine from source, phrases it to the packaged standard, tests the result, and maintains it on every change. Models may phrase grounded facts; deterministic code owns the facts and gate results.
 
 <!-- clean-docs:begin product-overview -->
-Version 0.5a1 compares normalized evidence across immutable refs and renders provenance-backed release facts. Optional narrative drafts cannot change, omit, or uncite those facts. Versioned plugins add extractors, discoverers, renderers, and policy checks in disposable snapshots; manifest migration includes a byte-exact rollback. It projects one verified documentation graph into llms.txt, named context bundles, and an accessible static demonstration. It scores human commands and recorded agent responses, reports changed binding drift and coverage gaps, and bootstraps source-bound baselines. Static adapters cover Python, TypeScript, OpenAPI, JSON Schema, package metadata, and MCP tools without importing repository code. `derive` previews changes unless you pass `--write`; `audit`, `check`, and `release` never write.
+Version 0.5 compares normalized evidence across immutable refs and renders provenance-backed release facts. Optional narrative drafts cannot change, omit, or uncite those facts. Versioned plugins add extractors, discoverers, renderers, and policy checks in disposable snapshots; manifest migration includes a byte-exact rollback. It projects one verified documentation graph into llms.txt, named context bundles, and an accessible static demonstration. It scores human commands and recorded agent responses, reports changed binding drift and coverage gaps, and bootstraps source-bound baselines. Static adapters cover Python, TypeScript, OpenAPI, JSON Schema, package metadata, and MCP tools without importing repository code. `derive` previews changes unless you pass `--write`; `audit`, `check`, and `release` never write.
 <!-- clean-docs:end product-overview -->
 ## Install and audit
 
