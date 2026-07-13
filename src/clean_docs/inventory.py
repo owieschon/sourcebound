@@ -12,6 +12,8 @@ from typing import Any
 
 import yaml
 
+from clean_docs.errors import ConfigurationError
+
 if sys.version_info >= (3, 11):
     import tomllib
 else:
@@ -49,6 +51,7 @@ class InventoryItem:
     adapter: str
     digest: str
     coverage: str
+    coverage_reason: str | None = None
 
 
 @dataclass(frozen=True)
@@ -196,6 +199,36 @@ def _structured_items(path: str, data: Any) -> list[dict[str, str]]:
     return items
 
 
+def _coverage_ignores(root: Path, identifiers: set[str]) -> dict[str, str]:
+    ignore_path = root / ".clean-docs-ignore.yml"
+    if not ignore_path.exists():
+        return {}
+    try:
+        raw = yaml.safe_load(ignore_path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise ConfigurationError(f"cannot read coverage policy {ignore_path}") from exc
+    except yaml.YAMLError as exc:
+        raise ConfigurationError(f"invalid coverage policy {ignore_path}") from exc
+    if not isinstance(raw, dict) or set(raw) != {"version", "ignore"}:
+        raise ConfigurationError("coverage policy must contain only version and ignore")
+    if raw["version"] != 1 or not isinstance(raw["ignore"], list):
+        raise ConfigurationError("coverage policy must use version 1 and an ignore list")
+    ignored: dict[str, str] = {}
+    for index, record in enumerate(raw["ignore"]):
+        if not isinstance(record, dict) or set(record) != {"id", "reason"}:
+            raise ConfigurationError(f"coverage ignore {index} must contain id and reason")
+        identifier = record["id"]
+        reason = record["reason"]
+        if not isinstance(identifier, str) or identifier not in identifiers:
+            raise ConfigurationError(f"coverage ignore {index} names an unknown inventory id")
+        if not isinstance(reason, str) or len(reason.strip()) < 12:
+            raise ConfigurationError(f"coverage ignore {index} needs a specific reason")
+        if identifier in ignored:
+            raise ConfigurationError(f"coverage ignore {index} duplicates an inventory id")
+        ignored[identifier] = reason.strip()
+    return ignored
+
+
 def _coverage(root: Path, identifiers: set[str]) -> tuple[bool, dict[str, str]]:
     bound = False
     manifest = root / ".clean-docs.yml"
@@ -204,18 +237,7 @@ def _coverage(root: Path, identifiers: set[str]) -> tuple[bool, dict[str, str]]:
             bound = "extractor: repository-inventory" in manifest.read_text(encoding="utf-8")
         except OSError:
             pass
-    ignored: dict[str, str] = {}
-    ignore_path = root / ".clean-docs-ignore.yml"
-    if ignore_path.exists():
-        try:
-            raw = yaml.safe_load(ignore_path.read_text(encoding="utf-8"))
-            records = raw.get("ignore", []) if isinstance(raw, dict) else []
-            for record in records:
-                if isinstance(record, dict) and record.get("id") in identifiers and record.get("reason"):
-                    ignored[str(record["id"])] = str(record["reason"])
-        except (OSError, yaml.YAMLError):
-            pass
-    return bound, ignored
+    return bound, _coverage_ignores(root, identifiers)
 
 
 def scan_inventory(root: Path) -> InventoryReport:
@@ -274,5 +296,11 @@ def scan_inventory(root: Path) -> InventoryReport:
     for identifier in sorted(unique):
         item = unique[identifier]
         coverage = "ignored" if identifier in ignored else "bound" if bound else "standard-gap"
-        items.append(InventoryItem(**item, coverage=coverage))
+        items.append(
+            InventoryItem(
+                **item,
+                coverage=coverage,
+                coverage_reason=ignored.get(identifier),
+            )
+        )
     return InventoryReport(tuple(sorted(languages)), tuple(items))
