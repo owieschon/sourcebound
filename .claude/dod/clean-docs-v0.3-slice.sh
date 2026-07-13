@@ -5,7 +5,7 @@ set -eu
 root="${HOME}/dev/doc-standard"
 cd "$root"
 
-PYTHONPATH=src python3 -m clean_docs --version | grep -q '^0.3.0$'
+git show v0.3.0:pyproject.toml | grep -q '^version = "0.3.0"$'
 python3 scripts/run_acceptance.py \
   --registry tests/v03-acceptance.yml \
   --out /tmp/clean-docs-v03-acceptance.json >/dev/null

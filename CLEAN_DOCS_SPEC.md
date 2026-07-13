@@ -450,6 +450,12 @@ The product must never describe a reduction in hygiene findings as proof that pr
 
 Each release proves one product claim before the next release broadens it. A later release may refine schemas, but it cannot weaken a prior E2E test without a recorded compatibility decision.
 
+| Release | Commit | Required CI | Wheel SHA-256 |
+| --- | --- | --- | --- |
+| [`v0.1.0`](https://github.com/owieschon/clean-docs/releases/tag/v0.1.0) | `de5cdc5458d319043da31f2d874b3186c9840224` | [29226615998](https://github.com/owieschon/clean-docs/actions/runs/29226615998) | `5b8f53dfe3ee546e7efd9656414385099ef9a2f9eae00d3ffc0b04f286315497` |
+| [`v0.2.0`](https://github.com/owieschon/clean-docs/releases/tag/v0.2.0) | `cea7c10b52c2fb4e7f836a92836a210bbc7557a7` | [29228125889](https://github.com/owieschon/clean-docs/actions/runs/29228125889) | `02b742a95d2676453e1ca14129978297e496f2a441c27c80f91f8c75f4d59b46` |
+| [`v0.3.0`](https://github.com/owieschon/clean-docs/releases/tag/v0.3.0) | `f7c036198c7f2cbff59247d1307218133502b724` | [29228926772](https://github.com/owieschon/clean-docs/actions/runs/29228926772) | `0430ab14d02b643aab6990caed1094d1b89f6dfcd08d414d7968b39ff8ba21ac` |
+
 ### Version 0: Proven local foundation, complete
 
 **Claim:** the existing standard captures the human judgment; the write gate and corpus linter prove that part of it can already execute as policy.
@@ -561,8 +567,6 @@ Version 0 preservation work at the start of Version 0.1:
 
 **Claim:** clean-docs can drive an unfamiliar repository to the configured documentation standard without turning model output into factual authority.
 
-Release receipt: [`v0.2.0`](https://github.com/owieschon/clean-docs/releases/tag/v0.2.0) resolves to `cea7c10b52c2fb4e7f836a92836a210bbc7557a7`; required [CI run 29228125889](https://github.com/owieschon/clean-docs/actions/runs/29228125889) passed; the reproducible wheel SHA-256 is `02b742a95d2676453e1ca14129978297e496f2a441c27c80f91f8c75f4d59b46`.
-
 #### Build
 
 - `inventory` and `init` commands.
@@ -620,7 +624,7 @@ Release receipt: [`v0.2.0`](https://github.com/owieschon/clean-docs/releases/tag
 - Audit results distinguish required failures and standard or adapter coverage gaps.
 - The bootstrap succeeds on one Python and one TypeScript dogfood repository.
 
-### Version 0.3: Change-impact and pull-request gate
+### Version 0.3: Change-impact and pull-request gate, complete
 
 **Claim:** clean-docs catches both drift in documented facts and likely new undocumented public surface on every repository change.
 
