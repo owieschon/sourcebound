@@ -866,7 +866,7 @@ Version 0 preservation work at the start of Version 0.1:
    - When clean-docs upgrades to 1.0.
    - Then manifests migrate or fail with an exact action, and bound evidence does not silently change.
 6. **independent reader success**
-   - Given fresh sessions for Anthropic Opus 4.8, Anthropic Sonnet 5, Codex GPT 5.5 Pro, and Codex GPT 6.5 Pro with only published clean-docs docs.
+   - Given fresh sessions for Anthropic Opus 4.8, Anthropic Sonnet 5, Codex GPT 5.5 High, and Codex GPT 5.6 Sol High with only published clean-docs docs.
    - When each model independently installs the tool, protects a fixture repo, repairs deliberate drift, and explains one limitation.
    - Then every model passes every observable task in the published rubric without shared history or prior outputs.
    - A reader can identify the README's applicability, problem, and resulting capability without reading past its first body block.
