@@ -12,8 +12,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import yaml
-
 try:
     import tomllib
 except ImportError:  # pragma: no cover - exercised on Python 3.10 in CI
@@ -83,6 +81,12 @@ def _timestamp(value: Any, *, label: str) -> None:
 
 
 def _load_rubric(root: Path) -> tuple[dict[str, Any], bytes]:
+    try:
+        import yaml
+    except ImportError as exc:
+        raise ReaderTrialError(
+            "stable reader-trial verification requires PyYAML"
+        ) from exc
     path = root / RUBRIC
     try:
         data = path.read_bytes()
