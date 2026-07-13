@@ -1,0 +1,12 @@
+version: 1
+bindings:
+  - id: supported-bindings
+    type: region
+    doc: README.md
+    region: supported-bindings
+    extractor: python-literal
+    source:
+      path: src/clean_docs/capabilities.py
+      symbol: SUPPORTED_BINDINGS
+    renderer: markdown-table
+    columns: [binding, source, output, check]
