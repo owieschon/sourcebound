@@ -459,6 +459,7 @@ Each release proves one product claim before the next release broadens it. A lat
 | [`v0.4.0`](https://github.com/owieschon/clean-docs/releases/tag/v0.4.0) | `715b91f01f67d519993f5aa23640867b76178e1a` | [29231093305](https://github.com/owieschon/clean-docs/actions/runs/29231093305) | `7599cdfc191089b2b7cead7798512ed4814a85e5fb73d40b806be60b9eb5eff9` |
 | [`v0.5.0`](https://github.com/owieschon/clean-docs/releases/tag/v0.5.0) | `17cd5461214e456d9f1925280627d7ec9ec0f0cb` | [29232645262](https://github.com/owieschon/clean-docs/actions/runs/29232645262) | `ed31005ab2160267701d7e16e1dacc8b0fa28935fcc321c3826f1973e8540f6d` |
 | [`v1.0.0rc5`](https://github.com/owieschon/clean-docs/releases/tag/v1.0.0rc5) | `a7c37ee90c9c6f73af1d73e685be9690d6856b92` | [29238892016](https://github.com/owieschon/clean-docs/actions/runs/29238892016) | `0ddb43c5a848e4243466bb6222f090cf8cbc0d9a414c07b98cc53e519a1ffc83` |
+| [`v1.0.0rc6`](https://github.com/owieschon/clean-docs/releases/tag/v1.0.0rc6) | `7f204ad38ac4c0668786c7cf7989b49fe435bb2e` | [29241466531](https://github.com/owieschon/clean-docs/actions/runs/29241466531) | `8d74fe28ab5c24d13899c7535c24286ec7795cb7c4b962ffab79bad53d8968c8` |
 
 ### Version 0: Proven local foundation, complete
 
