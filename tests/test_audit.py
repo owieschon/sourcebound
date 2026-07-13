@@ -3,7 +3,10 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-from clean_docs.audit import audit
+import pytest
+
+from clean_docs.audit import audit, write_audit_baseline
+from clean_docs.cli import main
 
 
 def _repo(tmp_path: Path) -> Path:
@@ -84,3 +87,68 @@ def test_generated_context_bundles_are_not_canonical_corpus_pages(tmp_path: Path
     assert report.findings == ()
     assert report.documents == ("README.md",)
     assert report.ignored_documents == (".clean-docs/context/contributor.md",)
+
+
+def test_hidden_configuration_markdown_is_not_reader_documentation(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    command = root / ".agent/commands/STATUS.md"
+    command.parent.mkdir(parents=True)
+    command.write_text("# Status command\n\nReport operational state.\n")
+    (root / "README.md").write_text("# Project\n")
+    _track(root)
+
+    report = audit(root)
+
+    assert report.ok
+    assert report.documents == ("README.md",)
+    assert report.ignored_documents == (".agent/commands/STATUS.md",)
+
+
+def test_exact_baseline_fails_on_new_and_resolved_findings(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    readme = root / "README.md"
+    readme.write_text("# Project\n\n[Missing](docs/missing.md)\n")
+    _track(root)
+
+    baseline_path = write_audit_baseline(root)
+    report = audit(root)
+
+    assert report.ok
+    assert report.findings == ()
+    assert [item.rule for item in report.baselined_findings] == ["broken-local-link"]
+    assert report.stale_baseline == ()
+    assert baseline_path == root / ".clean-docs/audit-baseline.json"
+
+    (root / "STATUS.md").write_text("# Status\n")
+    _track(root)
+    report = audit(root)
+    assert not report.ok
+    assert [item.rule for item in report.findings] == ["process-artifact"]
+    assert report.stale_baseline == ()
+
+    (root / "docs").mkdir()
+    (root / "docs/missing.md").write_text("# Present\n")
+    _track(root)
+    report = audit(root)
+    assert not report.ok
+    assert [item.rule for item in report.findings] == ["process-artifact"]
+    assert [item.rule for item in report.stale_baseline] == ["broken-local-link"]
+
+
+def test_update_baseline_is_explicit_and_tampering_is_rejected(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    root = _repo(tmp_path)
+    (root / "STATUS.md").write_text("# Status\n")
+    _track(root)
+
+    assert main(["--root", str(root), "audit"]) == 1
+    capsys.readouterr()
+    assert main(["--root", str(root), "audit", "--update-baseline"]) == 0
+    capsys.readouterr()
+    assert audit(root).ok
+
+    baseline = root / ".clean-docs/audit-baseline.json"
+    baseline.write_text(baseline.read_text().replace('"line": 1', '"line": 2'))
+    assert main(["--root", str(root), "audit"]) == 2
+    assert "fingerprint does not match" in capsys.readouterr().err

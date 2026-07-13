@@ -102,8 +102,9 @@ def diagnose(root: Path, manifest_path: Path) -> tuple[DoctorCheck, ...]:
         report = audit(root)
         checks.append(DoctorCheck(
             "documentation-audit",
-            not report.findings,
-            f"{len(report.documents)} active documents; {len(report.findings)} findings",
+            report.ok,
+            f"{len(report.documents)} active documents; {len(report.findings)} new findings; "
+            f"{len(report.baselined_findings)} baselined; {len(report.stale_baseline)} stale",
         ))
     except CleanDocsError as exc:
         checks.append(DoctorCheck("documentation-audit", False, str(exc)))

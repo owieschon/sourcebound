@@ -6,6 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from clean_docs.audit import write_audit_baseline
 from clean_docs.doctor import build_diagnostic_bundle
 from clean_docs.engine import drive
 from clean_docs.outcomes import build_outcome_receipt
@@ -107,6 +108,23 @@ def test_local_outcome_receipt_reports_baseline_and_changed_impact(
     assert not changed.ok
     assert changed.as_dict()["outcomes"]["drift_caught_before_merge"] >= 1
     assert changed.as_dict()["network_requests"] == 0
+
+
+def test_local_outcome_receipt_exposes_accepted_hygiene_debt(tmp_path: Path) -> None:
+    root, manifest, _base, _head = _fixture(tmp_path)
+    (root / "STATUS.md").write_text("# Existing status\n")
+    subprocess.run(["git", "-C", str(root), "add", "STATUS.md"], check=True)
+    write_audit_baseline(root)
+
+    receipt = build_outcome_receipt(root, manifest)
+
+    assert receipt.ok
+    assert receipt.as_dict()["documentation"] == {
+        "active": 2,
+        "archived": 0,
+        "hygiene_findings": 0,
+        "baselined_hygiene_findings": 1,
+    }
 
 
 def test_verify_writes_the_same_local_receipt_it_prints(tmp_path: Path) -> None:

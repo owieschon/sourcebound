@@ -21,6 +21,7 @@ class OutcomeReceipt:
     documents: int
     archived_documents: int
     hygiene_findings: int
+    baselined_hygiene_findings: int
     bindings: int
     current_bindings: int
     drifted_bindings: int
@@ -66,6 +67,7 @@ class OutcomeReceipt:
                 "active": self.documents,
                 "archived": self.archived_documents,
                 "hygiene_findings": self.hygiene_findings,
+                "baselined_hygiene_findings": self.baselined_hygiene_findings,
             },
             "bindings": {
                 "total": self.bindings,
@@ -112,7 +114,8 @@ def build_outcome_receipt(
         RepositorySnapshot(root).label,
         len(audit_report.documents),
         len(audit_report.ignored_documents),
-        len(audit_report.findings),
+        len(audit_report.findings) + len(audit_report.stale_baseline),
+        len(audit_report.baselined_findings),
         len(bindings),
         sum(not item.changed for item in bindings),
         sum(item.changed for item in bindings),

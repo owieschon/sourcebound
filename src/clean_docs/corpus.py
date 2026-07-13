@@ -72,7 +72,9 @@ def list_documents(root: Path) -> list[Path]:
             path
             for path in tracked
             if "archive" not in path.relative_to(root).parts
-            and path.relative_to(root).parts[:1] != (".clean-docs",)
+            and not any(
+                part.startswith(".") for part in path.relative_to(root).parts
+            )
         ]
     skipped = {
         "node_modules", ".venv", ".git", ".pytest_cache", "archive", ".clean-docs"
@@ -81,6 +83,7 @@ def list_documents(root: Path) -> list[Path]:
         path
         for path in root.rglob("*.md")
         if not set(path.relative_to(root).parts) & skipped
+        and not any(part.startswith(".") for part in path.relative_to(root).parts)
     )
 
 

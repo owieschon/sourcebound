@@ -498,7 +498,11 @@ def run_evaluation(
             model=model_record,
             detail=detail,
         ))
-    hygiene = tuple(asdict(finding) for finding in audit(root).findings)
+    audit_report = audit(root)
+    hygiene = tuple(asdict(finding) for finding in audit_report.findings) + tuple(
+        {**asdict(finding), "rule": "stale-baseline", "recorded_rule": finding.rule}
+        for finding in audit_report.stale_baseline
+    )
     return EvaluationReport(
         mode=mode,
         human_tasks=tuple(result for result in results if result.audience == "human"),

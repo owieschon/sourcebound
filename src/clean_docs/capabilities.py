@@ -10,6 +10,8 @@ PRODUCT_OVERVIEW = (
     "projects one verified documentation graph into llms.txt, named context bundles, and an "
     "accessible static demonstration. It scores human commands and recorded agent responses, "
     "reports changed binding drift and coverage gaps, and bootstraps source-bound baselines. "
+    "Mature repositories can commit an exact existing-debt baseline that fails on new and "
+    "resolved findings until explicitly refreshed. "
     "Static adapters cover Python, TypeScript, OpenAPI, JSON Schema, package metadata, and MCP "
     "tools without importing repository code. Declared processes run in disposable copies with "
     "bounded I/O and minimal environments. Local outcome, performance, and diagnostic receipts "
@@ -39,7 +41,11 @@ SUPPORTED_BINDINGS = {
 }
 
 CLI_REFERENCE = (
-    {"command": "audit", "job": "Inventory and check repository documentation", "writes": "no"},
+    {
+        "command": "audit",
+        "job": "Inventory and check repository documentation",
+        "writes": "with --update-baseline",
+    },
     {"command": "inventory", "job": "List detected repository surfaces and coverage", "writes": "no"},
     {"command": "init", "job": "Write a source-bound documentation baseline", "writes": "yes"},
     {"command": "explain", "job": "Explain a finding or coverage state", "writes": "no"},

@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
 from clean_docs.corpus import scan_corpus
+from clean_docs.errors import ConfigurationError
+from clean_docs.regions import atomic_write
 from clean_docs.residue import scan_residue
 from clean_docs.standard import load_default_pack
 
@@ -19,6 +23,8 @@ HEADING = re.compile(r"^#{2,}\s+(.+?)\s*$")
 ALLOW = re.compile(
     r'<!--\s*clean-docs:allow\s+([a-z][a-z-]+)\s+reason="([^"]+)"\s*-->'
 )
+AUDIT_BASELINE_SCHEMA = "clean-docs.audit-baseline.v1"
+AUDIT_BASELINE_PATH = Path(".clean-docs/audit-baseline.json")
 
 
 @dataclass(frozen=True)
@@ -34,6 +40,88 @@ class AuditReport:
     documents: tuple[str, ...]
     ignored_documents: tuple[str, ...]
     findings: tuple[AuditFinding, ...]
+    baselined_findings: tuple[AuditFinding, ...] = ()
+    stale_baseline: tuple[AuditFinding, ...] = ()
+
+    @property
+    def ok(self) -> bool:
+        return not self.findings and not self.stale_baseline
+
+
+def finding_fingerprint(finding: AuditFinding) -> str:
+    payload = json.dumps(
+        {
+            "detail": finding.detail,
+            "line": finding.line,
+            "path": finding.path,
+            "rule": finding.rule,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+
+def _finding_order(finding: AuditFinding) -> tuple[str, int, str, str]:
+    return (finding.path, finding.line, finding.rule, finding.detail)
+
+
+def render_audit_baseline(findings: tuple[AuditFinding, ...]) -> str:
+    entries = []
+    for finding in findings:
+        entries.append({
+            "fingerprint": finding_fingerprint(finding),
+            "rule": finding.rule,
+            "path": finding.path,
+            "line": finding.line,
+            "detail": finding.detail,
+        })
+    return json.dumps(
+        {"schema": AUDIT_BASELINE_SCHEMA, "findings": entries},
+        indent=2,
+    ) + "\n"
+
+
+def _load_audit_baseline(path: Path) -> tuple[AuditFinding, ...]:
+    if path.is_symlink():
+        raise ConfigurationError(f"audit baseline cannot be a symbolic link: {path}")
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ConfigurationError(f"cannot read audit baseline {path}: {exc}") from exc
+    if not isinstance(raw, dict) or raw.get("schema") != AUDIT_BASELINE_SCHEMA:
+        raise ConfigurationError(f"audit baseline has an unsupported schema: {path}")
+    entries = raw.get("findings")
+    if not isinstance(entries, list):
+        raise ConfigurationError(f"audit baseline findings must be a list: {path}")
+    findings: list[AuditFinding] = []
+    fingerprints: set[str] = set()
+    for index, entry in enumerate(entries):
+        if not isinstance(entry, dict):
+            raise ConfigurationError(f"audit baseline finding {index} must be an object")
+        expected_keys = {"fingerprint", "rule", "path", "line", "detail"}
+        if set(entry) != expected_keys:
+            raise ConfigurationError(
+                f"audit baseline finding {index} must contain exactly "
+                "fingerprint, rule, path, line, and detail"
+            )
+        if not all(
+            isinstance(entry[key], str)
+            for key in ("fingerprint", "rule", "path", "detail")
+        ):
+            raise ConfigurationError(f"audit baseline finding {index} has an invalid string field")
+        if not isinstance(entry["line"], int) or isinstance(entry["line"], bool) or entry["line"] < 1:
+            raise ConfigurationError(f"audit baseline finding {index} has an invalid line")
+        finding = AuditFinding(entry["rule"], entry["path"], entry["line"], entry["detail"])
+        fingerprint = finding_fingerprint(finding)
+        if entry["fingerprint"] != fingerprint:
+            raise ConfigurationError(f"audit baseline finding {index} fingerprint does not match")
+        if fingerprint in fingerprints:
+            raise ConfigurationError(f"audit baseline has duplicate finding {fingerprint}")
+        fingerprints.add(fingerprint)
+        findings.append(finding)
+    findings.sort(key=_finding_order)
+    return tuple(findings)
 
 
 def _tracked_markdown(root: Path) -> list[Path]:
@@ -79,7 +167,7 @@ def _local_link(target: str) -> bool:
     return not target.startswith(("#", "http://", "https://", "mailto:"))
 
 
-def audit(root: Path) -> AuditReport:
+def _scan_audit(root: Path) -> AuditReport:
     root = root.resolve()
     pack = load_default_pack()
     doc_limit = int(pack["policy"]["doc_max_lines"])
@@ -89,7 +177,7 @@ def audit(root: Path) -> AuditReport:
     findings: list[AuditFinding] = []
     for relative in _tracked_markdown(root):
         normalized = relative.as_posix()
-        if "archive" in relative.parts or relative.parts[:1] == (".clean-docs",):
+        if "archive" in relative.parts or any(part.startswith(".") for part in relative.parts):
             ignored.append(normalized)
             continue
         active.append(normalized)
@@ -172,3 +260,41 @@ def audit(root: Path) -> AuditReport:
         ))
     findings.sort(key=lambda item: (item.path, item.line, item.rule))
     return AuditReport(tuple(active), tuple(ignored), tuple(findings))
+
+
+def audit(root: Path, *, use_baseline: bool = True) -> AuditReport:
+    root = root.resolve()
+    report = _scan_audit(root)
+    baseline_path = root / AUDIT_BASELINE_PATH
+    if not use_baseline or not baseline_path.exists():
+        return report
+    baseline = _load_audit_baseline(baseline_path)
+    current = {finding_fingerprint(item): item for item in report.findings}
+    recorded = {finding_fingerprint(item): item for item in baseline}
+    matched = tuple(sorted(
+        (current[fingerprint] for fingerprint in current.keys() & recorded.keys()),
+        key=_finding_order,
+    ))
+    active = tuple(sorted(
+        (current[fingerprint] for fingerprint in current.keys() - recorded.keys()),
+        key=_finding_order,
+    ))
+    stale = tuple(sorted(
+        (recorded[fingerprint] for fingerprint in recorded.keys() - current.keys()),
+        key=_finding_order,
+    ))
+    return AuditReport(
+        report.documents,
+        report.ignored_documents,
+        active,
+        matched,
+        stale,
+    )
+
+
+def write_audit_baseline(root: Path) -> Path:
+    root = root.resolve()
+    path = root / AUDIT_BASELINE_PATH
+    raw_report = audit(root, use_baseline=False)
+    atomic_write(path, render_audit_baseline(raw_report.findings))
+    return path

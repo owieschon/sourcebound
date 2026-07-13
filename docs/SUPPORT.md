@@ -16,6 +16,28 @@ This page defines supported environments, compatibility promises, upgrades, loca
 
 TypeScript and JavaScript support is static. clean-docs does not require Node.js and does not execute project modules to discover their public surface.
 
+## Adopt an existing documentation corpus
+
+`init` is strict by default. It rolls back every bootstrap write when the current corpus has a hygiene finding. A mature repository can preserve that behavior for future changes while recording its current debt:
+
+```bash
+clean-docs init --no-model --accept-hygiene-baseline
+git diff -- .clean-docs/audit-baseline.json
+clean-docs audit
+```
+
+The committed baseline records each exact rule, path, line, detail, and fingerprint. Adoption mode does not archive or move existing documents. It does not ignore a rule or reader-facing directory. Hidden configuration trees are outside the documentation corpus. `audit` fails when a new finding appears. It also fails with `stale-baseline` when a recorded finding is resolved, because the baseline must shrink to match current debt.
+
+After reviewing intentional documentation repairs, replace the baseline with the current exact findings:
+
+```bash
+clean-docs audit --update-baseline
+git diff -- .clean-docs/audit-baseline.json
+clean-docs audit
+```
+
+Review and commit the baseline change with the documentation change. A malformed, tampered, duplicated, or symbolic-link baseline exits `2` instead of weakening the gate.
+
 ## Compatibility policy
 
 Manifest version `1`, plugin API version `1`, and published machine-readable schemas remain compatible throughout the 1.x line. A minor release may add optional fields. It cannot change the meaning of an existing field or silently change normalized evidence for a supported adapter.
@@ -62,7 +84,7 @@ clean-docs verify --base origin/main --head HEAD \
   --out .clean-docs/outcome.json
 ```
 
-The receipt counts current bindings, caught drift, coverage gaps, hygiene findings, and projection state. It records `network_requests: 0` and sends nothing.
+The receipt counts current bindings, caught drift, coverage gaps, active and baselined hygiene findings, and projection state. It records `network_requests: 0` and sends nothing.
 
 Measure the changed-check P95 and peak process memory on a repository with:
 

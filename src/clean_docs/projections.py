@@ -151,6 +151,8 @@ def _verify_links(root: Path, files: dict[Path, str]) -> None:
                 target_content = files[target]
             else:
                 path = root / target
+                if path.is_dir() and not fragment:
+                    continue
                 try:
                     target_content = path.read_text(encoding="utf-8")
                 except OSError as exc:

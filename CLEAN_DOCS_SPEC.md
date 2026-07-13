@@ -811,6 +811,7 @@ Version 0 preservation work at the start of Version 0.1:
 - Isolation controls for allowlisted commands and plugins.
 - Performance budgets, caching, local outcome receipts, and a diagnostic bundle.
 - Upgrade and deprecation policy.
+- Exact, reviewable hygiene baselines for adopting repositories with existing documentation debt.
 - Public documentation generated and checked by clean-docs.
 - Public source repository under the MIT license from the first supported release.
 - Signed release artifacts and software bill of materials.
@@ -821,6 +822,7 @@ Version 0 preservation work at the start of Version 0.1:
    - Given an undocumented supported repository.
    - When a maintainer supplies the standard and runs `clean-docs init`.
    - Then the repo reaches a passing protected baseline without manual document or manifest editing for discovered standard surfaces.
+   - Given an existing corpus with hygiene debt, the explicit adoption mode records exact findings, fails on new findings, and requires baseline pruning when debt is resolved.
 2. **full change lifecycle**
    - Given a protected repo and a pull request that changes, adds, and removes public behavior.
    - When the contributor follows repair output.
