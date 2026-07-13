@@ -16,6 +16,19 @@ This page defines supported environments, compatibility promises, upgrades, loca
 
 TypeScript and JavaScript support is static. clean-docs does not require Node.js and does not execute project modules to discover their public surface.
 
+## Run the reusable pull-request gate
+
+Pin both the reusable workflow and its package input to the same full commit:
+
+```yaml
+jobs:
+  clean-docs:
+    uses: owieschon/clean-docs/.github/workflows/reusable-clean-docs.yml@FULL_40_CHARACTER_CLEAN_DOCS_COMMIT
+    with: {package-ref: FULL_40_CHARACTER_CLEAN_DOCS_COMMIT}
+```
+
+The workflow rejects tags, branches, abbreviated commits, and non-hexadecimal input before installation. It requests read-only repository permission. Its `clean-docs-evidence` artifact contains the raw audit, binding, and changed-surface reports plus `clean-docs-run.json`. That receipt identifies the installed clean-docs version and commit, the checked repository ref and commit, the workflow run and attempt, each result state, and the byte count and SHA-256 digest of every accompanying evidence file. Keep the artifact with a release or repair receipt when the run itself may expire.
+
 ## Adopt an existing documentation corpus
 
 `init` is strict by default. It rolls back every bootstrap write when the current corpus has a hygiene finding. A mature repository can preserve that behavior for future changes while recording its current debt:
@@ -80,8 +93,7 @@ Each release publishes the wheel, its SPDX 2.3 software bill of materials, check
 `verify` runs audit, binding, and projection checks and prints `clean-docs.outcome.v1`. Add immutable refs to include pull-request impact, and write the same bytes to a local receipt with:
 
 ```bash
-clean-docs verify --base origin/main --head HEAD \
-  --out .clean-docs/outcome.json
+clean-docs verify --base origin/main --head HEAD --out .clean-docs/outcome.json
 ```
 
 The receipt counts current bindings, caught drift, coverage gaps, active and baselined hygiene findings, and projection state. It records `network_requests: 0` and sends nothing.
@@ -89,8 +101,7 @@ The receipt counts current bindings, caught drift, coverage gaps, active and bas
 Measure the changed-check P95 and peak process memory on a repository with:
 
 ```bash
-clean-docs benchmark --base origin/main --head HEAD \
-  --out .clean-docs/performance.json
+clean-docs benchmark --base origin/main --head HEAD --out .clean-docs/performance.json
 ```
 
 The command exits `1` when either published budget is exceeded.
@@ -100,8 +111,7 @@ The command exits `1` when either published budget is exceeded.
 Write a support-safe JSON bundle with:
 
 ```bash
-clean-docs doctor --format json \
-  --bundle .clean-docs/diagnostic.json
+clean-docs doctor --format json --bundle .clean-docs/diagnostic.json
 ```
 
 The bundle contains runtime versions, repository ref, manifest counts, plugin IDs, and doctor results. It excludes environment variables, credentials, document and source contents, and command arguments. Review the file before attaching it to a private security advisory or public support issue.

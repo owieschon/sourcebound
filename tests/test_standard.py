@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
 
+from clean_docs.capabilities import PRODUCT_OVERVIEW
 from clean_docs.errors import ConfigurationError
 from clean_docs.manifest import load_manifest
 from clean_docs.policy import check_document
@@ -63,3 +65,7 @@ def test_first_screen_capability_summary_is_self_derived() -> None:
         "product-overview",
         "supported-bindings",
     }
+
+
+def test_product_overview_does_not_duplicate_release_version() -> None:
+    assert re.search(r"\bVersion \d+\.\d+", PRODUCT_OVERVIEW) is None
