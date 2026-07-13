@@ -455,6 +455,7 @@ Each release proves one product claim before the next release broadens it. A lat
 | [`v0.1.0`](https://github.com/owieschon/clean-docs/releases/tag/v0.1.0) | `de5cdc5458d319043da31f2d874b3186c9840224` | [29226615998](https://github.com/owieschon/clean-docs/actions/runs/29226615998) | `5b8f53dfe3ee546e7efd9656414385099ef9a2f9eae00d3ffc0b04f286315497` |
 | [`v0.2.0`](https://github.com/owieschon/clean-docs/releases/tag/v0.2.0) | `cea7c10b52c2fb4e7f836a92836a210bbc7557a7` | [29228125889](https://github.com/owieschon/clean-docs/actions/runs/29228125889) | `02b742a95d2676453e1ca14129978297e496f2a441c27c80f91f8c75f4d59b46` |
 | [`v0.3.0`](https://github.com/owieschon/clean-docs/releases/tag/v0.3.0) | `f7c036198c7f2cbff59247d1307218133502b724` | [29228926772](https://github.com/owieschon/clean-docs/actions/runs/29228926772) | `0430ab14d02b643aab6990caed1094d1b89f6dfcd08d414d7968b39ff8ba21ac` |
+| [`v0.4.0`](https://github.com/owieschon/clean-docs/releases/tag/v0.4.0) | `715b91f01f67d519993f5aa23640867b76178e1a` | [29231093305](https://github.com/owieschon/clean-docs/actions/runs/29231093305) | `7599cdfc191089b2b7cead7798512ed4814a85e5fb73d40b806be60b9eb5eff9` |
 
 ### Version 0: Proven local foundation, complete
 
@@ -677,7 +678,7 @@ Version 0 preservation work at the start of Version 0.1:
 - Median changed-file check time meets the published budget on dogfood repositories.
 - The GitHub Action pins dependencies and requires read-only repository permissions unless posting a report is enabled.
 
-### Version 0.4: Human and agent projections with task evaluation
+### Version 0.4: Human and agent projections with task evaluation, complete
 
 **Claim:** one canonical documentation corpus supports human tasks and agent tasks without factual forks.
 

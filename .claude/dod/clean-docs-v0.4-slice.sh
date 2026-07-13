@@ -5,7 +5,8 @@ set -eu
 root="${HOME}/dev/doc-standard"
 cd "$root"
 
-grep -q '^version = "0.4.0"$' pyproject.toml
+git show v0.4.0:pyproject.toml | grep -q '^version = "0.4.0"$'
+test "$(git rev-parse 'v0.4.0^{}')" = "715b91f01f67d519993f5aa23640867b76178e1a"
 PYTHONPATH=src python3 scripts/record_demo.py --out /tmp/clean-docs-demo-evidence.json >/dev/null
 cmp .clean-docs/demo/evidence.json /tmp/clean-docs-demo-evidence.json
 PYTHONPATH=src python3 -m clean_docs --root . project --check >/dev/null
