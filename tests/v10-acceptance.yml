@@ -12,4 +12,4 @@ scenarios:
   - id: upgrade-compatibility
     test: tests/test_v10_acceptance.py::test_v05_manifest_and_evidence_remain_compatible_at_v10
   - id: independent-reader-success
-    test: tests/test_v10_acceptance.py::test_independent_reader_commands_complete_the_published_rubric
+    test: tests/test_v10_acceptance.py::test_independent_reader_release_requires_receipts_and_published_tasks_work

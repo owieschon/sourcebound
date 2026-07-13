@@ -30,3 +30,5 @@ The factual Markdown and JSON remain unchanged when narrative validation fails. 
 ## Current boundary
 
 Release extraction is static and snapshot-bound. First-party and configured discoverer plugins run once per ref in disposable copies. The active worktree, its installed dependencies, and narrative output cannot change the typed delta.
+
+Release-candidate builds rehearse the published reader tasks in CI. A stable release additionally requires content-addressed receipts from at least one independent human reader and one independent agent reader. Each participant must use only the rubric's published context, complete every task, and bind the resulting evidence by SHA-256. The receipt also names the exact candidate commit and wheel digest. `scripts/verify_reader_trial.py` checks `.clean-docs/reader-trial.json`; `scripts/build_release.py` reconstructs the candidate wheel and permits only the version and reader receipts to differ in the stable release. It refuses absent, incomplete, stale, tampered, or untried evidence.

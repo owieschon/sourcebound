@@ -847,10 +847,12 @@ Version 0 preservation work at the start of Version 0.1:
    - Given new human and agent users with only published clean-docs docs.
    - When they install the tool, protect a fixture repo, repair deliberate drift, and explain one limitation.
    - Then every observable task passes the published rubric.
+   - Required release evidence binds the candidate commit and artifact, rubric, supplied documents, participant independence attestations, and per-task receipts by SHA-256. Internal command rehearsal and recorded responses test the harness but do not substitute for the independent trial.
 
 #### Definition of done
 
 - All six 1.0 E2E scenarios pass on every supported platform.
+- The stable release build rejects missing, incomplete, stale, or tampered independent human and agent reader receipts.
 - All earlier release E2E suites remain green.
 - Two external pilot repositories run the required check for at least 30 days with recorded false-positive and repair-time metrics.
 - No open critical security issue exists; threat-model review and adversarial fixtures are complete.

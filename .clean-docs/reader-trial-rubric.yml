@@ -1,0 +1,19 @@
+version: 1
+context:
+  - README.md
+  - docs/CLI.md
+  - docs/SUPPORT.md
+  - docs/SECURITY_MODEL.md
+tasks:
+  - id: install
+    instruction: Install the candidate using only the published installation instructions.
+    passes_when: The installed clean-docs command reports the candidate version.
+  - id: protect-fixture
+    instruction: Initialize an undocumented fixture repository and reach a passing protected baseline.
+    passes_when: The manifest, generated documentation, and verification command all pass without undocumented setup knowledge.
+  - id: repair-drift
+    instruction: Change one public command, use the reported repair path, and restore a passing check.
+    passes_when: The deliberate drift fails first, the declared documentation region changes, and the final check passes.
+  - id: explain-limitation
+    instruction: Explain whether clean-docs itself revokes host network access for allowlisted processes and cite the published boundary.
+    passes_when: The answer assigns network isolation to the execution environment and cites the canonical limitation.

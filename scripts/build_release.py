@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import tarfile
@@ -15,17 +16,19 @@ from pathlib import Path, PurePosixPath
 
 if __package__:
     from scripts.build_sbom import render_sbom
+    from scripts.verify_reader_trial import verify_release_reader_trial
 else:
     from build_sbom import render_sbom
+    from verify_reader_trial import verify_release_reader_trial
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def _run(*args: str, cwd: Path = ROOT, env: dict[str, str] | None = None) -> str:
+def _run(*args: str, cwd: Path | None = None, env: dict[str, str] | None = None) -> str:
     proc = subprocess.run(
         list(args),
-        cwd=cwd,
+        cwd=cwd or ROOT,
         env=env,
         text=True,
         capture_output=True,
@@ -84,11 +87,53 @@ def _build_once(ref: str, epoch: str, parent: Path, name: str) -> Path:
     return wheels[0]
 
 
+def _verify_reader_candidate(
+    final_ref: str,
+    reader_trial: dict[str, object],
+    parent: Path,
+) -> None:
+    if reader_trial.get("required") is not True:
+        return
+    candidate = str(reader_trial["candidate_commit"])
+    _run("git", "merge-base", "--is-ancestor", candidate, final_ref)
+    changed = set(_run("git", "diff", "--name-only", candidate, final_ref).splitlines())
+    allowed = {"pyproject.toml", ".clean-docs/reader-trial.json"}
+    unexpected = sorted(
+        path
+        for path in changed
+        if path not in allowed and not path.startswith(".clean-docs/reader-trials/")
+    )
+    if unexpected:
+        raise RuntimeError(
+            "stable release changed product files after the reader trial: "
+            + ", ".join(unexpected)
+        )
+    candidate_project = _run("git", "show", f"{candidate}:pyproject.toml")
+    final_project = _run("git", "show", f"{final_ref}:pyproject.toml")
+    version_line = re.compile(r'^version = "[^"]+"$', re.MULTILINE)
+    if len(version_line.findall(candidate_project)) != 1 or len(version_line.findall(final_project)) != 1:
+        raise RuntimeError("pyproject.toml must contain one project version line")
+    if version_line.sub('version = "<release>"', candidate_project) != version_line.sub(
+        'version = "<release>"', final_project
+    ):
+        raise RuntimeError("stable release changed pyproject.toml beyond the version")
+    candidate_epoch = _run("git", "show", "-s", "--format=%ct", candidate)
+    candidate_wheel = _build_once(candidate, candidate_epoch, parent, "reader-candidate")
+    actual = hashlib.sha256(candidate_wheel.read_bytes()).hexdigest()
+    if actual != reader_trial["candidate_artifact_sha256"]:
+        raise RuntimeError("reader trial candidate artifact digest does not match a reproducible build")
+
+
 def build_release(output: Path) -> dict[str, object]:
     ref = _run("git", "rev-parse", "HEAD")
     epoch = _run("git", "show", "-s", "--format=%ct", ref)
     with tempfile.TemporaryDirectory(prefix="clean-docs-release-") as temporary:
         parent = Path(temporary)
+        evidence = parent / "evidence"
+        evidence.mkdir()
+        _archive(ref, evidence)
+        reader_trial = verify_release_reader_trial(evidence / "source")
+        _verify_reader_candidate(ref, reader_trial, parent)
         first = _build_once(ref, epoch, parent, "first")
         second = _build_once(ref, epoch, parent, "second")
         first_bytes = first.read_bytes()
@@ -113,6 +158,7 @@ def build_release(output: Path) -> dict[str, object]:
         "artifact": {"file": wheel.name, "sha256": digest},
         "sbom": {"file": sbom.name, "sha256": sbom_digest, "format": "SPDX-2.3"},
         "reproducible_builds": 2,
+        "independent_reader_trial": reader_trial,
     }
     receipt_path = output / "release.json"
     receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")

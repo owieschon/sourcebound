@@ -8,6 +8,6 @@
 - [docs/CLI.md](docs/CLI.md): bindings: cli-reference; sha256: 06a7005bb9523f7ede93611eb741ff63488f000aa3039e194fa9711bb6d9d2c4
 - [docs/EVALUATION.md](docs/EVALUATION.md): bindings: evaluation-scorers; sha256: 4f7d56256d3d7d3fe72cad2cfb42517c610ee52ef10d0321a28f363d41916eba
 - [docs/EXTENSIONS.md](docs/EXTENSIONS.md): bindings: extension-guide, migration-guide; sha256: 7d86665951370945a23a9be17a9c9128cbe4b95446228707f8f098a6eeb47bd5
-- [docs/RELEASES.md](docs/RELEASES.md): bindings: release-guide; sha256: 5617e427e7a401c34fb962645a2a14e8b829e17f95b26f1ca00aadc6fc86b8fc
+- [docs/RELEASES.md](docs/RELEASES.md): bindings: release-guide; sha256: 623760c4c6b975858db00337d74a05a38368c22e891aab870a9abf7d33ae1dac
 - [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md): bindings: security-model; sha256: e7bb56614b994171657792d8eb94d8314251e762baa07947befa71b43169b7fa
 - [docs/SUPPORT.md](docs/SUPPORT.md): bindings: support-guide; sha256: 7aa8823cf8bdf4042a41782deb4fac227bef14eb40c9060dc564a4a48857784f

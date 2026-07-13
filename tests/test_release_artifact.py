@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+import hashlib
+import subprocess
 from pathlib import Path
 
+import pytest
 import yaml
+
+import scripts.build_release as release_builder
 
 try:
     import tomllib
@@ -33,6 +38,7 @@ def test_release_toolchain_and_ci_install_are_pinned() -> None:
     assert "/tmp/clean-docs-release/bin/clean-docs --help" in commands
     assert "/tmp/clean-docs-release/bin/clean-docs --root . audit" in commands
     assert "python scripts/test_release_lifecycle.py --wheel dist/*.whl" in commands
+    assert "verify_release_reader_trial" in (ROOT / "scripts/build_release.py").read_text()
     upload = next(step for step in steps if step.get("uses") == UPLOAD_ARTIFACT)
     assert upload["with"]["if-no-files-found"] == "error"
     assert "dist/*.spdx.json" in upload["with"]["path"]
@@ -59,3 +65,102 @@ def test_release_workflow_attests_wheel_and_sbom() -> None:
     assert "expected one SBOM" in resolver["run"]
     upload = next(step for step in steps if step.get("uses") == UPLOAD_ARTIFACT)
     assert upload["with"]["if-no-files-found"] == "error"
+
+
+def test_stable_release_accepts_only_reader_candidate_version_and_receipts(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    project = tmp_path / "pyproject.toml"
+    project.write_text('[project]\nname = "fixture"\nversion = "1.0.0rc7"\n')
+    (tmp_path / "product.py").write_text("VALUE = 1\n")
+    subprocess.run(["git", "-C", str(tmp_path), "add", "."], check=True)
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(tmp_path),
+            "-c",
+            "user.name=Fixture",
+            "-c",
+            "user.email=fixture@example.test",
+            "commit",
+            "-qm",
+            "candidate",
+        ],
+        check=True,
+    )
+    candidate = subprocess.run(
+        ["git", "-C", str(tmp_path), "rev-parse", "HEAD"],
+        text=True,
+        capture_output=True,
+        check=True,
+    ).stdout.strip()
+    project.write_text('[project]\nname = "fixture"\nversion = "1.0.0"\n')
+    receipts = tmp_path / ".clean-docs/reader-trials"
+    receipts.mkdir(parents=True)
+    (receipts / "result.txt").write_text("passed\n")
+    subprocess.run(["git", "-C", str(tmp_path), "add", "."], check=True)
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(tmp_path),
+            "-c",
+            "user.name=Fixture",
+            "-c",
+            "user.email=fixture@example.test",
+            "commit",
+            "-qm",
+            "finalize",
+        ],
+        check=True,
+    )
+    final = subprocess.run(
+        ["git", "-C", str(tmp_path), "rev-parse", "HEAD"],
+        text=True,
+        capture_output=True,
+        check=True,
+    ).stdout.strip()
+    wheel = tmp_path / "candidate.whl"
+    wheel.write_bytes(b"candidate wheel")
+    monkeypatch.setattr(release_builder, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        release_builder,
+        "_build_once",
+        lambda *args, **kwargs: wheel,
+    )
+    trial: dict[str, object] = {
+        "required": True,
+        "candidate_commit": candidate,
+        "candidate_artifact_sha256": hashlib.sha256(wheel.read_bytes()).hexdigest(),
+    }
+
+    release_builder._verify_reader_candidate(final, trial, tmp_path / "build")
+
+    (tmp_path / "product.py").write_text("VALUE = 2\n")
+    subprocess.run(["git", "-C", str(tmp_path), "add", "."], check=True)
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(tmp_path),
+            "-c",
+            "user.name=Fixture",
+            "-c",
+            "user.email=fixture@example.test",
+            "commit",
+            "-qm",
+            "untried product change",
+        ],
+        check=True,
+    )
+    changed = subprocess.run(
+        ["git", "-C", str(tmp_path), "rev-parse", "HEAD"],
+        text=True,
+        capture_output=True,
+        check=True,
+    ).stdout.strip()
+    with pytest.raises(RuntimeError, match="changed product files"):
+        release_builder._verify_reader_candidate(changed, trial, tmp_path / "build")

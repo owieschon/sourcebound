@@ -22,6 +22,7 @@ from clean_docs.phrasing import MockProvider
 from clean_docs.projections import evaluate_projections, write_projections
 from clean_docs.release import build_release_report
 from clean_docs.snapshot import RepositorySnapshot
+from scripts.verify_reader_trial import ReaderTrialError, verify_release_reader_trial
 
 
 PROJECT = Path(__file__).parents[1]
@@ -357,7 +358,7 @@ def test_v05_manifest_and_evidence_remain_compatible_at_v10(tmp_path: Path) -> N
     assert not any(item.changed for item in evaluate(root, manifest.path))
 
 
-def test_independent_reader_commands_complete_the_published_rubric(
+def test_independent_reader_release_requires_receipts_and_published_tasks_work(
     tmp_path: Path,
 ) -> None:
     overview = (PROJECT / "README.md").read_text()
@@ -408,3 +409,14 @@ def test_independent_reader_commands_complete_the_published_rubric(
     assert _run(root, "drive").returncode == 0
     assert _run(root, "project").returncode == 0
     assert _run(root, "verify").returncode == 0
+
+    release_gate = tmp_path / "release-gate"
+    release_gate.mkdir()
+    (release_gate / "pyproject.toml").write_text(
+        '[project]\nname = "release-gate"\nversion = "1.0.0"\n'
+    )
+    rubric = release_gate / ".clean-docs/reader-trial-rubric.yml"
+    rubric.parent.mkdir(parents=True)
+    shutil.copyfile(PROJECT / ".clean-docs/reader-trial-rubric.yml", rubric)
+    with pytest.raises(ReaderTrialError, match="cannot read independent-reader receipt"):
+        verify_release_reader_trial(release_gate)
