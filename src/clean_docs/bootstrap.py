@@ -1,0 +1,227 @@
+from __future__ import annotations
+
+import difflib
+import hashlib
+import json
+import os
+import re
+from dataclasses import asdict, dataclass
+from pathlib import Path
+
+from clean_docs.audit import audit
+from clean_docs.emit import render_llms_txt
+from clean_docs.engine import evaluate
+from clean_docs.errors import ConfigurationError, PolicyError
+from clean_docs.extractors.inventory import INCLUDED_KINDS, extract_repository_inventory
+from clean_docs.inventory import InventoryItem, scan_inventory
+from clean_docs.models import Manifest, RegionBinding, Source
+from clean_docs.regions import atomic_write, replace_region
+from clean_docs.renderers import render
+from clean_docs.snapshot import RepositorySnapshot
+
+
+REFERENCE_REGION = "repository-surface"
+REFERENCE_SECTION = re.compile(
+    r"^## (?:Commands|CLI|Repository surface)\s*\n.*?(?=^## |\Z)", re.MULTILINE | re.DOTALL
+)
+PROCESS_NAME = re.compile(r"(?:^|[-_])(STATUS|HANDOFF|REPORT|PLAN|NOTES|WORKORDER)(?:[-_]|$)", re.I)
+
+
+@dataclass(frozen=True)
+class PlannedWrite:
+    path: str
+    content: str
+    reason: str
+    diff: str
+
+
+@dataclass(frozen=True)
+class PlannedMove:
+    source: str
+    path: str
+    reason: str
+
+
+@dataclass(frozen=True)
+class BootstrapPlan:
+    facts: tuple[InventoryItem, ...]
+    writes: tuple[PlannedWrite, ...]
+    moves: tuple[PlannedMove, ...]
+    gaps: tuple[str, ...]
+    digest: str
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "schema": "clean-docs.content-plan.v1",
+            "ok": not self.gaps,
+            "digest": self.digest,
+            "facts": [asdict(item) for item in self.facts],
+            "operations": [
+                {"action": "write", **asdict(write), "content": None}
+                for write in self.writes
+            ] + [
+                {"action": "move", **asdict(move)} for move in self.moves
+            ],
+            "gaps": list(self.gaps),
+        }
+
+
+def _manifest_text() -> str:
+    return """\
+version: 1
+bindings:
+  - id: repository-surface
+    type: region
+    doc: README.md
+    region: repository-surface
+    extractor: repository-inventory
+    source: {path: .}
+    renderer: markdown-table
+    columns: [kind, name, source, locator]
+"""
+
+
+def _binding(root: Path) -> RegionBinding:
+    return RegionBinding(
+        id="repository-surface",
+        doc=Path("README.md"),
+        region=REFERENCE_REGION,
+        extractor="repository-inventory",
+        source=Source(Path(".")),
+        renderer="markdown-table",
+        columns=("kind", "name", "source", "locator"),
+    )
+
+
+def _reference_document(root: Path) -> str:
+    readme = root / "README.md"
+    current = readme.read_text(encoding="utf-8") if readme.exists() else "# Repository\n"
+    binding = _binding(root)
+    evidence = extract_repository_inventory(RepositorySnapshot(root), binding)
+    generated = render(evidence, binding)
+    section = (
+        "## Repository surface\n\n"
+        "This table is generated from statically detected package, CLI, API, schema, and test surfaces.\n\n"
+        f"<!-- clean-docs:begin {REFERENCE_REGION} -->\n"
+        f"{generated}\n"
+        f"<!-- clean-docs:end {REFERENCE_REGION} -->\n"
+    )
+    if f"<!-- clean-docs:begin {REFERENCE_REGION} -->" in current:
+        return replace_region(current, REFERENCE_REGION, generated)
+    if REFERENCE_SECTION.search(current):
+        return REFERENCE_SECTION.sub(section + "\n", current, count=1).rstrip() + "\n"
+    return current.rstrip() + "\n\n" + section
+
+
+def _diff(path: str, before: str, after: str) -> str:
+    return "".join(difflib.unified_diff(
+        before.splitlines(keepends=True),
+        after.splitlines(keepends=True),
+        fromfile=path,
+        tofile=f"{path} (clean-docs init)",
+    ))
+
+
+def _planned_write(root: Path, path: str, content: str, reason: str) -> PlannedWrite | None:
+    target = root / path
+    before = target.read_text(encoding="utf-8") if target.exists() else ""
+    if before == content:
+        return None
+    return PlannedWrite(path, content, reason, _diff(path, before, content))
+
+
+def _archive_moves(root: Path) -> list[PlannedMove]:
+    documents = sorted(
+        path for path in root.rglob("*.md")
+        if path.is_file()
+        and path.name != "README.md"
+        and "docs/archive" not in path.relative_to(root).as_posix()
+        and not set(path.relative_to(root).parts) & {".git", ".venv", "node_modules"}
+    )
+    moves: dict[str, PlannedMove] = {}
+    for path in documents:
+        relative = path.relative_to(root).as_posix()
+        if PROCESS_NAME.search(path.stem):
+            destination = f"docs/archive/clean-docs-init/{relative.removeprefix('docs/')}"
+            moves[relative] = PlannedMove(relative, destination, "process-only document")
+    by_digest: dict[str, list[Path]] = {}
+    for path in documents:
+        normalized = "\n".join(line.rstrip() for line in path.read_text(encoding="utf-8").splitlines()).strip()
+        if normalized:
+            by_digest.setdefault(hashlib.sha256(normalized.encode()).hexdigest(), []).append(path)
+    for group in by_digest.values():
+        for path in sorted(group)[1:]:
+            relative = path.relative_to(root).as_posix()
+            destination = f"docs/archive/clean-docs-init/{relative.removeprefix('docs/')}"
+            moves.setdefault(relative, PlannedMove(relative, destination, "duplicate document"))
+    return sorted(moves.values(), key=lambda item: item.source)
+
+
+def build_bootstrap_plan(root: Path) -> BootstrapPlan:
+    root = root.resolve()
+    existing_manifest = root / ".clean-docs.yml"
+    manifest_text = _manifest_text()
+    if existing_manifest.exists() and existing_manifest.read_text(encoding="utf-8") != manifest_text:
+        raise ConfigurationError(
+            "init cannot replace an existing manifest; remove it or run inventory and add bindings"
+        )
+    report = scan_inventory(root)
+    facts = tuple(item for item in report.items if item.kind in INCLUDED_KINDS)
+    readme = _reference_document(root)
+    manifest = Manifest(
+        path=root / ".clean-docs.yml",
+        version=1,
+        bindings=(_binding(root),),
+    )
+    llms = render_llms_txt(manifest, documents={"README.md": readme.encode("utf-8")})
+    writes = [
+        item for item in (
+            _planned_write(root, "README.md", readme, "bind detected repository surfaces"),
+            _planned_write(root, ".clean-docs.yml", manifest_text, "declare the generated binding"),
+            _planned_write(root, "llms.txt", llms, "index the source-bound documentation"),
+        ) if item is not None
+    ]
+    supported = {"Python", "TypeScript", "JavaScript"}
+    gaps = tuple(
+        f"language adapter missing: {language}"
+        for language in report.languages
+        if language not in supported
+    )
+    moves = _archive_moves(root)
+    payload = json.dumps({
+        "facts": [item.id + ":" + item.digest for item in facts],
+        "writes": [(item.path, hashlib.sha256(item.content.encode()).hexdigest()) for item in writes],
+        "moves": [(item.source, item.path) for item in moves],
+        "gaps": gaps,
+    }, sort_keys=True, separators=(",", ":"))
+    return BootstrapPlan(
+        facts,
+        tuple(writes),
+        tuple(moves),
+        gaps,
+        hashlib.sha256(payload.encode()).hexdigest(),
+    )
+
+
+def apply_bootstrap_plan(root: Path, plan: BootstrapPlan) -> None:
+    root = root.resolve()
+    if plan.gaps:
+        raise ConfigurationError("cannot initialize unsupported surfaces: " + "; ".join(plan.gaps))
+    for move in plan.moves:
+        source = root / move.source
+        destination = root / move.path
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        if destination.exists():
+            raise ConfigurationError(f"archive destination already exists: {move.path}")
+        os.replace(source, destination)
+    for write in plan.writes:
+        atomic_write(root / write.path, write.content)
+    results = evaluate(root, root / ".clean-docs.yml")
+    if any(result.changed for result in results):
+        raise ConfigurationError("init wrote a baseline that does not pass binding checks")
+    report = audit(root)
+    if report.findings:
+        details = "; ".join(
+            f"{finding.path}:{finding.line} {finding.rule}" for finding in report.findings[:5]
+        )
+        raise PolicyError(f"init baseline has policy findings: {details}")

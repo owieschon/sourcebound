@@ -28,6 +28,7 @@ This table is derived from the command registry used by the parser:
 | --- | --- | --- |
 | audit | Inventory and check repository documentation | no |
 | inventory | List detected repository surfaces and coverage | no |
+| init | Write a source-bound documentation baseline | yes |
 | doctor | Check repository and integration readiness | no |
 | derive | Preview generated region changes | with --write |
 | drive | Repair bound regions and enforce policy | yes |
@@ -90,8 +91,7 @@ Run the pinned public-repository dogfood proof with:
 PYTHONPATH=src python3 scripts/dogfood_public_repos.py
 ```
 
-The proof clones two fixed commits, checks region and symbol bindings, and detects deliberate source drift.
-It repairs or restores the affected source relationship, verifies the final state, and never executes target code.
+The proof clones two fixed commits, checks region and symbol bindings, detects deliberate source drift, repairs or restores the affected source relationship, verifies the final state, and never executes target code.
 
 Self-hosting uses `python3 scripts/trusted_self_check.py`. Candidate code checks its own
 tree, then the verifier pinned in `.clean-docs-trust.json` independently checks the same
