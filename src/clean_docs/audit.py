@@ -45,7 +45,11 @@ def _tracked_markdown(root: Path) -> list[Path]:
         check=False,
     )
     if proc.returncode == 0:
-        return [Path(line) for line in proc.stdout.splitlines() if line]
+        return [
+            relative
+            for line in proc.stdout.splitlines()
+            if line and (root / (relative := Path(line))).is_file()
+        ]
     return sorted(path.relative_to(root) for path in root.rglob("*.md") if ".git" not in path.parts)
 
 

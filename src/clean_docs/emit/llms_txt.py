@@ -29,14 +29,38 @@ def _one_line(value: str, name: str) -> str:
     return value.strip()
 
 
-def _document_metadata(manifest: Manifest, document: str) -> tuple[str, str]:
+def _document_metadata(
+    manifest: Manifest, document: str, documents: dict[str, bytes] | None = None
+) -> tuple[str, str]:
     repository_root = manifest.path.parent.resolve()
     path = repository_root / document
-    try:
-        content = path.read_bytes()
-    except OSError as exc:
-        raise ConfigurationError(f"cannot index bound document {document}: {exc}") from exc
+    if documents is not None and document in documents:
+        content = documents[document]
+    else:
+        try:
+            content = path.read_bytes()
+        except OSError as exc:
+            raise ConfigurationError(f"cannot index bound document {document}: {exc}") from exc
     return quote(document, safe="/"), hashlib.sha256(content).hexdigest()
+
+
+def render_llms_txt(
+    manifest: Manifest,
+    *,
+    title: str | None = None,
+    summary: str | None = None,
+    documents: dict[str, bytes] | None = None,
+) -> str:
+    """Render an llms.txt projection without writing it."""
+    heading = _one_line(title or DEFAULT_TITLE, "title")
+    blurb = _one_line(summary or DEFAULT_SUMMARY, "summary")
+    lines = [f"# {heading}", "", f"> {blurb}", "", "## Source-bound documentation", ""]
+    for doc, ids in _bound_facts(manifest).items():
+        link, digest = _document_metadata(manifest, doc, documents)
+        lines.append(
+            f"- [{doc}]({link}): bindings: {', '.join(ids)}; sha256: {digest}"
+        )
+    return "\n".join(lines) + "\n"
 
 
 def emit_llms_txt(
@@ -47,13 +71,5 @@ def emit_llms_txt(
     summary: str | None = None,
 ) -> Path:
     """Write an llms.txt index derived from the manifest and return its path."""
-    heading = _one_line(title or DEFAULT_TITLE, "title")
-    blurb = _one_line(summary or DEFAULT_SUMMARY, "summary")
-    lines = [f"# {heading}", "", f"> {blurb}", "", "## Source-bound documentation", ""]
-    for doc, ids in _bound_facts(manifest).items():
-        link, digest = _document_metadata(manifest, doc)
-        lines.append(
-            f"- [{doc}]({link}): bindings: {', '.join(ids)}; sha256: {digest}"
-        )
-    atomic_write(out_path, "\n".join(lines) + "\n")
+    atomic_write(out_path, render_llms_txt(manifest, title=title, summary=summary))
     return out_path

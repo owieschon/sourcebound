@@ -33,6 +33,7 @@ SUPPORTED_BINDINGS = {
 CLI_REFERENCE = (
     {"command": "audit", "job": "Inventory and check repository documentation", "writes": "no"},
     {"command": "inventory", "job": "List detected repository surfaces and coverage", "writes": "no"},
+    {"command": "init", "job": "Write a source-bound documentation baseline", "writes": "yes"},
     {"command": "doctor", "job": "Check repository and integration readiness", "writes": "no"},
     {"command": "derive", "job": "Preview generated region changes", "writes": "with --write"},
     {"command": "drive", "job": "Repair bound regions and enforce policy", "writes": "yes"},

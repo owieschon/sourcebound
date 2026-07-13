@@ -8,6 +8,7 @@ from pathlib import Path
 
 from clean_docs import __version__
 from clean_docs.audit import audit
+from clean_docs.bootstrap import apply_bootstrap_plan, build_bootstrap_plan
 from clean_docs.capabilities import CLI_REFERENCE
 from clean_docs.doctor import diagnose
 from clean_docs.emit import emit_llms_txt, emit_stepwise_skill
@@ -35,6 +36,10 @@ def _parser() -> argparse.ArgumentParser:
     audit_parser.add_argument("--format", choices=("text", "json"), default="text")
     inventory_parser = sub.add_parser("inventory", help=_command_help("inventory"))
     inventory_parser.add_argument("--format", choices=("text", "json"), default="text")
+    init_parser = sub.add_parser("init", help=_command_help("init"))
+    init_parser.add_argument("--no-model", action="store_true")
+    init_parser.add_argument("--dry-run", action="store_true")
+    init_parser.add_argument("--format", choices=("text", "json"), default="text")
     doctor_parser = sub.add_parser("doctor", help=_command_help("doctor"))
     doctor_parser.add_argument("--format", choices=("text", "json"), default="text")
     derive = sub.add_parser("derive", help=_command_help("derive"))
@@ -156,6 +161,27 @@ def main(argv: list[str] | None = None) -> int:
             print(
                 f"inventory: {len(inventory_report.items)} surface(s); "
                 f"{len(inventory_report.languages)} language(s)"
+            )
+        return 0
+    if args.command == "init":
+        try:
+            plan = build_bootstrap_plan(root)
+            if not args.dry_run:
+                apply_bootstrap_plan(root, plan)
+        except CleanDocsError as exc:
+            print(f"clean-docs: {exc}", file=sys.stderr)
+            return exc.exit_code
+        if args.format == "json":
+            print(json.dumps(plan.as_dict(), indent=2))
+        else:
+            state = "planned" if args.dry_run else "applied"
+            for write in plan.writes:
+                print(f"[{state}] write {write.path}: {write.reason}")
+            for move in plan.moves:
+                print(f"[{state}] move {move.source} -> {move.path}: {move.reason}")
+            print(
+                f"init: {state} {len(plan.writes) + len(plan.moves)} operation(s); "
+                f"{len(plan.facts)} grounded fact(s)"
             )
         return 0
     if args.command == "doctor":

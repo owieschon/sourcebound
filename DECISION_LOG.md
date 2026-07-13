@@ -1,7 +1,9 @@
-# DECISION_LOG: consequential choices in the doc-standard harden-and-prove pass
+# clean-docs decision log
 
-Each entry states the context, the options, the choice and why, and how reversible it is. This
-is a changelog surface, so it carries dates and program provenance on purpose.
+This file records consequential product and implementation choices, their evidence, and their
+reversibility.
+
+<!-- clean-docs:allow doc-length reason="Product decisions stay in one chronological canonical log" -->
 
 ## 1. Define the reader-facing surface by the repo's own index, not by filename alone (2026-07-12)
 
@@ -115,3 +117,13 @@ evidence order, while path evidence sorts lexicographically. `derive` remains pr
 `--write` is present. A static micro-repository check has a five-second ceiling; allowlisted
 commands retain their declared timeouts. Reversible: later releases may add runtimes or platforms
 without changing the Version 0.1 behavior for existing repositories.
+
+## 12. Make bootstrap a reviewable content plan with an atomic write gate (2026-07-13)
+
+Context: repository initialization must write by default while keeping its factual authority
+inspectable and deterministic. Chose one content plan that records normalized evidence, content
+digests, exact diffs, archive moves, and unsupported-adapter gaps before any mutation. `--dry-run`
+returns that same plan without writing. The default path rejects gaps, applies the planned moves
+and writes, then requires binding and policy checks to pass. Existing manifests are never replaced
+implicitly. Reversible: the plan schema isolates bootstrap decisions from the binding engine, so a
+later information-architecture planner can add operations without weakening the write gate.
