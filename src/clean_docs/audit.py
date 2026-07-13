@@ -89,7 +89,7 @@ def audit(root: Path) -> AuditReport:
     findings: list[AuditFinding] = []
     for relative in _tracked_markdown(root):
         normalized = relative.as_posix()
-        if "archive" in relative.parts:
+        if "archive" in relative.parts or relative.parts[:1] == (".clean-docs",):
             ignored.append(normalized)
             continue
         active.append(normalized)

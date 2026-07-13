@@ -20,6 +20,7 @@ from clean_docs.inventory import scan_inventory
 from clean_docs.manifest import load_manifest
 from clean_docs.models import BindingResult
 from clean_docs.phrasing import RecordedProvider
+from clean_docs.projections import evaluate_projections, write_projections
 from clean_docs.standard import compile_standard, pack_matches_standard, write_pack
 
 
@@ -77,6 +78,11 @@ def _parser() -> argparse.ArgumentParser:
     check.add_argument("--project", type=Path, default=Path("."), help="monorepo project path")
     check.add_argument("--no-cache", action="store_true", help="bypass immutable-ref cache")
     check.add_argument("--format", choices=("text", "json", "sarif"), default="text")
+    project = sub.add_parser("project", help=_command_help("project"))
+    project.add_argument(
+        "--check", action="store_true", help="exit 1 instead of writing stale projections"
+    )
+    project.add_argument("--format", choices=("text", "json"), default="text")
     emit = sub.add_parser("emit", help=_command_help("emit"))
     emit_sub = emit.add_subparsers(dest="target", required=True)
     stepwise = emit_sub.add_parser(
@@ -271,6 +277,28 @@ def main(argv: list[str] | None = None) -> int:
     if not manifest.is_absolute():
         manifest = root / manifest
     try:
+        if args.command == "project":
+            loaded = load_manifest(manifest)
+            projection_results = evaluate_projections(root, loaded)
+            if args.check:
+                output = (
+                    _json(projection_results)
+                    if args.format == "json"
+                    else _text(projection_results)
+                )
+                sys.stdout.write(output)
+                return 1 if any(result.changed for result in projection_results) else 0
+            written = write_projections(root, loaded)
+            if args.format == "json":
+                print(json.dumps({
+                    "ok": True,
+                    "written": [path.as_posix() for path in written],
+                }, indent=2))
+            else:
+                for path in written:
+                    print(f"[projected] {path}")
+                print(f"project: wrote {len(written)} file(s)")
+            return 0
         if args.command == "emit":
             loaded = load_manifest(manifest)
             out = args.out if args.out.is_absolute() else root / args.out
@@ -361,6 +389,14 @@ def main(argv: list[str] | None = None) -> int:
             ref=args.ref,
             binding_id=args.binding,
         )
+        if (
+            args.command == "check"
+            and args.binding is None
+            and args.ref is None
+        ):
+            loaded = load_manifest(manifest)
+            if loaded.projections is not None:
+                results.extend(evaluate_projections(root, loaded))
         output = _json(results) if args.format == "json" else _text(results)
         sys.stdout.write(output)
         drift = any(result.changed for result in results)

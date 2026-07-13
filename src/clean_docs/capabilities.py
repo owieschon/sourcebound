@@ -1,7 +1,9 @@
 """Public capability registry rendered into the clean-docs README."""
 
 PRODUCT_OVERVIEW = (
-    "Version 0.3 compares normalized public surface across git refs and reports changed "
+    "Version 0.4a1 projects one verified documentation graph into llms.txt and named context "
+    "bundles, with source refs, content digests, link verification, and freshness checks. "
+    "It compares normalized public surface across git refs and reports changed "
     "binding drift, coverage gaps, and SARIF annotations. It statically inventories package, "
     "CLI, API, schema, test, and documentation surfaces and bootstraps a source-bound baseline. "
     "It audits documentation without "
@@ -42,6 +44,7 @@ CLI_REFERENCE = (
     {"command": "derive", "job": "Preview generated region changes", "writes": "with --write"},
     {"command": "drive", "job": "Repair bound regions and enforce policy", "writes": "yes"},
     {"command": "check", "job": "Fail on binding drift or uncovered changed surface", "writes": "no"},
+    {"command": "project", "job": "Regenerate configured documentation projections", "writes": "yes"},
     {"command": "emit", "job": "Project the manifest into another format", "writes": "yes"},
     {
         "command": "emit stepwise-skill",

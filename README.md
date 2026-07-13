@@ -5,9 +5,8 @@ clean-docs is a self-driving documentation system that applies one packaged stan
 Write the standard once; clean-docs does the repository work. The finished product audits each repository, derives its factual spine from source, phrases it to the packaged standard, tests the result, and maintains it on every change. Models may phrase grounded facts; deterministic code owns the facts and gate results.
 
 <!-- clean-docs:begin product-overview -->
-Version 0.3 compares normalized public surface across git refs and reports changed binding drift, coverage gaps, and SARIF annotations. It statically inventories package, CLI, API, schema, test, and documentation surfaces and bootstraps a source-bound baseline. It audits documentation without configuration and verifies region, claim, and symbol bindings from static Python, structured data, text files, path globs, and allowlisted JSON commands. It emits manifest-derived stepwise skill packages and llms.txt indexes, and it never imports repository code. `derive` previews changes unless you pass `--write`; `audit` and `check` never write.
+Version 0.4a1 projects one verified documentation graph into llms.txt and named context bundles, with source refs, content digests, link verification, and freshness checks. It compares normalized public surface across git refs and reports changed binding drift, coverage gaps, and SARIF annotations. It statically inventories package, CLI, API, schema, test, and documentation surfaces and bootstraps a source-bound baseline. It audits documentation without configuration and verifies region, claim, and symbol bindings from static Python, structured data, text files, path globs, and allowlisted JSON commands. It emits manifest-derived stepwise skill packages and llms.txt indexes, and it never imports repository code. `derive` previews changes unless you pass `--write`; `audit` and `check` never write.
 <!-- clean-docs:end product-overview -->
-
 ## Install and audit
 
 ```bash
@@ -34,6 +33,7 @@ This table is derived from the command registry used by the parser:
 | derive | Preview generated region changes | with --write |
 | drive | Repair bound regions and enforce policy | yes |
 | check | Fail on binding drift or uncovered changed surface | no |
+| project | Regenerate configured documentation projections | yes |
 | emit | Project the manifest into another format | yes |
 | emit stepwise-skill | Write a manifest-derived stepwise skill package | yes |
 | emit llms-txt | Write an index of source-bound documents | yes |

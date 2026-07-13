@@ -11,13 +11,16 @@ from clean_docs.models import (
     Binding,
     ClaimBinding,
     CommandSpec,
+    ContextBundleProjection,
+    LlmsTxtProjection,
     Manifest,
+    ProjectionConfig,
     RegionBinding,
     Source,
     SymbolBinding,
 )
 
-ROOT_KEYS = {"version", "bindings", "execution"}
+ROOT_KEYS = {"version", "bindings", "execution", "projections"}
 BINDING_KEYS = {
     "id", "type", "doc", "region", "anchor", "extractor", "source", "renderer",
     "columns", "language", "command", "assertion",
@@ -30,6 +33,9 @@ RENDERERS = {"fenced-text", "markdown-list", "markdown-table", "scalar"}
 EXECUTION_KEYS = {"commands", "allowed_commands"}
 COMMAND_KEYS = {"argv", "timeout_seconds", "network"}
 ASSERTION_KEYS = {"json_path", "operator", "expected"}
+PROJECTION_KEYS = {"llms_txt", "bundles"}
+LLMS_TXT_KEYS = {"output", "title", "summary"}
+BUNDLE_KEYS = {"id", "output", "include"}
 MANIFEST_REFERENCE = (
     {
         "binding": "region",
@@ -68,6 +74,72 @@ def _relative_path(raw: Any, where: str) -> Path:
     if path.is_absolute() or ".." in path.parts:
         raise ConfigurationError(f"{where} must stay inside the repository: {raw}")
     return path
+
+
+def _one_line(raw: Any, where: str) -> str | None:
+    if raw is None:
+        return None
+    if not isinstance(raw, str) or not raw.strip() or "\n" in raw or "\r" in raw:
+        raise ConfigurationError(f"{where} must be one non-empty line")
+    return raw.strip()
+
+
+def _load_projections(raw: Any, bound_docs: set[Path]) -> ProjectionConfig | None:
+    if raw is None:
+        return None
+    data = _mapping(raw, "projections")
+    _reject_unknown(data, PROJECTION_KEYS, "projections")
+    llms_txt = None
+    raw_llms = data.get("llms_txt")
+    if raw_llms is not None:
+        item = _mapping(raw_llms, "projections.llms_txt")
+        _reject_unknown(item, LLMS_TXT_KEYS, "projections.llms_txt")
+        llms_txt = LlmsTxtProjection(
+            output=_relative_path(item.get("output"), "projections.llms_txt.output"),
+            title=_one_line(item.get("title"), "projections.llms_txt.title"),
+            summary=_one_line(item.get("summary"), "projections.llms_txt.summary"),
+        )
+    bundles: list[ContextBundleProjection] = []
+    raw_bundles = data.get("bundles", [])
+    if not isinstance(raw_bundles, list):
+        raise ConfigurationError("projections.bundles must be a list")
+    bundle_ids: set[str] = set()
+    outputs = {llms_txt.output} if llms_txt else set()
+    for index, raw_bundle in enumerate(raw_bundles):
+        where = f"projections.bundles[{index}]"
+        item = _mapping(raw_bundle, where)
+        _reject_unknown(item, BUNDLE_KEYS, where)
+        bundle_id = item.get("id")
+        if not isinstance(bundle_id, str) or not bundle_id.strip():
+            raise ConfigurationError(f"{where}.id must be a non-empty string")
+        if bundle_id in bundle_ids:
+            raise ConfigurationError(f"duplicate context bundle id: {bundle_id}")
+        bundle_ids.add(bundle_id)
+        output = _relative_path(item.get("output"), f"{where}.output")
+        if output in outputs:
+            raise ConfigurationError(f"duplicate projection output: {output}")
+        outputs.add(output)
+        raw_include = item.get("include")
+        if (
+            not isinstance(raw_include, list)
+            or not raw_include
+            or not all(isinstance(path, str) for path in raw_include)
+        ):
+            raise ConfigurationError(f"{where}.include must be a non-empty path list")
+        include = tuple(_relative_path(path, f"{where}.include") for path in raw_include)
+        if len(set(include)) != len(include):
+            raise ConfigurationError(f"{where}.include must not contain duplicates")
+        unknown = sorted(path.as_posix() for path in include if path not in bound_docs)
+        if unknown:
+            raise ConfigurationError(
+                f"{where}.include names unbound document(s): {', '.join(unknown)}"
+            )
+        if output in include:
+            raise ConfigurationError(f"{where}.output cannot also be a source document")
+        bundles.append(ContextBundleProjection(bundle_id, output, include))
+    if llms_txt is None and not bundles:
+        raise ConfigurationError("projections must configure llms_txt or at least one bundle")
+    return ProjectionConfig(llms_txt=llms_txt, bundles=tuple(bundles))
 
 
 def load_manifest(path: Path) -> Manifest:
@@ -270,4 +342,13 @@ def load_manifest(path: Path) -> Manifest:
             columns=tuple(columns),
             language=language,
         ))
-    return Manifest(path=path, version=1, bindings=tuple(bindings), commands=tuple(commands))
+    projections = _load_projections(
+        root.get("projections"), {binding.doc for binding in bindings}
+    )
+    return Manifest(
+        path=path,
+        version=1,
+        bindings=tuple(bindings),
+        commands=tuple(commands),
+        projections=projections,
+    )

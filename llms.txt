@@ -1,0 +1,7 @@
+# clean-docs documentation
+
+> Canonical product documentation with source-bound facts and content digests.
+
+## Source-bound documentation
+
+- [README.md](README.md): bindings: cli-reference, manifest-reference, product-overview, supported-bindings; sha256: e16df9176309811b9485eb48954fce2c2f771082d921bfc35437547adf81dc12

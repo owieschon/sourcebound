@@ -62,11 +62,32 @@ class CommandSpec:
 
 
 @dataclass(frozen=True)
+class LlmsTxtProjection:
+    output: Path
+    title: str | None = None
+    summary: str | None = None
+
+
+@dataclass(frozen=True)
+class ContextBundleProjection:
+    id: str
+    output: Path
+    include: tuple[Path, ...]
+
+
+@dataclass(frozen=True)
+class ProjectionConfig:
+    llms_txt: LlmsTxtProjection | None = None
+    bundles: tuple[ContextBundleProjection, ...] = ()
+
+
+@dataclass(frozen=True)
 class Manifest:
     path: Path
     version: int
     bindings: tuple[Binding, ...]
     commands: tuple[CommandSpec, ...] = ()
+    projections: ProjectionConfig | None = None
 
 
 @dataclass(frozen=True)
