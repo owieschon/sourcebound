@@ -71,6 +71,7 @@ The agent needs compact, current context with stable identifiers and source link
 7. **Generated regions stay bounded.** clean-docs owns marked factual regions. Authors own surrounding explanation.
 8. **No executable source by default.** Static extractors parse source. Command extractors require explicit allowlisting and run with declared timeouts.
 9. **The product dogfoods itself.** clean-docs generates and verifies its own CLI, configuration, and capability references.
+10. **The repository contains product truth only.** Private planning, unrelated project context, and publication residue stay outside product code, docs, tests, issues, examples, and metadata.
 
 ## 4. Existing foundation
 
@@ -81,6 +82,7 @@ clean-docs starts from a working documentation-standard system. Version 0 preser
 | `STANDARD.md` | Defines sentence voice, medium choice, page shape, corpus structure, and the boundary between checks and judgment. | Becomes the default `clean-docs` policy profile and the canonical authoring standard. |
 | `quality-gate.py` | Blocks high-confidence language, engineering-claim, code, and secret patterns before Claude Code writes a file. | Its portable rules move into `policy`; the Claude Code hook remains one adapter. |
 | `doc-hygiene.py` | Checks process artifacts, agent-addressed docs, provenance, length, duplication, and restatement across tracked Markdown. | Its tested rules move into `policy` with stable finding identifiers, configuration, and regression fixtures. |
+| `scrub.py` | Detects identity residue, cross-project leakage, and publication-process tells with a reviewed baseline. | Its portable rules move into `policy`; personal patterns stay outside the distributable default profile. |
 | `skill/SKILL.md` | Runs residue and corpus checks during one agent's pre-publish workflow. | Remains a distribution adapter. Equivalent CLI, CI, Codex, Claude Code, editor, and hosting adapters call the same core. |
 | `DECISION_LOG.md` | Records why archive handling and several noisy patterns were changed after real-repo triage. | Seeds regression cases and architecture decisions. |
 | `ultra-csm-findings.json` and `ultra-csm-before-after.md` | Preserve the 280-finding baseline and the docs-only cleanup evidence. | Seed corpus-policy fixtures and the first dogfood case. |
@@ -298,6 +300,7 @@ Markers carry a stable binding identifier. Generated content never nests.
 | `clean-docs inventory` | List docs, public surfaces, evidence candidates, and coverage. | Deterministic inventory with advisory classifications. |
 | `clean-docs derive [--binding ID] [--check]` | Render bound documentation or show the diff without writing. | Deterministic. |
 | `clean-docs check [--changed]` | Verify bindings, policy, links, projections, and declared coverage. | Deterministic failures plus separated advisory findings. |
+| `clean-docs doctor` | Verify configuration, dependencies, isolation support, provider access, and required tool versions before a run. | Deterministic and fail closed for required checks. |
 | `clean-docs explain ID` | Show why a finding exists and how to repair it. | Deterministic. |
 | `clean-docs project` | Regenerate `llms.txt` and context bundles. | Deterministic. |
 | `clean-docs eval` | Run human-task fixtures and agent round-trip evaluations. | Deterministic scoring over recorded outputs; model execution is opt-in. |
@@ -356,7 +359,9 @@ A failed binding report must answer five questions in one screen:
 
 Canonical documentation follows the existing clean-docs standard:
 
+- Name the intended reader and task before expanding the page.
 - Start with a plain definition and the governing constraint.
+- State the value and problem before the procedure.
 - Use prose for cause and reasoning.
 - Use code for actions the reader should execute.
 - Use tables for lookup and comparison.
@@ -364,6 +369,8 @@ Canonical documentation follows the existing clean-docs standard:
 - Keep one canonical home for each fact.
 - Remove process artifacts from the reader-facing surface.
 - Carry limitations beside the claim they constrain.
+- Use progressive disclosure: summary, task path, reference, then optional depth.
+- Keep examples executable and test them against the supported release.
 
 Agent access is a projection problem, not a second-authoring problem.
 
@@ -394,6 +401,10 @@ Repository content is untrusted input.
 - Symlinks that escape the repository are rejected.
 - Generated paths must remain under declared documentation roots.
 - Model prompts exclude ignored paths, detected secrets, and files beyond configured size limits.
+- Model prompts are assembled deterministically from declared inputs and record content digests.
+- Secret values resolve outside model context and never enter prompts or provider logs.
+- Repository text is scanned for prompt-injection patterns before it enters an advisory model context.
+- Provider health checks fail closed before model-assisted work starts.
 - CI pins clean-docs and third-party extractor versions.
 
 The initial local implementation may rely on operating-system process controls. The public v1.0 claim requires a documented isolation model and adversarial tests for repository-controlled configuration and content.
@@ -412,6 +423,8 @@ No single score represents documentation quality. clean-docs reports separate me
 | Agent round-trip success | Correct observable task outputs divided by attempted tasks. |
 | False-positive rate | Dismissed required findings divided by required findings. |
 | Time to repair | Median time from failed check to passing rerun in dogfood repositories. |
+| Critical-path model calls | Model calls made by deterministic derive and check paths. Required target: zero. |
+| Outcome telemetry | Opt-in counts for completed baselines, caught drift, repaired checks, and evaluation task success. |
 
 The product must never describe a reduction in hygiene findings as proof that prose became clearer. The ultra-csm pass established that distinction: moving process artifacts improved navigation but did not rewrite reader-facing prose.
 
@@ -455,6 +468,7 @@ Version 0 preservation work at the start of Version 0.1:
 
 - Python package and `clean-docs` CLI.
 - Packaged standard, write-gate rules, and corpus-hygiene rules behind a shared policy result model.
+- Packaged residue and cross-project leakage rules with neutral defaults and repository-owned configuration.
 - Compatibility wrappers for the existing standalone scripts and Claude Code hook.
 - Versioned `.clean-docs.yml` schema with strict validation.
 - Immutable git snapshot abstraction.
@@ -465,6 +479,7 @@ Version 0 preservation work at the start of Version 0.1:
 - Marker-safe `derive` and read-only `derive --check`.
 - `check`, terminal output, and JSON output.
 - Pre-commit example and reusable GitHub Actions workflow.
+- `doctor` command for configuration, dependency, and isolation readiness.
 - Dogfood manifests for ultra-csm and bank-mcp.
 
 #### Functional E2E tests
@@ -515,6 +530,7 @@ Version 0 preservation work at the start of Version 0.1:
 - The README CLI and manifest reference are generated and verified by clean-docs itself.
 - The standalone scripts remain available as compatibility entry points or print an exact migration command.
 - The repository carries an OSI-approved license, security policy, and reproducible release artifact.
+- A repository-residue scan passes across code, docs, tests, examples, issue templates, and package metadata.
 
 ### Version 0.2: Repository audit and baseline generation
 
@@ -529,6 +545,8 @@ Version 0 preservation work at the start of Version 0.1:
 - Evidence-candidate graph and accepted/ignored/unresolved states.
 - Patch-plan output with proposed information architecture, bindings, moves, deletions, and prose changes.
 - Optional model provider for classification and prose drafts.
+- Deterministic prompt builder, provider interface, recorded response fixtures, and mock provider.
+- Prompt-injection scan over repository content selected for model context.
 - Human acceptance workflow that writes the manifest and baseline.
 - `--no-model` mode.
 
@@ -558,13 +576,18 @@ Version 0 preservation work at the start of Version 0.1:
    - Given a small TypeScript service with `package.json`, CLI help, OpenAPI, and Markdown docs.
    - When inventory runs.
    - Then adapters produce normalized evidence without executing project modules.
+7. **hostile advisory context**
+   - Given repository prose containing instructions to override the system, disclose secrets, or modify required findings.
+   - When model-assisted classification runs against a mock provider.
+   - Then the scan marks the input, secrets remain absent, deterministic findings stay unchanged, and the response cannot alter gate results.
 
 #### Definition of done
 
-- All six E2E scenarios pass in CI with recorded proposal artifacts.
+- All seven E2E scenarios pass in CI with recorded proposal artifacts.
 - `init` is dry-run by default and requires an acceptance file or interactive confirmation to write.
 - Every proposed factual statement links to evidence or carries an `author-owned` label.
 - Model-off tests pass with network disabled.
+- Model-on E2E tests use the mock provider in required CI; optional live-provider tests never gate a release.
 - Secret fixtures prove that detected credentials never enter prompts, logs, or output.
 - Re-running the accepted baseline produces an empty patch.
 - Audit results distinguish required failures, advisory findings, and unresolved coverage.
@@ -638,6 +661,7 @@ Version 0 preservation work at the start of Version 0.1:
 - Deterministic scorers for structured outputs, commands, configuration, and cited limits.
 - Evaluation history that records corpus digest, model, prompt, scorer, and result.
 - Accessibility advisory checks tied to the writing standard.
+- Task-first documentation templates with intended-reader, value, prerequisites, procedure, limits, and next-step slots.
 
 #### Functional E2E tests
 
@@ -740,6 +764,7 @@ Version 0 preservation work at the start of Version 0.1:
 - Performance budgets, caching, telemetry opt-in, and diagnostic bundle.
 - Upgrade and deprecation policy.
 - Public documentation generated and checked by clean-docs.
+- Public source repository under the MIT license from the first supported release.
 - Signed release artifacts and software bill of materials.
 
 #### Functional E2E tests
@@ -778,6 +803,7 @@ Version 0 preservation work at the start of Version 0.1:
 - P95 changed-file check time and memory use meet published budgets on small, medium, and monorepo fixtures.
 - Install, upgrade, rollback, and uninstall paths are documented and tested.
 - Signed artifacts, checksums, SBOM, license, support policy, and security reporting path are published.
+- Opt-in telemetry reports product outcomes and never captures repository contents, paths, claims, or generated documentation.
 - The docs site, `llms.txt`, context bundles, and CLI reference all pass clean-docs at the release commit.
 - The public guarantee matches the boundary in section 1.
 
