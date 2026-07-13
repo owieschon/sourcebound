@@ -63,16 +63,21 @@ A deprecation appears in release notes and command output for at least one minor
 
 ## Install, upgrade, roll back, and uninstall
 
-Create an isolated environment in a directory containing exactly one release wheel. The wildcard keeps the command valid for stable and release-candidate filenames:
+Create an isolated environment in a directory containing exactly one clean-docs wheel. A release
+bundle also contains a `wheelhouse` directory with supported runtime dependencies, so this procedure
+does not contact a package index:
 
 ```bash
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install ./clean_docs-*.whl
+python -m pip install --no-index --find-links ./wheelhouse ./clean_docs-*.whl
 clean-docs --version
 ```
 
-The clean-docs wheel declares PyYAML as a runtime dependency. `pip` resolves it from the configured package index or cache. For a network-blocked installation, provide a wheelhouse containing both artifacts and pass `--no-index --find-links WHEELHOUSE`.
+The version output must match the wheel filename. The clean-docs wheel declares PyYAML as a runtime
+dependency. A general release download does not bundle dependencies; create `wheelhouse`, place a
+compatible PyYAML wheel inside it, and use the same command. For an online installation, omit
+`--no-index --find-links ./wheelhouse` and let `pip` use the configured package index.
 
 Upgrade by installing the newer wheel and preview any requested schema migration before writing:
 
