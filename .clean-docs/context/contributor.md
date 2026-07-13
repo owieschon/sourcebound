@@ -1,13 +1,13 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `ece63cc2cd672638665c20c96c945ef31993bcdeb256060c491c00239c7e12ca`
+- Corpus sha256: `9fc21ac956e2033dfac22760cc184a8d5c85463cc5ee3cf56cbd999dbcd0f0ea`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `a373ccfa10e314b4f67b0dd954ecaf5a558a8e26f41025c17a055f58e62b3e6a`
+- Content sha256: `28772dd8564cd7d94c8e01beaae1183c6902652e72b5d4f2d3a727acc4ad3113`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
@@ -28,16 +28,7 @@ The same verified graph produces `llms.txt`, named context bundles, grounded rel
 
 ## How the pieces fit
 
-```mermaid
-flowchart LR
-    S["Repository sources<br/>code · schemas · commands"] --> E["Typed evidence<br/>static extraction · declared execution"]
-    E --> B["Source bindings<br/>region · claim · symbol"]
-    P["Packaged writing standard"] --> D["Documentation engine"]
-    B --> D
-    D --> R["Repaired docs"]
-    D --> G["Read-only CI gate"]
-    D --> X["llms.txt · context bundles · release facts"]
-```
+![clean-docs architecture: repository sources become typed evidence, source bindings, and verified documentation outcomes](docs/assets/architecture.svg)
 
 clean-docs extracts typed evidence from repository sources, connects that evidence to declared
 documentation bindings, and applies the packaged writing standard at the documentation engine. The

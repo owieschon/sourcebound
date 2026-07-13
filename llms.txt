@@ -5,7 +5,7 @@
 ## Canonical documentation
 
 - [CLEAN_DOCS_SPEC.md](CLEAN_DOCS_SPEC.md): declared canonical context; sha256: 1eb9ee346edd4595ee35e087c50ed54115cef4538287dbfd51584a1b69b972f3
-- [README.md](README.md): bindings: manifest-reference, product-overview, supported-bindings; sha256: a373ccfa10e314b4f67b0dd954ecaf5a558a8e26f41025c17a055f58e62b3e6a
+- [README.md](README.md): bindings: manifest-reference, product-overview, supported-bindings; sha256: 28772dd8564cd7d94c8e01beaae1183c6902652e72b5d4f2d3a727acc4ad3113
 - [SECURITY.md](SECURITY.md): declared canonical context; sha256: 9b73fcc18efa2ff39d64d8271a6c33b278de5dc625d7ac7c319587edf0c31621
 - [STANDARD.md](STANDARD.md): declared canonical context; sha256: 56ec9af1cdc08bd646694e21d3611ac005b3e3dff6d1c7e331bb50e972c3ab40
 - [docs/CLI.md](docs/CLI.md): bindings: cli-reference; sha256: dae82eebf8e8712dce8b4c17e480f13912155078b3e34fb0159ff2f2c45510bc

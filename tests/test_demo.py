@@ -64,13 +64,22 @@ def test_static_demo_is_byte_stable_accessible_and_runtime_free(tmp_path: Path) 
 
 def test_readme_architecture_precedes_the_install_path_and_has_text_equivalent() -> None:
     readme = (ROOT / "README.md").read_text()
+    graphic = (ROOT / "docs/assets/architecture.svg").read_text()
 
     architecture = readme.index("## How the pieces fit")
     install = readme.index("## Install and audit")
     assert architecture < install
-    assert 'S["Repository sources' in readme
-    assert 'D["Documentation engine"]' in readme
+    assert "docs/assets/architecture.svg" in readme
     assert "clean-docs extracts typed evidence" in readme
+    assert "<title" in graphic
+    assert "<desc" in graphic
+    assert "Repository sources" in graphic
+    assert "Typed evidence" in graphic
+    assert "Source bindings" in graphic
+    assert "clean-docs engine" in graphic
+    assert "Repair documentation" in graphic
+    assert "Reject stale changes" in graphic
+    assert "Project verified context" in graphic
 
 
 def test_static_demo_structure_rejects_inaccessible_or_runtime_content(

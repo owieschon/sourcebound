@@ -16,16 +16,7 @@ The same verified graph produces `llms.txt`, named context bundles, grounded rel
 
 ## How the pieces fit
 
-```mermaid
-flowchart LR
-    S["Repository sources<br/>code · schemas · commands"] --> E["Typed evidence<br/>static extraction · declared execution"]
-    E --> B["Source bindings<br/>region · claim · symbol"]
-    P["Packaged writing standard"] --> D["Documentation engine"]
-    B --> D
-    D --> R["Repaired docs"]
-    D --> G["Read-only CI gate"]
-    D --> X["llms.txt · context bundles · release facts"]
-```
+![clean-docs architecture: repository sources become typed evidence, source bindings, and verified documentation outcomes](docs/assets/architecture.svg)
 
 clean-docs extracts typed evidence from repository sources, connects that evidence to declared
 documentation bindings, and applies the packaged writing standard at the documentation engine. The

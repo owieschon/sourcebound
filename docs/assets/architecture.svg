@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" role="img" aria-labelledby="title desc">
+  <title id="title">How clean-docs turns repository sources into verified documentation</title>
+  <desc id="desc">Repository sources become typed evidence, which source bindings connect to the clean-docs engine. The packaged writing standard also feeds the engine. The engine repairs documentation, fails continuous integration on drift, and produces verified context and release projections.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0 0L10 5L0 10Z" fill="#53606d"/>
+    </marker>
+    <style>
+      .eyebrow { font: 700 14px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .08em; text-transform: uppercase; }
+      .title { font: 700 20px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #17212b; }
+      .body { font: 500 15px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #53606d; }
+      .flow { fill: none; stroke: #53606d; stroke-width: 2; marker-end: url(#arrow); }
+      .box { stroke: #c9d1d9; stroke-width: 1.5; }
+    </style>
+  </defs>
+
+  <rect width="960" height="500" rx="20" fill="#f7f8fa"/>
+
+  <text x="48" y="47" class="eyebrow" fill="#53606d">Evidence path</text>
+
+  <rect class="box" x="48" y="74" width="230" height="112" rx="12" fill="#ffffff"/>
+  <text x="72" y="110" class="title">Repository sources</text>
+  <text x="72" y="140" class="body">Code · schemas · commands</text>
+  <text x="72" y="164" class="body">Package and API metadata</text>
+
+  <path class="flow" d="M278 130H342"/>
+
+  <rect class="box" x="344" y="74" width="230" height="112" rx="12" fill="#ffffff"/>
+  <text x="368" y="110" class="title">Typed evidence</text>
+  <text x="368" y="140" class="body">Static extraction</text>
+  <text x="368" y="164" class="body">Declared, bounded execution</text>
+
+  <path class="flow" d="M574 130H638"/>
+
+  <rect class="box" x="640" y="74" width="272" height="112" rx="12" fill="#ffffff"/>
+  <text x="664" y="110" class="title">Source bindings</text>
+  <text x="664" y="140" class="body">Regions · claims · symbols</text>
+  <text x="664" y="164" class="body">Facts keep a canonical owner</text>
+
+  <path class="flow" d="M776 186V233"/>
+
+  <rect class="box" x="48" y="234" width="230" height="100" rx="12" fill="#fff7d6" stroke="#d6a900"/>
+  <text x="72" y="270" class="title">Writing standard</text>
+  <text x="72" y="300" class="body">Versioned policy for form</text>
+  <text x="72" y="322" class="body">and reader experience</text>
+
+  <path class="flow" d="M278 284H342"/>
+
+  <rect x="344" y="234" width="568" height="100" rx="12" fill="#17212b"/>
+  <text x="368" y="270" class="eyebrow" fill="#80e6c3">Deterministic core</text>
+  <text x="368" y="306" style="font: 700 24px ui-sans-serif, system-ui, sans-serif; fill: #ffffff;">clean-docs engine</text>
+  <text x="584" y="306" style="font: 500 15px ui-sans-serif, system-ui, sans-serif; fill: #c9d1d9;">derive · check · verify · project</text>
+
+  <path class="flow" d="M628 334V378H190V398"/>
+  <path class="flow" d="M628 334V378H480V398"/>
+  <path class="flow" d="M628 334V378H770V398"/>
+
+  <rect class="box" x="48" y="400" width="274" height="68" rx="12" fill="#e9fbf5" stroke="#20a67a"/>
+  <text x="72" y="429" class="title">Repair documentation</text>
+  <text x="72" y="453" class="body">Update declared regions</text>
+
+  <rect class="box" x="344" y="400" width="272" height="68" rx="12" fill="#fff0ed" stroke="#dc5a42"/>
+  <text x="368" y="429" class="title">Reject stale changes</text>
+  <text x="368" y="453" class="body">Read-only CI gate</text>
+
+  <rect class="box" x="638" y="400" width="274" height="68" rx="12" fill="#edf4ff" stroke="#4a7fc4"/>
+  <text x="662" y="429" class="title">Project verified context</text>
+  <text x="662" y="453" class="body">llms.txt · bundles · release facts</text>
+</svg>
