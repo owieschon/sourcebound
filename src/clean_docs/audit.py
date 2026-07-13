@@ -9,6 +9,7 @@ from pathlib import Path
 
 from clean_docs.corpus import scan_corpus
 from clean_docs.errors import ConfigurationError
+from clean_docs.policy import check_document
 from clean_docs.regions import atomic_write
 from clean_docs.residue import scan_residue
 from clean_docs.standard import load_default_pack
@@ -136,7 +137,9 @@ def _tracked_markdown(root: Path) -> list[Path]:
         return [
             relative
             for line in proc.stdout.splitlines()
-            if line and (root / (relative := Path(line))).is_file()
+            if line
+            and (root / (relative := Path(line))).is_file()
+            and relative.parts[:2] != ("tests", "fixtures")
         ]
     return sorted(path.relative_to(root) for path in root.rglob("*.md") if ".git" not in path.parts)
 
@@ -189,6 +192,10 @@ def _scan_audit(root: Path) -> AuditReport:
             continue
         lines = text.splitlines()
         allowances = _allowances(lines)
+        findings.extend(
+            AuditFinding(item.rule, item.doc, item.line, item.detail)
+            for item in check_document(normalized, text, pack)
+        )
         if PROCESS_NAME.search(relative.name):
             findings.append(AuditFinding(
                 "process-artifact",

@@ -83,7 +83,9 @@ def _root(tmp_path: Path) -> Path:
     shutil.copy2(FIXTURE_PLUGIN / "pyproject.toml", root / "plugin-pyproject.toml")
     (root / "facts.ext").write_text("alpha\n")
     (root / "README.md").write_text(
-        "# Fixture\n\n<!-- clean-docs:begin facts -->\n"
+        "# Fixture\n\n<!-- clean-docs:purpose -->\n"
+        "Use this fixture when testing an external evidence plugin. It gives maintainers one bounded region and one policy surface.\n"
+        "<!-- clean-docs:end purpose -->\n\n<!-- clean-docs:begin facts -->\n"
         "<!-- clean-docs:end facts -->\n"
     )
     (root / ".clean-docs.yml").write_text(_manifest())

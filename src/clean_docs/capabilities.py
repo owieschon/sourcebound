@@ -1,22 +1,17 @@
 """Public capability registry rendered into the clean-docs README."""
 
 PRODUCT_OVERVIEW = (
-    "clean-docs protects Python and TypeScript repository documentation through local, "
-    "pre-commit, and pull-request workflows. It compares normalized evidence across immutable "
-    "refs and renders "
-    "provenance-backed release facts. Optional narrative drafts cannot change, omit, or "
-    "uncite those facts. Versioned plugins add extractors, discoverers, renderers, and policy "
-    "checks in disposable snapshots; manifest migration includes a byte-exact rollback. It "
-    "projects one verified documentation graph into llms.txt, named context bundles, and an "
-    "accessible static demonstration. It scores human commands and recorded agent responses, "
-    "reports changed binding drift and coverage gaps, and bootstraps source-bound baselines. "
-    "Mature repositories can commit an exact existing-debt baseline that fails on new and "
-    "resolved findings until explicitly refreshed. "
+    "Source owns the facts; the packaged standard owns their form. clean-docs audits tracked "
+    "Markdown, binds claims to source evidence, repairs declared regions, and fails CI when "
+    "either the facts or the documentation contract drift.\n\n"
     "Static adapters cover Python, TypeScript, OpenAPI, JSON Schema, package metadata, and MCP "
-    "tools without importing repository code. Declared processes run in disposable copies with "
-    "bounded I/O and minimal environments. Local outcome, performance, and diagnostic receipts "
-    "make checks inspectable without telemetry. `derive` previews changes unless you pass "
-    "`--write`; `audit`, `check`, `verify`, and `release` never change documentation."
+    "tools without importing repository code. Declared commands and versioned plugins run in "
+    "disposable copies with bounded I/O and minimal environments.\n\n"
+    "The same verified graph produces `llms.txt`, named context bundles, grounded release facts, "
+    "and task evaluations for people and agents. Local receipts make those checks inspectable "
+    "without telemetry.\n\n"
+    "`derive` previews changes unless you pass `--write`. `audit`, `check`, `verify`, and "
+    "`release` never change documentation."
 )
 
 SUPPORTED_BINDINGS = {

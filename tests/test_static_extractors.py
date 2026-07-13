@@ -31,6 +31,10 @@ def _repo(tmp_path: Path) -> Path:
     (root / "README.md").write_text("""\
 # Fixture
 
+<!-- clean-docs:purpose -->
+Use this fixture when testing static extractors. It gives maintainers one document with scalar, path, table, and fenced outputs.
+<!-- clean-docs:end purpose -->
+
 <!-- clean-docs:begin version -->
 stale
 <!-- clean-docs:end version -->

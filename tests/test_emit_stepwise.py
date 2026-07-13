@@ -27,6 +27,10 @@ SOURCE = 'ACTIONS = {"a": {"name": "a", "tier": 1}}\n'
 README = """\
 # Fixture
 
+<!-- clean-docs:purpose -->
+Use this fixture when testing a stepwise projection. It gives maintainers one bound document to audit and repair.
+<!-- clean-docs:end purpose -->
+
 <!-- clean-docs:begin actions -->
 | name | tier |
 | --- | --- |

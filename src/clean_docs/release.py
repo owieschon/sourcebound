@@ -9,7 +9,7 @@ from typing import Any
 
 from clean_docs.errors import ConfigurationError
 from clean_docs.inventory import InventoryItem, scan_inventory
-from clean_docs.policy import check_document
+from clean_docs.policy import check_prose
 from clean_docs.plugins import discover_plugin_items, merge_plugin_inventory
 from clean_docs.manifest import load_manifest
 from clean_docs.snapshot import RepositorySnapshot
@@ -184,7 +184,7 @@ def validate_release_narrative(report: ReleaseReport, response: str) -> Narrativ
                 f"delta {delta_id} contradicts deterministic fields: {', '.join(mismatched)}"
             )
             continue
-        policy = check_document("<release-narrative>", text, load_default_pack())
+        policy = check_prose("<release-narrative>", text, load_default_pack())
         if policy:
             findings.extend(
                 f"delta {delta_id} violates {finding.rule}: {finding.detail}"

@@ -147,6 +147,8 @@ def _prompt(root: Path, facts: tuple[InventoryItem, ...]) -> tuple[str, tuple[st
         "standard": {
             "constraint": pack["generation"]["constraint"],
             "checklist": pack["checklist"],
+            "voice": pack["generation"]["voice"],
+            "purpose_contract": pack["generation"]["purpose_contract"],
         },
         "allowed_templates": {
             template: sorted(kinds) for template, kinds in sorted(TEMPLATE_KINDS.items())

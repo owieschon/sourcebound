@@ -63,6 +63,9 @@ def _root(tmp_path: Path) -> Path:
     (root / "source.txt").write_text("Bound overview\n")
     (root / "README.md").write_text(
         "# Fixture\n\n"
+        "<!-- clean-docs:purpose -->\n"
+        "Use this fixture when scoring repository documentation tasks. It gives evaluators one published context for every configured scorer.\n"
+        "<!-- clean-docs:end purpose -->\n\n"
         "<!-- clean-docs:begin overview -->\nBound overview\n"
         "<!-- clean-docs:end overview -->\n\n"
         "## Quickstart\n\nRun the install command, then the first command.\n\n"
@@ -71,7 +74,10 @@ def _root(tmp_path: Path) -> Path:
     (root / ".clean-docs.yml").write_text(_manifest())
     (fixture / "source.txt").write_text("Bound fixture\n")
     (fixture / "README.md").write_text(
-        "# Target\n\n<!-- clean-docs:begin fact -->\nBound fixture\n"
+        "# Target\n\n<!-- clean-docs:purpose -->\n"
+        "Use this target when testing a generated manifest. It gives evaluators one source-bound fact to verify.\n"
+        "<!-- clean-docs:end purpose -->\n\n"
+        "<!-- clean-docs:begin fact -->\nBound fixture\n"
         "<!-- clean-docs:end fact -->\n"
     )
     (responses / "structured.json").write_text('{"command": "clean-docs check"}\n')

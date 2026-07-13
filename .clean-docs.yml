@@ -15,7 +15,7 @@ bindings:
     source:
       path: src/clean_docs/capabilities.py
       symbol: PRODUCT_OVERVIEW
-    renderer: scalar
+    renderer: markdown-fragment
   - id: supported-bindings
     type: region
     doc: README.md

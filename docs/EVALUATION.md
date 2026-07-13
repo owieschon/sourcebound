@@ -1,14 +1,8 @@
 # Evaluate documentation tasks
 
-This guide shows how to score observable human tasks and replayable agent responses.
-
-## Intended reader
-
-Use this guide when repository documentation must prove that a person or agent can complete a specific task from declared pages alone.
-
-## Value
-
-`clean-docs eval` reports human task success, agent task success, and hygiene findings separately. A passing task proves its configured observable result. It does not turn one model response into a general quality score.
+<!-- clean-docs:purpose -->
+Use this guide when repository docs must prove that a person or agent can finish a declared task from published pages alone. It shows you how to build replayable evaluations whose passing result names the observed capability without turning one response into a general quality score.
+<!-- clean-docs:end purpose -->
 
 ## Prerequisites
 

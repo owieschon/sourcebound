@@ -7,7 +7,7 @@ spec="${HOME}/dev/doc-standard/CLEAN_DOCS_SPEC.md"
 test -f "$spec"
 python3 "${HOME}/dev/doc-standard/scripts/check_doc_names.py" "${HOME}/dev/doc-standard"
 grep -q '^# clean-docs product specification$' "$spec"
-grep -q '^## 4\. Existing foundation$' "$spec"
+grep -q '^## 4\. Starting foundation$' "$spec"
 grep -q '^### Version 0: Proven local foundation, complete$' "$spec"
 
 for version in 0.1 0.2 0.3 0.4 0.5 1.0; do
@@ -18,8 +18,8 @@ test "$(grep -c '^#### Functional E2E tests$' "$spec")" -eq 6
 test "$(grep -c '^#### Definition of done$' "$spec")" -eq 7
 
 grep -q 'quality-gate.py.*inherited product inputs' "$spec"
-grep -q 'Humans and agents consume the same canonical documentation' "$spec"
-grep -q 'Write a documentation standard once' "$spec"
+grep -q 'One corpus serves humans and agents' "$spec"
+grep -q 'Write your documentation standard once' "$spec"
 grep -q 'Models phrase; they do not decide' "$spec"
 grep -q 'no per-change approval is required' "$spec"
 grep -q '`clean-docs drive \[--changed\]`' "$spec"
@@ -29,6 +29,8 @@ grep -q '`clean-docs doctor`' "$spec"
 grep -q 'mock provider' "$spec"
 grep -q 'Prompt-injection scan' "$spec"
 grep -q 'Public source repository under the MIT license' "$spec"
+grep -q 'BLUF purpose contract' "$spec"
+grep -q 'structured generation data' "$spec"
 
 ! grep -q 'Sourcebound' "$spec"
 ! grep -q '—' "$spec"

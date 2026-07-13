@@ -7,6 +7,7 @@ import pytest
 
 from clean_docs.audit import audit, write_audit_baseline
 from clean_docs.cli import main
+from clean_docs.policy import ensure_purpose_contract
 
 
 def _repo(tmp_path: Path) -> Path:
@@ -17,6 +18,11 @@ def _repo(tmp_path: Path) -> Path:
 
 
 def _track(root: Path) -> None:
+    for path in root.rglob("*.md"):
+        content = path.read_text()
+        if len([line for line in content.splitlines() if line.strip()]) == 1:
+            content = content.rstrip() + f"\n\nUse {path.stem} when its repository details are required.\n"
+        path.write_text(ensure_purpose_contract(content))
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
 
 
@@ -65,8 +71,47 @@ def test_audit_runs_corpus_rules_and_accepts_named_reasoned_allowances(tmp_path:
     report = audit(root)
 
     assert [(finding.rule, finding.line) for finding in report.findings] == [
-        ("provenance", 6),
+        ("provenance", 8),
     ]
+
+
+def test_audit_requires_the_purpose_contract_before_body_content(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    (root / "README.md").write_text("# Project\n\nBody content arrives first.\n")
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    report = audit(root)
+
+    assert [(finding.rule, finding.line) for finding in report.findings] == [
+        ("purpose-contract", 1),
+    ]
+
+
+def test_audit_applies_sentence_policy_to_reader_documents(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    (root / "README.md").write_text(
+        "# Project\n\n<!-- clean-docs:purpose -->\n"
+        "Use this page when source claims can drift. It gives maintainers a checked repair path.\n"
+        "<!-- clean-docs:end purpose -->\n\nA powerful workflow.\n"
+    )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    assert [(finding.rule, finding.line) for finding in audit(root).findings] == [
+        ("prohibited-booster", 7),
+    ]
+
+
+def test_audit_ignores_purpose_markers_when_comparing_prose(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    (root / "README.md").write_text(ensure_purpose_contract(
+        "# Project\n\nUse this page for project behavior.\n"
+    ))
+    (root / "GUIDE.md").write_text(ensure_purpose_contract(
+        "# Guide\n\nUse this page for guide behavior.\n"
+    ))
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    assert not any(finding.rule == "near-dup" for finding in audit(root).findings)
 
 
 def test_generated_context_bundles_are_not_canonical_corpus_pages(tmp_path: Path) -> None:

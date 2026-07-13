@@ -1,6 +1,8 @@
 # Security model
 
-This page defines which repository inputs clean-docs treats as data, which declared processes it executes, and where the host must add isolation.
+<!-- clean-docs:purpose -->
+Use this model before allowing clean-docs to run a repository command or plugin. It separates static data from declared execution, names the controls clean-docs enforces, and tells operators where the host must provide stronger isolation.
+<!-- clean-docs:end purpose -->
 
 ## Trust tiers
 

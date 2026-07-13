@@ -1,25 +1,32 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `1e75ee32b2c39516008a31f0c01336290801039d39133c6372bc267b91585c55`
+- Corpus sha256: `419407606e7f58de5b6e07f26c796b4e92da40101c9a5dcfefb32e7bded8c185`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `96532e29b1d73f493fde801d9a372fca92a3e3a93d049dce6d6e059a25b226e3`
+- Content sha256: `513c9405519d8af55d3426061fdfa59671f57dcb30e78966552d90cb87cd324e`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
 
-clean-docs is a self-driving documentation system that applies one packaged standard and keeps repository documentation current for humans and agents.
-
-Write the standard once; clean-docs does the repository work. The finished product audits each repository, derives its factual spine from source, phrases it to the packaged standard, tests the result, and maintains it on every change. Models may phrase grounded facts; deterministic code owns the facts and gate results.
-
+<!-- clean-docs:purpose -->
+Use clean-docs when code changes faster than its documentation and reviewers cannot tell which claims are stale. It gives maintainers a local, deterministic path from source change to repaired, verified docs; models may phrase facts, but they never decide the facts or gate results.
+<!-- clean-docs:end purpose -->
 <!-- clean-docs:begin product-overview -->
-clean-docs protects Python and TypeScript repository documentation through local, pre-commit, and pull-request workflows. It compares normalized evidence across immutable refs and renders provenance-backed release facts. Optional narrative drafts cannot change, omit, or uncite those facts. Versioned plugins add extractors, discoverers, renderers, and policy checks in disposable snapshots; manifest migration includes a byte-exact rollback. It projects one verified documentation graph into llms.txt, named context bundles, and an accessible static demonstration. It scores human commands and recorded agent responses, reports changed binding drift and coverage gaps, and bootstraps source-bound baselines. Mature repositories can commit an exact existing-debt baseline that fails on new and resolved findings until explicitly refreshed. Static adapters cover Python, TypeScript, OpenAPI, JSON Schema, package metadata, and MCP tools without importing repository code. Declared processes run in disposable copies with bounded I/O and minimal environments. Local outcome, performance, and diagnostic receipts make checks inspectable without telemetry. `derive` previews changes unless you pass `--write`; `audit`, `check`, `verify`, and `release` never change documentation.
+Source owns the facts; the packaged standard owns their form. clean-docs audits tracked Markdown, binds claims to source evidence, repairs declared regions, and fails CI when either the facts or the documentation contract drift.
+
+Static adapters cover Python, TypeScript, OpenAPI, JSON Schema, package metadata, and MCP tools without importing repository code. Declared commands and versioned plugins run in disposable copies with bounded I/O and minimal environments.
+
+The same verified graph produces `llms.txt`, named context bundles, grounded release facts, and task evaluations for people and agents. Local receipts make those checks inspectable without telemetry.
+
+`derive` previews changes unless you pass `--write`. `audit`, `check`, `verify`, and `release` never change documentation.
 <!-- clean-docs:end product-overview -->
 ## Install and audit
+
+Create an isolated environment, install the project, and audit the current repository:
 
 ```bash
 python -m venv .venv
@@ -32,7 +39,7 @@ clean-docs audit
 
 ## Protect a repository
 
-Run the deterministic bootstrap once, inspect its patch, and verify the protected baseline:
+Bootstrap the source bindings once, inspect the patch, and verify the protected baseline:
 
 ```bash
 clean-docs init --no-model
@@ -89,7 +96,7 @@ Repositories do not configure a standard path. clean-docs bundles a versioned po
 
 ## Verify public and self-hosted behavior
 
-Run the pinned public-repository dogfood proof with:
+Reproduce the pinned public-repository proof with:
 
 ```bash
 PYTHONPATH=src python3 scripts/dogfood_public_repos.py
@@ -128,20 +135,14 @@ See the [recorded drift demonstration](https://owieschon.github.io/clean-docs/) 
 ## Canonical document: docs/EVALUATION.md
 
 - Source: [docs/EVALUATION.md](../../docs/EVALUATION.md)
-- Content sha256: `4f7d56256d3d7d3fe72cad2cfb42517c610ee52ef10d0321a28f363d41916eba`
+- Content sha256: `aaf5640377fc0aca3fc046eed8f3c2e6d06b89f3b4e6ae56f610b796bedd8b70`
 
 <!-- clean-docs:canonical docs/EVALUATION.md begin -->
 # Evaluate documentation tasks
 
-This guide shows how to score observable human tasks and replayable agent responses.
-
-## Intended reader
-
-Use this guide when repository documentation must prove that a person or agent can complete a specific task from declared pages alone.
-
-## Value
-
-`clean-docs eval` reports human task success, agent task success, and hygiene findings separately. A passing task proves its configured observable result. It does not turn one model response into a general quality score.
+<!-- clean-docs:purpose -->
+Use this guide when repository docs must prove that a person or agent can finish a declared task from published pages alone. It shows you how to build replayable evaluations whose passing result names the observed capability without turning one response into a general quality score.
+<!-- clean-docs:end purpose -->
 
 ## Prerequisites
 
