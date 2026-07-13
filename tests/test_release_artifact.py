@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import hashlib
+import re
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -19,6 +21,29 @@ ROOT = Path(__file__).parents[1]
 UPLOAD_ARTIFACT = (
     "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"
 )
+
+
+def test_published_wheel_checksum_command_accepts_matching_artifact(tmp_path: Path) -> None:
+    wheel = tmp_path / "clean_docs-1.0.0rc13-py3-none-any.whl"
+    wheel.write_bytes(b"release candidate")
+    digest = hashlib.sha256(wheel.read_bytes()).hexdigest()
+    (tmp_path / "SHA256SUMS").write_text(f"{digest}  {wheel.name}\n")
+
+    support = (ROOT / "docs/SUPPORT.md").read_text()
+    section = support.split("### Verify release artifacts", maxsplit=1)[1]
+    match = re.search(r"```bash\npython - <<'PY'\n(.*?)\nPY\n", section, re.DOTALL)
+    assert match is not None
+
+    result = subprocess.run(
+        [sys.executable, "-c", match.group(1)],
+        cwd=tmp_path,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == f"{wheel.name}: {digest}"
 
 
 def test_release_toolchain_and_ci_install_are_pinned() -> None:
