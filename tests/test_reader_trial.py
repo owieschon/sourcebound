@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import hashlib
-import importlib
 import json
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -15,7 +15,6 @@ from scripts.verify_reader_trial import (
     verify_reader_trial,
     verify_release_reader_trial,
 )
-import scripts.verify_reader_trial as reader_trial_module
 
 
 ROOT = Path(__file__).parents[1]
@@ -140,10 +139,22 @@ def test_stable_release_requires_reader_trial_while_candidate_build_does_not(
     assert summary["participants"] == {"human": 1, "agent": 1}
 
 
-def test_candidate_gate_does_not_import_yaml(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_candidate_gate_does_not_import_yaml(tmp_path: Path) -> None:
     project = tmp_path / "pyproject.toml"
     project.write_text('[project]\nname = "fixture"\nversion = "1.0.0rc7"\n')
-    monkeypatch.setitem(sys.modules, "yaml", None)
-    module = importlib.reload(reader_trial_module)
+    script = (
+        "import json, pathlib, sys; "
+        "sys.modules['yaml'] = None; "
+        "from scripts.verify_reader_trial import verify_release_reader_trial; "
+        "print(json.dumps(verify_release_reader_trial(pathlib.Path(sys.argv[1]))))"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", script, str(tmp_path)],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
 
-    assert module.verify_release_reader_trial(tmp_path) == {"required": False}
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout) == {"required": False}
