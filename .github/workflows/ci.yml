@@ -16,6 +16,8 @@ jobs:
         python-version: ["3.10", "3.12", "3.14"]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
@@ -25,5 +27,4 @@ jobs:
       - run: python -m mypy src/clean_docs
       - run: python -m ruff check src tests
       - run: python scripts/check_doc_names.py
-      - run: clean-docs --root . standard check
-      - run: clean-docs --root . check
+      - run: python scripts/trusted_self_check.py

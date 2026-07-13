@@ -16,6 +16,7 @@ PYTHONPATH=src python3 -m clean_docs --help | grep -q 'check'
 PYTHONPATH=src python3 -m clean_docs --help | grep -q 'drive'
 PYTHONPATH=src python3 -m clean_docs --root "$root" standard check | grep -q '^\[current\]'
 PYTHONPATH=src python3 -m clean_docs --root "$root" check | grep -q '^\[current\] supported-bindings: README.md$'
+python3 scripts/trusted_self_check.py | grep -q '"ok": true'
 
 ! rg -n 'requests|httpx|urllib|openai|anthropic' src/clean_docs tests
 git diff --check

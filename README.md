@@ -90,6 +90,10 @@ The proof clones two fixed commits, derives documentation from Python and JSON s
 detects deliberate source drift, repairs the generated regions, and verifies each final
 state. It never executes code from either target repository.
 
+Self-hosting uses `python3 scripts/trusted_self_check.py`. Candidate code checks its own
+tree, then the verifier pinned in `.clean-docs-trust.json` independently checks the same
+files. Updating that pin is a release operation, not part of documentation generation.
+
 ## Supported binding surface
 
 This table is derived from `src/clean_docs/capabilities.py` by clean-docs itself:
