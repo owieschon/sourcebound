@@ -109,6 +109,26 @@ def test_detects_repairs_and_preserves_author_prose(tmp_path: Path) -> None:
     assert _run(root, "check").returncode == 0
 
 
+def test_ci_evidence_fails_on_drift_and_passes_after_regeneration(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    (root / "src/actions.py").write_text(SOURCE_THREE)
+
+    audit = _run(root, "audit", "--format", "json")
+    check = _run(root, "check", "--format", "json")
+    (root / "clean-docs-audit.json").write_text(audit.stdout)
+    (root / "clean-docs-check.json").write_text(check.stdout)
+
+    assert audit.returncode == 0
+    assert check.returncode == 1
+    assert json.loads((root / "clean-docs-audit.json").read_text())["ok"] is True
+    assert json.loads((root / "clean-docs-check.json").read_text())["ok"] is False
+
+    assert _run(root, "derive", "--write").returncode == 0
+    repaired = _run(root, "check", "--format", "json")
+    assert repaired.returncode == 0
+    assert json.loads(repaired.stdout)["ok"] is True
+
+
 def test_reads_source_from_immutable_ref_without_mutation(tmp_path: Path) -> None:
     root = _repo(tmp_path)
     baseline = subprocess.run(

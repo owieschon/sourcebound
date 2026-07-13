@@ -54,5 +54,10 @@ def test_distribution_integrations_are_strict() -> None:
     trigger = workflow[True]["workflow_call"]
     assert trigger["inputs"]["package-ref"]["required"] is True
     steps = workflow["jobs"]["clean-docs"]["steps"]
-    assert any("clean-docs audit" == step.get("run") for step in steps)
-    assert any("clean-docs check" == step.get("run") for step in steps)
+    gate = next(step for step in steps if step.get("name") == "Evaluate documentation gate")
+    assert "clean-docs audit --format json > clean-docs-audit.json" in gate["run"]
+    assert "clean-docs check --format json > clean-docs-check.json" in gate["run"]
+    upload = next(step for step in steps if step.get("name") == "Upload clean-docs evidence")
+    assert upload["if"] == "always()"
+    assert upload["uses"] == "actions/upload-artifact@v4"
+    assert upload["with"]["if-no-files-found"] == "error"
