@@ -95,3 +95,13 @@ projections. `emit stepwise-skill` packages the audit, repair, and verify workfl
 The latter changes deterministically when a bound document or binding changes; a later projection
 gate will make committing that change mandatory. Reversible: both implementations are isolated
 under `emit/` and share only the native manifest model.
+
+## 10. Keep the product local-first and make the demonstration static (2026-07-13)
+
+Context: the deterministic CLI, pre-commit hook, CI action, and projections already cover the
+maintenance workflow. A hosted system would add runtime trust, storage, account, and
+operations surfaces without improving source binding or gate correctness. Chose to keep those
+surfaces out of the product. The only web output is a static demonstration generated from
+recorded fixture evidence, with no backend, credentials, runtime network dependency, or CLI
+telemetry. Machine-readable outcome receipts stay local or in CI artifacts. Reversible: a future
+consumer can process the same receipts without changing the core or the local default.

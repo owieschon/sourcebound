@@ -76,6 +76,7 @@ The agent needs compact, current context with stable identifiers and source link
 9. **No executable source by default.** Static extractors parse source. Command extractors require explicit allowlisting and run with declared timeouts.
 10. **The product dogfoods itself.** clean-docs generates and verifies its own CLI, configuration, and capability references.
 11. **The repository contains product truth only.** Private planning, unrelated project context, and publication residue stay outside product code, docs, tests, issues, examples, and metadata.
+12. **The product stays local-first.** The CLI, pre-commit hook, and CI action are the product. A static demonstration may explain recorded behavior, but clean-docs does not require a hosted service or outbound telemetry.
 
 ## 4. Existing foundation
 
@@ -86,7 +87,7 @@ clean-docs starts from a working documentation-standard system. Version 0 preser
 | [`STANDARD.md`](STANDARD.md) | Defines sentence voice, medium choice, page shape, corpus structure, and the boundary between checks and judgment. | Becomes the default `clean-docs` policy profile and the canonical authoring standard. |
 | [`quality-gate.py`](quality-gate.py) | Blocks high-confidence language, engineering-claim, code, and secret patterns before an agent writes a file. | Its portable rules move into `policy`; the pre-write hook remains one adapter. |
 | [`doc-hygiene.py`](doc-hygiene.py) | Checks process artifacts, agent-addressed docs, provenance, length, duplication, and restatement across tracked Markdown. | Its tested rules move into `policy` with stable finding identifiers, configuration, and regression fixtures. |
-| [`skill/SKILL.md`](skill/SKILL.md) | Runs residue and corpus checks during one agent's pre-publish workflow. | Remains a distribution adapter. Equivalent CLI, CI, agent, editor, and hosting adapters call the same core. |
+| [`skill/SKILL.md`](skill/SKILL.md) | Runs residue and corpus checks during one agent's pre-publish workflow. | Remains a distribution adapter. Equivalent CLI, CI, agent, editor, and publishing adapters call the same core. |
 | [`DECISION_LOG.md`](DECISION_LOG.md) | Records why archive handling and several noisy patterns were changed after real-repo triage. | Seeds regression cases and architecture decisions. |
 | [`docs/archive/v0/ultra-csm-findings.json`](docs/archive/v0/ultra-csm-findings.json) and [`docs/archive/v0/ultra-csm-before-after.md`](docs/archive/v0/ultra-csm-before-after.md) | Preserve the 280-finding baseline and the docs-only cleanup evidence. | Seed corpus-policy fixtures and the first dogfood case. |
 | Prior product brief | Defines ref-aware extraction, region/claim/symbol bindings, derive/check symmetry, and a no-model CI gate. | Supplies the binding engine contract in this specification under the final `clean-docs` name. |
@@ -127,6 +128,7 @@ These are the starting conditions for the version plan. Existing artifacts remai
 - Standard-constrained language and structure generation with deterministic validation.
 - Grounded release-note skeletons from evidence deltas.
 - Local CLI, pre-commit integration, and GitHub Actions integration.
+- One static demonstration page generated from recorded fixture evidence.
 - A documented extractor and renderer extension API.
 
 ### Not in scope
@@ -138,6 +140,8 @@ These are the starting conditions for the version plan. Existing artifacts remai
 - Inferring product intent that the repository does not encode.
 - Promising complete documentation coverage beyond the configured standard and adapters.
 - Maintaining separate human and agent copies of the same facts.
+- Requiring a hosted service, backend, database, account system, or runtime dashboard.
+- Sending repository activity or CLI usage to an analytics service.
 
 ## 6. System model
 
@@ -438,7 +442,7 @@ No single score represents documentation quality. clean-docs reports separate me
 | False-positive rate | Dismissed required findings divided by required findings. |
 | Time to repair | Median time from failed check to passing rerun in dogfood repositories. |
 | Critical-path model calls | Model calls made by deterministic derive and check paths. Required target: zero. |
-| Outcome telemetry | Opt-in counts for completed baselines, caught drift, repaired checks, and evaluation task success. |
+| Local outcome receipts | Machine-readable counts for completed baselines, caught drift, repaired checks, and evaluation task success. |
 
 The product must never describe a reduction in hygiene findings as proof that prose became clearer. The ultra-csm pass established that distinction: moving process artifacts improved navigation but did not rewrite reader-facing prose.
 
@@ -685,6 +689,7 @@ Version 0 preservation work at the start of Version 0.1:
 - Task-first documentation templates with intended-reader, value, prerequisites, procedure, limits, and next-step slots.
 - Manifest-derived stepwise skill projection with strict configuration, ordered reference files,
   explicit navigation, and skill or command CLI roles.
+- A static demonstration generated from recorded before, drift, and repaired fixture states.
 
 #### Functional E2E tests
 
@@ -718,10 +723,14 @@ Version 0 preservation work at the start of Version 0.1:
    - Then the output is byte-stable, names the real bound documents, validates against the schema,
      chains every reference through `next_step`, and its audit, drive, and check commands pass in a
      temporary repository.
+8. **static demonstration**
+   - Given recorded fixture evidence for current, drifted, and repaired states.
+   - When the demonstration is generated twice.
+   - Then the output is byte-stable, shows the exact check and repair evidence, and requires no backend, database, credentials, or runtime network request.
 
 #### Definition of done
 
-- All seven E2E scenarios pass, with networked agent runs separated from replayable scoring.
+- All eight E2E scenarios pass, with networked agent runs separated from replayable scoring.
 - Projections contain canonical content or references only, plus generated metadata.
 - Every bundle records a source ref and digest.
 - Human and agent task scores are reported separately from hygiene findings.
@@ -792,7 +801,7 @@ Version 0 preservation work at the start of Version 0.1:
 - Supported Python and TypeScript adapters with documented compatibility.
 - Local, pre-commit, and GitHub pull-request workflows.
 - Isolation controls for allowlisted commands and plugins.
-- Performance budgets, caching, telemetry opt-in, and diagnostic bundle.
+- Performance budgets, caching, local outcome receipts, and a diagnostic bundle.
 - Upgrade and deprecation policy.
 - Public documentation generated and checked by clean-docs.
 - Public source repository under the MIT license from the first supported release.
@@ -834,8 +843,8 @@ Version 0 preservation work at the start of Version 0.1:
 - P95 changed-file check time and memory use meet published budgets on small, medium, and monorepo fixtures.
 - Install, upgrade, rollback, and uninstall paths are documented and tested.
 - Signed artifacts, checksums, SBOM, license, support policy, and security reporting path are published.
-- Opt-in telemetry reports product outcomes and never captures repository contents, paths, claims, or generated documentation.
-- The docs site, `llms.txt`, context bundles, and CLI reference all pass clean-docs at the release commit.
+- Machine-readable run summaries report product outcomes locally and make no outbound request.
+- The static docs and demonstration site, `llms.txt`, context bundles, and CLI reference all pass clean-docs at the release commit.
 - The public guarantee matches the boundary in section 1.
 
 ## 14. Test architecture
@@ -890,7 +899,7 @@ Each version follows the same delivery sequence:
 - Recognized new surface is documented automatically. Unsupported new surface is a standard or adapter coverage gap that names the missing capability.
 - Human and agent documentation share canonical pages.
 - Round-trip evaluation measures task completion, not stylistic resemblance.
-- Agent skills, pre-write hooks, editor extensions, and hosting integrations are distribution adapters. None defines the product architecture.
+- Agent skills, pre-write hooks, editor extensions, and static publishing integrations are distribution adapters. None defines the product architecture.
 
 ## 17. Open decisions before Version 0.1 implementation
 
@@ -902,4 +911,4 @@ Only decisions that change the core contract block implementation:
 4. Set the Version 0.1 performance budget and supported platforms.
 5. Define the normalized-table ordering contract so generated diffs remain stable.
 
-These choices belong in architecture decision records when implementation begins. Product extensions, model providers, hosting, and additional ecosystems do not block Version 0.1.
+These choices belong in architecture decision records when implementation begins. Product extensions, model providers, static publishing, and additional ecosystems do not block Version 0.1.
