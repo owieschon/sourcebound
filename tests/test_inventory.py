@@ -32,6 +32,7 @@ sub = parser.add_subparsers()
 sub.add_parser("serve")
 parser.add_argument("--port")
 """)
+    (root / "noxfile.py").write_text("def internal_build_task():\n    return True\n")
     (root / "tests/test_cli.py").write_text("def test_cli():\n    assert True\n")
     (root / "docs/guide.md").write_text("# Guide\n\n[Schema](../schemas/item.schema.json)\n")
     (root / "schemas/item.schema.json").write_text(
@@ -71,6 +72,7 @@ def test_python_inventory_is_static_typed_and_deterministic(tmp_path: Path) -> N
     } <= {item.kind for item in first.items}
     assert all(item.coverage == "standard-gap" for item in first.items)
     assert all(len(item.digest) == 64 for item in first.items)
+    assert not any(item.name == "internal_build_task" for item in first.items)
 
 
 def test_typescript_package_inventory_needs_no_project_execution(tmp_path: Path) -> None:
@@ -80,7 +82,7 @@ def test_typescript_package_inventory_needs_no_project_execution(tmp_path: Path)
         "name": "fixture-cli",
         "version": "2.0.0",
         "bin": {"fixture": "dist/cli.js"},
-        "scripts": {"test": "vitest run", "build": "tsc"},
+        "scripts": {"test": "vitest run", "build": "tsc", "//note": "not a script"},
     }))
     (root / "src/index.ts").write_text(
         "throw new Error('must not execute');\nexport function start() { return true }\n"
@@ -96,6 +98,31 @@ def test_typescript_package_inventory_needs_no_project_execution(tmp_path: Path)
     assert by_kind["test-runner"].name == "test"
     assert any(item.kind == "api-symbol" and item.name == "start" for item in report.items)
     assert any(item.kind == "test-suite" for item in report.items)
+    assert not any(item.name == "//note" for item in report.items)
+
+
+def test_typescript_declaration_exports_are_discovered_statically(tmp_path: Path) -> None:
+    root = tmp_path / "typescript-declarations"
+    root.mkdir()
+    (root / "index.d.ts").write_text(
+        "export default class Queue<Value> {}\n"
+        "export interface QueueOptions {}\n"
+        "export type QueueSize = number\n"
+    )
+    (root / "index.js").write_text("export default class Queue {}\n")
+
+    report = scan_inventory(root)
+
+    symbols = {
+        (item.name, item.adapter)
+        for item in report.items
+        if item.kind == "api-symbol"
+    }
+    assert symbols == {
+        ("Queue", "typescript-static"),
+        ("QueueOptions", "typescript-static"),
+        ("QueueSize", "typescript-static"),
+    }
 
 
 def test_inventory_cli_reports_coverage_and_repository_binding_repairs_docs(

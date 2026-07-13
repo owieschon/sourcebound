@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the named Version 0.1 acceptance scenarios and write one JSON receipt."""
+"""Run a named release acceptance registry and write one JSON receipt."""
 
 from __future__ import annotations
 
@@ -27,6 +27,18 @@ EXPECTED_IDS = {
     "known-false-positive-regressions",
     "self-hosting-checker-tampering",
 }
+EXPECTED_IDS_BY_RELEASE = {
+    "0.1": EXPECTED_IDS,
+    "0.2": {
+        "unfamiliar-python-repository-baseline",
+        "standard-once-bootstrap",
+        "model-boundary",
+        "no-model-completeness",
+        "idempotent-rerun",
+        "multi-language-fixture",
+        "hostile-phrasing-context",
+    },
+}
 
 
 @dataclass(frozen=True)
@@ -35,12 +47,17 @@ class AcceptanceCase:
     test: str
 
 
-def load_cases(path: Path) -> tuple[AcceptanceCase, ...]:
+def load_registry(path: Path) -> tuple[str, tuple[AcceptanceCase, ...]]:
     raw: Any = yaml.safe_load(path.read_text(encoding="utf-8"))
     if not isinstance(raw, dict) or set(raw) != {"version", "release", "scenarios"}:
         raise ValueError("acceptance registry must contain version, release, and scenarios")
-    if raw["version"] != 1 or raw["release"] != "0.1":
-        raise ValueError("acceptance registry must describe release 0.1 at version 1")
+    release = raw["release"]
+    if (
+        raw["version"] != 1
+        or not isinstance(release, str)
+        or release not in EXPECTED_IDS_BY_RELEASE
+    ):
+        raise ValueError("acceptance registry names an unsupported release or schema version")
     scenarios = raw["scenarios"]
     if not isinstance(scenarios, list):
         raise ValueError("acceptance scenarios must be a list")
@@ -57,12 +74,19 @@ def load_cases(path: Path) -> tuple[AcceptanceCase, ...]:
         if not (ROOT / node.split("::", 1)[0]).is_file():
             raise ValueError(f"acceptance scenario {identifier} names a missing test file")
         cases.append(AcceptanceCase(identifier, node))
-    if {case.id for case in cases} != EXPECTED_IDS or len(cases) != len(EXPECTED_IDS):
-        raise ValueError("acceptance registry must name each Version 0.1 scenario exactly once")
-    return tuple(cases)
+    expected = EXPECTED_IDS_BY_RELEASE[release]
+    if {case.id for case in cases} != expected or len(cases) != len(expected):
+        raise ValueError(f"acceptance registry must name each Version {release} scenario exactly once")
+    return release, tuple(cases)
 
 
-def run_cases(cases: tuple[AcceptanceCase, ...]) -> dict[str, object]:
+def load_cases(path: Path) -> tuple[AcceptanceCase, ...]:
+    return load_registry(path)[1]
+
+
+def run_cases(
+    cases: tuple[AcceptanceCase, ...], release: str = "0.1"
+) -> dict[str, object]:
     results = []
     for case in cases:
         proc = subprocess.run(
@@ -83,7 +107,7 @@ def run_cases(cases: tuple[AcceptanceCase, ...]) -> dict[str, object]:
         })
     return {
         "schema": "clean-docs.acceptance.v1",
-        "release": "0.1",
+        "release": release,
         "ok": all(result["ok"] for result in results),
         "scenarios": results,
     }
@@ -95,7 +119,8 @@ def main() -> int:
     parser.add_argument("--out", type=Path)
     args = parser.parse_args()
     try:
-        receipt = run_cases(load_cases(args.registry.resolve()))
+        release, cases = load_registry(args.registry.resolve())
+        receipt = run_cases(cases, release)
     except (OSError, ValueError, subprocess.SubprocessError) as exc:
         print(f"acceptance: {exc}", file=sys.stderr)
         return 2

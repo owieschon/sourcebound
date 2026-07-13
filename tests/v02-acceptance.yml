@@ -1,0 +1,17 @@
+version: 1
+release: "0.2"
+scenarios:
+  - id: unfamiliar-python-repository-baseline
+    test: tests/test_init.py::test_init_dry_run_is_read_only_then_default_init_writes_and_verifies
+  - id: standard-once-bootstrap
+    test: tests/test_init.py::test_standard_once_bootstrap_records_evidence_and_verifies
+  - id: model-boundary
+    test: tests/test_init.py::test_model_response_cannot_add_an_unsupported_fact
+  - id: no-model-completeness
+    test: tests/test_init.py::test_no_model_completes_without_credentials_or_network
+  - id: idempotent-rerun
+    test: tests/test_init.py::test_idempotent_init_preserves_binding_id_and_has_empty_patch
+  - id: multi-language-fixture
+    test: tests/test_init.py::test_typescript_repository_bootstraps_without_python_metadata
+  - id: hostile-phrasing-context
+    test: tests/test_init.py::test_hostile_model_context_is_filtered_and_cannot_change_gate_results

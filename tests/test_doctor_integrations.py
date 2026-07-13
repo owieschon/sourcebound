@@ -67,9 +67,17 @@ def test_distribution_integrations_are_strict() -> None:
     assert matrix["python-version"] == ["3.10", "3.12", "3.14"]
     dogfood = ci["jobs"]["public-dogfood"]
     assert dogfood["needs"] == "test"
-    assert dogfood["steps"][-1]["run"] == "python scripts/dogfood_public_repos.py"
+    assert dogfood["steps"][-2]["run"] == "python scripts/dogfood_public_repos.py"
+    assert dogfood["steps"][-1]["run"] == "python scripts/dogfood_bootstrap_repos.py"
     acceptance = ci["jobs"]["acceptance-v0-1"]
     assert acceptance["needs"] == "test"
     receipt = acceptance["steps"][-1]
     assert receipt["if"] == "always()"
     assert receipt["with"]["if-no-files-found"] == "error"
+    acceptance_v02 = ci["jobs"]["acceptance-v0-2"]
+    assert acceptance_v02["needs"] == "test"
+    run = acceptance_v02["steps"][-2]["run"]
+    assert "--registry tests/v02-acceptance.yml" in run
+    v02_receipt = acceptance_v02["steps"][-1]
+    assert v02_receipt["if"] == "always()"
+    assert v02_receipt["with"]["if-no-files-found"] == "error"
