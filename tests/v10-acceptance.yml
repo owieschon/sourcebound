@@ -1,0 +1,15 @@
+version: 1
+release: "1.0"
+scenarios:
+  - id: empty-to-protected-repository
+    test: tests/test_v10_acceptance.py::test_empty_repository_reaches_protected_baseline_without_manual_docs
+  - id: full-change-lifecycle
+    test: tests/test_v10_acceptance.py::test_full_change_lifecycle_repairs_docs_coverage_projection_and_release
+  - id: offline-deterministic-operation
+    test: tests/test_v10_acceptance.py::test_all_deterministic_workflows_operate_offline
+  - id: malicious-repository
+    test: tests/test_v10_acceptance.py::test_malicious_repository_controls_hold
+  - id: upgrade-compatibility
+    test: tests/test_v10_acceptance.py::test_v05_manifest_and_evidence_remain_compatible_at_v10
+  - id: independent-reader-success
+    test: tests/test_v10_acceptance.py::test_independent_reader_commands_complete_the_published_rubric

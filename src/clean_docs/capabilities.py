@@ -1,7 +1,9 @@
 """Public capability registry rendered into the clean-docs README."""
 
 PRODUCT_OVERVIEW = (
-    "Version 0.5 compares normalized evidence across immutable refs and renders "
+    "Version 1.0a1 protects Python and TypeScript repository documentation through local, "
+    "pre-commit, and pull-request workflows. It compares normalized evidence across immutable "
+    "refs and renders "
     "provenance-backed release facts. Optional narrative drafts cannot change, omit, or "
     "uncite those facts. Versioned plugins add extractors, discoverers, renderers, and policy "
     "checks in disposable snapshots; manifest migration includes a byte-exact rollback. It "
@@ -9,8 +11,10 @@ PRODUCT_OVERVIEW = (
     "accessible static demonstration. It scores human commands and recorded agent responses, "
     "reports changed binding drift and coverage gaps, and bootstraps source-bound baselines. "
     "Static adapters cover Python, TypeScript, OpenAPI, JSON Schema, package metadata, and MCP "
-    "tools without importing repository code. `derive` previews changes unless you pass "
-    "`--write`; `audit`, `check`, and `release` never write."
+    "tools without importing repository code. Declared processes run in disposable copies with "
+    "bounded I/O and minimal environments. Local outcome, performance, and diagnostic receipts "
+    "make checks inspectable without telemetry. `derive` previews changes unless you pass "
+    "`--write`; `audit`, `check`, `verify`, and `release` never change documentation."
 )
 
 SUPPORTED_BINDINGS = {
@@ -40,6 +44,8 @@ CLI_REFERENCE = (
     {"command": "init", "job": "Write a source-bound documentation baseline", "writes": "yes"},
     {"command": "explain", "job": "Explain a finding or coverage state", "writes": "no"},
     {"command": "doctor", "job": "Check repository and integration readiness", "writes": "no"},
+    {"command": "verify", "job": "Write a local deterministic outcome receipt", "writes": "with --out"},
+    {"command": "benchmark", "job": "Measure changed-check time and memory budgets", "writes": "with --out"},
     {"command": "derive", "job": "Preview generated region changes", "writes": "with --write"},
     {"command": "drive", "job": "Repair bound regions and enforce policy", "writes": "yes"},
     {"command": "check", "job": "Fail on binding drift or uncovered changed surface", "writes": "no"},

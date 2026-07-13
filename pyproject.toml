@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "clean-docs"
-version = "0.5.0"
+version = "1.0.0a1"
 description = "Keep repository documentation bound to its sources."
 readme = "README.md"
 requires-python = ">=3.10"

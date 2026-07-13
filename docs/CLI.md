@@ -12,6 +12,8 @@ The table is generated from the command registry used by the parser:
 | init | Write a source-bound documentation baseline | yes |
 | explain | Explain a finding or coverage state | no |
 | doctor | Check repository and integration readiness | no |
+| verify | Write a local deterministic outcome receipt | with --out |
+| benchmark | Measure changed-check time and memory budgets | with --out |
 | derive | Preview generated region changes | with --write |
 | drive | Repair bound regions and enforce policy | yes |
 | check | Fail on binding drift or uncovered changed surface | no |

@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
-import subprocess
 from typing import Any
 
 from clean_docs.errors import ExtractionError
 from clean_docs.execution import resolve_argv
+from clean_docs.isolation import run_isolated_process
 from clean_docs.models import CommandSpec, EvidenceValue, Provenance
 from clean_docs.snapshot import RepositorySnapshot
 
@@ -24,20 +23,12 @@ def _select(value: Any, path: str) -> Any:
 def extract_command(
     snapshot: RepositorySnapshot, command: CommandSpec, json_path: str
 ) -> EvidenceValue:
-    env = {key: value for key, value in os.environ.items() if key in {"HOME", "PATH", "TMPDIR"}}
-    try:
-        with snapshot.materialized_root() as command_root:
-            proc = subprocess.run(
-                resolve_argv(command.argv),
-                cwd=command_root,
-                env=env,
-                text=True,
-                capture_output=True,
-                timeout=command.timeout_seconds,
-                check=False,
-            )
-    except (OSError, subprocess.SubprocessError) as exc:
-        raise ExtractionError(f"command {command.id} failed to run: {exc}") from exc
+    proc = run_isolated_process(
+        snapshot,
+        resolve_argv(command.argv),
+        label=f"command {command.id}",
+        timeout_seconds=command.timeout_seconds,
+    )
     if proc.returncode != 0:
         detail = proc.stderr.strip() or proc.stdout.strip()
         raise ExtractionError(f"command {command.id} exited {proc.returncode}: {detail[:500]}")

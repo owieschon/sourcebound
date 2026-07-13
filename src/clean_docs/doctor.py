@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import platform
 import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
+from clean_docs import __version__
 from clean_docs.audit import audit
 from clean_docs.errors import CleanDocsError, ConfigurationError
 from clean_docs.execution import resolve_argv
@@ -17,6 +19,56 @@ class DoctorCheck:
     name: str
     ok: bool
     detail: str
+
+
+@dataclass(frozen=True)
+class DiagnosticBundle:
+    ref: str | None
+    checks: tuple[DoctorCheck, ...]
+    bindings: int | None
+    commands: int | None
+    plugins: tuple[str, ...]
+
+    @property
+    def ok(self) -> bool:
+        return all(check.ok for check in self.checks)
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "schema": "clean-docs.diagnostic.v1",
+            "ok": self.ok,
+            "version": __version__,
+            "runtime": {
+                "python": platform.python_version(),
+                "implementation": platform.python_implementation(),
+                "system": platform.system(),
+                "machine": platform.machine(),
+            },
+            "repository": {
+                "ref": self.ref,
+                "bindings": self.bindings,
+                "commands": self.commands,
+                "plugins": list(self.plugins),
+            },
+            "checks": [
+                {"name": check.name, "ok": check.ok, "detail": check.detail}
+                for check in self.checks
+            ],
+            "included_data": [
+                "runtime versions",
+                "repository ref",
+                "manifest counts and plugin ids",
+                "doctor check results",
+            ],
+            "excluded_data": [
+                "environment variables",
+                "credentials",
+                "document contents",
+                "source contents",
+                "command arguments",
+            ],
+            "network_requests": 0,
+        }
 
 
 def _git_repository(root: Path) -> DoctorCheck:
@@ -75,3 +127,28 @@ def diagnose(root: Path, manifest_path: Path) -> tuple[DoctorCheck, ...]:
     except ConfigurationError as exc:
         checks.append(DoctorCheck("manifest", False, str(exc)))
     return tuple(checks)
+
+
+def build_diagnostic_bundle(root: Path, manifest_path: Path) -> DiagnosticBundle:
+    root = root.resolve()
+    checks = diagnose(root, manifest_path)
+    ref = None
+    proc = subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "HEAD"],
+        text=True,
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+    if proc.returncode == 0:
+        ref = proc.stdout.strip()
+    try:
+        manifest = load_manifest(manifest_path)
+        bindings = len(manifest.bindings)
+        commands = len(manifest.commands)
+        plugins = tuple(item.id for item in manifest.plugins)
+    except ConfigurationError:
+        bindings = None
+        commands = None
+        plugins = ()
+    return DiagnosticBundle(ref, checks, bindings, commands, plugins)

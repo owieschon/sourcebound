@@ -178,7 +178,8 @@ def test_ci_evidence_fails_on_drift_and_passes_after_regeneration(tmp_path: Path
     upload = next(
         step
         for step in workflow["jobs"]["clean-docs"]["steps"]
-        if step.get("uses") == "actions/upload-artifact@v4"
+        if step.get("uses")
+        == "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"
     )
     assert upload["if"] == "always()"
     assert upload["with"]["if-no-files-found"] == "error"

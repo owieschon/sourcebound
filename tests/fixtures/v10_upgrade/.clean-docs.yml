@@ -1,0 +1,10 @@
+version: 1
+bindings:
+  - id: facts
+    type: region
+    doc: README.md
+    region: facts
+    extractor: file
+    source: {path: facts.txt}
+    renderer: fenced-text
+    language: text

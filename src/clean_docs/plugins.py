@@ -4,10 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
-import shutil
-import subprocess
-import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -15,6 +11,7 @@ from typing import Any
 from clean_docs.errors import ConfigurationError, ExtractionError
 from clean_docs.execution import resolve_argv
 from clean_docs.inventory import InventoryItem, InventoryReport, scan_inventory
+from clean_docs.isolation import MAX_PROCESS_IO_BYTES, run_isolated_process
 from clean_docs.manifest import load_manifest
 from clean_docs.models import (
     PLUGIN_API_VERSION,
@@ -27,8 +24,7 @@ from clean_docs.policy import PolicyFinding
 from clean_docs.snapshot import RepositorySnapshot
 
 
-MAX_PLUGIN_OUTPUT_BYTES = 1_000_000
-COPY_IGNORES = (".git", ".venv", "node_modules", "__pycache__")
+MAX_PLUGIN_OUTPUT_BYTES = MAX_PROCESS_IO_BYTES
 
 
 @dataclass(frozen=True)
@@ -36,20 +32,6 @@ class PluginResponse:
     plugin: str
     operation: str
     result: dict[str, Any]
-
-
-def _isolated_copy(source: Path, destination: Path) -> None:
-    shutil.copytree(
-        source,
-        destination,
-        symlinks=True,
-        ignore=shutil.ignore_patterns(*COPY_IGNORES),
-    )
-    for path in destination.rglob("*"):
-        if path.is_symlink():
-            raise ExtractionError(
-                f"plugin snapshot contains a symbolic link: {path.relative_to(destination)}"
-            )
 
 
 def _run_plugin(
@@ -73,41 +55,16 @@ def _run_plugin(
         sort_keys=True,
         separators=(",", ":"),
     )
-    with snapshot.materialized_root() as source, tempfile.TemporaryDirectory(
-        prefix="clean-docs-plugin-"
-    ) as temporary:
-        sandbox = Path(temporary)
-        worktree = sandbox / "repository"
-        _isolated_copy(source, worktree)
-        environment = {
-            "HOME": str(sandbox / "home"),
-            "TMPDIR": str(sandbox / "tmp"),
-            "PATH": os.environ.get("PATH", ""),
-            "NO_COLOR": "1",
-        }
-        Path(environment["HOME"]).mkdir()
-        Path(environment["TMPDIR"]).mkdir()
-        try:
-            proc = subprocess.run(
-                resolve_argv(plugin.argv),
-                cwd=worktree,
-                input=request,
-                text=True,
-                capture_output=True,
-                timeout=plugin.timeout_seconds,
-                check=False,
-                env=environment,
-            )
-        except (OSError, subprocess.SubprocessError) as exc:
-            raise ExtractionError(f"plugin {plugin.id} failed to run: {exc}") from exc
+    proc = run_isolated_process(
+        snapshot,
+        resolve_argv(plugin.argv),
+        label=f"plugin {plugin.id}",
+        timeout_seconds=plugin.timeout_seconds,
+        input_text=request,
+    )
     if proc.returncode != 0:
         detail = proc.stderr.strip() or proc.stdout.strip() or "no output"
         raise ExtractionError(f"plugin {plugin.id} exited {proc.returncode}: {detail[:500]}")
-    output_size = len(proc.stdout.encode()) + len(proc.stderr.encode())
-    if output_size > MAX_PLUGIN_OUTPUT_BYTES:
-        raise ExtractionError(
-            f"plugin {plugin.id} output exceeds {MAX_PLUGIN_OUTPUT_BYTES} bytes"
-        )
     try:
         raw = json.loads(proc.stdout)
     except json.JSONDecodeError as exc:

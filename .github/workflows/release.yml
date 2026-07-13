@@ -1,0 +1,54 @@
+name: Publish release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: >-
+          python -m pip install
+          "build==1.2.2.post1" "setuptools==75.8.0" "wheel==0.45.1"
+      - run: python scripts/build_release.py --out dist
+      - run: python -m venv /tmp/clean-docs-release
+      - run: /tmp/clean-docs-release/bin/pip install dist/*.whl
+      - run: /tmp/clean-docs-release/bin/clean-docs --version
+      - run: /tmp/clean-docs-release/bin/clean-docs --root . verify
+      - run: python scripts/test_release_lifecycle.py --wheel dist/*.whl
+      - name: Attest wheel provenance
+        uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4.1.1
+        with:
+          subject-path: dist/*.whl
+      - name: Attest wheel SBOM
+        uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4.1.1
+        with:
+          subject-path: dist/*.whl
+          sbom-path: dist/*.spdx.json
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: clean-docs-release-${{ github.sha }}
+          path: dist/
+          if-no-files-found: error
+      - name: Publish release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          args=(--repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes)
+          if [[ "$GITHUB_REF_NAME" == *rc* ]]; then
+            args+=(--prerelease)
+          fi
+          gh release create "$GITHUB_REF_NAME" dist/* "${args[@]}"

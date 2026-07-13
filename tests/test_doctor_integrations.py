@@ -66,7 +66,9 @@ def test_distribution_integrations_are_strict() -> None:
     assert "command_property" in annotations["run"]
     upload = next(step for step in steps if step.get("name") == "Upload clean-docs evidence")
     assert upload["if"] == "always()"
-    assert upload["uses"] == "actions/upload-artifact@v4"
+    assert upload["uses"] == (
+        "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"
+    )
     assert upload["with"]["if-no-files-found"] == "error"
     assert "clean-docs-*.sarif" in upload["with"]["path"]
     assert workflow[True]["workflow_call"]["inputs"]["base-ref"]["required"] is False

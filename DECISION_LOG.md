@@ -257,3 +257,40 @@ make duplicate extension IDs and collisions with first-party inventory hard extr
 Inventory, changed checks, and release comparison use the same merge rule, so no output path can
 silently pick a different authority. Reversible: a future namespaced identity schema can replace
 the collision rule through a versioned plugin API migration.
+
+## 25. Apply one disposable-process boundary to commands and plugins (2026-07-13)
+
+Context: allowlisting a command defines what may run, but it does not constrain where that process
+reads or writes. Chose one process runner for declared commands and plugins. It rejects repository
+symlinks, copies the selected snapshot, supplies a temporary home and minimal environment, passes
+literal arguments without a shell, and enforces timeout, combined-output, and secret-output limits.
+Writes to the disposable copy are discarded. This is process isolation, not an operating-system or
+network sandbox, and the public security model says so. Reversible: a stronger platform sandbox can
+implement the same bounded result contract.
+
+## 26. Keep outcome and diagnostic receipts local and content-safe (2026-07-13)
+
+Context: continuous use needs evidence that drift was caught and enough runtime context to diagnose
+failures, but CLI telemetry would weaken the trust boundary. Chose deterministic local JSON
+receipts. `verify` records audit, binding, projection, and changed-check outcomes; `benchmark`
+records P95 time and process memory; `doctor --bundle` records versions, counts, plugin identifiers,
+and checks. Each declares zero network requests. Diagnostic output excludes environment variables,
+credentials, repository contents, and command arguments. Reversible: users can aggregate files in
+their own systems without changing local execution.
+
+## 27. Protect bootstrap projections in the generated manifest (2026-07-13)
+
+Context: `init` wrote `llms.txt` but did not declare that file as a checked projection, so the first
+generated repository could drift immediately after reaching a passing baseline. Chose to place the
+projection declaration in the generated manifest and verify both bindings and projections before
+bootstrap completes. Reversible: another declared output can replace `llms.txt` without creating an
+unowned generated file.
+
+## 28. Publish reproducible release evidence with signed attestations (2026-07-13)
+
+Context: a reproducible wheel proves byte stability locally but does not identify the public build
+that produced a downloaded asset or disclose its dependency claims. Chose deterministic SPDX 2.3
+SBOM generation from wheel metadata, checksums covering the wheel and SBOM, and GitHub artifact
+attestations for provenance and the SBOM. Official workflow actions are pinned to immutable commits.
+The release gate also installs the prior release, upgrades, rolls back, upgrades again, and uninstalls
+the candidate. Reversible: another signing service can attest the same wheel digest and SBOM bytes.

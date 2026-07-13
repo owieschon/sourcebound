@@ -1,6 +1,6 @@
 # Security policy
 
-This policy explains how to report a clean-docs vulnerability and which trust boundaries the current alpha supports.
+This policy explains how to report a clean-docs vulnerability and what support to expect.
 
 ## Report a vulnerability
 
@@ -15,8 +15,10 @@ Include:
 
 You should receive an acknowledgement within seven days. A fix, mitigation, or status update follows after the report is reproduced and scoped.
 
-## Supported alpha boundary
+## Supported boundary
 
-The Version 0.1 alpha parses YAML and Python syntax. It does not import bound Python modules or run repository commands. Manifest paths cannot be absolute or contain parent-directory segments. Generated content may change only the body between one declared marker pair.
+Static adapters parse source without importing repository modules. Manifest paths cannot be absolute or contain parent-directory segments. Generated content may change only the body between one declared marker pair.
 
-The alpha does not yet claim sandboxed plugin or command execution. Do not add command extractors until the execution policy and adversarial E2E suite in the product specification are implemented.
+Declared commands and plugins run in disposable repository copies with minimal environments, timeouts, active combined-I/O limits, symlink rejection, and secret-output rejection. These controls contain repository-relative writes. The execution environment still owns operating-system and network isolation for untrusted declared code.
+
+Read the [security model](docs/SECURITY_MODEL.md) for the trust tiers, enforced controls, and explicit non-goals.

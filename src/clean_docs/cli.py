@@ -11,7 +11,7 @@ from clean_docs.audit import audit
 from clean_docs.bootstrap import apply_bootstrap_plan, build_bootstrap_plan
 from clean_docs.capabilities import CLI_REFERENCE
 from clean_docs.changed import check_changed, render_sarif
-from clean_docs.doctor import diagnose
+from clean_docs.doctor import build_diagnostic_bundle
 from clean_docs.emit import emit_llms_txt, emit_stepwise_skill
 from clean_docs.engine import drive, evaluate, write_results
 from clean_docs.evaluation import run_evaluation, write_evaluation_history
@@ -21,6 +21,8 @@ from clean_docs.plugins import scan_extended_inventory
 from clean_docs.manifest import load_manifest
 from clean_docs.models import BindingResult
 from clean_docs.migration import apply_migration, build_migration_plan, rollback_migration
+from clean_docs.outcomes import build_outcome_receipt
+from clean_docs.performance import benchmark_changed_check
 from clean_docs.phrasing import RecordedProvider
 from clean_docs.projections import evaluate_projections, write_projections
 from clean_docs.release import (
@@ -28,6 +30,7 @@ from clean_docs.release import (
     render_release_markdown,
     validate_release_narrative,
 )
+from clean_docs.regions import atomic_write
 from clean_docs.standard import compile_standard, pack_matches_standard, write_pack
 
 
@@ -66,6 +69,18 @@ def _parser() -> argparse.ArgumentParser:
     explain_parser.add_argument("--format", choices=("text", "json"), default="text")
     doctor_parser = sub.add_parser("doctor", help=_command_help("doctor"))
     doctor_parser.add_argument("--format", choices=("text", "json"), default="text")
+    doctor_parser.add_argument("--bundle", type=Path)
+    verify = sub.add_parser("verify", help=_command_help("verify"))
+    verify.add_argument("--base")
+    verify.add_argument("--head")
+    verify.add_argument("--project", type=Path, default=Path("."))
+    verify.add_argument("--out", type=Path)
+    benchmark = sub.add_parser("benchmark", help=_command_help("benchmark"))
+    benchmark.add_argument("--base", required=True)
+    benchmark.add_argument("--head", required=True)
+    benchmark.add_argument("--project", type=Path, default=Path("."))
+    benchmark.add_argument("--iterations", type=int, default=7)
+    benchmark.add_argument("--out", type=Path)
     derive = sub.add_parser("derive", help=_command_help("derive"))
     derive.add_argument("--write", action="store_true", help="write derived regions atomically")
     derive.add_argument("--check", action="store_true", help="exit 1 when a region would change")
@@ -323,16 +338,50 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "doctor":
         manifest = args.manifest if args.manifest.is_absolute() else root / args.manifest
-        checks = diagnose(root, manifest)
+        bundle = build_diagnostic_bundle(root, manifest)
+        checks = bundle.checks
+        if args.bundle is not None:
+            bundle_path = args.bundle if args.bundle.is_absolute() else root / args.bundle
+            atomic_write(bundle_path, json.dumps(bundle.as_dict(), indent=2) + "\n")
         if args.format == "json":
-            print(json.dumps({
-                "ok": all(check.ok for check in checks),
-                "checks": [asdict(check) for check in checks],
-            }, indent=2))
+            print(json.dumps(bundle.as_dict(), indent=2))
         else:
             for check in checks:
                 print(f"[{'ok' if check.ok else 'fail'}] {check.name}: {check.detail}")
         return 0 if all(check.ok for check in checks) else 1
+    if args.command in {"verify", "benchmark"}:
+        manifest = args.manifest if args.manifest.is_absolute() else root / args.manifest
+        try:
+            if args.command == "verify":
+                outcome_report = build_outcome_receipt(
+                    root,
+                    manifest,
+                    base=args.base,
+                    head=args.head,
+                    project=args.project,
+                )
+                payload = outcome_report.as_dict()
+                ok = outcome_report.ok
+            else:
+                performance_report = benchmark_changed_check(
+                    root,
+                    manifest,
+                    base=args.base,
+                    head=args.head,
+                    project=args.project,
+                    iterations=args.iterations,
+                )
+                payload = performance_report.as_dict()
+                ok = performance_report.ok
+        except CleanDocsError as exc:
+            print(f"clean-docs: {exc}", file=sys.stderr)
+            return exc.exit_code
+        rendered = json.dumps(payload, indent=2) + "\n"
+        if args.out is not None:
+            output = args.out if args.out.is_absolute() else root / args.out
+            atomic_write(output, rendered)
+        sys.stdout.write(rendered)
+        return 0 if ok else 1
     if args.command == "standard":
         source = args.source if args.source.is_absolute() else root / args.source
         output = args.output if args.output.is_absolute() else root / args.output

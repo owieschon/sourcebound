@@ -13,6 +13,11 @@ import tarfile
 import tempfile
 from pathlib import Path, PurePosixPath
 
+if __package__:
+    from scripts.build_sbom import render_sbom
+else:
+    from build_sbom import render_sbom
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -91,19 +96,29 @@ def build_release(output: Path) -> dict[str, object]:
         if first_bytes != second_bytes:
             raise RuntimeError("wheel bytes differ across two builds of the same commit")
         digest = hashlib.sha256(first_bytes).hexdigest()
+        first_sbom = render_sbom(first, int(epoch))
+        second_sbom = render_sbom(second, int(epoch))
+        if first_sbom != second_sbom:
+            raise RuntimeError("SBOM bytes differ across two builds of the same commit")
         output.mkdir(parents=True, exist_ok=True)
         wheel = output / first.name
         wheel.write_bytes(first_bytes)
+        sbom = output / f"{wheel.stem}.spdx.json"
+        sbom.write_text(first_sbom)
+        sbom_digest = hashlib.sha256(first_sbom.encode()).hexdigest()
     receipt: dict[str, object] = {
         "schema": "clean-docs.release.v1",
         "ref": ref,
         "source_date_epoch": int(epoch),
         "artifact": {"file": wheel.name, "sha256": digest},
+        "sbom": {"file": sbom.name, "sha256": sbom_digest, "format": "SPDX-2.3"},
         "reproducible_builds": 2,
     }
     receipt_path = output / "release.json"
     receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
-    (output / "SHA256SUMS").write_text(f"{digest}  {wheel.name}\n")
+    (output / "SHA256SUMS").write_text(
+        f"{digest}  {wheel.name}\n{sbom_digest}  {sbom.name}\n"
+    )
     return receipt
 
 

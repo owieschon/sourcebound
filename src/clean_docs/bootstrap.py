@@ -14,8 +14,16 @@ from clean_docs.engine import evaluate
 from clean_docs.errors import ConfigurationError, PolicyError
 from clean_docs.extractors.inventory import INCLUDED_KINDS, extract_repository_inventory
 from clean_docs.inventory import InventoryItem, scan_inventory
-from clean_docs.models import Manifest, RegionBinding, Source
+from clean_docs.manifest import load_manifest
+from clean_docs.models import (
+    LlmsTxtProjection,
+    Manifest,
+    ProjectionConfig,
+    RegionBinding,
+    Source,
+)
 from clean_docs.phrasing import GroundedDraft, ModelRecord, PhrasingProvider, build_model_record
+from clean_docs.projections import evaluate_projections
 from clean_docs.regions import atomic_write, replace_region
 from clean_docs.renderers import render
 from clean_docs.snapshot import RepositorySnapshot
@@ -103,6 +111,11 @@ bindings:
     source: {{path: .}}
     renderer: markdown-table
     columns: [kind, name, source, locator]
+projections:
+  llms_txt:
+    output: llms.txt
+    title: Repository documentation
+    summary: Source-bound repository documentation.
 """
 
 
@@ -211,8 +224,24 @@ def build_bootstrap_plan(
         path=root / ".clean-docs.yml",
         version=1,
         bindings=(_binding(readme_path),),
+        projections=ProjectionConfig(
+            llms_txt=LlmsTxtProjection(
+                Path("llms.txt"),
+                "Repository documentation",
+                "Source-bound repository documentation.",
+            )
+        ),
     )
-    llms = render_llms_txt(manifest, documents={readme_path: readme.encode("utf-8")})
+    assert manifest.projections is not None
+    llms_config = manifest.projections.llms_txt
+    assert llms_config is not None
+    llms = render_llms_txt(
+        manifest,
+        title=llms_config.title,
+        summary=llms_config.summary,
+        documents={readme_path: readme.encode("utf-8")},
+        output_path=root / llms_config.output,
+    )
     writes = [
         item for item in (
             _planned_write(root, readme_path, readme, "bind detected repository surfaces"),
@@ -275,6 +304,9 @@ def apply_bootstrap_plan(root: Path, plan: BootstrapPlan) -> None:
                 f"{finding.path}:{finding.line} {finding.rule}" for finding in report.findings[:5]
             )
             raise PolicyError(f"init baseline has policy findings: {details}")
+        manifest = load_manifest(root / ".clean-docs.yml")
+        if any(result.changed for result in evaluate_projections(root, manifest)):
+            raise ConfigurationError("init wrote a baseline with stale projections")
     except Exception:
         for path, content in originals.items():
             target = root / path

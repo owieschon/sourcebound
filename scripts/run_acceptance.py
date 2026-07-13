@@ -64,6 +64,14 @@ EXPECTED_IDS_BY_RELEASE = {
         "schema-migration",
         "cross-ref-isolation",
     },
+    "1.0": {
+        "empty-to-protected-repository",
+        "full-change-lifecycle",
+        "offline-deterministic-operation",
+        "malicious-repository",
+        "upgrade-compatibility",
+        "independent-reader-success",
+    },
 }
 
 

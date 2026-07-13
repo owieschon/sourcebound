@@ -71,6 +71,16 @@ bindings:
     doc: docs/EXTENSIONS.md
     anchor: migrate-a-prior-manifest
     source: {path: src/clean_docs/migration.py, symbol: build_migration_plan}
+  - id: support-guide
+    type: symbol
+    doc: docs/SUPPORT.md
+    anchor: record-local-outcomes
+    source: {path: src/clean_docs/outcomes.py, symbol: build_outcome_receipt}
+  - id: security-model
+    type: symbol
+    doc: docs/SECURITY_MODEL.md
+    anchor: process-controls
+    source: {path: src/clean_docs/isolation.py, symbol: run_isolated_process}
 projections:
   llms_txt:
     output: llms.txt

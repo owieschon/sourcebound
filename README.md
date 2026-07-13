@@ -5,7 +5,7 @@ clean-docs is a self-driving documentation system that applies one packaged stan
 Write the standard once; clean-docs does the repository work. The finished product audits each repository, derives its factual spine from source, phrases it to the packaged standard, tests the result, and maintains it on every change. Models may phrase grounded facts; deterministic code owns the facts and gate results.
 
 <!-- clean-docs:begin product-overview -->
-Version 0.5 compares normalized evidence across immutable refs and renders provenance-backed release facts. Optional narrative drafts cannot change, omit, or uncite those facts. Versioned plugins add extractors, discoverers, renderers, and policy checks in disposable snapshots; manifest migration includes a byte-exact rollback. It projects one verified documentation graph into llms.txt, named context bundles, and an accessible static demonstration. It scores human commands and recorded agent responses, reports changed binding drift and coverage gaps, and bootstraps source-bound baselines. Static adapters cover Python, TypeScript, OpenAPI, JSON Schema, package metadata, and MCP tools without importing repository code. `derive` previews changes unless you pass `--write`; `audit`, `check`, and `release` never write.
+Version 1.0a1 protects Python and TypeScript repository documentation through local, pre-commit, and pull-request workflows. It compares normalized evidence across immutable refs and renders provenance-backed release facts. Optional narrative drafts cannot change, omit, or uncite those facts. Versioned plugins add extractors, discoverers, renderers, and policy checks in disposable snapshots; manifest migration includes a byte-exact rollback. It projects one verified documentation graph into llms.txt, named context bundles, and an accessible static demonstration. It scores human commands and recorded agent responses, reports changed binding drift and coverage gaps, and bootstraps source-bound baselines. Static adapters cover Python, TypeScript, OpenAPI, JSON Schema, package metadata, and MCP tools without importing repository code. Declared processes run in disposable copies with bounded I/O and minimal environments. Local outcome, performance, and diagnostic receipts make checks inspectable without telemetry. `derive` previews changes unless you pass `--write`; `audit`, `check`, `verify`, and `release` never change documentation.
 <!-- clean-docs:end product-overview -->
 ## Install and audit
 
@@ -18,9 +18,22 @@ clean-docs audit
 
 `audit` inventories tracked Markdown without `.clean-docs.yml`, enforces corpus rules, and scans tracked product files for repository residue.
 
+## Protect a repository
+
+Run the deterministic bootstrap once, inspect its patch, and verify the protected baseline:
+
+```bash
+clean-docs init --no-model
+git diff
+clean-docs check
+clean-docs verify
+```
+
+`init` adds source-bound facts, `.clean-docs.yml`, and a checked `llms.txt` projection. Commit those files with the source they describe. A later source change makes `check` fail until `drive` repairs recognized bindings and `project` refreshes projections.
+
 ## CLI reference
 
-Use the [CLI reference](docs/CLI.md) to look up each command and whether it writes.
+Use the [CLI reference](docs/CLI.md) to look up each command and whether it writes. The [support guide](docs/SUPPORT.md) defines supported runtimes, upgrades, diagnostics, and local outcome receipts.
 
 ## Manifest reference
 
@@ -88,9 +101,9 @@ This table is derived from `src/clean_docs/capabilities.py` by clean-docs itself
 ## Current limits
 
 - Claims consume JSON from an allowlisted command; symbols resolve static paths or Python names.
-- Command allowlisting and timeouts are enforced. In an allowlisted `argv`, `{python}` selects the interpreter running clean-docs. Network isolation belongs to the execution environment.
+- Declared commands and plugins run in disposable repository copies with minimal environments, active I/O limits, and timeouts. In an allowlisted `argv`, `{python}` selects the interpreter running clean-docs. Network isolation belongs to the execution environment; the [security model](docs/SECURITY_MODEL.md) defines the remaining OS boundary.
 - Coverage ignores must name a detected inventory ID and carry a specific reason; `explain` reports the evidence and repair for gaps.
-- Changed checks have a published five-second median budget on each pinned dogfood repository.
+- Changed checks have published P95 time and peak-memory budgets for small, medium, and monorepo fixtures.
 - Destination markers must already exist and cannot nest.
 - Evaluation claim boundaries are defined in the [evaluation guide](docs/EVALUATION.md).
 - clean-docs reports malformed configuration as exit `2`, drift as exit `1`, and extraction failures as exit `3`.

@@ -4,8 +4,10 @@
 
 ## Source-bound documentation
 
-- [README.md](README.md): bindings: manifest-reference, product-overview, supported-bindings; sha256: d1c0fc5f12654275285bc5bb2672c4020df795859d7633b85f1fecddac36e3f8
-- [docs/CLI.md](docs/CLI.md): bindings: cli-reference; sha256: 029425a74f7bd807c0e427a4e71397964092a71a80ef39693d4867fe065ab106
+- [README.md](README.md): bindings: manifest-reference, product-overview, supported-bindings; sha256: 0d2a37678adcb8a74c59a2f491bc797517bc0e78cd8913ce71c2ce1abe5f7579
+- [docs/CLI.md](docs/CLI.md): bindings: cli-reference; sha256: 8e85e281ac2e08bbae0228b022eed4f3b1c1f8e77367074191c8cebab72e4671
 - [docs/EVALUATION.md](docs/EVALUATION.md): bindings: evaluation-scorers; sha256: 4f7d56256d3d7d3fe72cad2cfb42517c610ee52ef10d0321a28f363d41916eba
 - [docs/EXTENSIONS.md](docs/EXTENSIONS.md): bindings: extension-guide, migration-guide; sha256: 7d86665951370945a23a9be17a9c9128cbe4b95446228707f8f098a6eeb47bd5
 - [docs/RELEASES.md](docs/RELEASES.md): bindings: release-guide; sha256: 5617e427e7a401c34fb962645a2a14e8b829e17f95b26f1ca00aadc6fc86b8fc
+- [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md): bindings: security-model; sha256: e7bb56614b994171657792d8eb94d8314251e762baa07947befa71b43169b7fa
+- [docs/SUPPORT.md](docs/SUPPORT.md): bindings: support-guide; sha256: 3e3deec8606122432070b17ebc7c76451d05bc032d271ad4ed8a70805a2ad0dc
