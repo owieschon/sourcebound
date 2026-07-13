@@ -2,11 +2,12 @@
 
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
+import sys
 
-try:
+if sys.version_info >= (3, 11):
     import tomllib
-except ImportError:  # pragma: no cover - Python 3.10
-    import tomli as tomllib  # type: ignore[import-not-found,no-redef]
+else:  # pragma: no cover - Python 3.10
+    import tomli as tomllib
 
 
 def _package_version() -> str:

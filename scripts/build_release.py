@@ -12,6 +12,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import zipfile
 from pathlib import Path, PurePosixPath
 
 if __package__:
@@ -23,6 +24,21 @@ else:
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _canonicalize_wheel(path: Path) -> None:
+    """Rewrite a wheel without runtime-dependent ZIP compression bytes."""
+    with zipfile.ZipFile(path) as source:
+        entries = [(name, source.read(name)) for name in sorted(source.namelist())]
+    temporary = path.with_suffix(".canonical.whl")
+    with zipfile.ZipFile(temporary, "w", compression=zipfile.ZIP_STORED) as output:
+        for name, content in entries:
+            info = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_STORED
+            info.create_system = 3
+            info.external_attr = 0o100644 << 16
+            output.writestr(info, content)
+    temporary.replace(path)
 
 
 def _run(*args: str, cwd: Path | None = None, env: dict[str, str] | None = None) -> str:
@@ -84,6 +100,7 @@ def _build_once(ref: str, epoch: str, parent: Path, name: str) -> Path:
     wheels = sorted(output.glob("*.whl"))
     if len(wheels) != 1:
         raise RuntimeError(f"release build produced {len(wheels)} wheels; expected 1")
+    _canonicalize_wheel(wheels[0])
     return wheels[0]
 
 

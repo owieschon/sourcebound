@@ -4,6 +4,7 @@ import hashlib
 import re
 import subprocess
 import sys
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -44,6 +45,22 @@ def test_published_wheel_checksum_command_accepts_matching_artifact(tmp_path: Pa
 
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip() == f"{wheel.name}: {digest}"
+
+
+def test_wheel_canonicalization_removes_zip_runtime_variation(tmp_path: Path) -> None:
+    first = tmp_path / "first.whl"
+    second = tmp_path / "second.whl"
+    with zipfile.ZipFile(first, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("b.txt", "second")
+        archive.writestr("a.txt", "first")
+    with zipfile.ZipFile(second, "w", compression=zipfile.ZIP_STORED) as archive:
+        archive.writestr("a.txt", "first")
+        archive.writestr("b.txt", "second")
+
+    release_builder._canonicalize_wheel(first)
+    release_builder._canonicalize_wheel(second)
+
+    assert first.read_bytes() == second.read_bytes()
 
 
 def test_release_toolchain_and_ci_install_are_pinned() -> None:
