@@ -18,7 +18,10 @@ test "$(grep -c '^#### Definition of done$' "$spec")" -eq 7
 
 grep -q 'quality-gate.py.*inherited product inputs' "$spec"
 grep -q 'Humans and agents consume the same canonical documentation' "$spec"
-grep -q 'They do not decide whether CI passes' "$spec"
+grep -q 'Write a documentation standard once' "$spec"
+grep -q 'Models phrase; they do not decide' "$spec"
+grep -q 'no per-change approval is required' "$spec"
+grep -q '`clean-docs drive \[--changed\]`' "$spec"
 grep -q 'Any repository.*core can inspect files' "$spec"
 grep -q 'The repository contains product truth only' "$spec"
 grep -q '`clean-docs doctor`' "$spec"

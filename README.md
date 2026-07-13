@@ -1,8 +1,10 @@
 # clean-docs
 
-clean-docs binds factual documentation to repository sources and fails when the two drift apart.
+Write your documentation standard once. clean-docs drives repository documentation to it and keeps the result current for humans and agents.
 
-The current alpha reads a static Python assignment, renders a marked Markdown table, and checks the committed table against the source. It never imports repository code. `derive` previews changes unless you pass `--write`; `check` never writes.
+The finished product audits each repository, derives its factual spine from source, phrases it to the configured standard, tests the result, and maintains it on every change. Models may phrase grounded facts; deterministic code owns the facts and gate results.
+
+The current alpha implements the first deterministic slice. It reads a static Python assignment, renders a marked Markdown table, and checks the committed table against the source. It never imports repository code. `derive` previews changes unless you pass `--write`; `check` never writes.
 
 ## Install the alpha
 
