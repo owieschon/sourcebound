@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from clean_docs.corpus import scan_corpus
+from clean_docs.residue import scan_residue
 from clean_docs.standard import load_default_pack
 
 
@@ -158,5 +159,12 @@ def audit(root: Path) -> AuditReport:
             for existing in findings
         ):
             findings.append(candidate)
+    for residue_finding in scan_residue(root):
+        findings.append(AuditFinding(
+            residue_finding.rule,
+            residue_finding.doc,
+            residue_finding.line,
+            residue_finding.detail,
+        ))
     findings.sort(key=lambda item: (item.path, item.line, item.rule))
     return AuditReport(tuple(active), tuple(ignored), tuple(findings))

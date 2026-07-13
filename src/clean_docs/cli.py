@@ -115,7 +115,11 @@ def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     root = args.root.resolve()
     if args.command == "audit":
-        report = audit(root)
+        try:
+            report = audit(root)
+        except CleanDocsError as exc:
+            print(f"clean-docs: {exc}", file=sys.stderr)
+            return exc.exit_code
         if args.format == "json":
             print(json.dumps({
                 "ok": not report.findings,

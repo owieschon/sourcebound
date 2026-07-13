@@ -45,12 +45,15 @@ def diagnose(root: Path, manifest_path: Path) -> tuple[DoctorCheck, ...]:
         ))
     except CleanDocsError as exc:
         checks.append(DoctorCheck("default-policy-pack", False, str(exc)))
-    report = audit(root)
-    checks.append(DoctorCheck(
-        "documentation-audit",
-        not report.findings,
-        f"{len(report.documents)} active documents; {len(report.findings)} findings",
-    ))
+    try:
+        report = audit(root)
+        checks.append(DoctorCheck(
+            "documentation-audit",
+            not report.findings,
+            f"{len(report.documents)} active documents; {len(report.findings)} findings",
+        ))
+    except CleanDocsError as exc:
+        checks.append(DoctorCheck("documentation-audit", False, str(exc)))
     try:
         manifest = load_manifest(manifest_path)
         checks.append(DoctorCheck(
