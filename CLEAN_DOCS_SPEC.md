@@ -78,9 +78,9 @@ The agent needs compact, current context with stable identifiers and source link
 11. **The repository contains product truth only.** Private planning, unrelated project context, and publication residue stay outside product code, docs, tests, issues, examples, and metadata.
 12. **The product stays local-first.** The CLI, pre-commit hook, and CI action are the product. A static demonstration may explain recorded behavior, but clean-docs does not require a hosted service or outbound telemetry.
 
-## 4. Existing foundation
+## 4. Starting foundation
 
-clean-docs starts from a working documentation-standard system. Version 0 preserves its evidence and shortcomings. The product work packages and extends this foundation instead of recreating it.
+clean-docs began with a working documentation-standard system. Version 0 preserves its evidence and shortcomings. The version plan records how the product packaged and extended this foundation instead of recreating it.
 
 | Existing artifact | Proven behavior | Product destination |
 | --- | --- | --- |
@@ -101,14 +101,14 @@ clean-docs starts from a working documentation-standard system. Version 0 preser
 - Prose rewriting alone can preserve a stale capability description.
 - Repository-derived factual regions and continuous verification are required, not optional extensions.
 
-### What remains unbuilt
+### Starting gaps closed by the version plan
 
-- The existing scripts do not share a package, configuration schema, finding model, or CLI.
-- The write gate is coupled to one agent runtime.
-- The hygiene linter detects but does not generate or maintain a compliant baseline.
-- No source binding, generated region, claim assertion, coverage model, or ref-aware evidence graph exists in code.
-- No `llms.txt`, context bundle, release delta, or task-evaluation runner exists.
-- The ultra-csm cleanup improved navigation but left justified findings and did not prove documentation accuracy.
+- The original scripts did not share a package, configuration schema, finding model, or CLI.
+- The original write gate was coupled to one agent runtime.
+- The original hygiene linter detected findings but did not generate or maintain a compliant baseline.
+- Source bindings, generated regions, claim assertions, coverage state, and a ref-aware evidence graph did not exist.
+- `llms.txt`, context bundles, release deltas, and task evaluation did not exist.
+- The initial ultra-csm cleanup improved navigation but left justified findings and did not prove documentation accuracy.
 
 These are the starting conditions for the version plan. Existing artifacts remain executable until their replacements pass parity tests.
 
@@ -409,7 +409,8 @@ Repository content is untrusted input.
 - Discovery never imports repository Python or JavaScript modules.
 - Command extractors run only named `argv` arrays from the configured manifest.
 - Shell interpolation is unsupported.
-- Network access is denied unless a configured command explicitly enables it.
+- Deterministic clean-docs paths make no network request, and manifests cannot grant network access to a declared command or plugin.
+- The local process wrapper cannot revoke host network access or absolute host paths. The execution environment must enforce those boundaries before it runs untrusted declared code.
 - Commands have time, output, and process-count limits.
 - Temporary checkouts are isolated from the user's working tree.
 - Secrets are redacted from logs and generated output.
@@ -457,6 +458,7 @@ Each release proves one product claim before the next release broadens it. A lat
 | [`v0.3.0`](https://github.com/owieschon/clean-docs/releases/tag/v0.3.0) | `f7c036198c7f2cbff59247d1307218133502b724` | [29228926772](https://github.com/owieschon/clean-docs/actions/runs/29228926772) | `0430ab14d02b643aab6990caed1094d1b89f6dfcd08d414d7968b39ff8ba21ac` |
 | [`v0.4.0`](https://github.com/owieschon/clean-docs/releases/tag/v0.4.0) | `715b91f01f67d519993f5aa23640867b76178e1a` | [29231093305](https://github.com/owieschon/clean-docs/actions/runs/29231093305) | `7599cdfc191089b2b7cead7798512ed4814a85e5fb73d40b806be60b9eb5eff9` |
 | [`v0.5.0`](https://github.com/owieschon/clean-docs/releases/tag/v0.5.0) | `17cd5461214e456d9f1925280627d7ec9ec0f0cb` | [29232645262](https://github.com/owieschon/clean-docs/actions/runs/29232645262) | `ed31005ab2160267701d7e16e1dacc8b0fa28935fcc321c3826f1973e8540f6d` |
+| [`v1.0.0rc5`](https://github.com/owieschon/clean-docs/releases/tag/v1.0.0rc5) | `a7c37ee90c9c6f73af1d73e685be9690d6856b92` | [29238892016](https://github.com/owieschon/clean-docs/actions/runs/29238892016) | `0ddb43c5a848e4243466bb6222f090cf8cbc0d9a414c07b98cc53e519a1ffc83` |
 
 ### Version 0: Proven local foundation, complete
 
@@ -869,7 +871,7 @@ Functional E2E tests use real temporary git repositories, not mocks of git behav
 - Expected exit code.
 - Expected file diff.
 - Expected finding identifiers and evidence.
-- Forbidden side effects, including undeclared working-tree mutation, network, secret output, and unrelated prose changes.
+- Forbidden side effects, including undeclared working-tree mutation, network requests by deterministic clean-docs paths, secret output, and unrelated prose changes. Declared child-process network isolation remains an execution-environment responsibility.
 
 Keep four fixture classes:
 
