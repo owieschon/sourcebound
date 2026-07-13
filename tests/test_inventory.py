@@ -270,3 +270,40 @@ bindings:
     assert before.split("<!-- clean-docs:inventory-sha256", 1)[0] == (
         second.expected.split("<!-- clean-docs:inventory-sha256", 1)[0]
     )
+
+
+def test_repository_overview_ignores_unrendered_package_version_changes(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "versioned-repository"
+    root.mkdir()
+    (root / "pyproject.toml").write_text(
+        '[project]\nname = "fixture"\nversion = "1.0.0rc1"\n'
+    )
+    readme = root / "README.md"
+    readme.write_text(
+        "# Surface\n\n"
+        "<!-- clean-docs:begin repository-surface -->\n"
+        "stale\n"
+        "<!-- clean-docs:end repository-surface -->\n"
+    )
+    manifest = root / ".clean-docs.yml"
+    manifest.write_text("""\
+version: 1
+bindings:
+  - id: repository-surface
+    type: region
+    doc: README.md
+    region: repository-surface
+    extractor: repository-overview
+    source: {path: .}
+    renderer: markdown-fragment
+""")
+    initial = evaluate(root, manifest)[0]
+    write_results(root, [initial])
+
+    (root / "pyproject.toml").write_text(
+        '[project]\nname = "fixture"\nversion = "1.0.0"\n'
+    )
+
+    assert not evaluate(root, manifest)[0].changed
