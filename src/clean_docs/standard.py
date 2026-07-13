@@ -91,7 +91,7 @@ def _style_contract(text: str, checks: list[str]) -> dict[str, Any]:
     required_phrases = {
         "second_person": "Second person + imperative",
         "system_actor": "Name the system as an actor",
-        "one_claim": "One claim per sentence",
+        "informative_clauses": "Every clause adds information",
         "concrete_verbs": "Plain, concrete verbs",
         "direct_facts": "State facts without hedging",
         "senior_colleague": "helpful senior colleague",
@@ -109,7 +109,7 @@ def _style_contract(text: str, checks: list[str]) -> dict[str, Any]:
             "register": "helpful senior colleague",
             "reader_actions": "second person and imperative",
             "system_behavior": "name the system as an actor and state behavior as fact",
-            "sentence_shape": "one claim per sentence",
+            "sentence_shape": "split claims that need separate evidence or differ in scope",
             "verbs": "plain and concrete",
             "certainty": "direct facts; mark genuine uncertainty explicitly",
             "contractions": "allowed",
