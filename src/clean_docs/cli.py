@@ -9,8 +9,10 @@ from pathlib import Path
 from clean_docs import __version__
 from clean_docs.audit import audit
 from clean_docs.doctor import diagnose
+from clean_docs.emit import emit_llms_txt, emit_stepwise_skill
 from clean_docs.engine import drive, evaluate, write_results
 from clean_docs.errors import CleanDocsError
+from clean_docs.manifest import load_manifest
 from clean_docs.models import BindingResult
 from clean_docs.standard import compile_standard, pack_matches_standard, write_pack
 
@@ -41,6 +43,22 @@ def _parser() -> argparse.ArgumentParser:
     check.add_argument("--binding", help="evaluate one binding id")
     check.add_argument("--ref", help="read bound sources from an immutable git ref")
     check.add_argument("--format", choices=("text", "json"), default="text")
+    emit = sub.add_parser("emit", help="project the manifest into an interoperable skill package")
+    emit_sub = emit.add_subparsers(dest="target", required=True)
+    stepwise = emit_sub.add_parser(
+        "stepwise-skill", help="emit a manifest-derived stepwise skill package"
+    )
+    stepwise.add_argument("--out", type=Path, default=Path("dist/stepwise-skill"))
+    stepwise.add_argument("--display-name", default="Keep documentation true")
+    stepwise.add_argument("--role", choices=("skill", "command"), default="skill")
+    stepwise.add_argument("--parent-command")
+    stepwise.add_argument("--command", dest="command_name")
+    llms = emit_sub.add_parser(
+        "llms-txt", help="emit an llms.txt index of the manifest's source-bound docs"
+    )
+    llms.add_argument("--out", type=Path, default=Path("llms.txt"))
+    llms.add_argument("--title", default="Repository documentation")
+    llms.add_argument("--summary")
     standard = sub.add_parser("standard", help="build or verify the bundled default policy pack")
     standard_sub = standard.add_subparsers(dest="standard_command", required=True)
     for command in ("build", "check"):
@@ -148,6 +166,31 @@ def main(argv: list[str] | None = None) -> int:
     if not manifest.is_absolute():
         manifest = root / manifest
     try:
+        if args.command == "emit":
+            loaded = load_manifest(manifest)
+            out = args.out if args.out.is_absolute() else root / args.out
+
+            def _shown(path: Path) -> Path:
+                return path.relative_to(root) if path.is_relative_to(root) else path
+
+            if args.target == "llms-txt":
+                written_path = emit_llms_txt(
+                    loaded, out, title=args.title, summary=args.summary
+                )
+                print(_shown(written_path))
+                return 0
+            written = emit_stepwise_skill(
+                loaded,
+                out,
+                display_name=args.display_name,
+                role=args.role,
+                parent_command=args.parent_command,
+                command=args.command_name,
+            )
+            for path in written:
+                print(_shown(path))
+            print(f"emit: wrote {len(written)} file(s) to {_shown(out)}")
+            return 0
         if args.command == "drive":
             results, findings = drive(
                 root,

@@ -29,4 +29,7 @@ jobs:
       - run: python scripts/check_doc_names.py
       - run: clean-docs --root . audit
       - run: clean-docs --root . doctor
+      - run: clean-docs --root . emit stepwise-skill --out /tmp/clean-docs-stepwise
+      - run: clean-docs --root /tmp/clean-docs-stepwise audit
+      - run: clean-docs --root . emit llms-txt --out /tmp/clean-docs-llms.txt
       - run: python scripts/trusted_self_check.py

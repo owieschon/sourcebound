@@ -71,3 +71,30 @@ signature. Options: (a) add brittle regexes; (b) record them as instruction-only
 standard's honest seam and name where an LLM-judge pass slots in. Chose (b): a judge-by-pattern
 check for a judgment call misfires in both directions, the failure mode this system was built to
 avoid. Reversible: prose in `STANDARD.md` section 6.
+
+## 8. Emit interoperable stepwise skills via an edge adapter, not an engine change (2026-07-13)
+
+Context: an interoperable distribution target requires a stepwise skill format. Options: (a)
+teach the engine that format; (b) keep one native model and project it through an edge adapter.
+Chose (b). `src/clean_docs/emit/stepwise.py` reads the manifest and writes `config.yaml` plus
+ordered reference steps chained by `next_step`. The package names the repository's bound docs
+and carries clean-docs' audit, repair, and verify workflow, so it is a projection instead of a
+static clone. Other projection formats can remain sibling adapters over the same model. The
+`test_emit_stepwise` E2E proves schema shape, stable reruns, manifest grounding, navigation, and
+workflow execution in a temporary repository. A target-specific build, security scan, or server
+integration remains outside this proof. Reversible: the adapter is isolated under `emit/`;
+deleting it leaves the engine untouched.
+
+## 9. Add an llms.txt projection and judge emit targets by payload, not format (2026-07-13)
+
+Context: the stepwise-skill adapter is format-correct but its payload is clean-docs' own command
+workflow. context-mill is a content system, so a package that carries commands is dressed in a
+content system's shape and no external registry will serve a "run clean-docs" skill. Options: (a)
+treat the stepwise skill as a live integration; (b) draw a content-vs-command line, keep the
+stepwise skill as a demonstration of format fluency and adapter architecture, and add the
+content-carrying projection the system actually wants. Chose (b): `src/clean_docs/emit/llms_txt.py`
+emits an llms.txt index of the manifest's source-bound documents, each linked with its bindings
+and a content sha256, regenerated as bindings change, so the index stays current by construction.
+The Agent Skill (`skill/SKILL.md`) already owns the command payload. The interface-compat doc now
+states this seam and labels the stepwise skill demonstration, not live integration. Reversible:
+the projection is additive under `emit/`; the framing is prose.
