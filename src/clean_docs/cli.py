@@ -14,6 +14,7 @@ from clean_docs.changed import check_changed, render_sarif
 from clean_docs.doctor import diagnose
 from clean_docs.emit import emit_llms_txt, emit_stepwise_skill
 from clean_docs.engine import drive, evaluate, write_results
+from clean_docs.evaluation import run_evaluation, write_evaluation_history
 from clean_docs.errors import CleanDocsError, ConfigurationError
 from clean_docs.explain import explain
 from clean_docs.inventory import scan_inventory
@@ -83,6 +84,14 @@ def _parser() -> argparse.ArgumentParser:
         "--check", action="store_true", help="exit 1 instead of writing stale projections"
     )
     project.add_argument("--format", choices=("text", "json"), default="text")
+    evaluate_tasks = sub.add_parser("eval", help=_command_help("eval"))
+    evaluate_tasks.add_argument(
+        "--fixtures", type=Path, default=Path(".clean-docs/eval.yml")
+    )
+    evaluate_tasks.add_argument("--mode", choices=("replay", "live"), default="replay")
+    evaluate_tasks.add_argument("--record-dir", type=Path)
+    evaluate_tasks.add_argument("--history", type=Path)
+    evaluate_tasks.add_argument("--format", choices=("text", "json"), default="text")
     emit = sub.add_parser("emit", help=_command_help("emit"))
     emit_sub = emit.add_subparsers(dest="target", required=True)
     stepwise = emit_sub.add_parser(
@@ -277,6 +286,37 @@ def main(argv: list[str] | None = None) -> int:
     if not manifest.is_absolute():
         manifest = root / manifest
     try:
+        if args.command == "eval":
+            fixtures = args.fixtures if args.fixtures.is_absolute() else root / args.fixtures
+            record_dir = args.record_dir
+            if record_dir is not None and not record_dir.is_absolute():
+                record_dir = root / record_dir
+            evaluation_report = run_evaluation(
+                root,
+                manifest,
+                fixtures,
+                mode=args.mode,
+                record_dir=record_dir,
+            )
+            if args.history:
+                history = args.history if args.history.is_absolute() else root / args.history
+                write_evaluation_history(history, evaluation_report)
+            if args.format == "json":
+                print(json.dumps(evaluation_report.as_dict(), indent=2))
+            else:
+                for audience, task_results in (
+                    ("human", evaluation_report.human_tasks),
+                    ("agent", evaluation_report.agent_tasks),
+                ):
+                    passed = sum(result.ok for result in task_results)
+                    print(f"{audience}: {passed}/{len(task_results)} task(s) passed")
+                    for result in task_results:
+                        state = "pass" if result.ok else "fail"
+                        print(f"[{state}] {result.id} ({result.scorer}): {result.detail}")
+                print(
+                    f"hygiene: {len(evaluation_report.hygiene_findings)} finding(s)"
+                )
+            return 0 if evaluation_report.ok else 1
         if args.command == "project":
             loaded = load_manifest(manifest)
             projection_results = evaluate_projections(root, loaded)
