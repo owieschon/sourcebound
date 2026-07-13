@@ -1,8 +1,8 @@
-participant: 05d6179a-3e58-470c-9140-248f9cb5435e
+participant: 1df96ff3-a3d2-4817-8538-62f439080119
 profile: anthropic-sonnet-5
 independent: true
 context: published-docs-only
-completed_at: 2026-07-13T22:39:57Z
+completed_at: 2026-07-13T22:58:21Z
 result: PASS
 task: protect-fixture
 
@@ -25,7 +25,7 @@ workspace/fixture/
   src/fixture_pkg/__init__.py: public function add(a, b)
 
 $ git init -q && git add -A && git commit -q -m "initial fixture"
-setup_exit=0 (one commit: 9fb989c "initial fixture")
+setup_exit=0 (one commit: ae914f7 "initial fixture")
 
 commands, exit codes, and output:
 
@@ -78,7 +78,7 @@ check_exit=0
 $ clean-docs verify
 {
   "schema": "clean-docs.outcome.v1",
-  "version": "1.0.0rc16",
+  "version": "1.0.0rc17",
   "ref": "WORKTREE",
   "ok": true,
   "outcomes": {
@@ -99,7 +99,7 @@ verify_exit=0
 Baseline committed for reuse by the repair-drift task:
 $ git add README.md .clean-docs.yml llms.txt
 $ git commit -q -m "protected baseline (clean-docs init)"
-87d8148 protected baseline (clean-docs init)
+fe492d1 protected baseline (clean-docs init)
 
 result: init, git diff inspection, check, and verify all completed and
 passed exactly as documented (init_exit=0, check_exit=0, verify_exit=0,

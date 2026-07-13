@@ -1,11 +1,11 @@
-participant: 906A29D0-6C1B-4A0D-88B1-3E7A2E6E1FCA
+participant: 4911D34F-2DDA-4212-B97C-17F8D60F9E05
 profile: anthropic-opus-4-8
 independent: true
 context: published-docs-only
-completed_at: 2026-07-13T22:42:40Z
+completed_at: 2026-07-13T23:00:56Z
 result: PASS
 task: explain-limitation
-candidate: clean-docs 1.0.0rc16
+candidate: clean-docs 1.0.0rc17
 
 evidence:
   QUESTION: Does clean-docs revoke host network access from every process on
@@ -41,12 +41,11 @@ evidence:
      "Network isolation belongs to the execution environment; the [security
       model](docs/SECURITY_MODEL.md) defines the remaining OS boundary."
 
-  Supporting scope (what the controls actually cover), docs/SECURITY_MODEL.md
-  -- section "## Process controls" (line 20):
-     "Every declared process receives a copied repository, temporary home,
-      temporary directory, PATH, and NO_COLOR. clean-docs does not pass
-      other environment variables. ... discards the copy after the result is
-      parsed."
+  Supporting scope (what the controls cover), docs/SECURITY_MODEL.md --
+  section "## Process controls" (line 20): "Every declared process receives a
+  copied repository, temporary home, temporary directory, PATH, and NO_COLOR.
+  clean-docs does not pass other environment variables. ... discards the copy
+  after the result is parsed."
 
   These sections jointly establish that clean-docs neither claims nor
   provides machine-wide network revocation; that responsibility belongs to

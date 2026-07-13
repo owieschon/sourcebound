@@ -1,26 +1,32 @@
-participant: 2B1AE0F7-FC8C-409F-8FF5-2678FF4820C9
+participant: A065012C-9F65-4820-8CB2-E1389B9F9DF2
 profile: codex-gpt-5-6-sol-high
 independent: true
 context: published-docs-only
-completed_at: 2026-07-13T22:42:07Z
+completed_at: 2026-07-13T22:59:58Z
 result: PASS
 task: protect-fixture
 evidence:
-  Published procedure citation: README.md, section "Protect a repository".
+  Published procedure citation: README.md, section "Protect a repository" (lines 33-47).
   Fresh fixture: workspace/fixture
   Authored tracked inputs:
     - README.md with substantive purpose prose and a Public API section.
-    - src/widget.py with public function public_greeting(name: str) -> str and static ACTIONS data.
-  Command: git init workspace/fixture
+    - src/widget.py with static ACTIONS data and public function public_greeting(name: str) -> str.
+  Command: git init -b main .
   Output:
-    Initialized empty Git repository in /Users/owieschon/clean-docs-reader-trials-rc16/codex-gpt-5-6-sol-high/workspace/fixture/.git/
+    Initialized empty Git repository in /Users/owieschon/clean-docs-reader-trials-rc17/codex-gpt-5-6-sol-high/workspace/fixture/.git/
+  Exit code: 0
+  Command: git config user.name 'Clean Docs Trial'
+  Output: <empty>
+  Exit code: 0
+  Command: git config user.email 'trial@example.invalid'
+  Output: <empty>
   Exit code: 0
   Command: git add README.md src/widget.py
   Output: <empty>
   Exit code: 0
   Command: git commit -m 'Create fixture'
   Output:
-    [main (root-commit) b5d7827] Create fixture
+    [main (root-commit) bbd3bb2] Create fixture
      2 files changed, 17 insertions(+)
      create mode 100644 README.md
      create mode 100644 src/widget.py
@@ -76,7 +82,7 @@ evidence:
   Output:
     {
       "schema": "clean-docs.outcome.v1",
-      "version": "1.0.0rc16",
+      "version": "1.0.0rc17",
       "ref": "WORKTREE",
       "ok": true,
       "outcomes": {

@@ -1,37 +1,37 @@
-participant: 2B1AE0F7-FC8C-409F-8FF5-2678FF4820C9
+participant: A065012C-9F65-4820-8CB2-E1389B9F9DF2
 profile: codex-gpt-5-6-sol-high
 independent: true
 context: published-docs-only
-completed_at: 2026-07-13T22:42:07Z
+completed_at: 2026-07-13T22:59:58Z
 result: PASS
 task: install
 evidence:
-  Published procedure citations: docs/SUPPORT.md, section "Install, upgrade, roll back, and uninstall"; docs/SUPPORT.md, subsection "Verify release artifacts".
-  Checksum command: the published local Python SHA-256 snippet in docs/SUPPORT.md, run from the assigned profile directory.
+  Published procedure citations: docs/SUPPORT.md, section "Install, upgrade, roll back, and uninstall" (lines 65-80); subsection "Verify release artifacts" (lines 92-119).
+  Checksum command: the literal local Python SHA-256 snippet at docs/SUPPORT.md lines 97-114.
   Checksum output:
-    clean_docs-1.0.0rc16-py3-none-any.whl: d172a67420575d190a403b9d33dd12a854c8fdb8cbbee6e1dbbd46ab84b16032
+    clean_docs-1.0.0rc17-py3-none-any.whl: 058a6b27cdb66519e98812388f44c024ad817463e268bdd8563f87c8920a5a0b
   Checksum exit code: 0
-  SHA256SUMS expected digest: d172a67420575d190a403b9d33dd12a854c8fdb8cbbee6e1dbbd46ab84b16032
-  Observed result: the wheel digest exactly matched SHA256SUMS.
+  SHA256SUMS expected digest: 058a6b27cdb66519e98812388f44c024ad817463e268bdd8563f87c8920a5a0b
+  Observed checksum result: the wheel digest exactly matched SHA256SUMS.
   Command: python3 -m venv workspace/install-venv
   Output: <empty>
   Exit code: 0
   Command: workspace/install-venv/bin/python -m pip install --no-index --find-links ./wheelhouse ./clean_docs-*.whl
   Output:
-    WARNING: The directory '/Users/owieschon/Library/Caches/pip' or its parent directory is not owned or is not writable by the current user. The cache has been disabled. Check the permissions and owner of that directory. If executing pip with sudo, you should use sudo's -H flag.
     Looking in links: ./wheelhouse
-    Processing ./clean_docs-1.0.0rc16-py3-none-any.whl
-    Processing ./wheelhouse/pyyaml-6.0.3-cp314-cp314-macosx_11_0_arm64.whl (from clean-docs==1.0.0rc16)
+    Processing ./clean_docs-1.0.0rc17-py3-none-any.whl
+    Processing ./wheelhouse/pyyaml-6.0.3-cp314-cp314-macosx_11_0_arm64.whl (from clean-docs==1.0.0rc17)
     Installing collected packages: PyYAML, clean-docs
-    Successfully installed PyYAML-6.0.3 clean-docs-1.0.0rc16
+
+    Successfully installed PyYAML-6.0.3 clean-docs-1.0.0rc17
   Exit code: 0
   Command: workspace/install-venv/bin/clean-docs --version
   Output:
-    1.0.0rc16
+    1.0.0rc17
   Exit code: 0
   Literal-command failures: none. No documented command that was attempted failed.
   Substitutions:
     - The documented venv path ".venv" was changed to "workspace/install-venv" because the trial requires all generated state under workspace.
-    - Instead of relying on shell activation across command invocations, the venv's explicit python and clean-docs executable paths were used. The documented --no-index, --find-links, wheel glob, and local wheelhouse semantics were unchanged.
-  Network-dependent command not run: "gh attestation verify" was not run because the trial forbids network access and docs/SUPPORT.md states that the attestation step needs GitHub access. The documented checksum step is explicitly local.
+    - Explicit venv executable paths replaced shell activation because command invocations do not share shell state. The documented --no-index, --find-links, wheel glob, and local wheelhouse semantics were unchanged.
+  Network-dependent command not run: "gh attestation verify" was not run because the trial forbids network access and docs/SUPPORT.md line 119 states that attestation needs GitHub access. The documented checksum step is explicitly local.
 documentation_gaps: none

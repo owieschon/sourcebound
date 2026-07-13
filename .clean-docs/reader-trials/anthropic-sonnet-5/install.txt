@@ -1,8 +1,8 @@
-participant: 05d6179a-3e58-470c-9140-248f9cb5435e
+participant: 1df96ff3-a3d2-4817-8538-62f439080119
 profile: anthropic-sonnet-5
 independent: true
 context: published-docs-only
-completed_at: 2026-07-13T22:39:57Z
+completed_at: 2026-07-13T22:58:21Z
 result: PASS
 task: install
 
@@ -22,11 +22,11 @@ run read-only, no files modified):
 $ python3 - <<'PY'
 [script from docs/SUPPORT.md "Verify release artifacts", verbatim]
 PY
-clean_docs-1.0.0rc16-py3-none-any.whl: d172a67420575d190a403b9d33dd12a854c8fdb8cbbee6e1dbbd46ab84b16032
+clean_docs-1.0.0rc17-py3-none-any.whl: 058a6b27cdb66519e98812388f44c024ad817463e268bdd8563f87c8920a5a0b
 checksum_exit=0
 
 This matches SHA256SUMS exactly:
-d172a67420575d190a403b9d33dd12a854c8fdb8cbbee6e1dbbd46ab84b16032  clean_docs-1.0.0rc16-py3-none-any.whl
+058a6b27cdb66519e98812388f44c024ad817463e268bdd8563f87c8920a5a0b  clean_docs-1.0.0rc17-py3-none-any.whl
 
 Step 2 -- create venv under workspace and install offline via the
 bundled wheelhouse (SUPPORT.md: "A release bundle also contains a
@@ -37,21 +37,21 @@ $ python3 -m venv workspace/.venv
 venv_exit=0
 
 $ source workspace/.venv/bin/activate
-$ python -m pip install --no-index --find-links ./wheelhouse ./clean_docs-1.0.0rc16-py3-none-any.whl
+$ python -m pip install --no-index --find-links ./wheelhouse ./clean_docs-1.0.0rc17-py3-none-any.whl
 Looking in links: ./wheelhouse
-Processing ./clean_docs-1.0.0rc16-py3-none-any.whl
-Processing ./wheelhouse/pyyaml-6.0.3-cp314-cp314-macosx_11_0_arm64.whl (from clean-docs==1.0.0rc16)
+Processing ./clean_docs-1.0.0rc17-py3-none-any.whl
+Processing ./wheelhouse/pyyaml-6.0.3-cp314-cp314-macosx_11_0_arm64.whl (from clean-docs==1.0.0rc17)
 Installing collected packages: PyYAML, clean-docs
-Successfully installed PyYAML-6.0.3 clean-docs-1.0.0rc16
+Successfully installed PyYAML-6.0.3 clean-docs-1.0.0rc17
 pip_install_exit=0
 
 $ clean-docs --version
-1.0.0rc16
+1.0.0rc17
 version_exit=0
 
 result: checksum verified locally and matched; wheel installed with
 `--no-index --find-links ./wheelhouse`, contacting no package index (no
-network activity); `clean-docs --version` reports 1.0.0rc16, matching
+network activity); `clean-docs --version` reports 1.0.0rc17, matching
 the wheel filename, exactly as SUPPORT.md specifies ("The version
 output must match the wheel filename").
 

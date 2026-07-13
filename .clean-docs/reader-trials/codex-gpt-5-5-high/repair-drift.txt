@@ -1,8 +1,8 @@
-participant: 92258FAD-2026-46D4-93C0-61EB50A0504C
+participant: 51F7DD94-22EF-4CE7-9488-FC56B6D80821
 profile: codex-gpt-5-5-high
 independent: true
 context: published-docs-only
-completed_at: 2026-07-13T22:40:32Z
+completed_at: 2026-07-13T22:59:42Z
 result: PASS
 task: repair-drift
 evidence:
@@ -19,7 +19,7 @@ evidence:
     renderer: markdown-table
     columns: [name, tier]
 
-  Command: /Users/owieschon/clean-docs-reader-trials-rc16/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs drive && git diff -- .clean-docs.yml README.md llms.txt && /Users/owieschon/clean-docs-reader-trials-rc16/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs project && git diff -- .clean-docs.yml README.md llms.txt && /Users/owieschon/clean-docs-reader-trials-rc16/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check && /Users/owieschon/clean-docs-reader-trials-rc16/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs verify
+  Command: /Users/owieschon/clean-docs-reader-trials-rc17/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs drive && git diff -- .clean-docs.yml README.md llms.txt && /Users/owieschon/clean-docs-reader-trials-rc17/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs project && git diff -- .clean-docs.yml README.md llms.txt && /Users/owieschon/clean-docs-reader-trials-rc17/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check && /Users/owieschon/clean-docs-reader-trials-rc17/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs verify
   Exit code: 0
   Baseline output:
   [current] repository-surface: README.md
@@ -43,10 +43,10 @@ evidence:
   | --- | --- |
   | alpha | stable |
 
-  Command: git add README.md .clean-docs.yml llms.txt src/fixture_app/actions.py && git -c user.name='Reader Trial' -c user.email='reader-trial@example.invalid' commit -m 'Protect fixture docs and action binding' && /Users/owieschon/clean-docs-reader-trials-rc16/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check
+  Command: git add README.md .clean-docs.yml llms.txt src/fixture_app/actions.py && git -c user.name='Reader Trial' -c user.email='reader-trial@example.invalid' commit -m 'Protect fixture docs and action binding' && /Users/owieschon/clean-docs-reader-trials-rc17/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check
   Exit code: 0
   Relevant output:
-  [main 3b62426] Protect fixture docs and action binding
+  [main 88af410] Protect fixture docs and action binding
    3 files changed, 47 insertions(+)
    create mode 100644 .clean-docs.yml
    create mode 100644 llms.txt
@@ -57,7 +57,7 @@ evidence:
   Source change:
   src/fixture_app/actions.py changed from {"name": "alpha", "tier": "stable"} to {"name": "beta", "tier": "stable"}.
 
-  Command: /Users/owieschon/clean-docs-reader-trials-rc16/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check
+  Command: /Users/owieschon/clean-docs-reader-trials-rc17/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check
   Exit code: 1
   First failure output:
   [current] repository-surface: README.md
@@ -73,7 +73,7 @@ evidence:
    <!-- clean-docs:end actions -->
   [current] projection:llms.txt: llms.txt
 
-  Command: /Users/owieschon/clean-docs-reader-trials-rc16/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs drive && git diff -- README.md llms.txt src/fixture_app/actions.py .clean-docs.yml && /Users/owieschon/clean-docs-reader-trials-rc16/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs project && git diff -- README.md llms.txt src/fixture_app/actions.py .clean-docs.yml && /Users/owieschon/clean-docs-reader-trials-rc16/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check && /Users/owieschon/clean-docs-reader-trials-rc16/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs verify
+  Command: /Users/owieschon/clean-docs-reader-trials-rc17/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs drive && git diff -- README.md llms.txt src/fixture_app/actions.py .clean-docs.yml && /Users/owieschon/clean-docs-reader-trials-rc17/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs project && git diff -- README.md llms.txt src/fixture_app/actions.py .clean-docs.yml && /Users/owieschon/clean-docs-reader-trials-rc17/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check && /Users/owieschon/clean-docs-reader-trials-rc17/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs verify
   Exit code: 0
   Repair output:
   [current] repository-surface: README.md
@@ -96,7 +96,7 @@ evidence:
 
   Final verification fields:
   schema: clean-docs.outcome.v1
-  version: 1.0.0rc16
+  version: 1.0.0rc17
   ok: true
   protected_baseline_current: true
   coverage_complete: true

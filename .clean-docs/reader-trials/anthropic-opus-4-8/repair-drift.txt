@@ -1,11 +1,11 @@
-participant: 906A29D0-6C1B-4A0D-88B1-3E7A2E6E1FCA
+participant: 4911D34F-2DDA-4212-B97C-17F8D60F9E05
 profile: anthropic-opus-4-8
 independent: true
 context: published-docs-only
-completed_at: 2026-07-13T22:42:22Z
+completed_at: 2026-07-13T23:00:36Z
 result: PASS
 task: repair-drift
-candidate: clean-docs 1.0.0rc16
+candidate: clean-docs 1.0.0rc17
 
 evidence:
   SUPPORTED MANIFEST PATTERN ADDED (README "Manifest reference" example: a
@@ -30,22 +30,18 @@ evidence:
     $ clean-docs check
         [current] repository-surface / commands / projection:llms.txt
         baseline_check_exit=0
-    $ git commit ...        commit_exit=0   (baseline at 8975308)
+    $ git commit ...        commit_exit=0   (baseline at 3e96602)
 
   WHAT CHANGED (bound source edit to make the docs stale):
-    $ git diff -- src/widgetkit/core.py
+    src/widgetkit/core.py COMMANDS entry:
       -    {"name": "report", "summary": "Write the deterministic normalized report"},
       +    {"name": "publish", "summary": "Publish the deterministic normalized report"},
 
   FIRST CHECK FAILS (README repair step 1: "exits 1 and names the stale
   binding"):
     $ clean-docs check
-      [current] repository-surface: README.md
-      [drift] commands: README.md
-        -| report | Write the deterministic normalized report |
-        +| publish | Publish the deterministic normalized report |
-      [current] projection:llms.txt: llms.txt
-      check1_exit=1        (drift == exit 1, per README "Current limits")
+        [drift] commands: README.md   (report -> publish)
+        check1_exit=1        (drift == exit 1, per README "Current limits")
 
   PUBLISHED REPAIR PROCEDURE (README "Protect a repository": the exact
   documented sequence check -> drive -> project -> verify, including the
@@ -60,10 +56,10 @@ evidence:
 
   FINAL CHECK PASSES:
     $ clean-docs check
-      [current] repository-surface / commands / projection:llms.txt
-      check2_exit=0
+        [current] repository-surface / commands / projection:llms.txt
+        check2_exit=0
 
-  Repaired state committed at 6717ed2. All exit codes: baseline_check=0,
+  Repaired state committed at 8f30747. All exit codes: baseline_check=0,
   check1=1, drive=0, project=0, verify=0, check2=0.
 
 documentation_gaps: none

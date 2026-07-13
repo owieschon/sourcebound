@@ -1,8 +1,8 @@
-participant: 05d6179a-3e58-470c-9140-248f9cb5435e
+participant: 1df96ff3-a3d2-4817-8538-62f439080119
 profile: anthropic-sonnet-5
 independent: true
 context: published-docs-only
-completed_at: 2026-07-13T22:39:57Z
+completed_at: 2026-07-13T22:58:21Z
 result: PASS
 task: repair-drift
 
@@ -19,7 +19,7 @@ Source-to-document binding: the `repository-surface` region binding
 declared in .clean-docs.yml by `clean-docs init --no-model` during the
 protect-fixture task -- this is a supported binding type (type: region,
 per README's manifest reference table) and was already established with
-a passing baseline, committed as 87d8148 "protected baseline (clean-docs
+a passing baseline, committed as fe492d1 "protected baseline (clean-docs
 init)" in the protect-fixture task.
 
 .clean-docs.yml binding (unmodified, inspected only):
@@ -93,7 +93,7 @@ $ clean-docs check
 check_final_exit=0
 
 $ clean-docs verify
-{"schema": "clean-docs.outcome.v1", "version": "1.0.0rc16", "ref": "WORKTREE",
+{"schema": "clean-docs.outcome.v1", "version": "1.0.0rc17", "ref": "WORKTREE",
  "ok": true, "outcomes": {"protected_baseline_current": true,
  "coverage_complete": true, "direct_coverage_complete": false,
  "drift_caught_before_merge": 0}, "bindings": {"total": 1, "current": 1,

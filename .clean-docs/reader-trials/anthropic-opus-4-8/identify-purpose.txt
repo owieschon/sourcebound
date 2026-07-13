@@ -1,11 +1,11 @@
-participant: 906A29D0-6C1B-4A0D-88B1-3E7A2E6E1FCA
+participant: 4911D34F-2DDA-4212-B97C-17F8D60F9E05
 profile: anthropic-opus-4-8
 independent: true
 context: published-docs-only
-completed_at: 2026-07-13T22:40:27Z
+completed_at: 2026-07-13T22:58:34Z
 result: PASS
 task: identify-purpose
-candidate: clean-docs 1.0.0rc16
+candidate: clean-docs 1.0.0rc17
 
 evidence:
   SOURCE (README.md first body block, the <!-- clean-docs:purpose --> block,

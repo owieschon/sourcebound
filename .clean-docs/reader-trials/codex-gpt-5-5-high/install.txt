@@ -1,8 +1,8 @@
-participant: 92258FAD-2026-46D4-93C0-61EB50A0504C
+participant: 51F7DD94-22EF-4CE7-9488-FC56B6D80821
 profile: codex-gpt-5-5-high
 independent: true
 context: published-docs-only
-completed_at: 2026-07-13T22:40:32Z
+completed_at: 2026-07-13T22:59:42Z
 result: PASS
 task: install
 evidence:
@@ -35,17 +35,17 @@ evidence:
   PY
   Exit code: 0
   Relevant output:
-  clean_docs-1.0.0rc16-py3-none-any.whl: d172a67420575d190a403b9d33dd12a854c8fdb8cbbee6e1dbbd46ab84b16032
+  clean_docs-1.0.0rc17-py3-none-any.whl: 058a6b27cdb66519e98812388f44c024ad817463e268bdd8563f87c8920a5a0b
 
   Command: mkdir -p workspace && python3 -m venv workspace/.venv && source workspace/.venv/bin/activate && python -m pip install --no-index --find-links ./wheelhouse ./clean_docs-*.whl && clean-docs --version
   Exit code: 0
   Relevant output:
   Looking in links: ./wheelhouse
-  Processing ./clean_docs-1.0.0rc16-py3-none-any.whl
-  Processing ./wheelhouse/pyyaml-6.0.3-cp314-cp314-macosx_11_0_arm64.whl (from clean-docs==1.0.0rc16)
+  Processing ./clean_docs-1.0.0rc17-py3-none-any.whl
+  Processing ./wheelhouse/pyyaml-6.0.3-cp314-cp314-macosx_11_0_arm64.whl (from clean-docs==1.0.0rc17)
   Installing collected packages: PyYAML, clean-docs
-  Successfully installed PyYAML-6.0.3 clean-docs-1.0.0rc16
-  1.0.0rc16
+  Successfully installed PyYAML-6.0.3 clean-docs-1.0.0rc17
+  1.0.0rc17
 
   Observation: install used --no-index and ./wheelhouse; no package index access was used.
 documentation_gaps: none

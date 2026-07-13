@@ -1,11 +1,11 @@
-participant: 906A29D0-6C1B-4A0D-88B1-3E7A2E6E1FCA
+participant: 4911D34F-2DDA-4212-B97C-17F8D60F9E05
 profile: anthropic-opus-4-8
 independent: true
 context: published-docs-only
-completed_at: 2026-07-13T22:41:34Z
+completed_at: 2026-07-13T22:59:45Z
 result: PASS
 task: protect-fixture
-candidate: clean-docs 1.0.0rc16
+candidate: clean-docs 1.0.0rc17
 
 evidence:
   FIXTURE (fresh minimal git repo under workspace/fixture):
@@ -49,7 +49,7 @@ evidence:
     $ clean-docs verify
         {
           "schema": "clean-docs.outcome.v1",
-          "version": "1.0.0rc16",
+          "version": "1.0.0rc17",
           "ref": "WORKTREE",
           "ok": true,
           "outcomes": { "protected_baseline_current": true,
@@ -63,6 +63,6 @@ evidence:
         verify_exit=0
 
   VERIFICATION OUTCOME: ok=true, protected_baseline_current=true, exit 0,
-  version 1.0.0rc16, network_requests=0.
+  version 1.0.0rc17, network_requests=0.
 
 documentation_gaps: none

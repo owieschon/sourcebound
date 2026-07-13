@@ -1,12 +1,12 @@
-participant: 2B1AE0F7-FC8C-409F-8FF5-2678FF4820C9
+participant: A065012C-9F65-4820-8CB2-E1389B9F9DF2
 profile: codex-gpt-5-6-sol-high
 independent: true
 context: published-docs-only
-completed_at: 2026-07-13T22:42:07Z
+completed_at: 2026-07-13T22:59:58Z
 result: PASS
 task: repair-drift
 evidence:
-  Published procedure citation: README.md, "Manifest reference" for the python-literal/markdown-table region shape and "Protect a repository" for the bound-source repair sequence.
+  Published procedure citations: README.md, "Manifest reference" (lines 69-103) for the python-literal/markdown-table region; "Protect a repository" (lines 49-61) for bound-source repair.
   Added supported binding:
     id: actions
     type: region
@@ -49,7 +49,7 @@ evidence:
     [current] projection:llms.txt: llms.txt
   Exit code: 0
   Clean-bound-baseline verification: ../install-venv/bin/clean-docs verify
-  Output summary: schema clean-docs.outcome.v1; version 1.0.0rc16; "ok": true; bindings total 2/current 2/drifted 0; projections total 1/current 1/stale 0; network_requests 0.
+  Output summary: schema clean-docs.outcome.v1; version 1.0.0rc17; "ok": true; bindings total 2/current 2/drifted 0; projections total 1/current 1/stale 0; network_requests 0.
   Exit code: 0
   Source-only change: appended {"name": "publish", "tier": "preview"} to ACTIONS in src/widget.py without changing README.md.
   Pre-repair command: ../install-venv/bin/clean-docs check
@@ -100,7 +100,7 @@ evidence:
   Output:
     {
       "schema": "clean-docs.outcome.v1",
-      "version": "1.0.0rc16",
+      "version": "1.0.0rc17",
       "ref": "WORKTREE",
       "ok": true,
       "outcomes": {

@@ -1,25 +1,25 @@
-participant: 92258FAD-2026-46D4-93C0-61EB50A0504C
+participant: 51F7DD94-22EF-4CE7-9488-FC56B6D80821
 profile: codex-gpt-5-5-high
 independent: true
 context: published-docs-only
-completed_at: 2026-07-13T22:40:32Z
+completed_at: 2026-07-13T22:59:42Z
 result: PASS
 task: protect-fixture
 evidence:
-  Fixture path: workspace/fixture-codex-gpt-5-5-high-rc16
+  Fixture path: workspace/fixture-codex-gpt-5-5-high-rc17
   Fixture contents: README.md, pyproject.toml, src/fixture_app/api.py containing public function public_value, and src/fixture_app/actions.py.
 
-  Command: test ! -e workspace/fixture-codex-gpt-5-5-high-rc16 && mkdir -p workspace/fixture-codex-gpt-5-5-high-rc16/src/fixture_app
+  Command: test ! -e workspace/fixture-codex-gpt-5-5-high-rc17 && mkdir -p workspace/fixture-codex-gpt-5-5-high-rc17/src/fixture_app
   Exit code: 0
 
   Command: git init && git add README.md pyproject.toml src/fixture_app/__init__.py src/fixture_app/api.py src/fixture_app/actions.py && git -c user.name='Reader Trial' -c user.email='reader-trial@example.invalid' commit -m 'Create fixture package'
   Exit code: 0
   Relevant output:
-  Initialized empty Git repository in /Users/owieschon/clean-docs-reader-trials-rc16/codex-gpt-5-5-high/workspace/fixture-codex-gpt-5-5-high-rc16/.git/
-  [main (root-commit) 24a82a5] Create fixture package
+  Initialized empty Git repository in /Users/owieschon/clean-docs-reader-trials-rc17/codex-gpt-5-5-high/workspace/fixture-codex-gpt-5-5-high-rc17/.git/
+  [main (root-commit) 9790ab5] Create fixture package
    5 files changed, 24 insertions(+)
 
-  Command: /Users/owieschon/clean-docs-reader-trials-rc16/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs init --no-model && git diff -- .clean-docs.yml README.md llms.txt && /Users/owieschon/clean-docs-reader-trials-rc16/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check && /Users/owieschon/clean-docs-reader-trials-rc16/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs verify
+  Command: /Users/owieschon/clean-docs-reader-trials-rc17/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs init --no-model && git diff -- .clean-docs.yml README.md llms.txt && /Users/owieschon/clean-docs-reader-trials-rc17/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check && /Users/owieschon/clean-docs-reader-trials-rc17/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs verify
   Exit code: 0
   Relevant output:
   [applied] write README.md: bind detected repository surfaces
@@ -42,7 +42,7 @@ evidence:
 
   Verification fields:
   schema: clean-docs.outcome.v1
-  version: 1.0.0rc16
+  version: 1.0.0rc17
   ok: true
   protected_baseline_current: true
   coverage_complete: true
