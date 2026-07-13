@@ -16,7 +16,7 @@ from clean_docs.standard import load_default_pack
 
 
 PROCESS_NAME = re.compile(
-    r"(?:^|[-_])(REPORT|HANDOFF|DISPATCH|BLOCKED|STATUS|PROGRESS|RECEIPT|FINDINGS|WORKORDER|NOTES|PLAN)(?:[-_.]|$)",
+    r"(?:^|[-_])(REPORT|HANDOFF|DISPATCH|BLOCKED|STATUS|PROGRESS|RECEIPT|FINDINGS|WORKORDER)(?:[-_.]|$)",
     re.IGNORECASE,
 )
 LINK = re.compile(r"\[[^\]]+\]\(([^)\s]+)(?:\s+[^)]*)?\)")
@@ -140,8 +140,13 @@ def _tracked_markdown(root: Path) -> list[Path]:
             if line
             and (root / (relative := Path(line))).is_file()
             and relative.parts[:2] != ("tests", "fixtures")
+            and ".fixture." not in relative.name.lower()
         ]
-    return sorted(path.relative_to(root) for path in root.rglob("*.md") if ".git" not in path.parts)
+    return sorted(
+        path.relative_to(root)
+        for path in root.rglob("*.md")
+        if ".git" not in path.parts and ".fixture." not in path.name.lower()
+    )
 
 
 def _allowances(lines: list[str]) -> set[str]:

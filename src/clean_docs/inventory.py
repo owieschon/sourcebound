@@ -39,7 +39,7 @@ TS_EXPORT = re.compile(
 )
 TS_CLI_COMMAND = re.compile(r"\.command\(\s*['\"]([^'\"]+)['\"]")
 TS_CLI_OPTION = re.compile(r"\.option\(\s*['\"]([^'\"]+)['\"]")
-TS_MCP_TOOL = re.compile(r"\.tool\(\s*['\"]([^'\"]+)['\"]")
+TS_MCP_TOOL = re.compile(r"\.(?:tool|registerTool)\(\s*['\"]([^'\"]+)['\"]")
 HTTP_METHODS = {"get", "put", "post", "delete", "patch", "head", "options", "trace"}
 PYTHON_TOOLING_MODULES = {"conftest.py", "noxfile.py", "setup.py"}
 
@@ -252,7 +252,7 @@ def _structured_items(path: str, data: Any) -> list[dict[str, str]]:
                     requires_python,
                 )
             )
-    if path == "package.json":
+    if Path(path).name == "package.json":
         name = str(data.get("name", "JavaScript package"))
         version = str(data.get("version", "unknown"))
         items.append(_item("package", name, path, "package", "node-package", f"{name}:{version}"))

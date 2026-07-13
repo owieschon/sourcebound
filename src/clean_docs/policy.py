@@ -136,8 +136,23 @@ def _purpose_contract(doc: str, text: str, pack: dict[str, Any]) -> list[PolicyF
     return []
 
 
-def ensure_purpose_contract(text: str) -> str:
-    """Move substantive authored prose to the opening contract or add a grounded fallback."""
+def _substantive_purpose(lines: list[str]) -> bool:
+    prose = " ".join(line.strip() for line in lines).strip()
+    words = WORD_RE.findall(prose.lower())
+    if len(words) < 8:
+        return False
+    if all(re.match(r"^(?:\*\*)?[^:]{1,32}:(?:\*\*)?\s*", line.strip()) for line in lines):
+        return False
+    signals = {
+        "use", "when", "for", "before", "without", "after", "lets", "gives",
+        "exposes", "accepts", "describes", "documents", "captures", "flags",
+        "prevents", "allows", "provides", "returns", "helps",
+    }
+    return len(words) >= 30 or bool(signals & set(words))
+
+
+def ensure_purpose_contract(text: str, *, fallback: bool = True) -> str:
+    """Move substantive authored prose to the opening contract or add an optional fallback."""
     if PURPOSE_BEGIN in text or PURPOSE_END in text:
         return text
     lines = text.splitlines()
@@ -186,9 +201,11 @@ def ensure_purpose_contract(text: str) -> str:
             and len(opening_tokens - title_tokens) < 3
         )
         if not restates_title:
-            selected = (index, end, paragraph)
-            break
-        rejected_restatements.append((index, end))
+            if fallback or _substantive_purpose(paragraph):
+                selected = (index, end, paragraph)
+                break
+        else:
+            rejected_restatements.append((index, end))
         index = max(end, index + 1)
 
     insertion = h1_index + 1
@@ -198,6 +215,8 @@ def ensure_purpose_contract(text: str) -> str:
     ):
         insertion += 1
     if selected is None:
+        if not fallback:
+            return text
         topic = " ".join(title.split())
         opening = (
             f"Use this page when you need to understand {topic} before changing this repository. "
