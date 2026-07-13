@@ -1,5 +1,12 @@
 """Public capability registry rendered into the clean-docs README."""
 
+PRODUCT_OVERVIEW = (
+    "The current alpha audits documentation without configuration and verifies region, claim, "
+    "and symbol bindings from static Python, structured data, text files, path globs, and "
+    "allowlisted JSON commands. It never imports repository code. `derive` previews changes "
+    "unless you pass `--write`; `audit` and `check` never write."
+)
+
 SUPPORTED_BINDINGS = {
     "claim": {
         "binding": "claim",

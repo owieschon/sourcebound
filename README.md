@@ -4,7 +4,9 @@ clean-docs is a self-driving documentation system that applies one packaged stan
 
 Write the standard once; clean-docs does the repository work. The finished product audits each repository, derives its factual spine from source, phrases it to the packaged standard, tests the result, and maintains it on every change. Models may phrase grounded facts; deterministic code owns the facts and gate results.
 
-The current alpha audits documentation without configuration, reads a static Python assignment or JSON Pointer, renders a marked Markdown table, and checks the committed table against the source. It never imports repository code. `derive` previews changes unless you pass `--write`; `audit` and `check` never write.
+<!-- clean-docs:begin product-overview -->
+The current alpha audits documentation without configuration and verifies region, claim, and symbol bindings from static Python, structured data, text files, path globs, and allowlisted JSON commands. It never imports repository code. `derive` previews changes unless you pass `--write`; `audit` and `check` never write.
+<!-- clean-docs:end product-overview -->
 
 ## Install and audit
 
@@ -109,8 +111,6 @@ This table is derived from `src/clean_docs/capabilities.py` by clean-docs itself
 
 ## Current limits
 
-- Manifest version 1 accepts `region`, `claim`, and `symbol` bindings.
-- Regions support static Python, JSON, YAML, TOML, text files, and path globs with typed renderers.
 - Claims consume JSON from an allowlisted command; symbols resolve static paths or Python names.
 - Command allowlisting and timeouts are enforced; network isolation belongs to the execution environment.
 - Source constructor calls must use keyword arguments.

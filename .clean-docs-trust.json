@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "channel": "bootstrap",
-  "commit": "0d9847cfe1d7f8abcbf24c7352f48202d8cc0ddc",
+  "commit": "a87a0f28e99433c4afd1b3db8e869219384033df",
   "package_version": "0.1.0a1",
   "required_checks": ["standard", "bindings"]
 }
