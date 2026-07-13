@@ -64,13 +64,13 @@ def test_static_demo_is_byte_stable_accessible_and_runtime_free(tmp_path: Path) 
 
 def test_readme_architecture_precedes_the_install_path_and_has_text_equivalent() -> None:
     readme = (ROOT / "README.md").read_text()
-    graphic = (ROOT / "docs/assets/architecture.svg").read_text()
+    graphic = (ROOT / "docs/assets/clean-docs-system-map.svg").read_text()
 
     architecture = readme.index("## How the pieces fit")
     install = readme.index("## Install and audit")
     architecture_section = readme[architecture:install]
     assert architecture < install
-    assert "docs/assets/architecture.svg" in architecture_section
+    assert "docs/assets/clean-docs-system-map.svg" in architecture_section
     for concept in (
         "Repository sources",
         "code",
