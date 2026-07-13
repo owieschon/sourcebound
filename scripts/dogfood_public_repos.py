@@ -18,6 +18,7 @@ class DogfoodCase:
     name: str
     url: str
     commit: str
+    binding_type: str
     manifest: str
     document: str
     source: Path
@@ -30,6 +31,7 @@ CASES = (
         name="ultra-csm",
         url="https://github.com/owieschon/ultra-csm.git",
         commit="d1592058558e82ee8d9ab7073d2cf872f8ad58e3",
+        binding_type="region",
         manifest="""\
 version: 1
 bindings:
@@ -61,32 +63,28 @@ Not generated yet.
         name="agent-governance-lab",
         url="https://github.com/owieschon/agent-governance-lab.git",
         commit="207caf4ecd6575f9096777e0e8246e51780f5882",
+        binding_type="symbol",
         manifest="""\
 version: 1
 bindings:
-  - id: comparison-cases
-    type: region
+  - id: comparison-policy-symbol
+    type: symbol
     doc: docs/CLEAN_DOCS_DOGFOOD.md
-    region: comparison-cases
-    extractor: json
+    anchor: policy-registry
     source:
-      path: experiment/corpus.json
-      pointer: /cases
-    renderer: markdown-table
-    columns: [id, title, family, expected_label, enforced_mechanism]
+      path: rails/agl/comparison.py
+      symbol: POLICY_IDS
 """,
         document="""\
-# Comparison case registry
+# Comparison policy registry
 
-This page is generated from the repository's comparison corpus.
+## Policy registry
 
-<!-- clean-docs:begin comparison-cases -->
-Not generated yet.
-<!-- clean-docs:end comparison-cases -->
+The public policy identifiers are defined by `POLICY_IDS` in `rails/agl/comparison.py`.
 """,
-        source=Path("experiment/corpus.json"),
-        before='"title": "Unchanged clean candidate"',
-        after='"title": "Changed clean candidate"',
+        source=Path("rails/agl/comparison.py"),
+        before='POLICY_IDS = ("L0", "L1", "SHAM", "L3")',
+        after='RENAMED_POLICY_IDS = ("L0", "L1", "SHAM", "L3")',
     ),
 )
 
@@ -121,10 +119,18 @@ def _run_case(case: DogfoodCase, parent: Path) -> dict[str, object]:
     document.write_text(case.document, encoding="utf-8")
 
     initial = evaluate(root, manifest)
-    _require(any(result.changed for result in initial), f"{case.name}: initial drift missing")
-    repaired, findings = drive(root, manifest)
-    _require(not findings, f"{case.name}: policy rejected baseline repair")
-    _require(any(result.changed for result in repaired), f"{case.name}: baseline was not repaired")
+    if case.binding_type == "region":
+        _require(any(result.changed for result in initial), f"{case.name}: initial drift missing")
+        repaired, findings = drive(root, manifest)
+        _require(not findings, f"{case.name}: policy rejected baseline repair")
+        _require(
+            any(result.changed for result in repaired),
+            f"{case.name}: baseline was not repaired",
+        )
+        baseline_state = "repaired"
+    else:
+        _require(not any(result.changed for result in initial), f"{case.name}: baseline drifted")
+        baseline_state = "current"
     immutable = evaluate(root, manifest, ref=case.commit)
     _require(not any(result.changed for result in immutable), f"{case.name}: ref check drifted")
 
@@ -134,8 +140,14 @@ def _run_case(case: DogfoodCase, parent: Path) -> dict[str, object]:
     source.write_text(source_text.replace(case.before, case.after), encoding="utf-8")
     changed = evaluate(root, manifest)
     _require(any(result.changed for result in changed), f"{case.name}: source drift was missed")
-    repaired_again, findings = drive(root, manifest)
-    _require(not findings, f"{case.name}: policy rejected change repair")
+    if case.binding_type == "region":
+        repaired_again, findings = drive(root, manifest)
+        _require(not findings, f"{case.name}: policy rejected change repair")
+        recovery = "documentation-derived"
+    else:
+        source.write_text(source_text, encoding="utf-8")
+        repaired_again = evaluate(root, manifest)
+        recovery = "source-restored"
     current = evaluate(root, manifest)
     _require(not any(result.changed for result in current), f"{case.name}: repair left drift")
 
@@ -143,14 +155,14 @@ def _run_case(case: DogfoodCase, parent: Path) -> dict[str, object]:
     return {
         "repository": case.name,
         "commit": case.commit,
+        "binding_type": result.binding_type,
         "extractor": result.provenance.extractor,
         "source": result.provenance.path,
         "locator": result.provenance.locator,
-        "initial_drift_detected": True,
-        "baseline_repaired": True,
+        "baseline_state": baseline_state,
         "immutable_ref_current": True,
         "source_change_detected": True,
-        "source_change_repaired": True,
+        "recovery": recovery,
         "final_check_current": True,
     }
 
