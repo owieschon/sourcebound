@@ -1,7 +1,7 @@
 # clean-docs
 
 <!-- clean-docs:purpose -->
-Use clean-docs when code changes faster than its documentation and reviewers cannot tell which claims are stale. It gives maintainers a local, deterministic path from source change to repaired, verified docs; models may phrase facts, but they never decide the facts or gate results.
+clean-docs is a source-bound documentation engine and CLI for maintainers whose code changes faster than its documentation. It identifies stale claims and provides a local, deterministic path from source change to repaired, verified docs; models may phrase facts, but they never choose the facts or gate results.
 <!-- clean-docs:end purpose -->
 <!-- clean-docs:allow doc-length reason="The canonical overview keeps installation, first protection, manifest shape, and current boundaries in one reader path" -->
 <!-- clean-docs:begin product-overview -->

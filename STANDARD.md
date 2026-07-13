@@ -1,7 +1,7 @@
 # Documentation style guide: clean, grounded developer docs
 
 <!-- clean-docs:purpose -->
-Use this guide when writing or reviewing repository documentation for people or agents. It prevents correct facts from becoming hard to find, easy to misread, or detached from source; after applying it, you can choose the right medium, voice, canonical home, and evidence boundary for each claim.
+STANDARD.md is the canonical writing and documentation policy packaged with clean-docs. Use it when writing or reviewing repository documentation for people or agents: it prevents correct facts from becoming hard to find, easy to misread, or detached from source, and it defines how to choose the right medium, voice, canonical home, and evidence boundary for each claim.
 <!-- clean-docs:end purpose -->
 
 <!-- clean-docs:allow doc-length reason="The four documentation tiers form one canonical standard and must be evaluated together" -->
@@ -147,7 +147,20 @@ every abstraction is grounded on first use or cut, and each sentence carries one
 measure is a blind read: hand the doc to a reader with no prior context and check whether they can
 state back what the system is. The docs hit that bar with specific, repeatable moves:
 
-### Open with a BLUF purpose contract
+### Define the subject, then state the BLUF purpose contract
+
+Definition and purpose are separate reader contracts. An ontological definition names what category
+the subject belongs to: "X is a Y." A purpose contract states who should continue, what problem the
+page addresses, and what the reader can do afterward. A capability list or value proposition can
+answer what a system does while leaving its category ambiguous, so neither substitutes for a
+definition.
+
+Every product, system, or concept overview opens with a plain category definition before explaining
+value or mechanism. Name the narrowest category the sources support, then add the distinguishing
+boundary a reader needs. "QueueKit is a Python task queue that stores jobs in PostgreSQL" defines a
+category and boundary. "QueueKit processes jobs quickly" states behavior but never says what it is.
+Procedural pages whose subject is already established link to its canonical definition and open with
+the purpose contract instead of repeating it.
 
 Every doc opens with the documentation equivalent of a function contract. State the bottom line
 before the explanation so the wrong reader can leave and the right reader knows what the page will
@@ -164,9 +177,10 @@ list describes the implementation instead of the reader's problem. Booster prose
 A scope claim the page or product does not deliver is documentation drift.
 
 The deterministic floor checks that one purpose block exists, appears before any body content, and
-does not restate the H1. Judgment checks whether it names a real audience, problem, and resulting
-capability without overselling the implementation. A mechanical pass never substitutes for that
-truth check.
+does not restate the H1. Judgment checks whether an overview names a true category and whether the
+purpose contract names a real audience, problem, and resulting capability without overselling the
+implementation. Category truth cannot be inferred from sentence shape: "X is a platform" passes a
+regex and can still be false. A mechanical pass never substitutes for that truth check.
 
 ### Use repeatable explanation techniques
 
@@ -430,7 +444,8 @@ Run this against any doc before shipping. Each line is a fail/pass check.
       justify staying whole or split.
 - [ ] Every factual claim (capabilities, flags, counts, routes) traces to a source in the code,
       not to memory or an old draft.
-- [ ] The first screen defines what the system is and does; a reader with no context could state
-      it back.
+- [ ] For every product, system, or concept overview, the first screen defines what category the
+      subject belongs to with an ontological definition, not merely what it does; a reader with no
+      context could state it back.
 - [ ] The first body block is a BLUF purpose contract: applicability, problem, and resulting
       capability are explicit, falsifiable, and true to the code.
