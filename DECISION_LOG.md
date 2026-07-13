@@ -147,3 +147,13 @@ when binding or policy verification fails. The same dogfood also consolidated th
 rule, preserved the repository's actual README casing, and removed three inventory false
 positives before the Python and TypeScript receipts were accepted. Reversible: the transaction is
 contained in bootstrap application and does not change the binding engine.
+
+## 15. Make coverage exceptions strict and explainable (2026-07-13)
+
+Context: inventory already labeled surfaces bound, ignored, or standard-gap, but malformed ignore
+files were silently discarded and readers could not resolve a finding identifier to its evidence
+and repair. Chose a versioned ignore schema with known IDs, unique entries, and specific reasons.
+`explain` now reports required policy repairs separately from non-blocking coverage states and
+includes adapter, source, locator, and digest evidence. Invalid policy exits as configuration
+error instead of changing coverage implicitly. Reversible: new policy fields require a schema
+version change; existing valid reasoned ignores retain their meaning.

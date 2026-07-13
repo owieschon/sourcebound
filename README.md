@@ -29,6 +29,7 @@ This table is derived from the command registry used by the parser:
 | audit | Inventory and check repository documentation | no |
 | inventory | List detected repository surfaces and coverage | no |
 | init | Write a source-bound documentation baseline | yes |
+| explain | Explain a finding or coverage state | no |
 | doctor | Check repository and integration readiness | no |
 | derive | Preview generated region changes | with --write |
 | drive | Repair bound regions and enforce policy | yes |
@@ -40,8 +41,6 @@ This table is derived from the command registry used by the parser:
 | standard build | Compile the canonical standard | yes |
 | standard check | Fail when the policy pack is stale | no |
 <!-- clean-docs:end cli-reference -->
-
-Use `--format json` for machine-readable results and `--ref <git-ref>` to read sources from an immutable commit.
 
 ## Manifest reference
 
@@ -92,8 +91,7 @@ PYTHONPATH=src python3 scripts/dogfood_public_repos.py
 PYTHONPATH=src python3 scripts/dogfood_bootstrap_repos.py
 ```
 
-The binding proof checks two fixed commits, detects deliberate source drift, and verifies recovery without executing target code.
-The bootstrap proof inventories and initializes pinned Python and TypeScript repositories, verifies the generated baseline, and requires an empty rerun.
+The binding proof checks source drift and recovery at two fixed commits; the bootstrap proof initializes pinned Python and TypeScript repositories, verifies each baseline, and requires empty reruns without executing target code.
 
 Self-hosting uses `python3 scripts/trusted_self_check.py`; the verifier pinned in `.clean-docs-trust.json` independently checks candidate code, and updating that pin is a release operation.
 
@@ -113,6 +111,7 @@ This table is derived from `src/clean_docs/capabilities.py` by clean-docs itself
 
 - Claims consume JSON from an allowlisted command; symbols resolve static paths or Python names.
 - Command allowlisting and timeouts are enforced; network isolation belongs to the execution environment.
+- Coverage ignores must name a detected inventory ID and carry a specific reason; `explain` reports the evidence and repair for gaps.
 - Source constructor calls must use keyword arguments.
 - Destination markers must already exist and cannot nest.
 - clean-docs reports malformed configuration as exit `2`, drift as exit `1`, and extraction failures as exit `3`.

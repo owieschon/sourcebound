@@ -130,10 +130,13 @@ def _prompt(root: Path, facts: tuple[InventoryItem, ...]) -> tuple[str, tuple[st
     pack = load_default_pack()
     documents, context_flags = _context(root)
     flags = list(context_flags)
-    safe_facts: list[dict[str, str]] = []
+    safe_facts: list[dict[str, object]] = []
     for index, fact in enumerate(facts):
-        record: dict[str, str] = {}
+        record: dict[str, object] = {}
         for field, value in asdict(fact).items():
+            if not isinstance(value, str):
+                record[field] = value
+                continue
             sanitized, found = _sanitize(f"inventory:{index}:{field}", value)
             record[field] = sanitized
             flags.extend(found)

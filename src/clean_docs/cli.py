@@ -14,6 +14,7 @@ from clean_docs.doctor import diagnose
 from clean_docs.emit import emit_llms_txt, emit_stepwise_skill
 from clean_docs.engine import drive, evaluate, write_results
 from clean_docs.errors import CleanDocsError, ConfigurationError
+from clean_docs.explain import explain
 from clean_docs.inventory import scan_inventory
 from clean_docs.manifest import load_manifest
 from clean_docs.models import BindingResult
@@ -51,6 +52,9 @@ def _parser() -> argparse.ArgumentParser:
         "--dry-run", action="store_true", help="print the content plan without writing"
     )
     init_parser.add_argument("--format", choices=("text", "json"), default="text")
+    explain_parser = sub.add_parser("explain", help=_command_help("explain"))
+    explain_parser.add_argument("identifier", help="policy rule or inventory id")
+    explain_parser.add_argument("--format", choices=("text", "json"), default="text")
     doctor_parser = sub.add_parser("doctor", help=_command_help("doctor"))
     doctor_parser.add_argument("--format", choices=("text", "json"), default="text")
     derive = sub.add_parser("derive", help=_command_help("derive"))
@@ -163,7 +167,11 @@ def main(argv: list[str] | None = None) -> int:
             )
         return 1 if report.findings else 0
     if args.command == "inventory":
-        inventory_report = scan_inventory(root)
+        try:
+            inventory_report = scan_inventory(root)
+        except CleanDocsError as exc:
+            print(f"clean-docs: {exc}", file=sys.stderr)
+            return exc.exit_code
         if args.format == "json":
             print(json.dumps(inventory_report.as_dict(), indent=2))
         else:
@@ -173,6 +181,25 @@ def main(argv: list[str] | None = None) -> int:
                 f"inventory: {len(inventory_report.items)} surface(s); "
                 f"{len(inventory_report.languages)} language(s)"
             )
+        return 0
+    if args.command == "explain":
+        try:
+            explanation = explain(root, args.identifier)
+        except CleanDocsError as exc:
+            print(f"clean-docs: {exc}", file=sys.stderr)
+            return exc.exit_code
+        if args.format == "json":
+            print(json.dumps(explanation.as_dict(), indent=2))
+        else:
+            print(f"[{explanation.state}] {explanation.id}: {explanation.summary}")
+            if explanation.evidence:
+                print(
+                    "evidence: "
+                    f"{explanation.evidence['source']}#{explanation.evidence['locator']} "
+                    f"via {explanation.evidence['adapter']} "
+                    f"sha256:{explanation.evidence['sha256']}"
+                )
+            print(f"repair: {explanation.repair}")
         return 0
     if args.command == "init":
         try:
