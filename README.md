@@ -18,11 +18,13 @@ The same verified graph produces `llms.txt`, named context bundles, grounded rel
 
 ![clean-docs architecture: repository sources become typed evidence, source bindings, and verified documentation outcomes](docs/assets/architecture.svg)
 
-clean-docs extracts typed evidence from repository sources, connects that evidence to declared
-documentation bindings, and applies the packaged writing standard at the documentation engine. The
-same engine repairs bound regions, checks drift without writing, and projects the verified corpus
-into machine-readable outputs. Models may phrase supplied evidence outside the deterministic path;
-they do not choose facts or decide whether the gate passes.
+Repository sources such as code, schemas, commands, package metadata, and API metadata become typed
+evidence through static extraction or declared, bounded execution. Source bindings connect that
+evidence to documentation regions, claims, and symbols. The clean-docs engine combines those
+bindings with the packaged writing standard, then produces three outcomes: repaired documentation,
+a read-only CI gate that rejects stale changes, and verified context projections such as `llms.txt`,
+context bundles, and release facts. Models may phrase supplied evidence outside this deterministic
+path; they do not choose facts or decide whether the gate passes.
 
 ## Install and audit
 

@@ -68,9 +68,34 @@ def test_readme_architecture_precedes_the_install_path_and_has_text_equivalent()
 
     architecture = readme.index("## How the pieces fit")
     install = readme.index("## Install and audit")
+    architecture_section = readme[architecture:install]
     assert architecture < install
-    assert "docs/assets/architecture.svg" in readme
-    assert "clean-docs extracts typed evidence" in readme
+    assert "docs/assets/architecture.svg" in architecture_section
+    for concept in (
+        "Repository sources",
+        "code",
+        "schemas",
+        "commands",
+        "package metadata",
+        "API metadata",
+        "typed evidence",
+        "static extraction",
+        "declared, bounded execution",
+        "Source bindings",
+        "regions",
+        "claims",
+        "symbols",
+        "clean-docs engine",
+        "packaged writing standard",
+        "repaired documentation",
+        "read-only CI gate",
+        "rejects stale changes",
+        "verified context projections",
+        "llms.txt",
+        "context bundles",
+        "release facts",
+    ):
+        assert concept in architecture_section
     assert "<title" in graphic
     assert "<desc" in graphic
     assert "Repository sources" in graphic

@@ -1,13 +1,13 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `9fc21ac956e2033dfac22760cc184a8d5c85463cc5ee3cf56cbd999dbcd0f0ea`
+- Corpus sha256: `f03f3cce7e79ba8d58f77a62b0d33059fc9d61e9f0f305f3fdfb341c07427641`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `28772dd8564cd7d94c8e01beaae1183c6902652e72b5d4f2d3a727acc4ad3113`
+- Content sha256: `c47efc0cb031b7c2abc070edfd1a9ada5b4da81131068e87874f6b9bae5a87bb`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
@@ -30,11 +30,13 @@ The same verified graph produces `llms.txt`, named context bundles, grounded rel
 
 ![clean-docs architecture: repository sources become typed evidence, source bindings, and verified documentation outcomes](docs/assets/architecture.svg)
 
-clean-docs extracts typed evidence from repository sources, connects that evidence to declared
-documentation bindings, and applies the packaged writing standard at the documentation engine. The
-same engine repairs bound regions, checks drift without writing, and projects the verified corpus
-into machine-readable outputs. Models may phrase supplied evidence outside the deterministic path;
-they do not choose facts or decide whether the gate passes.
+Repository sources such as code, schemas, commands, package metadata, and API metadata become typed
+evidence through static extraction or declared, bounded execution. Source bindings connect that
+evidence to documentation regions, claims, and symbols. The clean-docs engine combines those
+bindings with the packaged writing standard, then produces three outcomes: repaired documentation,
+a read-only CI gate that rejects stale changes, and verified context projections such as `llms.txt`,
+context bundles, and release facts. Models may phrase supplied evidence outside this deterministic
+path; they do not choose facts or decide whether the gate passes.
 
 ## Install and audit
 
