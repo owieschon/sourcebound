@@ -1,6 +1,7 @@
 # Documentation style guide: clean, grounded developer docs
 
 <!-- clean-docs:allow doc-length reason="The four documentation tiers form one canonical standard and must be evaluated together" -->
+<!-- clean-docs:allow audience reason="This standard names agent-workflow signals as policy examples rather than addressing an agent" -->
 
 This is the single reference for documentation voice across every project. It stays one file
 over the 120-line threshold on purpose: its four tiers (sentence voice, single-doc medium

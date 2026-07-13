@@ -29,6 +29,7 @@ def test_audit_needs_no_manifest_and_reports_corpus_failures(tmp_path: Path) -> 
         "broken-local-link",
         "process-artifact",
     }
+    assert len(report.findings) == 2
 
 
 def test_archive_and_reasoned_length_allowance_are_explicit(tmp_path: Path) -> None:
@@ -46,3 +47,20 @@ def test_archive_and_reasoned_length_allowance_are_explicit(tmp_path: Path) -> N
 
     assert report.findings == ()
     assert report.ignored_documents == ("docs/archive/REPORT.md",)
+
+
+def test_audit_runs_corpus_rules_and_accepts_named_reasoned_allowances(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    (root / "REFERENCE.md").write_text(
+        "# Reference\n\n"
+        "<!-- clean-docs:allow audience reason=\"This page documents the workflow vocabulary\" -->\n"
+        "The next executor can pick up this branch from the worktree.\n\n"
+        "The value was recorded in (Program 7).\n"
+    )
+    _track(root)
+
+    report = audit(root)
+
+    assert [(finding.rule, finding.line) for finding in report.findings] == [
+        ("provenance", 6),
+    ]

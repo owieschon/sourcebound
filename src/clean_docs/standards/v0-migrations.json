@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "baseline": "docs/archive/v0/originals",
+  "differences": [
+    {
+      "rule": "archive-surface",
+      "change": "Directory scans skip any archive path segment; explicit file scans still inspect it.",
+      "reason": "Archived history is outside the reader-facing documentation surface."
+    },
+    {
+      "rule": "audience-if-then",
+      "change": "IF/THEN is not an audience signal.",
+      "reason": "Decision records use the token as reader-facing technical vocabulary."
+    },
+    {
+      "rule": "provenance-byte-identical",
+      "change": "byte-identical is not a provenance signal.",
+      "reason": "The phrase describes technical data fidelity."
+    },
+    {
+      "rule": "reasoned-allowance",
+      "change": "The audit command accepts named, reasoned suppressions while the compatibility linter preserves Version 0 output.",
+      "reason": "The canonical standard requires justified long documents and sections instead of unconditional rejection."
+    }
+  ]
+}
