@@ -679,7 +679,7 @@ Version 0 preservation work at the start of Version 0.1:
 - Stable finding identifiers preserve finding identity across reruns.
 - Cached and uncached runs return byte-identical normalized results.
 - Median changed-file check time meets the published budget on dogfood repositories.
-- The GitHub Action pins dependencies and requires read-only repository permissions unless posting a report is enabled.
+- The GitHub Action requires a full clean-docs commit, uses read-only repository permissions, and publishes a content-addressed receipt that binds the installed candidate, source commit, workflow run, and raw evidence files.
 
 ### Version 0.4: Human and agent projections with task evaluation, complete
 

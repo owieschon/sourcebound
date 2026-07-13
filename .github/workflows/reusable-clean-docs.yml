@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       package-ref:
-        description: Immutable clean-docs commit or tag to install.
+        description: Full 40-character clean-docs commit to install.
         required: true
         type: string
       base-ref:
@@ -32,9 +32,20 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install pinned clean-docs
-        run: >-
-          python -m pip install
-          "clean-docs @ git+https://github.com/owieschon/clean-docs.git@${{ inputs.package-ref }}"
+        env:
+          CLEAN_DOCS_PACKAGE_REF: ${{ inputs.package-ref }}
+        run: |
+          set -eu
+          python3 - <<'PY'
+          import os
+          import re
+
+          package_ref = os.environ["CLEAN_DOCS_PACKAGE_REF"]
+          if re.fullmatch(r"[0-9a-fA-F]{40}", package_ref) is None:
+              raise SystemExit("package-ref must be a full 40-character commit")
+          PY
+          python3 -m pip install \
+            "clean-docs @ git+https://github.com/owieschon/clean-docs.git@${CLEAN_DOCS_PACKAGE_REF}"
       - name: Evaluate documentation gate
         run: |
           set +e
@@ -58,7 +69,7 @@ jobs:
       - name: Publish changed-surface annotations
         if: always() && hashFiles('clean-docs-changed.json') != ''
         run: |
-          python - <<'PY'
+          python3 - <<'PY'
           import json
           import os
 
@@ -80,6 +91,109 @@ jobs:
                   print(f"::{level} file={command_property(path)}::{command_data(message)}")
           with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as handle:
               handle.write("\n".join(summary) + "\n")
+          PY
+      - name: Write action receipt
+        if: always()
+        env:
+          CLEAN_DOCS_PACKAGE_REF: ${{ inputs.package-ref }}
+          CLEAN_DOCS_REPOSITORY: ${{ github.repository }}
+          CLEAN_DOCS_REPOSITORY_REF: ${{ github.ref }}
+          CLEAN_DOCS_REPOSITORY_SHA: ${{ github.sha }}
+          CLEAN_DOCS_BASE_REF: ${{ inputs.base-ref || github.event.pull_request.base.sha }}
+          CLEAN_DOCS_HEAD_REF: ${{ inputs.head-ref || github.event.pull_request.head.sha }}
+          CLEAN_DOCS_EVENT: ${{ github.event_name }}
+          CLEAN_DOCS_RUN_ID: ${{ github.run_id }}
+          CLEAN_DOCS_RUN_ATTEMPT: ${{ github.run_attempt }}
+          CLEAN_DOCS_WORKFLOW_REF: ${{ github.workflow_ref }}
+          CLEAN_DOCS_WORKFLOW_SHA: ${{ github.workflow_sha }}
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          from importlib.metadata import PackageNotFoundError, version
+          from pathlib import Path
+
+          output = Path("clean-docs-run.json")
+
+          def result(path):
+              candidate = Path(path)
+              if not candidate.is_file():
+                  return None
+              try:
+                  return json.loads(candidate.read_text(encoding="utf-8")).get("ok")
+              except (json.JSONDecodeError, OSError):
+                  return None
+
+          try:
+              package_version = version("clean-docs")
+          except PackageNotFoundError:
+              package_version = None
+
+          evidence_paths = sorted(
+              path
+              for pattern in ("clean-docs-*.json", "clean-docs-*.sarif")
+              for path in Path(".").glob(pattern)
+              if path != output
+          )
+          results = {
+              "audit": result("clean-docs-audit.json"),
+              "bindings": result("clean-docs-check.json"),
+              "changed": result("clean-docs-changed.json"),
+          }
+          changed_required = bool(
+              os.environ["CLEAN_DOCS_BASE_REF"]
+              and os.environ["CLEAN_DOCS_HEAD_REF"]
+          )
+          results["ok"] = (
+              results["audit"] is True
+              and results["bindings"] is True
+              and (
+                  results["changed"] is True
+                  if changed_required
+                  else results["changed"] is not False
+              )
+          )
+          receipt = {
+              "schema": "clean-docs.action-run.v1",
+              "package": {
+                  "ref": os.environ["CLEAN_DOCS_PACKAGE_REF"],
+                  "version": package_version,
+              },
+              "source": {
+                  "repository": os.environ["CLEAN_DOCS_REPOSITORY"],
+                  "ref": os.environ["CLEAN_DOCS_REPOSITORY_REF"],
+                  "sha": os.environ["CLEAN_DOCS_REPOSITORY_SHA"],
+                  "comparison": (
+                      {
+                          "base": os.environ["CLEAN_DOCS_BASE_REF"],
+                          "head": os.environ["CLEAN_DOCS_HEAD_REF"],
+                      }
+                      if changed_required
+                      else None
+                  ),
+              },
+              "run": {
+                  "event": os.environ["CLEAN_DOCS_EVENT"],
+                  "id": int(os.environ["CLEAN_DOCS_RUN_ID"]),
+                  "attempt": int(os.environ["CLEAN_DOCS_RUN_ATTEMPT"]),
+                  "workflow_ref": os.environ["CLEAN_DOCS_WORKFLOW_REF"],
+                  "workflow_sha": os.environ["CLEAN_DOCS_WORKFLOW_SHA"],
+              },
+              "results": results,
+              "evidence": [
+                  {
+                      "path": path.as_posix(),
+                      "bytes": path.stat().st_size,
+                      "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                  }
+                  for path in evidence_paths
+              ],
+          }
+          output.write_text(
+              json.dumps(receipt, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
           PY
       - name: Upload clean-docs evidence
         if: always()
