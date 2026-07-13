@@ -13,10 +13,11 @@ from clean_docs.capabilities import CLI_REFERENCE
 from clean_docs.doctor import diagnose
 from clean_docs.emit import emit_llms_txt, emit_stepwise_skill
 from clean_docs.engine import drive, evaluate, write_results
-from clean_docs.errors import CleanDocsError
+from clean_docs.errors import CleanDocsError, ConfigurationError
 from clean_docs.inventory import scan_inventory
 from clean_docs.manifest import load_manifest
 from clean_docs.models import BindingResult
+from clean_docs.phrasing import RecordedProvider
 from clean_docs.standard import compile_standard, pack_matches_standard, write_pack
 
 
@@ -37,8 +38,18 @@ def _parser() -> argparse.ArgumentParser:
     inventory_parser = sub.add_parser("inventory", help=_command_help("inventory"))
     inventory_parser.add_argument("--format", choices=("text", "json"), default="text")
     init_parser = sub.add_parser("init", help=_command_help("init"))
-    init_parser.add_argument("--no-model", action="store_true")
-    init_parser.add_argument("--dry-run", action="store_true")
+    model_mode = init_parser.add_mutually_exclusive_group()
+    model_mode.add_argument(
+        "--no-model", action="store_true", help="use deterministic adapters only"
+    )
+    model_mode.add_argument(
+        "--recorded-model-response",
+        type=Path,
+        help="replay a grounded JSON provider response",
+    )
+    init_parser.add_argument(
+        "--dry-run", action="store_true", help="print the content plan without writing"
+    )
     init_parser.add_argument("--format", choices=("text", "json"), default="text")
     doctor_parser = sub.add_parser("doctor", help=_command_help("doctor"))
     doctor_parser.add_argument("--format", choices=("text", "json"), default="text")
@@ -165,7 +176,18 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "init":
         try:
-            plan = build_bootstrap_plan(root)
+            provider = None
+            if args.recorded_model_response:
+                response_path = args.recorded_model_response
+                if not response_path.is_absolute():
+                    response_path = root / response_path
+                try:
+                    provider = RecordedProvider(response_path.read_text(encoding="utf-8"))
+                except OSError as exc:
+                    raise ConfigurationError(
+                        f"cannot read recorded model response {response_path}"
+                    ) from exc
+            plan = build_bootstrap_plan(root, provider)
             if not args.dry_run:
                 apply_bootstrap_plan(root, plan)
         except CleanDocsError as exc:
