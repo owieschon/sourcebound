@@ -155,6 +155,81 @@ def test_typescript_repository_bootstraps_without_python_metadata(
     assert main(["--root", str(root), "check"]) == 0
 
 
+def test_standard_once_bootstrap_records_evidence_and_verifies(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    root = tmp_path / "standard-once"
+    root.mkdir()
+    (root / "pyproject.toml").write_text(
+        '[project]\nname = "standard-once"\nversion = "1.0.0"\n'
+    )
+    (root / "README.md").write_text("# Standard once\n")
+
+    assert main(["--root", str(root), "init", "--format", "json"]) == 0
+
+    plan = json.loads(capsys.readouterr().out)
+    assert plan["ok"] is True
+    assert all(
+        {"id", "source", "locator", "adapter", "digest"} <= set(fact)
+        for fact in plan["facts"]
+    )
+    assert (root / ".clean-docs.yml").is_file()
+    assert (root / "llms.txt").is_file()
+    assert main(["--root", str(root), "check"]) == 0
+
+
+def test_no_model_completes_without_credentials_or_network(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = tmp_path / "offline-no-model"
+    root.mkdir()
+    (root / "pyproject.toml").write_text(
+        '[project]\nname = "offline-service"\nversion = "1.0.0"\n'
+    )
+    (root / "README.md").write_text("# Offline service\n")
+    monkeypatch.delenv("CLEAN_DOCS_MODEL", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setattr(socket, "create_connection", _block_network)
+    monkeypatch.setattr(socket.socket, "connect", _block_network)
+    monkeypatch.setattr(socket.socket, "connect_ex", _block_network)
+
+    assert main(["--root", str(root), "init", "--no-model"]) == 0
+
+    capsys.readouterr()
+    assert (root / ".clean-docs.yml").is_file()
+    assert (root / "llms.txt").is_file()
+    assert main(["--root", str(root), "check"]) == 0
+
+
+def test_idempotent_init_preserves_binding_id_and_has_empty_patch(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    root = tmp_path / "idempotent-init"
+    root.mkdir()
+    (root / "pyproject.toml").write_text(
+        '[project]\nname = "stable-service"\nversion = "1.0.0"\n'
+    )
+    (root / "README.md").write_text("# Stable service\n")
+
+    assert main(["--root", str(root), "init", "--no-model", "--format", "json"]) == 0
+    first = json.loads(capsys.readouterr().out)
+    manifest = (root / ".clean-docs.yml").read_text()
+    assert "id: repository-surface" in manifest
+
+    assert main(["--root", str(root), "init", "--no-model", "--format", "json"]) == 0
+    second = json.loads(capsys.readouterr().out)
+
+    assert second["operations"] == []
+    assert (root / ".clean-docs.yml").read_text() == manifest
+    assert {
+        (fact["id"], fact["digest"]) for fact in first["facts"]
+    } == {
+        (fact["id"], fact["digest"]) for fact in second["facts"]
+    }
+
+
 def test_init_refuses_to_replace_an_existing_manifest(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -299,3 +374,78 @@ def test_secret_removed_by_repair_is_redacted_from_plan(
     assert secret not in captured.out
     assert secret not in (root / "README.md").read_text()
     assert (root / ".clean-docs.yml").exists()
+
+
+def test_failed_post_write_policy_check_restores_the_repository(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    root = tmp_path / "rollback"
+    docs = root / "docs"
+    docs.mkdir(parents=True)
+    (root / "pyproject.toml").write_text(
+        '[project]\nname = "rollback-service"\nversion = "1.0.0"\n'
+    )
+    (root / "README.md").write_text(
+        "# Rollback service\n\n[Missing reference](docs/missing.md)\n"
+    )
+    (docs / "HANDOFF.md").write_text("# Handoff\n\nTemporary state.\n")
+    before = {
+        path.relative_to(root).as_posix(): (
+            "directory" if path.is_dir() else path.read_bytes()
+        )
+        for path in root.rglob("*")
+    }
+
+    assert main(["--root", str(root), "init", "--no-model"]) == 1
+
+    captured = capsys.readouterr()
+    assert "broken-local-link" in captured.err
+    after = {
+        path.relative_to(root).as_posix(): (
+            "directory" if path.is_dir() else path.read_bytes()
+        )
+        for path in root.rglob("*")
+    }
+    assert after == before
+
+
+def test_init_rejects_a_missing_repository_root(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    missing = tmp_path / "missing"
+
+    assert main(["--root", str(missing), "init", "--no-model"]) == 2
+
+    captured = capsys.readouterr()
+    assert "repository root does not exist" in captured.err
+    assert not missing.exists()
+
+
+def test_init_preserves_the_repository_readme_filename(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    root = tmp_path / "lowercase-readme"
+    root.mkdir()
+    (root / "package.json").write_text(json.dumps({
+        "name": "lowercase-readme",
+        "version": "1.0.0",
+    }))
+    (root / "readme.md").write_text("# Lowercase readme\n")
+
+    assert main([
+        "--root", str(root), "init", "--no-model", "--dry-run", "--format", "json"
+    ]) == 0
+
+    plan = json.loads(capsys.readouterr().out)
+    write_paths = {
+        operation["path"]
+        for operation in plan["operations"]
+        if operation["action"] == "write"
+    }
+    assert "readme.md" in write_paths
+    assert "README.md" not in write_paths
+
+    assert main(["--root", str(root), "init", "--no-model"]) == 0
+    capsys.readouterr()
+    assert "doc: readme.md" in (root / ".clean-docs.yml").read_text()
+    assert "[readme.md](readme.md)" in (root / "llms.txt").read_text()

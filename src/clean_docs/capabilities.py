@@ -2,10 +2,11 @@
 
 PRODUCT_OVERVIEW = (
     "Version 0.2 alpha statically inventories package, CLI, API, schema, test, and documentation "
-    "surfaces. It audits documentation without configuration and verifies region, claim, and "
-    "symbol bindings from static Python, structured data, text files, path globs, and "
-    "allowlisted JSON commands. It emits manifest-derived stepwise skill packages and llms.txt "
-    "indexes, and it never imports repository code. `derive` previews changes "
+    "surfaces and bootstraps a source-bound baseline. It audits documentation without "
+    "configuration and verifies region, claim, and symbol bindings from static Python, "
+    "structured data, text files, path globs, and allowlisted JSON commands. It emits "
+    "manifest-derived stepwise skill packages and llms.txt indexes, and it never imports "
+    "repository code. `derive` previews changes "
     "unless you pass `--write`; `audit` and `check` never write."
 )
 

@@ -11,7 +11,7 @@ from clean_docs.standard import load_default_pack
 
 
 PROCESS_NAME = re.compile(
-    r"(REPORT|HANDOFF|DISPATCH|BLOCKED|STATUS|PROGRESS|RECEIPT|FINDINGS|WORKORDER|NOTES)",
+    r"(?:^|[-_])(REPORT|HANDOFF|DISPATCH|BLOCKED|STATUS|PROGRESS|RECEIPT|FINDINGS|WORKORDER|NOTES|PLAN)(?:[-_.]|$)",
     re.IGNORECASE,
 )
 LINK = re.compile(r"\[[^\]]+\]\(([^)\s]+)(?:\s+[^)]*)?\)")

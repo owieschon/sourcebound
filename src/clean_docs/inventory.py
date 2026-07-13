@@ -30,8 +30,13 @@ LANGUAGES = {
     ".rs": "Rust",
 }
 LINK = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
-TS_EXPORT = re.compile(r"^\s*export\s+(?:async\s+)?(?:function|class|const)\s+([A-Za-z_$][\w$]*)", re.M)
+TS_EXPORT = re.compile(
+    r"^\s*export\s+(?:default\s+)?(?:async\s+)?(?:abstract\s+)?"
+    r"(?:function|class|const|interface|type|enum)\s+([A-Za-z_$][\w$]*)",
+    re.M,
+)
 HTTP_METHODS = {"get", "put", "post", "delete", "patch", "head", "options", "trace"}
+PYTHON_TOOLING_MODULES = {"conftest.py", "noxfile.py", "setup.py"}
 
 
 @dataclass(frozen=True)
@@ -118,7 +123,7 @@ def _python_items(path: str, text: str) -> list[dict[str, str]]:
         return []
     items: list[dict[str, str]] = []
     is_test = Path(path).name.startswith("test_") or "/tests/" in f"/{path}"
-    if not is_test:
+    if not is_test and Path(path).name not in PYTHON_TOOLING_MODULES:
         for node in tree.body:
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and not node.name.startswith("_"):
                 items.append(_item("api-symbol", node.name, path, node.name, "python-ast", ast.dump(node)))
@@ -168,6 +173,8 @@ def _structured_items(path: str, data: Any) -> list[dict[str, str]]:
         scripts = data.get("scripts")
         if isinstance(scripts, dict):
             for script, command in sorted(scripts.items()):
+                if str(script).startswith("//"):
+                    continue
                 kind = "test-runner" if script == "test" or script.startswith("test:") else "package-script"
                 items.append(_item(kind, str(script), path, f"scripts.{script}", "node-package", str(command)))
         binaries = data.get("bin")
@@ -227,8 +234,13 @@ def scan_inventory(root: Path) -> InventoryReport:
         if file_path.suffix.lower() == ".py":
             raw_items.extend(_python_items(relative, text))
         if file_path.suffix.lower() in {".ts", ".tsx", ".js", ".jsx"}:
+            adapter = (
+                "typescript-static"
+                if file_path.suffix.lower() in {".ts", ".tsx"}
+                else "javascript-static"
+            )
             for name in TS_EXPORT.findall(text):
-                raw_items.append(_item("api-symbol", name, relative, name, "typescript-static", name))
+                raw_items.append(_item("api-symbol", name, relative, name, adapter, name))
         data = _structured(file_path, text)
         if data is not None:
             raw_items.extend(_structured_items(relative, data))
@@ -241,6 +253,21 @@ def scan_inventory(root: Path) -> InventoryReport:
             file_path.name.startswith("test_") and file_path.suffix == ".py"
         ) or file_path.name.endswith((".test.ts", ".spec.ts", ".test.js", ".spec.js")):
             raw_items.append(_item("test-suite", relative, relative, "file", "test-files", text))
+    declaration_symbols = {
+        (item["name"], item["source"][:-5])
+        for item in raw_items
+        if item["kind"] == "api-symbol" and item["source"].endswith(".d.ts")
+    }
+    raw_items = [
+        item
+        for item in raw_items
+        if not (
+            item["kind"] == "api-symbol"
+            and not item["source"].endswith(".d.ts")
+            and (item["name"], str(Path(item["source"]).with_suffix("")))
+            in declaration_symbols
+        )
+    ]
     unique = {item["id"]: item for item in raw_items}
     bound, ignored = _coverage(root, set(unique))
     items = []

@@ -89,7 +89,7 @@ The public policy identifiers are defined by `POLICY_IDS` in `rails/agl/comparis
 )
 
 
-def _git(*args: str, cwd: Path | None = None) -> str:
+def run_git(*args: str, cwd: Path | None = None) -> str:
     proc = subprocess.run(
         ["git", *args], cwd=cwd, text=True, capture_output=True, timeout=60, check=False
     )
@@ -99,19 +99,19 @@ def _git(*args: str, cwd: Path | None = None) -> str:
     return proc.stdout.strip()
 
 
-def _require(condition: bool, message: str) -> None:
+def require(condition: bool, message: str) -> None:
     if not condition:
         raise RuntimeError(message)
 
 
 def _run_case(case: DogfoodCase, parent: Path) -> dict[str, object]:
     root = parent / case.name
-    _git("init", "-q", str(root))
-    _git("remote", "add", "origin", case.url, cwd=root)
-    _git("fetch", "-q", "--depth", "1", "origin", case.commit, cwd=root)
-    _git("checkout", "-q", "--detach", "FETCH_HEAD", cwd=root)
-    resolved = _git("rev-parse", "HEAD", cwd=root)
-    _require(resolved == case.commit, f"{case.name}: expected {case.commit}, got {resolved}")
+    run_git("init", "-q", str(root))
+    run_git("remote", "add", "origin", case.url, cwd=root)
+    run_git("fetch", "-q", "--depth", "1", "origin", case.commit, cwd=root)
+    run_git("checkout", "-q", "--detach", "FETCH_HEAD", cwd=root)
+    resolved = run_git("rev-parse", "HEAD", cwd=root)
+    require(resolved == case.commit, f"{case.name}: expected {case.commit}, got {resolved}")
 
     manifest = root / ".clean-docs.yml"
     document = root / "docs/CLEAN_DOCS_DOGFOOD.md"
@@ -120,36 +120,36 @@ def _run_case(case: DogfoodCase, parent: Path) -> dict[str, object]:
 
     initial = evaluate(root, manifest)
     if case.binding_type == "region":
-        _require(any(result.changed for result in initial), f"{case.name}: initial drift missing")
+        require(any(result.changed for result in initial), f"{case.name}: initial drift missing")
         repaired, findings = drive(root, manifest)
-        _require(not findings, f"{case.name}: policy rejected baseline repair")
-        _require(
+        require(not findings, f"{case.name}: policy rejected baseline repair")
+        require(
             any(result.changed for result in repaired),
             f"{case.name}: baseline was not repaired",
         )
         baseline_state = "repaired"
     else:
-        _require(not any(result.changed for result in initial), f"{case.name}: baseline drifted")
+        require(not any(result.changed for result in initial), f"{case.name}: baseline drifted")
         baseline_state = "current"
     immutable = evaluate(root, manifest, ref=case.commit)
-    _require(not any(result.changed for result in immutable), f"{case.name}: ref check drifted")
+    require(not any(result.changed for result in immutable), f"{case.name}: ref check drifted")
 
     source = root / case.source
     source_text = source.read_text(encoding="utf-8")
-    _require(source_text.count(case.before) == 1, f"{case.name}: mutation target changed")
+    require(source_text.count(case.before) == 1, f"{case.name}: mutation target changed")
     source.write_text(source_text.replace(case.before, case.after), encoding="utf-8")
     changed = evaluate(root, manifest)
-    _require(any(result.changed for result in changed), f"{case.name}: source drift was missed")
+    require(any(result.changed for result in changed), f"{case.name}: source drift was missed")
     if case.binding_type == "region":
         repaired_again, findings = drive(root, manifest)
-        _require(not findings, f"{case.name}: policy rejected change repair")
+        require(not findings, f"{case.name}: policy rejected change repair")
         recovery = "documentation-derived"
     else:
         source.write_text(source_text, encoding="utf-8")
         repaired_again = evaluate(root, manifest)
         recovery = "source-restored"
     current = evaluate(root, manifest)
-    _require(not any(result.changed for result in current), f"{case.name}: repair left drift")
+    require(not any(result.changed for result in current), f"{case.name}: repair left drift")
 
     result = repaired_again[0]
     return {

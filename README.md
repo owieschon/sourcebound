@@ -5,7 +5,7 @@ clean-docs is a self-driving documentation system that applies one packaged stan
 Write the standard once; clean-docs does the repository work. The finished product audits each repository, derives its factual spine from source, phrases it to the packaged standard, tests the result, and maintains it on every change. Models may phrase grounded facts; deterministic code owns the facts and gate results.
 
 <!-- clean-docs:begin product-overview -->
-Version 0.2 alpha statically inventories package, CLI, API, schema, test, and documentation surfaces. It audits documentation without configuration and verifies region, claim, and symbol bindings from static Python, structured data, text files, path globs, and allowlisted JSON commands. It emits manifest-derived stepwise skill packages and llms.txt indexes, and it never imports repository code. `derive` previews changes unless you pass `--write`; `audit` and `check` never write.
+Version 0.2 alpha statically inventories package, CLI, API, schema, test, and documentation surfaces and bootstraps a source-bound baseline. It audits documentation without configuration and verifies region, claim, and symbol bindings from static Python, structured data, text files, path globs, and allowlisted JSON commands. It emits manifest-derived stepwise skill packages and llms.txt indexes, and it never imports repository code. `derive` previews changes unless you pass `--write`; `audit` and `check` never write.
 <!-- clean-docs:end product-overview -->
 
 ## Install and audit
@@ -89,13 +89,13 @@ Run the pinned public-repository dogfood proof with:
 
 ```bash
 PYTHONPATH=src python3 scripts/dogfood_public_repos.py
+PYTHONPATH=src python3 scripts/dogfood_bootstrap_repos.py
 ```
 
-The proof clones two fixed commits, checks region and symbol bindings, detects deliberate source drift, repairs or restores the affected source relationship, verifies the final state, and never executes target code.
+The binding proof checks two fixed commits, detects deliberate source drift, and verifies recovery without executing target code.
+The bootstrap proof inventories and initializes pinned Python and TypeScript repositories, verifies the generated baseline, and requires an empty rerun.
 
-Self-hosting uses `python3 scripts/trusted_self_check.py`. Candidate code checks its own
-tree, then the verifier pinned in `.clean-docs-trust.json` independently checks the same
-files. Updating that pin is a release operation, not part of documentation generation.
+Self-hosting uses `python3 scripts/trusted_self_check.py`; the verifier pinned in `.clean-docs-trust.json` independently checks candidate code, and updating that pin is a release operation.
 
 ## Supported binding surface
 

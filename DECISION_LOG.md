@@ -137,3 +137,13 @@ the sentence. Unknown facts, arbitrary fields, duplicate mappings, and incompati
 fail before writes. Prompts are deterministic, secret-redacted, and stripped of repository
 instructions; required checks never consume provider output. Reversible: additional templates can
 be added with explicit compatibility tests without broadening the provider's authority.
+
+## 14. Treat bootstrap writes and moves as one transaction (2026-07-13)
+
+Context: a pinned repository failed policy checks only after bootstrap had moved process documents
+and written its baseline. Leaving those changes behind would make a failed command unsafe. Chose
+to snapshot every write target, track each completed move, and restore both files and directories
+when binding or policy verification fails. The same dogfood also consolidated the process-name
+rule, preserved the repository's actual README casing, and removed three inventory false
+positives before the Python and TypeScript receipts were accepted. Reversible: the transaction is
+contained in bootstrap application and does not change the binding engine.
