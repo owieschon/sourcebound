@@ -24,7 +24,7 @@ UPLOAD_ARTIFACT = (
 
 
 def test_published_wheel_checksum_command_accepts_matching_artifact(tmp_path: Path) -> None:
-    wheel = tmp_path / "clean_docs-1.0.0rc13-py3-none-any.whl"
+    wheel = tmp_path / "clean_docs-1.0.0rc14-py3-none-any.whl"
     wheel.write_bytes(b"release candidate")
     digest = hashlib.sha256(wheel.read_bytes()).hexdigest()
     (tmp_path / "SHA256SUMS").write_text(f"{digest}  {wheel.name}\n")

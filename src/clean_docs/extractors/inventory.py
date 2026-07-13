@@ -106,7 +106,17 @@ def extract_repository_overview(
         if len(by_kind[kind]) > 3:
             examples += f", and {len(by_kind[kind]) - 3} more"
         lines.append(f"| {_inline(kind)} | {len(by_kind[kind])} | {examples} |")
-    normalized = json.dumps(inventory_rows, sort_keys=True, separators=(",", ":"))
+    rendered_rows = [
+        {
+            "kind": item["kind"],
+            "name": item["name"],
+            "source": item["source"],
+            "locator": item["locator"],
+            "adapter": item["adapter"],
+        }
+        for item in inventory_rows
+    ]
+    normalized = json.dumps(rendered_rows, sort_keys=True, separators=(",", ":"))
     digest = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
     lines.extend(("", f"<!-- clean-docs:inventory-sha256 {digest} -->"))
     return EvidenceValue(
