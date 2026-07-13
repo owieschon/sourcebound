@@ -1,12 +1,11 @@
 # Documentation style guide: clean, grounded developer docs
 
+<!-- clean-docs:purpose -->
+Use this guide when writing or reviewing repository documentation for people or agents. It prevents correct facts from becoming hard to find, easy to misread, or detached from source; after applying it, you can choose the right medium, voice, canonical home, and evidence boundary for each claim.
+<!-- clean-docs:end purpose -->
+
 <!-- clean-docs:allow doc-length reason="The four documentation tiers form one canonical standard and must be evaluated together" -->
 <!-- clean-docs:allow audience reason="This standard names agent-workflow signals as policy examples rather than addressing an agent" -->
-
-This is the single reference for documentation voice across every project. It stays one file
-over the 120-line threshold on purpose: its four tiers (sentence voice, single-doc medium
-boundary, corpus, and grounding) are read as one system, and splitting them would break the
-one-canonical-home rule this doc itself teaches.
 
 Derived from a close reading of a developer-documentation corpus spanning overview,
 quickstart, workflows, best practices, memory, hooks, integrations, settings, and CLI
@@ -121,6 +120,29 @@ first screen. Concretely, the first sentence is a plain definition ("X is a Y th
 every abstraction is grounded on first use or cut, and each sentence carries one claim. The
 measure is a blind read: hand the doc to a reader with no prior context and check whether they can
 state back what the system is. The docs hit that bar with specific, repeatable moves:
+
+### Open with a BLUF purpose contract
+
+Every doc opens with the documentation equivalent of a function contract. State the bottom line
+before the explanation so the wrong reader can leave and the right reader knows what the page will
+change for them.
+
+| Contract slot | The opener answers |
+| --- | --- |
+| Precondition | Who this is for and when it applies |
+| Job | What problem leaves the reader stuck without this page |
+| Postcondition | What the reader can do after reading |
+
+Keep the contract falsifiable and true to the code. A title restatement adds no contract. A feature
+list describes the implementation instead of the reader's problem. Booster prose cannot be checked.
+A scope claim the page or product does not deliver is documentation drift.
+
+The deterministic floor checks that one purpose block exists, appears before any body content, and
+does not restate the H1. Judgment checks whether it names a real audience, problem, and resulting
+capability without overselling the implementation. A mechanical pass never substitutes for that
+truth check.
+
+### Use repeatable explanation techniques
 
 1. **Open with a definition, then the one constraint that explains everything downstream.**
    Best-practices names it once ("The context window fills up fast, and performance
@@ -292,3 +314,5 @@ Run this against any doc before shipping. Each line is a fail/pass check.
       not to memory or an old draft.
 - [ ] The first screen defines what the system is and does; a reader with no context could state
       it back.
+- [ ] The first body block is a BLUF purpose contract: applicability, problem, and resulting
+      capability are explicit, falsifiable, and true to the code.

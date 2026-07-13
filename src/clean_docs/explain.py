@@ -40,6 +40,10 @@ RULES = {
         "A status, handoff, plan, or report remains on the reader-facing surface.",
         "Move process history under docs/archive and link only if readers need it.",
     ),
+    "purpose-contract": (
+        "The document does not open with one marked BLUF purpose contract.",
+        "Put a plain prose block after the H1 that names who should read, the problem, and the resulting capability.",
+    ),
     "prohibited-booster": (
         "The prose uses a prohibited booster instead of a verifiable claim.",
         "Remove the booster and state the measured property directly.",

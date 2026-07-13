@@ -1,6 +1,8 @@
 # Security policy
 
-This policy explains how to report a clean-docs vulnerability and what support to expect.
+<!-- clean-docs:purpose -->
+Use this policy when you find a clean-docs vulnerability or need to judge whether a report belongs in a private channel. It tells reporters what evidence to send, what must stay private, and what response to expect.
+<!-- clean-docs:end purpose -->
 
 ## Report a vulnerability
 

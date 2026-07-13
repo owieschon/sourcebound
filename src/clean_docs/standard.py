@@ -82,6 +82,54 @@ def _mechanical_policy(text: str, checks: list[str]) -> dict[str, Any]:
         "require_grounded_facts": any("factual claim" in check for check in checks),
         "require_definition_first": any("first screen defines" in check for check in checks),
         "require_one_job": any("one job" in check for check in checks),
+        "require_purpose_contract": any("BLUF purpose contract" in check for check in checks),
+    }
+
+
+def _style_contract(text: str, checks: list[str]) -> dict[str, Any]:
+    normalized = " ".join(text.split())
+    required_phrases = {
+        "second_person": "Second person + imperative",
+        "system_actor": "Name the system as an actor",
+        "one_claim": "One claim per sentence",
+        "concrete_verbs": "Plain, concrete verbs",
+        "direct_facts": "State facts without hedging",
+        "senior_colleague": "helpful senior colleague",
+        "bluf": "BLUF purpose contract",
+    }
+    missing = [name for name, phrase in required_phrases.items() if phrase not in normalized]
+    if missing:
+        raise ConfigurationError(
+            "standard is missing required style trait(s): " + ", ".join(missing)
+        )
+    if not any("BLUF purpose contract" in check for check in checks):
+        raise ConfigurationError("standard checklist is missing the BLUF purpose contract")
+    return {
+        "voice": {
+            "register": "helpful senior colleague",
+            "reader_actions": "second person and imperative",
+            "system_behavior": "name the system as an actor and state behavior as fact",
+            "sentence_shape": "one claim per sentence",
+            "verbs": "plain and concrete",
+            "certainty": "direct facts; mark genuine uncertainty explicitly",
+            "contractions": "allowed",
+        },
+        "purpose_contract": {
+            "begin_marker": "<!-- clean-docs:purpose -->",
+            "end_marker": "<!-- clean-docs:end purpose -->",
+            "position": "first meaningful block after the H1",
+            "mechanical": [
+                "exactly one marked purpose block",
+                "purpose block precedes body content",
+                "purpose prose does not restate the H1",
+            ],
+            "judgment": [
+                "names who the page is for and when it applies",
+                "states the reader problem rather than listing features",
+                "states a falsifiable resulting capability",
+                "matches the implementation and cited sources",
+            ],
+        },
     }
 
 
@@ -103,6 +151,7 @@ def compile_standard(path: Path) -> dict[str, Any]:
     if missing:
         raise ConfigurationError(f"standard is missing required tier heading(s): {', '.join(missing)}")
     checks = _checklist(lines)
+    style = _style_contract(text, checks)
     pack: dict[str, Any] = {
         "pack_version": PACK_VERSION,
         "profile": DEFAULT_PROFILE,
@@ -114,9 +163,12 @@ def compile_standard(path: Path) -> dict[str, Any]:
         "headings": headings,
         "checklist": checks,
         "policy": _mechanical_policy(text, checks),
+        "style": style,
         "generation": {
             "instructions": text,
             "constraint": "Phrase only the supplied evidence and preserve its scope.",
+            "voice": style["voice"],
+            "purpose_contract": style["purpose_contract"],
         },
     }
     pack["pack_sha256"] = _pack_digest(pack)

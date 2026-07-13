@@ -47,7 +47,9 @@ def _fixture(tmp_path: Path) -> tuple[Path, Path, str, str]:
     subprocess.run(["git", "init", "-q", str(root)], check=True)
     (root / "cli.py").write_text("parser.add_parser('serve')\n")
     (root / "README.md").write_text(
-        "# Fixture\n\n## Repository surface\n\n"
+        "# Fixture\n\n<!-- clean-docs:purpose -->\n"
+        "Use this fixture when testing support receipts. It gives operators one repository surface whose changed evidence can be measured.\n"
+        "<!-- clean-docs:end purpose -->\n\n## Repository surface\n\n"
         "<!-- clean-docs:begin repository-surface -->\n"
         "<!-- clean-docs:end repository-surface -->\n"
     )
@@ -112,7 +114,11 @@ def test_local_outcome_receipt_reports_baseline_and_changed_impact(
 
 def test_local_outcome_receipt_exposes_accepted_hygiene_debt(tmp_path: Path) -> None:
     root, manifest, _base, _head = _fixture(tmp_path)
-    (root / "STATUS.md").write_text("# Existing status\n")
+    (root / "STATUS.md").write_text(
+        "# Existing status\n\n<!-- clean-docs:purpose -->\n"
+        "Use this page when checking the fixture's existing process debt. It preserves one accepted hygiene finding for the receipt.\n"
+        "<!-- clean-docs:end purpose -->\n"
+    )
     subprocess.run(["git", "-C", str(root), "add", "STATUS.md"], check=True)
     write_audit_baseline(root)
 

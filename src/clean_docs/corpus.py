@@ -43,6 +43,7 @@ STOPWORDS = frozenset(
 )
 WORD_RE = re.compile(r"[a-z][a-z0-9-]{2,}")
 FENCE_RE = re.compile(r"^```")
+HTML_COMMENT_RE = re.compile(r"^\s*<!--.*?-->\s*$")
 
 
 def _git_tracked_markdown(root: Path) -> list[Path] | None:
@@ -58,7 +59,11 @@ def _git_tracked_markdown(root: Path) -> list[Path] | None:
         return None
     if proc.returncode != 0:
         return None
-    files = [root / line for line in proc.stdout.splitlines() if line.strip()]
+    files = [
+        root / line
+        for line in proc.stdout.splitlines()
+        if line.strip() and (root / line).is_file()
+    ]
     return files or None
 
 
@@ -72,6 +77,7 @@ def list_documents(root: Path) -> list[Path]:
             path
             for path in tracked
             if "archive" not in path.relative_to(root).parts
+            and path.relative_to(root).parts[:2] != ("tests", "fixtures")
             and not any(
                 part.startswith(".") for part in path.relative_to(root).parts
             )
@@ -110,6 +116,11 @@ def _paragraphs(text: str) -> list[tuple[int, str]]:
         if in_fence:
             continue
         if not raw.strip():
+            if buffer:
+                result.append((start, " ".join(buffer)))
+                buffer = []
+            continue
+        if HTML_COMMENT_RE.match(raw):
             if buffer:
                 result.append((start, " ".join(buffer)))
                 buffer = []

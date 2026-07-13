@@ -5,8 +5,10 @@ description: Audit repository documentation, repair bound facts, and verify that
 
 # Maintain repository documentation
 
+<!-- clean-docs:purpose -->
 Use clean-docs when documentation may have drifted, when a repository needs a corpus audit,
-or before publishing a change that affects bound facts.
+or before publishing a change that affects bound facts. This procedure gives maintainers a read-only audit, a bounded repair path, and the gates that prove source-bound docs are current.
+<!-- clean-docs:end purpose -->
 
 ## Audit without configuration
 

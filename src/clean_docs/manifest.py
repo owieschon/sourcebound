@@ -406,7 +406,7 @@ def load_manifest(path: Path) -> Manifest:
             "file": {"fenced-text", "scalar"},
             "json": {"markdown-table"},
             "path": {"markdown-list"},
-            "python-literal": {"markdown-table", "scalar"},
+            "python-literal": {"markdown-fragment", "markdown-table", "scalar"},
             "repository-inventory": {"markdown-table"},
             "repository-overview": {"markdown-fragment"},
             "structured-data": {"markdown-list", "markdown-table", "scalar"},

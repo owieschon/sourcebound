@@ -1,7 +1,8 @@
 # clean-docs decision log
 
-This file records consequential product and implementation choices, their evidence, and their
-reversibility.
+<!-- clean-docs:purpose -->
+Use this log when a current clean-docs behavior needs its design rationale or reversal path. It keeps consequential choices out of task docs so maintainers can change a decision without mistaking old process history for product truth.
+<!-- clean-docs:end purpose -->
 
 <!-- clean-docs:allow doc-length reason="Product decisions stay in one chronological canonical log" -->
 
@@ -294,3 +295,15 @@ SBOM generation from wheel metadata, checksums covering the wheel and SBOM, and 
 attestations for provenance and the SBOM. Official workflow actions are pinned to immutable commits.
 The release gate also installs the prior release, upgrades, rolls back, upgrades again, and uninstalls
 the candidate. Reversible: another signing service can attest the same wheel digest and SBOM bytes.
+
+## 29. Compile the writing personality and enforce a BLUF purpose contract (2026-07-13)
+
+Context: the authored standard described a specific voice, but runtime policy enforced only booster
+words and audit did not invoke that policy. The README exposed the gap as a dense capability list.
+Chose to compile the voice into structured generation data and require each reader-facing Markdown
+page to open with one marked purpose contract that names applicability, problem, and outcome.
+Deterministic checks own presence, position, prose shape, and title-restatement rejection; human or
+agent judgment owns truth and scope. Bootstrap preserves an existing author opener inside markers.
+Source-derived Markdown fragments preserve paragraph boundaries so regeneration cannot collapse the
+README back into brochure prose. Reversible: a future pack version can change the markers or rubric
+through an explicit migration without weakening current repositories silently.

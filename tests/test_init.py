@@ -101,6 +101,9 @@ def test_init_dry_run_is_read_only_then_default_init_writes_and_verifies(
     applied = json.loads(capsys.readouterr().out)
     assert applied["digest"] == planned["digest"]
     readme = (root / "README.md").read_text()
+    assert readme.count("<!-- clean-docs:purpose -->") == 1
+    assert readme.count("<!-- clean-docs:end purpose -->") == 1
+    assert "Author-owned introduction." in readme
     assert "obsolete-command" not in readme
     assert "| cli-command | 2 | `inspect`, `serve` |" in readme
     assert "| package | 1 | `baseline-service` |" in readme
@@ -321,11 +324,24 @@ def test_hostile_model_context_is_filtered_and_cannot_change_gate_results(
         }],
     }))
     before = audit(root).findings
+    assert [(finding.path, finding.rule) for finding in before] == [
+        ("README.md", "purpose-contract"),
+        ("docs/CONTEXT.md", "purpose-contract"),
+    ]
+    context_before = (docs / "CONTEXT.md").read_text()
 
     plan = build_bootstrap_plan(root, provider)
     replay = build_bootstrap_plan(root, MockProvider(provider.response))
 
     serialized = json.dumps(plan.as_dict(), sort_keys=True)
+    prompt = json.loads(provider.last_prompt)
+    assert prompt["standard"]["voice"]["register"] == "helpful senior colleague"
+    assert prompt["standard"]["purpose_contract"]["judgment"] == [
+        "names who the page is for and when it applies",
+        "states the reader problem rather than listing features",
+        "states a falsifiable resulting capability",
+        "matches the implementation and cited sources",
+    ]
     assert replay.model.prompt_sha256 == plan.model.prompt_sha256
     assert replay.model.response_sha256 == plan.model.response_sha256
     assert secret not in provider.last_prompt
@@ -337,11 +353,17 @@ def test_hostile_model_context_is_filtered_and_cannot_change_gate_results(
 
     apply_bootstrap_plan(root, plan)
 
-    assert audit(root).findings == before
+    assert audit(root).findings == ()
     readme = (root / "README.md").read_text()
     assert "The repository provides `grounded-service` as a package." in readme
     assert secret not in readme
     assert hostile not in readme
+    context_after = (docs / "CONTEXT.md").read_text()
+    assert context_after == context_before.replace(
+        f"{hostile}\n",
+        f"<!-- clean-docs:purpose -->\n{hostile}\n<!-- clean-docs:end purpose -->\n",
+    )
+    assert secret in context_after
 
 
 def test_secret_removed_by_repair_is_redacted_from_plan(

@@ -1,7 +1,8 @@
 # Support and lifecycle
 
-This page defines supported environments, compatibility promises, upgrades, local receipts, and the information to attach to a support request.
-
+<!-- clean-docs:purpose -->
+Use this guide when adopting, upgrading, rolling back, diagnosing, or requesting help for clean-docs. It prevents unsupported assumptions from entering a production gate and gives operators the exact compatibility, evidence, and recovery procedures for a supported installation.
+<!-- clean-docs:end purpose -->
 ## Supported environments
 
 | Surface | Supported contract |

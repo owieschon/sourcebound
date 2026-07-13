@@ -1,6 +1,8 @@
 # Grounded release notes
 
-This page explains how to produce release facts from two immutable repository refs.
+<!-- clean-docs:purpose -->
+Use this guide when release notes must describe the difference between two repository refs without trusting a narrative draft to choose the changes. It shows maintainers how to render the source-bound delta and reject prose that omits, alters, duplicates, or uncites a fact.
+<!-- clean-docs:end purpose -->
 
 ## Render the factual skeleton
 

@@ -1,6 +1,8 @@
 # CLI reference
 
-This page is the lookup table for every clean-docs command and its write behavior.
+<!-- clean-docs:purpose -->
+Use this reference when you know the repository task but need the clean-docs command or its write boundary. It lets you choose a command without guessing whether that command changes documentation.
+<!-- clean-docs:end purpose -->
 
 The table is generated from the command registry used by the parser:
 

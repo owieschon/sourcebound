@@ -74,9 +74,14 @@ def extract_python_literal(
     except SyntaxError as exc:
         raise ExtractionError(f"cannot parse {binding.source.path}: {exc}") from exc
     extracted = _evaluate(_find_assignment(tree, binding.source.symbol))
+    value: Any
+    kind: str
     if binding.renderer == "markdown-table":
         value = _rows(extracted)
         kind = "table"
+    elif binding.renderer == "markdown-fragment" and isinstance(extracted, str):
+        value = extracted
+        kind = "markdown"
     elif binding.renderer == "scalar" and not isinstance(extracted, (dict, list)):
         value = extracted
         kind = "scalar"

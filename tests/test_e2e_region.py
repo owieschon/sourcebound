@@ -45,7 +45,9 @@ SOURCE_THREE = SOURCE_TWO.replace(
 README = """\
 # Fixture
 
+<!-- clean-docs:purpose -->
 Author-owned introduction.
+<!-- clean-docs:end purpose -->
 
 <!-- clean-docs:begin actions -->
 | name | tier | external |
@@ -109,7 +111,10 @@ def test_detects_repairs_and_preserves_author_prose(tmp_path: Path) -> None:
     write = _run(root, "derive", "--write")
     assert write.returncode == 0
     updated = (root / "README.md").read_text()
-    assert updated.startswith("# Fixture\n\nAuthor-owned introduction.\n")
+    assert updated.startswith(
+        "# Fixture\n\n<!-- clean-docs:purpose -->\n"
+        "Author-owned introduction.\n<!-- clean-docs:end purpose -->\n"
+    )
     assert updated.endswith("\nAuthor-owned ending.\n")
     assert "| call | 3 | true |" in updated
     assert _run(root, "check").returncode == 0
@@ -254,7 +259,8 @@ def test_two_region_repair_preserves_every_unbound_byte(tmp_path: Path) -> None:
     (root / "first.txt").write_text("new first\n")
     (root / "second.txt").write_text("new second\n")
     original = (
-        "# Fixture\n\nAuthor introduction.\n\n"
+        "# Fixture\n\n<!-- clean-docs:purpose -->\n"
+        "Author introduction.\n<!-- clean-docs:end purpose -->\n\n"
         "<!-- clean-docs:begin first -->\nold first\n<!-- clean-docs:end first -->\n\n"
         "Author bridge.\n\n"
         "<!-- clean-docs:begin second -->\nold second\n<!-- clean-docs:end second -->\n\n"

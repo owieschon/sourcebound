@@ -15,7 +15,13 @@ ROOT = Path(__file__).parents[1]
 def _quickstart(readme: str) -> str:
     start = readme.index("## Install and audit")
     end = readme.index("\n## ", start + 3)
-    return "# Quickstart fixture\n\n" + readme[start:end].strip() + "\n"
+    return (
+        "# Quickstart fixture\n\n<!-- clean-docs:purpose -->\n"
+        "Use this fixture when testing the published install path. It lets a new reader install clean-docs and run the first audit from this page alone.\n"
+        "<!-- clean-docs:end purpose -->\n\n"
+        + readme[start:end].strip()
+        + "\n"
+    )
 
 
 def test_human_quickstart_installs_and_runs_from_declared_docs(tmp_path: Path) -> None:

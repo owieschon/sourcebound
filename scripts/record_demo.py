@@ -29,6 +29,10 @@ bindings:
 README = """\
 # Fixture service
 
+<!-- clean-docs:purpose -->
+Use this fixture when demonstrating a source-bound command repair. It lets readers observe drift, a bounded write, and the passing check.
+<!-- clean-docs:end purpose -->
+
 ## Command
 
 <!-- clean-docs:begin public-command -->

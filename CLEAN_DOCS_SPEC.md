@@ -1,12 +1,10 @@
 # clean-docs product specification
 
-**This specification defines the final clean-docs product, the releases that build it, and the executable evidence required to ship each release.**
+<!-- clean-docs:purpose -->
+Use this specification when deciding what clean-docs must ship or whether a release claim is earned. It keeps product scope, version order, functional tests, and definitions of done in one contract so implementation and acceptance cannot drift apart.
+<!-- clean-docs:end purpose -->
 
 <!-- clean-docs:allow doc-length reason="The release contract and inherited E2E requirements must remain one versioned reference" -->
-
-Write a documentation standard once. clean-docs audits a software repository, drives its documentation to that standard, and keeps it clean, current, and usable as the repository changes. Humans and agents consume the same canonical documentation through different generated indexes and context bundles.
-
-This file stays whole despite its length because it has one job: bind the product contract to the release claims, E2E tests, and definitions of done that prove it. Splitting the roadmap from the product contract would let implementation scope and acceptance drift apart.
 
 The product combines two workflows over one evidence model:
 
@@ -374,7 +372,8 @@ A failed binding report must answer five questions in one screen:
 
 Canonical documentation follows the existing clean-docs standard:
 
-- Name the intended reader and task before expanding the page.
+- Open every reader-facing page with one marked BLUF purpose contract immediately after its H1.
+- Name who should read, the problem that makes the page necessary, and the capability the reader gains.
 - Start with a plain definition and the governing constraint.
 - State the value and problem before the procedure.
 - Use prose for cause and reasoning.
@@ -386,6 +385,18 @@ Canonical documentation follows the existing clean-docs standard:
 - Carry limitations beside the claim they constrain.
 - Use progressive disclosure: summary, task path, reference, then optional depth.
 - Keep examples executable and test them against the supported release.
+
+The gate checks the contract's mechanical floor: one complete block exists, it precedes all body
+content, it is plain prose, and it does not restate the title. Judgment checks whether the audience,
+problem, and outcome are specific, falsifiable, and true to the implementation. A mechanical pass
+cannot establish those claims. Bootstrap marks an existing author opener without rewriting it and
+creates a deterministic fallback only when no usable opener exists.
+
+The compiled standard carries the voice as structured generation data: second-person imperative
+for reader actions, the system as actor for behavior, one claim per sentence, concrete verbs,
+direct certainty, explicit genuine uncertainty, and the register of a helpful senior colleague.
+The full authored standard remains in the pack as the generation instruction; the structure makes
+the traits testable at the prompt boundary instead of depending on a model to infer them.
 
 Agent access is a projection problem, not a second-authoring problem.
 
@@ -817,6 +828,7 @@ Version 0 preservation work at the start of Version 0.1:
 - Exact, reviewable hygiene baselines for adopting repositories with existing documentation debt.
 - Compact bootstrap summaries that preserve a deterministic digest of the full detected catalog.
 - Public documentation generated and checked by clean-docs.
+- A compiled voice and BLUF purpose contract used by bootstrap, audit, and phrasing prompts.
 - Public source repository under the MIT license from the first supported release.
 - Signed release artifacts and software bill of materials.
 
@@ -826,6 +838,7 @@ Version 0 preservation work at the start of Version 0.1:
    - Given an undocumented supported repository.
    - When a maintainer supplies the standard and runs `clean-docs init`.
    - Then the repo reaches a passing protected baseline without manual document or manifest editing for discovered standard surfaces.
+   - Every active Markdown page opens with a purpose contract; existing author prose remains byte-for-byte inside its markers, and a second init has no patch.
    - Given an existing corpus with hygiene debt, the explicit adoption mode records exact findings, fails on new findings, and requires baseline pruning when debt is resolved.
 2. **full change lifecycle**
    - Given a protected repo and a pull request that changes, adds, and removes public behavior.
@@ -847,6 +860,7 @@ Version 0 preservation work at the start of Version 0.1:
    - Given new human and agent users with only published clean-docs docs.
    - When they install the tool, protect a fixture repo, repair deliberate drift, and explain one limitation.
    - Then every observable task passes the published rubric.
+   - A reader can identify the README's applicability, problem, and resulting capability without reading past its first body block.
    - Required release evidence binds the candidate commit and artifact, rubric, supplied documents, participant independence attestations, and per-task receipts by SHA-256. Internal command rehearsal and recorded responses test the harness but do not substitute for the independent trial.
 
 #### Definition of done
@@ -861,6 +875,8 @@ Version 0 preservation work at the start of Version 0.1:
 - Signed artifacts, checksums, SBOM, license, support policy, and security reporting path are published.
 - Machine-readable run summaries report product outcomes locally and make no outbound request.
 - The static docs and demonstration site, `llms.txt`, context bundles, and CLI reference all pass clean-docs at the release commit.
+- Audit fails on a missing, misplaced, malformed, or title-restating purpose contract, and generated stepwise docs pass the same rule.
+- Functional tests prove that the phrasing prompt carries the structured voice and purpose rubrics while release-note fragments are not misclassified as complete documents.
 - The public guarantee matches the boundary in section 1.
 
 ## 14. Test architecture

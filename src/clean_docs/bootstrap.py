@@ -9,6 +9,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from clean_docs.audit import AUDIT_BASELINE_PATH, PROCESS_NAME, audit, write_audit_baseline
+from clean_docs.corpus import list_documents
 from clean_docs.emit import render_llms_txt
 from clean_docs.engine import evaluate
 from clean_docs.errors import ConfigurationError, PolicyError
@@ -23,6 +24,7 @@ from clean_docs.models import (
     Source,
 )
 from clean_docs.phrasing import GroundedDraft, ModelRecord, PhrasingProvider, build_model_record
+from clean_docs.policy import ensure_purpose_contract
 from clean_docs.projections import evaluate_projections
 from clean_docs.regions import atomic_write, replace_region
 from clean_docs.renderers import render
@@ -142,6 +144,7 @@ def _reference_document(
 ) -> str:
     readme = root / document
     current = readme.read_text(encoding="utf-8") if readme.exists() else "# Repository\n"
+    current = ensure_purpose_contract(current)
     binding = _binding(document)
     evidence = extract_repository_overview(RepositorySnapshot(root), binding)
     generated = render(evidence, binding)
@@ -229,6 +232,8 @@ def build_bootstrap_plan(
     facts = tuple(item for item in report.items if item.kind in INCLUDED_KINDS)
     model = build_model_record(root, facts, provider) if provider else None
     readme = _reference_document(root, readme_path, model.drafts if model else ())
+    moves = [] if accept_hygiene_baseline else _archive_moves(root)
+    moved = {item.source for item in moves}
     manifest = Manifest(
         path=root / ".clean-docs.yml",
         version=1,
@@ -258,15 +263,37 @@ def build_bootstrap_plan(
             _planned_write(root, "llms.txt", llms, "index the source-bound documentation"),
         ) if item is not None
     ]
+    for path in list_documents(root):
+        relative = path.relative_to(root).as_posix()
+        if relative == readme_path or relative in moved:
+            continue
+        current = path.read_text(encoding="utf-8")
+        updated = ensure_purpose_contract(current)
+        planned = _planned_write(
+            root,
+            relative,
+            updated,
+            "mark the document-level purpose contract",
+        )
+        if planned is not None:
+            writes.append(planned)
     supported = {"Python", "TypeScript", "JavaScript"}
     gaps = tuple(
         f"language adapter missing: {language}"
         for language in report.languages
         if language not in supported
     )
-    if any(redact_secrets(item.content)[1] for item in writes):
+    introduced_secret = False
+    for item in writes:
+        target = root / item.path
+        before = target.read_text(encoding="utf-8") if target.exists() else ""
+        before_rules = set(redact_secrets(before)[1])
+        after_rules = set(redact_secrets(item.content)[1])
+        if after_rules - before_rules:
+            introduced_secret = True
+            break
+    if introduced_secret:
         gaps += ("secret detected in generated documentation",)
-    moves = [] if accept_hygiene_baseline else _archive_moves(root)
     payload = json.dumps({
         "facts": [item.id + ":" + item.digest for item in facts],
         "writes": [(item.path, hashlib.sha256(item.content.encode()).hexdigest()) for item in writes],
