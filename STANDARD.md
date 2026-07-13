@@ -16,15 +16,18 @@ clean-docs packages this file as its canonical default standard.
 
 **Choose the medium by what the reader is doing at that sentence, not by what the content is about.**
 
-| Reader's current verb           | Medium                 |
-| ------------------------------- | ---------------------- |
-| Orienting / deciding / "why"    | Prose                  |
-| Doing (type or paste this)      | Code block             |
-| Choosing among options          | Table                  |
-| Looking up one fact by key      | Table (registry)       |
-| Following an ordered sequence   | Numbered steps         |
-| About to hit a non-obvious trap | Callout (Warning/Note) |
-| Doing one task per environment  | Tabs                   |
+| Reader's current verb | Medium |
+| --- | --- |
+| Orienting, deciding, or asking why | Prose |
+| Doing something in code or a shell | Runnable code block |
+| Acting in a visual interface | Cropped screenshot or short video |
+| Choosing among options or comparing attributes | Table |
+| Looking up one fact by key | Registry or generated reference |
+| Following a sequence | Numbered steps |
+| Understanding flow, state, or relationships | Diagram plus text equivalent |
+| Avoiding a non-obvious trap | Semantic callout |
+| Doing the same task in one of several environments | Deep-linkable tabs |
+| Checking whether the task worked | Expected result or verification command |
 
 A page is just this rule applied sentence by sentence. Reference pages look different from
 tutorials only because a reference reader looks-up more often than a tutorial reader orients.
@@ -44,12 +47,17 @@ numbered list), never a table, because they're an *ordering*, not a *lookup*.
 
 Three sentences of pure mechanism before any command is named. That's the job of prose.
 
-### Code: confirmatory, never bare
-Code proves what the prose just framed. Two hard rules:
+### Code: executable evidence, never bare
+Code can teach the action directly once the reader knows why they are taking it. Two hard rules:
 - **No bare block.** Every code block has a prose lead-in ending in a colon that says what
   it does, and often a follow-up naming what to notice or what breaks.
-- **Comments inside the block do the labeling** the surrounding prose would otherwise repeat,
-  and state *intent*, not mechanics (`# Block SQL write operations`, not `# run grep`).
+- **Comments are sparse.** Use one only when the code cannot express a constraint or intent.
+  Do not make comments narrate the example line by line.
+
+When placement matters, name the file. Use realistic names and values that expose the shape of the
+task. Use tabs for language or platform variants, visual diffs for a progressive edit, focus or
+collapse markers for the lines that matter, and a copy action for install commands. A reader must be
+able to tell whether a block is runnable, configuration, output, or a prompt before copying it.
 
 The escalation ladder inside a single block is a signature move. It goes abstract form, then a
 real named instance, then the complication:
@@ -68,9 +76,9 @@ Placeholders (`<name>`, `YOUR_TOKEN`, `/path/to/x`) and real recognizable values
 Stripe) are **never mixed on one line**. The language tag sets the reader's action: `bash` = run in a
 shell, `json`/`yaml` = config, `text` = type this *to* the agent (a prompt). Keep that split.
 
-### Table: for choosing-among or looking-up, where order doesn't matter
-Three jobs only: (a) parallel options the reader picks from, (b) a registry indexed by key,
-(c) before/after pairs. Column design mirrors the questions the reader is asking:
+### Table: for comparison or lookup, where order doesn't matter
+Tables compare several items across several attributes, index facts by key, define terms in context,
+or show before-and-after states. Column design mirrors the questions the reader is asking:
 `Scope | Loads in | Shared with team | Stored in`. Cell rule: **left column is a bare token
 in code font; right columns are sentences that scale with complexity.** A simple flag gets a
 fragment; a hard one gets a paragraph *in the same cell* until it earns its own section. The
@@ -83,15 +91,20 @@ Callout type is semantic, not decorative:
 - **Note** = a true-but-easily-missed clarification or a scope boundary.
 - **Tip** = optional power-user extra, often a `Tips:` bullet list.
 
-### Diagram: temporal flow and decision branching only
-Reserved for lifecycles and decision trees, and always *after* prose has described the flow.
-The diagram confirms a sequence already stated in words; it never carries the first explanation.
+### Diagrams: make relationships and state visible
+Use a diagram for data flow, lifecycle, architecture, or decision branching when prose would force
+the reader to reconstruct the shape. It may be the primary explanation. Follow it with a text
+description that preserves the meaning for screen readers, search, and text-only tools.
 
-### Screenshots: used almost never
-The source documentation corpus contains essentially zero screenshots. A text interface is
-taught with text: "You'll see the prompt with the version, current model, and working directory
-shown above it." Reach for an image only when the thing is inherently visual (a
-rendered UI layout, a graph) and prose would be longer and worse. Default to describing.
+### Screenshots and video: teach recognition and interaction
+Use a screenshot when the reader must find, distinguish, or verify something visual. Crop unrelated
+UI, use a consistent viewport, annotate the target, remove personal or sensitive data, write useful
+alt text, and provide light and dark variants when appearance changes. A caption states what to
+notice rather than repeating the image.
+
+Use a short video for a multi-step interaction, temporal UI behavior, or a workflow whose motion is
+the lesson. Prefer a controllable video to an animated image. Provide a text path to the same outcome
+and make code legible at full screen. Do not use media as decoration or as the only record of a fact.
 
 ---
 
@@ -102,14 +115,25 @@ rendered UI layout, a graph) and prose would be longer and worse. Default to des
 - **Name the system as an actor** so behavior reads as fact, not promise: "The tool skips
   that server and reports the error." Behavior is stated, not sold, which is why the docs
   never read as marketing.
-- **One claim per sentence.** Couple two tightly-related facts with a semicolon; otherwise
-  use a period. "Undefined = no restrictions, empty array = lockdown. Denylist takes precedence."
+- **Every clause adds information.** Split a sentence when its claims need separate evidence or
+  differ in scope. Keep tightly coupled cause and effect together.
 - **Plain, concrete verbs.** Things fill, skip, block, load, collide. Never "leverage", "utilize", "seamlessly", "powerful", "simply", or "comprehensive". <!-- slop-ok: naming banned booster words as negative examples -->
 - **State facts without hedging.** "The tool always asks for permission before modifying
   files" is absolute, not "usually." When advice is *genuinely* situational, mark the
   uncertainty explicitly ("Sometimes you *should* let context accumulate…") rather than blur it.
 - **Contractions are fine** ("you'll", "won't", "let's"); the register is a helpful senior
   colleague, not a spec.
+- **Use present tense and active voice.** Use future tense only for behavior that has not happened.
+  Passive voice is useful only when the actor is unknown or irrelevant.
+- **Remove trivializers.** Words such as "easy", "obvious", and "just" dismiss the reader's
+  difficulty. State the action and its prerequisites instead. <!-- slop-ok -->
+- **Use sentence case for headings, American English, and the Oxford comma.** Spell out zero through
+  nine; use numerals from 10 onward and for percentages or technical values.
+- **Format interface paths consistently.** Bold control labels and write nested paths as
+  **Parent > Child > Control**. Reserve bold for semantic labels, definitions, and UI controls,
+  not general emphasis.
+- **Link the first meaningful mention.** Use descriptive link text, point to the exact destination,
+  and deep-link into the product when the reader's next action happens there. Never use "click here".
 
 ---
 
@@ -177,22 +201,47 @@ truth check.
 
 ## 5. Page shape by genre
 
-**Tutorial** (linear): blockquote tagline stating the payoff and time cost → `## Step N: <imperative verb>`
-spine → each step is prose lead-in + code + optional Tip → close with an "Essential commands"
-table and outbound links.
+<!-- clean-docs:allow section-length reason="The genre contracts form one comparison set and splitting them would hide their boundaries" -->
 
-**Conceptual** (teaches an idea): definition → the one constraint / problem it solves → a
-"This page covers:" bullet map → H2 sections that are imperative verb phrases, each running
-**orient (prose) → instruct (code) → warn (callout)**.
+**Overview** (decide): plain definition and value → supported environments and essential capabilities
+→ visual model where useful → routes to setup, concepts, and common jobs. It answers what this is,
+whether it fits the reader's stack, and where to start.
 
-**Reference** (lookup): one-line descriptor → minimal conceptual preamble *only* where the
-reader must reason across items (precedence, scope) → the lookup table(s), ordered by the
-reader's journey (what you do, then how you modify it), with an Example column on every row.
+**Getting started** (first outcome): prerequisites shared before any platform branches → minimal
+installation → one useful result → explicit verification → next task. Exclude advanced configuration.
 
-**Universal:** order sections by the reader's journey, not the alphabet (except a pure
-registry, indexed by key). End every section by linking outward rather than expanding inline;
-keep each page to what only that page can say. Inline version/currency notes at the claim they
-modify; never add a "changelog" section.
+**Start here** (adoption syllabus): visible milestones → required, recommended, and optional work →
+the goal of each milestone → links to the focused procedure → next useful outcome. Progress markers
+reduce abandonment; they are not decoration.
+
+**Tutorial** (linear learning): payoff and prerequisites → imperative step spine → each step combines
+only the media needed to act → observable result → next experiment or related guide. State a time cost
+only when it is grounded.
+
+**Conceptual** (mental model): definition → the constraint or problem it explains → relationships,
+data flow, or terms → consequences for the reader. Use diagrams for shape and tables for definitions.
+Do not force an instruction into a concept page.
+
+**Guide** (one job): outcome-shaped title → brief applicability and prerequisites → practical steps →
+verification → next related job. Name the job the reader is doing, not the feature they happen to use.
+
+**Troubleshooting** (recover): searchable symptom → likely cause → diagnostic → repair → expected
+result → escalation. When several causes are possible, expose the decision path. Put setup off-ramps
+first and escalation last.
+
+**Reference** (lookup): one-line descriptor → minimal context for precedence or scope → generated or
+structured entries → examples where they resolve ambiguity. Order by the reader's journey unless it
+is a pure alphabetic registry. Generate signatures, parameters, schemas, and defaults from the source
+that defines them; hand-write only the context needed to use them correctly.
+
+**Safety, privacy, or cost controls** (choose a boundary): state what is protected, where the control
+executes, and what remains outside it → order options from least to most restrictive → name defaults,
+inheritance, and overrides → show how to verify the boundary.
+
+**Universal:** teach through **orient → act → observe → verify → extend**, omitting verbs the genre
+does not need. Order sections by the reader's journey, not the alphabet except in a pure registry.
+Link outward rather than expanding a second job inline. Keep version notes beside the claim they
+modify; never add a changelog section to current reference.
 
 ---
 
@@ -227,6 +276,58 @@ corpus of individually-clean docs still sprawls. Each rule below is a check a re
   bites a 300-line dossier of individually-tight sentences.
 - **Prefer the denser medium.** An inline 3-to-7-item enumeration (vendor classes, data
   sources, tested dimensions) is a table or list, not a sentence.
+
+### Give the corpus a navigation contract
+
+Readers should be able to predict where a fact lives. Use a stable taxonomy such as overview,
+getting started, concepts, guides, troubleshooting, and reference. A product area does not need every
+category, but a label must keep the same reader intent everywhere it appears. Navigation names the
+reader's destination, not the repository's internal architecture.
+
+Treat each path as a contract:
+
+| Path | Reader question |
+| --- | --- |
+| Overview | What is this, does it fit, and where do I begin? |
+| Getting started | What is the shortest verified path to a useful result? |
+| Concepts | Why does the system behave this way? |
+| Guides | How do I complete this job? |
+| Troubleshooting | How do I recover from this symptom? |
+| Reference | What is the exact current value, shape, or behavior? |
+
+### Keep facts next to the behavior that owns them
+
+Place a fact's canonical source as close as practical to the code, schema, configuration, or product
+surface that defines it. Render other surfaces from that source. A web guide, in-product onboarding,
+command help, and an agent projection may differ in presentation, but they must not independently
+restate shared facts.
+
+Generated reference and hand-written explanation are complements. Generate signatures, options,
+defaults, and schemas. Hand-write motivation, mental models, examples, failure modes, and the links
+between tasks. When generation cannot prove a prose claim, label that boundary instead of implying
+that inventory coverage validates the prose.
+
+### Enforce rules at the narrowest honest layer
+
+Layer checks by scope and severity. Corpus rules inspect ownership and duplication. Page rules inspect
+structure and links. Sentence rules inspect terms, voice, and mechanics. Errors block demonstrably
+wrong or unsafe output; warnings flag likely defects; suggestions expose judgment calls.
+
+Every deterministic rule needs a positive fixture, a negative fixture, and a documented repair.
+Classify exceptions by kind, such as proper names, case-sensitive technology terms, or accepted
+jargon. Do not hide unrelated failures behind a blanket suppression. Use a model or human to judge
+truth, usefulness, and pedagogy, not to rediscover punctuation that a linter can identify exactly.
+
+### Assign ownership and learn from failed tasks
+
+The owner closest to a fact writes or approves its current truth. The documentation-system owner
+maintains structure, tooling, navigation, and the reading experience. Every published area names an
+owner so stale pages have a destination.
+
+Prioritize changes from observed reader failures: repeated support questions, failed setup attempts,
+unhelpful-page feedback, missing search results, and tasks an agent cannot complete from published
+material. Record the evidence outside the reader-facing page. Repair the canonical source, regenerate
+its projections, and rerun the failed task.
 
 ### What only judgment can check (the honest seam)
 
@@ -287,25 +388,40 @@ customer emails." No amount of voice or structure work catches that; only ground
 
 ## 8. Pre-publish checklist
 
+<!-- clean-docs:allow section-length reason="The checklist is the executable review surface for every tier of this standard" -->
+
 Run this against any doc before shipping. Each line is a fail/pass check.
 
 - [ ] Every code block has a prose lead-in ending in `:` and (where useful) a follow-up.
 - [ ] No table encodes precedence or an ordering rule; those are prose or numbered lists.
-- [ ] Every table's left column is a bare token; every "choose among" table's columns are the
-      reader's actual questions.
+- [ ] Every comparison table's columns are the reader's actual questions; ordered logic stays
+      in prose or numbered steps.
 - [ ] Every "don't" is paired with an "instead"; every warning states a *mechanism*.
 - [ ] Callouts are semantic (Warning = harm, Note = easily-missed, Tip = optional) and none
       carries a concept's first explanation.
 - [ ] Placeholders and real values are never mixed on one line; language tags are correct
       (`bash` vs `text` vs `json`).
+- [ ] Code examples are realistic and sparse in comments; filenames, diffs, focus, or tabs expose
+      placement and variants when needed.
+- [ ] Screenshots are cropped, scrubbed, annotated, captioned, and described; video has a text path;
+      diagrams have a text equivalent.
 - [ ] The page names its one governing constraint early.
 - [ ] No booster adjectives (`seamless`, `powerful`, `simply`, `comprehensive`, `leverage`, `utilize`). <!-- slop-ok: banned-word registry for the checklist -->
-- [ ] Sentences are one-claim; the system is named as an actor; actions are imperative.
+- [ ] Every clause adds information; claims needing separate evidence are split; the system is named
+      as an actor; reader actions are imperative.
+- [ ] Headings use sentence case; UI controls use semantic bold; link text names its destination.
 - [ ] Sections end by linking outward; version notes are inline at the claim.
 - [ ] No process artifact (report, handoff, dispatch, status, blocked-note) is on the
       reader-facing doc surface; that content lives in git, PRs, or issues.
 - [ ] Every published doc's audience is a reader, not a future agent.
 - [ ] No fact is restated across sibling docs; shared facts have one canonical home, cited.
+- [ ] The page fits the corpus navigation contract and its genre follows the reader's intended path.
+- [ ] Procedures include an observable result and verification; troubleshooting proceeds from
+      symptom through diagnosis and repair before escalation.
+- [ ] Generated reference comes from the defining source; hand-written prose supplies context rather
+      than copying signatures, schemas, defaults, or option lists.
+- [ ] Every deterministic rule has positive and negative fixtures, a repair, a severity, and a scoped
+      exception model.
 - [ ] No reference doc carries provenance, receipts, or baseline deltas; those go in a changelog.
 - [ ] No sentence restates a prior sentence; each section leads with its takeaway.
 - [ ] Each doc names its one job in its first line; docs >120 lines and sections >40 lines
