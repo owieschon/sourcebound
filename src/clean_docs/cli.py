@@ -51,12 +51,16 @@ def _parser() -> argparse.ArgumentParser:
 
 def _json(results: list[BindingResult], *, repaired: bool = False) -> str:
     return json.dumps({
-        "ok": repaired or not any(result.changed for result in results),
+        "ok": not any(
+            result.changed and not (repaired and result.binding_type == "region")
+            for result in results
+        ),
         "results": [
             {
                 "binding": result.binding_id,
                 "doc": result.doc,
-                "status": "repaired" if repaired and result.changed else (
+                "status": "repaired" if repaired and result.changed
+                and result.binding_type == "region" else (
                     "drift" if result.changed else "current"
                 ),
                 "diff": result.diff,
@@ -76,7 +80,8 @@ def _json(results: list[BindingResult], *, repaired: bool = False) -> str:
 def _text(results: list[BindingResult], *, repaired: bool = False) -> str:
     lines: list[str] = []
     for result in results:
-        status = "repaired" if repaired and result.changed else (
+        was_repaired = repaired and result.changed and result.binding_type == "region"
+        status = "repaired" if was_repaired else (
             "drift" if result.changed else "current"
         )
         lines.append(f"[{status}] {result.binding_id}: {result.doc}")
@@ -150,10 +155,12 @@ def main(argv: list[str] | None = None) -> int:
                     )
                 return 1
             print(
-                f"drive: repaired {sum(result.changed for result in results)} document(s); "
+                f"drive: repaired {sum(result.changed for result in results if result.binding_type == 'region')} document(s); "
                 "implemented policy checks passed"
             )
-            return 0
+            return 1 if any(
+                result.changed and result.binding_type != "region" for result in results
+            ) else 0
         results = evaluate(
             root,
             manifest,

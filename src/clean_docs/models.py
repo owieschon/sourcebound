@@ -24,10 +24,47 @@ class RegionBinding:
 
 
 @dataclass(frozen=True)
+class Assertion:
+    path: str
+    operator: str
+    expected: Any
+
+
+@dataclass(frozen=True)
+class ClaimBinding:
+    id: str
+    doc: Path
+    anchor: str
+    extractor: str
+    command: str
+    assertion: Assertion
+
+
+@dataclass(frozen=True)
+class SymbolBinding:
+    id: str
+    doc: Path
+    anchor: str
+    source: Source
+
+
+Binding = RegionBinding | ClaimBinding | SymbolBinding
+
+
+@dataclass(frozen=True)
+class CommandSpec:
+    id: str
+    argv: tuple[str, ...]
+    timeout_seconds: int
+    network: bool
+
+
+@dataclass(frozen=True)
 class Manifest:
     path: Path
     version: int
-    bindings: tuple[RegionBinding, ...]
+    bindings: tuple[Binding, ...]
+    commands: tuple[CommandSpec, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -55,3 +92,4 @@ class BindingResult:
     observed: str
     diff: str
     provenance: Provenance
+    binding_type: str = "region"
