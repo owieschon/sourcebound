@@ -12,7 +12,7 @@ from clean_docs.audit import AUDIT_BASELINE_PATH, PROCESS_NAME, audit, write_aud
 from clean_docs.emit import render_llms_txt
 from clean_docs.engine import evaluate
 from clean_docs.errors import ConfigurationError, PolicyError
-from clean_docs.extractors.inventory import INCLUDED_KINDS, extract_repository_inventory
+from clean_docs.extractors.inventory import INCLUDED_KINDS, extract_repository_overview
 from clean_docs.inventory import InventoryItem, scan_inventory
 from clean_docs.manifest import load_manifest
 from clean_docs.models import (
@@ -114,10 +114,9 @@ bindings:
     type: region
     doc: {document}
     region: repository-surface
-    extractor: repository-inventory
+    extractor: repository-overview
     source: {{path: .}}
-    renderer: markdown-table
-    columns: [kind, name, source, locator]
+    renderer: markdown-fragment
 projections:
   llms_txt:
     output: llms.txt
@@ -131,10 +130,10 @@ def _binding(document: str = "README.md") -> RegionBinding:
         id="repository-surface",
         doc=Path(document),
         region=REFERENCE_REGION,
-        extractor="repository-inventory",
+        extractor="repository-overview",
         source=Source(Path(".")),
-        renderer="markdown-table",
-        columns=("kind", "name", "source", "locator"),
+        renderer="markdown-fragment",
+        columns=(),
     )
 
 
@@ -144,7 +143,7 @@ def _reference_document(
     readme = root / document
     current = readme.read_text(encoding="utf-8") if readme.exists() else "# Repository\n"
     binding = _binding(document)
-    evidence = extract_repository_inventory(RepositorySnapshot(root), binding)
+    evidence = extract_repository_overview(RepositorySnapshot(root), binding)
     generated = render(evidence, binding)
     highlights = ""
     if drafts:
@@ -153,7 +152,7 @@ def _reference_document(
         ) + "\n\n"
     section = (
         "## Repository surface\n\n"
-        "This table is generated from statically detected package, CLI, API, schema, and test surfaces.\n\n"
+        "This summary is generated from statically detected package, CLI, API, schema, and test surfaces. Run `clean-docs inventory` for the full catalog.\n\n"
         f"{highlights}"
         f"<!-- clean-docs:begin {REFERENCE_REGION} -->\n"
         f"{generated}\n"

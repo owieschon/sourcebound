@@ -32,9 +32,12 @@ BINDING_KEYS = {
 }
 SOURCE_KEYS = {"path", "symbol", "pointer", "glob"}
 EXTRACTORS = {
-    "file", "json", "path", "python-literal", "repository-inventory", "structured-data",
+    "file", "json", "path", "python-literal", "repository-inventory",
+    "repository-overview", "structured-data",
 }
-RENDERERS = {"fenced-text", "markdown-list", "markdown-table", "scalar"}
+RENDERERS = {
+    "fenced-text", "markdown-fragment", "markdown-list", "markdown-table", "scalar"
+}
 EXECUTION_KEYS = {"commands", "allowed_commands"}
 COMMAND_KEYS = {"argv", "timeout_seconds", "network"}
 ASSERTION_KEYS = {"json_path", "operator", "expected"}
@@ -383,12 +386,12 @@ def load_manifest(path: Path) -> Manifest:
         elif extractor == "file":
             if any(value is not None for value in (symbol, pointer, source_glob)):
                 raise ConfigurationError(f"{where}.source.path is the only valid file source field")
-        elif extractor == "repository-inventory":
+        elif extractor in {"repository-inventory", "repository-overview"}:
             if source_path != "." or any(
                 value is not None for value in (symbol, pointer, source_glob)
             ):
                 raise ConfigurationError(
-                    f"{where}.source.path must be . for repository-inventory"
+                    f"{where}.source.path must be . for {extractor}"
                 )
         else:
             if not isinstance(source_glob, str) or not source_glob:
@@ -405,6 +408,7 @@ def load_manifest(path: Path) -> Manifest:
             "path": {"markdown-list"},
             "python-literal": {"markdown-table", "scalar"},
             "repository-inventory": {"markdown-table"},
+            "repository-overview": {"markdown-fragment"},
             "structured-data": {"markdown-list", "markdown-table", "scalar"},
         }
         if (

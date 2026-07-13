@@ -80,7 +80,10 @@ def _affected_paths(
         matched.update(changed)
     else:
         source = binding.source
-        if isinstance(binding, RegionBinding) and binding.extractor == "repository-inventory":
+        if (
+            isinstance(binding, RegionBinding)
+            and binding.extractor in {"repository-inventory", "repository-overview"}
+        ):
             matched.update(changed)
         elif source.glob:
             matched.update(path for path in changed if fnmatch(path, source.glob))

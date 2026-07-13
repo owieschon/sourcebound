@@ -102,12 +102,10 @@ def test_init_dry_run_is_read_only_then_default_init_writes_and_verifies(
     assert applied["digest"] == planned["digest"]
     readme = (root / "README.md").read_text()
     assert "obsolete-command" not in readme
-    assert "| cli-command | serve | src/service/cli.py | serve |" in readme
+    assert "| cli-command | 2 | `inspect`, `serve` |" in readme
+    assert "| package | 1 | `baseline-service` |" in readme
+    assert "<!-- clean-docs:inventory-sha256 " in readme
     assert "Keep this author-owned procedure." in readme
-    assert all(
-        f"| {kind} | {name} | {source} | {locator} |" in readme
-        for kind, name, source, locator in generated_rows
-    )
     assert (root / ".clean-docs.yml").is_file()
     assert (root / "llms.txt").is_file()
     assert (root / "docs/GUIDE.md").is_file()
@@ -148,10 +146,10 @@ def test_typescript_repository_bootstraps_without_python_metadata(
     capsys.readouterr()
 
     readme = (root / "README.md").read_text()
-    assert "| package | typed-service | package.json | package |" in readme
-    assert "| cli-command | typed | package.json | bin.typed |" in readme
-    assert "| api-symbol | start | src/index.ts | start |" in readme
-    assert "| api-endpoint | GET /health | openapi.json | GET /health |" in readme
+    assert "| package | 1 | `typed-service` |" in readme
+    assert "| cli-command | 1 | `typed` |" in readme
+    assert "| api-symbol | 1 | `start` |" in readme
+    assert "| api-endpoint | 1 | `GET /health` |" in readme
     assert main(["--root", str(root), "check"]) == 0
 
 

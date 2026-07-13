@@ -45,6 +45,10 @@ def render(evidence: EvidenceValue, binding: RegionBinding) -> str:
         if isinstance(evidence.value, (dict, list)):
             raise ExtractionError("scalar renderer requires a scalar value")
         return _cell(evidence.value)
+    if binding.renderer == "markdown-fragment":
+        if not isinstance(evidence.value, str) or evidence.kind != "markdown":
+            raise ExtractionError("markdown-fragment requires generated Markdown evidence")
+        return evidence.value.rstrip()
     if binding.renderer == "fenced-text":
         if not isinstance(evidence.value, str):
             raise ExtractionError("fenced-text renderer requires text evidence")

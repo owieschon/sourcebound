@@ -291,7 +291,11 @@ def _coverage(root: Path, identifiers: set[str]) -> tuple[bool, dict[str, str]]:
     manifest = root / ".clean-docs.yml"
     if manifest.exists():
         try:
-            bound = "extractor: repository-inventory" in manifest.read_text(encoding="utf-8")
+            manifest_text = manifest.read_text(encoding="utf-8")
+            bound = any(
+                f"extractor: {extractor}" in manifest_text
+                for extractor in ("repository-inventory", "repository-overview")
+            )
         except OSError:
             pass
     return bound, _coverage_ignores(root, identifiers)

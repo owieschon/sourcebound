@@ -1,13 +1,13 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `da684f723eba77cd4b1024db99dd631fd9a7eebe20f14c15e481f17f8e5ba07e`
+- Corpus sha256: `bf2d90bcfe4cbef02b6e9c6586e8518465d5e625ed2c61e3b57c7638c9be4d53`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `b0b8b6c31f025774051794aae4b67456a7595d3f4ae1c82234b842f30c873569`
+- Content sha256: `feb2f540bda7be1a1e209f6191e9b05ee4822bc0c4ccd4211ea5b10b6345c584`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
@@ -41,7 +41,7 @@ clean-docs check
 clean-docs verify
 ```
 
-`init` adds source-bound facts, `.clean-docs.yml`, and a checked `llms.txt` projection. Commit those files with the source they describe. A later source change makes `check` fail until `drive` repairs recognized bindings and `project` refreshes projections.
+`init` adds a compact source-surface summary, `.clean-docs.yml`, and a checked `llms.txt` projection. Run `clean-docs inventory` for the full detected catalog. The summary carries a hidden catalog digest, so `check` catches a source replacement even when its surface count stays the same. Commit the generated files with the source they describe. Use `drive` to repair recognized binding drift and `project` to refresh projections.
 
 If existing hygiene findings block adoption, follow the [mature-repository baseline procedure](docs/SUPPORT.md#adopt-an-existing-documentation-corpus). The explicit baseline protects existing debt by exact fingerprint and still fails on new or resolved findings.
 

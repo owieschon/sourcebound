@@ -164,3 +164,49 @@ bindings:
     )
     ignored = next(item for item in scan_inventory(root).items if item.id == ignored_id)
     assert ignored.coverage == "ignored"
+
+
+def test_repository_overview_stays_compact_and_tracks_the_full_catalog(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "large-repository"
+    source = root / "src/package"
+    source.mkdir(parents=True)
+    for index in range(200):
+        (source / f"module_{index}.py").write_text(
+            f"def surface_{index}():\n    return {index}\n"
+        )
+    readme = root / "README.md"
+    readme.write_text(
+        "# Large repository\n\n"
+        "<!-- clean-docs:begin repository-surface -->\nstale\n"
+        "<!-- clean-docs:end repository-surface -->\n"
+    )
+    manifest = root / ".clean-docs.yml"
+    manifest.write_text("""\
+version: 1
+bindings:
+  - id: repository-surface
+    type: region
+    doc: README.md
+    region: repository-surface
+    extractor: repository-overview
+    source: {path: .}
+    renderer: markdown-fragment
+""")
+
+    first = evaluate(root, manifest)[0]
+    assert first.changed
+    assert "| api-symbol | 200 |" in first.expected
+    assert "and 197 more" in first.expected
+    assert len(first.expected.splitlines()) < 15
+    write_results(root, [first])
+    before = readme.read_text()
+
+    (source / "module_199.py").write_text("def zzzz_replacement():\n    return 199\n")
+    second = evaluate(root, manifest)[0]
+
+    assert second.changed
+    assert before.split("<!-- clean-docs:inventory-sha256", 1)[0] == (
+        second.expected.split("<!-- clean-docs:inventory-sha256", 1)[0]
+    )

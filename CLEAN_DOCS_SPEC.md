@@ -812,6 +812,7 @@ Version 0 preservation work at the start of Version 0.1:
 - Performance budgets, caching, local outcome receipts, and a diagnostic bundle.
 - Upgrade and deprecation policy.
 - Exact, reviewable hygiene baselines for adopting repositories with existing documentation debt.
+- Compact bootstrap summaries that preserve a deterministic digest of the full detected catalog.
 - Public documentation generated and checked by clean-docs.
 - Public source repository under the MIT license from the first supported release.
 - Signed release artifacts and software bill of materials.
