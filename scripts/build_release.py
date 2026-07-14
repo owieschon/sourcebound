@@ -114,11 +114,13 @@ def _verify_reader_candidate(
     candidate = str(reader_trial["candidate_commit"])
     _run("git", "merge-base", "--is-ancestor", candidate, final_ref)
     changed = set(_run("git", "diff", "--name-only", candidate, final_ref).splitlines())
-    allowed = {"pyproject.toml", ".clean-docs/reader-trial.json"}
+    receipt_path = str(reader_trial["receipt_path"])
+    evidence_root = str(reader_trial["evidence_root"]).rstrip("/") + "/"
+    allowed = {"pyproject.toml", receipt_path}
     unexpected = sorted(
         path
         for path in changed
-        if path not in allowed and not path.startswith(".clean-docs/reader-trials/")
+        if path not in allowed and not path.startswith(evidence_root)
     )
     if unexpected:
         raise RuntimeError(

@@ -1,13 +1,13 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `74f0d42c8d758125d6fbe9878054b8bd5abeb7b32477a26274e99f776128be01`
+- Corpus sha256: `4de14e204a537a326c3881119c5d39f9efea575cf1c7355f9a573d1a8c85c279`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `4289b0409955e0ce025e67cdf718814f0c0d77971663fe779809a64aa8e39d05`
+- Content sha256: `b3d947ea15bd363b589a256b91affbd9d954b8b78667aa34432e8d0478cc5358`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
@@ -16,6 +16,13 @@
 clean-docs is a source-bound documentation engine and CLI for maintainers whose code changes faster than its documentation. It identifies stale claims and provides a local, deterministic path from source change to repaired, verified docs; models may phrase facts, but they never choose the facts or gate results.
 <!-- clean-docs:end purpose -->
 <!-- clean-docs:allow doc-length reason="The canonical overview keeps installation, first protection, manifest shape, and current boundaries in one reader path" -->
+
+[![CI](https://github.com/owieschon/clean-docs/actions/workflows/ci.yml/badge.svg)](https://github.com/owieschon/clean-docs/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/owieschon/clean-docs?display_name=tag&sort=semver)](https://github.com/owieschon/clean-docs/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-25225f.svg)](LICENSE)
+
+**[Start here](docs/learn/index.md)** for the product map, runnable drift tutorial, real-repository
+postmortem, and deterministic-boundary explanation.
 
 ## Why clean-docs exists
 

@@ -1,0 +1,15 @@
+version: 1
+release: "1.1"
+scenarios:
+  - id: public-repository-legibility
+    test: tests/test_v11_learning.py::test_public_repository_legibility_e2e
+  - id: tutorial-from-a-clean-room
+    test: tests/test_v11_learning.py::test_published_tutorial_runs_the_observed_drift_loop
+  - id: postmortem-facts-cannot-drift
+    test: tests/test_v11_learning.py::test_postmortem_evidence_drift_repairs_only_bound_regions
+  - id: deterministic-seam-boundary
+    test: tests/test_v11_learning.py::test_deep_dive_claims_resolve_to_deterministic_implementation_sources
+  - id: additive-learning-corpus
+    test: tests/test_v11_learning.py::test_additive_learning_corpus_passes_audit_projection_and_links
+  - id: fresh-reader-learning-path
+    test: tests/test_reader_trial.py::test_version_11_reader_trial_uses_two_families_and_learning_tasks

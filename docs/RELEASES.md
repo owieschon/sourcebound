@@ -33,4 +33,11 @@ The factual Markdown and JSON remain unchanged when narrative validation fails. 
 
 Release extraction is static and snapshot-bound. First-party and configured discoverer plugins run once per ref in disposable copies. The active worktree, its installed dependencies, and narrative output cannot change the typed delta.
 
-Release-candidate builds rehearse the published reader tasks in CI. A stable release additionally requires one content-addressed trial from each model profile declared in the rubric: Anthropic Opus 4.8, Anthropic Sonnet 5, Codex GPT 5.5 High, and Codex GPT 5.6 Sol High. Every profile runs in a fresh session with only the rubric's published context, completes every task, and binds its evidence by SHA-256. Profiles cannot share conversation history or prior trial output. The receipt also names the exact candidate commit and wheel digest. `scripts/verify_reader_trial.py` checks `.clean-docs/reader-trial.json`; `scripts/build_release.py` reconstructs the candidate wheel and permits only the version and reader receipts to differ in the stable release. It refuses absent, duplicate, substituted, incomplete, stale, tampered, or untried evidence.
+Release-candidate builds rehearse the published reader tasks in CI. A stable release additionally requires one content-addressed trial from each profile in that release line's rubric:
+
+| Release line | Independent reader set | Evidence contract |
+| --- | --- | --- |
+| `1.0` | Anthropic Opus 4.8, Anthropic Sonnet 5, Codex GPT 5.5 High, and Codex GPT 5.6 Sol High | Product identification, installation, protection, repair, and limitation tasks |
+| `1.1` | Anthropic Opus 4.8 and Codex GPT 5.6 Sol High | Learning-path routing, tutorial execution, and deterministic-authority tasks |
+
+Every profile runs in a fresh session with only the rubric's published context, completes every task, and binds its evidence by SHA-256. Profiles cannot share conversation history or prior trial output. The receipt also names the exact candidate commit and wheel digest. `scripts/verify_reader_trial.py` selects the versioned rubric and evidence namespace; `scripts/build_release.py` reconstructs the candidate wheel and permits only the version and matching reader receipts to differ in the stable release. It refuses absent, duplicate, substituted, incomplete, stale, tampered, or untried evidence.

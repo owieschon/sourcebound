@@ -5,6 +5,13 @@ clean-docs is a source-bound documentation engine and CLI for maintainers whose 
 <!-- clean-docs:end purpose -->
 <!-- clean-docs:allow doc-length reason="The canonical overview keeps installation, first protection, manifest shape, and current boundaries in one reader path" -->
 
+[![CI](https://github.com/owieschon/clean-docs/actions/workflows/ci.yml/badge.svg)](https://github.com/owieschon/clean-docs/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/owieschon/clean-docs?display_name=tag&sort=semver)](https://github.com/owieschon/clean-docs/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-25225f.svg)](LICENSE)
+
+**[Start here](docs/learn/index.md)** for the product map, runnable drift tutorial, real-repository
+postmortem, and deterministic-boundary explanation.
+
 ## Why clean-docs exists
 
 <!-- clean-docs:begin product-overview -->
