@@ -39,6 +39,14 @@ jobs:
       - run: clean-docs --root . release --from v0.4.0 --to HEAD --format json
       - run: python scripts/record_demo.py --out /tmp/clean-docs-demo-evidence.json
       - run: cmp .clean-docs/demo/evidence.json /tmp/clean-docs-demo-evidence.json
+      - run: python scripts/build_learning_evidence.py --out /tmp/clean-docs-learning-evidence.json
+      - run: cmp .clean-docs/learning/ultra-csm-hygiene.json /tmp/clean-docs-learning-evidence.json
+      - run: >-
+          python scripts/record_learning_tutorial.py
+          --clean-docs "$(command -v clean-docs)"
+          --out /tmp/clean-docs-tutorial-evidence.json
+      - run: cmp .clean-docs/learning/tutorial-evidence.json /tmp/clean-docs-tutorial-evidence.json
+      - run: python scripts/render_social_preview.py --check
       - run: python scripts/trusted_self_check.py
 
   public-dogfood:
@@ -222,6 +230,32 @@ jobs:
         with:
           name: clean-docs-v1.0-acceptance-${{ matrix.os }}-${{ github.sha }}
           path: clean-docs-v10-acceptance.json
+          if-no-files-found: error
+
+  acceptance-v1-1:
+    needs: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install ".[dev]"
+      - run: >-
+          python scripts/run_acceptance.py
+          --registry tests/v11-acceptance.yml
+          --out clean-docs-v11-acceptance.json
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: clean-docs-v1.1-acceptance-${{ matrix.os }}-${{ github.sha }}
+          path: clean-docs-v11-acceptance.json
           if-no-files-found: error
 
   performance-v1-0:
