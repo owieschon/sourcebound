@@ -180,6 +180,8 @@ def test_stable_release_accepts_only_reader_candidate_version_and_receipts(
         "required": True,
         "candidate_commit": candidate,
         "candidate_artifact_sha256": hashlib.sha256(wheel.read_bytes()).hexdigest(),
+        "receipt_path": ".clean-docs/reader-trial.json",
+        "evidence_root": ".clean-docs/reader-trials",
     }
 
     release_builder._verify_reader_candidate(final, trial, tmp_path / "build")

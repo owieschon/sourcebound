@@ -12,6 +12,7 @@ import yaml
 
 from scripts.verify_reader_trial import (
     ReaderTrialError,
+    trial_layout,
     verify_reader_trial,
     verify_release_reader_trial,
 )
@@ -24,10 +25,16 @@ def _sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def _write_trial(root: Path) -> Path:
-    rubric_path = root / ".clean-docs/reader-trial-rubric.yml"
+def _write_trial(
+    root: Path,
+    *,
+    release_version: str = "1.0.0",
+    candidate: str = "1.0.0rc9",
+) -> Path:
+    layout = trial_layout(release_version)
+    rubric_path = root / layout.rubric
     rubric_path.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(ROOT / ".clean-docs/reader-trial-rubric.yml", rubric_path)
+    shutil.copyfile(ROOT / layout.rubric, rubric_path)
     rubric_bytes = rubric_path.read_bytes()
     rubric = yaml.safe_load(rubric_bytes)
     context = []
@@ -42,7 +49,7 @@ def _write_trial(root: Path) -> Path:
         profile_id = profile["id"]
         tasks = []
         for task in rubric["tasks"]:
-            relative = Path(".clean-docs/reader-trials") / profile_id / f"{task['id']}.txt"
+            relative = layout.evidence_root / profile_id / f"{task['id']}.txt"
             evidence = root / relative
             evidence.parent.mkdir(parents=True, exist_ok=True)
             evidence.write_text(f"{profile_id} passed {task['id']} using published docs only\n")
@@ -62,14 +69,14 @@ def _write_trial(root: Path) -> Path:
         })
     receipt = {
         "schema": "clean-docs.independent-reader-trial.v2",
-        "candidate": "1.0.0rc9",
+        "candidate": candidate,
         "candidate_commit": "a" * 40,
         "candidate_artifact_sha256": "b" * 64,
         "rubric_sha256": _sha256(rubric_bytes),
         "context": context,
         "participants": participants,
     }
-    receipt_path = root / ".clean-docs/reader-trial.json"
+    receipt_path = root / layout.receipt
     receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
     return receipt_path
 
@@ -89,6 +96,26 @@ def test_reader_trial_binds_rubric_context_participants_and_task_evidence(
         "codex-gpt-5-6-sol-high": 1,
     }
     assert summary["tasks_per_participant"] == 5
+    assert summary["receipt_sha256"] == _sha256(receipt.read_bytes())
+
+
+def test_version_11_reader_trial_uses_two_families_and_learning_tasks(tmp_path: Path) -> None:
+    receipt = _write_trial(
+        tmp_path,
+        release_version="1.1.0",
+        candidate="1.1.0rc1",
+    )
+
+    summary = verify_reader_trial(tmp_path, "1.1.0")
+
+    assert summary["candidate"] == "1.1.0rc1"
+    assert summary["participants"] == {
+        "anthropic-opus-4-8": 1,
+        "codex-gpt-5-6-sol-high": 1,
+    }
+    assert summary["tasks_per_participant"] == 5
+    assert summary["receipt_path"] == ".clean-docs/reader-trial-v1.1.json"
+    assert summary["evidence_root"] == ".clean-docs/reader-trials-v1.1"
     assert summary["receipt_sha256"] == _sha256(receipt.read_bytes())
 
 

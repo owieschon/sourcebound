@@ -8,6 +8,7 @@ import hashlib
 import json
 import re
 import sys
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -32,6 +33,24 @@ MAX_EVIDENCE_BYTES = 1_000_000
 
 class ReaderTrialError(ValueError):
     """The reader-trial evidence does not prove the release gate."""
+
+
+@dataclass(frozen=True)
+class TrialLayout:
+    rubric: Path
+    receipt: Path
+    evidence_root: Path
+
+
+def trial_layout(release_version: str) -> TrialLayout:
+    """Keep each release line bound to the rubric its candidate readers saw."""
+    if release_version.startswith("1.1."):
+        return TrialLayout(
+            rubric=Path(".clean-docs/reader-trial-rubric-v1.1.yml"),
+            receipt=Path(".clean-docs/reader-trial-v1.1.json"),
+            evidence_root=Path(".clean-docs/reader-trials-v1.1"),
+        )
+    return TrialLayout(rubric=RUBRIC, receipt=RECEIPT, evidence_root=EVIDENCE_ROOT)
 
 
 def _sha256(data: bytes) -> str:
@@ -80,14 +99,14 @@ def _timestamp(value: Any, *, label: str) -> None:
         raise ReaderTrialError(f"{label} must include a UTC offset")
 
 
-def _load_rubric(root: Path) -> tuple[dict[str, Any], bytes]:
+def _load_rubric(root: Path, rubric_path: Path) -> tuple[dict[str, Any], bytes]:
     try:
         import yaml
     except ImportError as exc:
         raise ReaderTrialError(
             "stable reader-trial verification requires PyYAML"
         ) from exc
-    path = root / RUBRIC
+    path = root / rubric_path
     try:
         data = path.read_bytes()
         raw: Any = yaml.safe_load(data)
@@ -139,8 +158,9 @@ def _load_rubric(root: Path) -> tuple[dict[str, Any], bytes]:
 def verify_reader_trial(root: Path, release_version: str) -> dict[str, object]:
     """Return a release-safe summary or raise when evidence is incomplete."""
     root = root.resolve()
-    rubric, rubric_bytes = _load_rubric(root)
-    receipt_path = root / RECEIPT
+    layout = trial_layout(release_version)
+    rubric, rubric_bytes = _load_rubric(root, layout.rubric)
+    receipt_path = root / layout.receipt
     try:
         receipt_bytes = receipt_path.read_bytes()
         raw: Any = json.loads(receipt_bytes)
@@ -247,7 +267,7 @@ def verify_reader_trial(root: Path, release_version: str) -> dict[str, object]:
                 raise ReaderTrialError("reader task evidence paths must be unique strings")
             if not isinstance(digest, str) or SHA256.fullmatch(digest) is None:
                 raise ReaderTrialError(f"reader task evidence digest is invalid: {evidence}")
-            evidence_path = _relative_file(root, evidence, prefix=EVIDENCE_ROOT)
+            evidence_path = _relative_file(root, evidence, prefix=layout.evidence_root)
             evidence_bytes = evidence_path.read_bytes()
             if not evidence_bytes or len(evidence_bytes) > MAX_EVIDENCE_BYTES:
                 raise ReaderTrialError(f"reader task evidence size is invalid: {evidence}")
@@ -270,6 +290,8 @@ def verify_reader_trial(root: Path, release_version: str) -> dict[str, object]:
         "receipt_sha256": _sha256(receipt_bytes),
         "rubric_sha256": rubric_digest,
         "context_sha256": context_digest,
+        "receipt_path": layout.receipt.as_posix(),
+        "evidence_root": layout.evidence_root.as_posix(),
         "participants": completed_profiles,
         "tasks_per_participant": len(expected_tasks),
     }
