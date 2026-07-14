@@ -72,6 +72,14 @@ EXPECTED_IDS_BY_RELEASE = {
         "upgrade-compatibility",
         "independent-reader-success",
     },
+    "1.1": {
+        "public-repository-legibility",
+        "tutorial-from-a-clean-room",
+        "postmortem-facts-cannot-drift",
+        "deterministic-seam-boundary",
+        "additive-learning-corpus",
+        "fresh-reader-learning-path",
+    },
 }
 
 
