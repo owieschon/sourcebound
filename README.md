@@ -4,8 +4,13 @@
 clean-docs is a source-bound documentation engine and CLI for maintainers whose code changes faster than its documentation. It identifies stale claims and provides a local, deterministic path from source change to repaired, verified docs; models may phrase facts, but they never choose the facts or gate results.
 <!-- clean-docs:end purpose -->
 <!-- clean-docs:allow doc-length reason="The canonical overview keeps installation, first protection, manifest shape, and current boundaries in one reader path" -->
+
+## Why clean-docs exists
+
 <!-- clean-docs:begin product-overview -->
-Source owns the facts; the packaged standard owns their form. clean-docs audits tracked Markdown, binds claims to source evidence, repairs declared regions, and fails CI when either the facts or the documentation contract drift.
+Documentation drift is easy to miss: code changes, the prose still sounds plausible, and reviewers have no mechanical way to know which claim became false. Human review and general-purpose agents can improve wording, but neither makes the relationship between a claim and its source reproducible in CI.
+
+clean-docs exists to make that relationship explicit. Source owns the facts; the packaged standard owns their form. clean-docs audits tracked Markdown, binds claims to source evidence, repairs declared regions, and fails CI when either the facts or the documentation contract drift.
 
 Static adapters cover Python, TypeScript, OpenAPI, JSON Schema, package metadata, and MCP tools without importing repository code. Declared commands and versioned plugins run in disposable copies with bounded I/O and minimal environments.
 
