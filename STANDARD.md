@@ -341,6 +341,51 @@ Treat each path as a contract:
 | Troubleshooting | How do I recover from this symptom? |
 | Reference | What is the exact current value, shape, or behavior? |
 
+### One source, purpose-built projections
+
+<!-- clean-docs:allow section-length reason="The dual-audience contract keeps canonical-source, teaching, retrieval, authority, and evaluation requirements together because they govern one projection system" -->
+
+The documentation corpus is a maintained teaching system, not a pile of readable files. Encode
+meaning once, then project it for the audience's task. A human surface may use progressive
+disclosure, diagrams, and narrative. An agent surface may use stable identifiers, typed metadata,
+compact context bundles, and explicit relationships. Neither projection may invent a second source
+of truth.
+
+Canonical content should carry enough structure to generate or validate the projections that need
+it: content type, applicability, authority, version, prerequisites, side effects, verification,
+and links between concepts, tasks, decisions, and reference definitions. Keep those fields only
+when they change behavior; metadata without a consumer is another form of documentation theater.
+
+Teach every consequential surface at three levels:
+
+1. **Model:** name the entities, ownership, lifecycle, state transitions, trust boundaries, and
+   invariants that let a reader reason beyond the example.
+2. **Procedure:** state prerequisites, ordered actions, observable intermediate states, success,
+   failure handling, cleanup, rollback, and retry behavior.
+3. **Judgment:** state when to choose the path, when not to, what evidence changes the choice, and
+   when the documentation is insufficient and the reader must abstain or escalate.
+
+Structure is semantic. Label content as concept, tutorial, task, reference, troubleshooting,
+decision, migration, policy, or ADR when tooling consumes that distinction. A high-consequence task
+also states permissions, reversibility, side effects, blast radius, approval, and rollback. Agents
+must not infer authorization from capability.
+
+Design retrieval units to survive extraction. Each unit names its system, version or applicability,
+subject, normative status, and authority without dangling pronouns. Stable anchors let a person,
+agent, test, or support record cite the exact governing rule. Controlled terminology preserves
+entity boundaries; preferred terms and deprecated synonyms are part of the contract.
+
+Examples are executable lessons. Reuse tested assets, pin their environment, show expected output,
+and include the failure or counterexample that defines the negative boundary. Documentation tests
+therefore include audience tasks: correct selection, parameters, preconditions, recovery,
+abstention, and citation of the governing rule. Schema, spelling, and link checks cannot prove that
+the material teaches correct behavior.
+
+Authority and uncertainty stay visible. Distinguish requirements, guidance, examples, history,
+experiments, generated reference, and deprecated behavior. State non-guarantees and conflicts, and
+give an escalation path for missing policy. A correct answer from the wrong version or a tutorial
+treated as normative is still a documentation failure.
+
 ### Keep facts next to the behavior that owns them
 
 Place a fact's canonical source as close as practical to the code, schema, configuration, or product
@@ -483,3 +528,11 @@ Run this against any doc before shipping. Each line is a fail/pass check.
       context could state it back.
 - [ ] The first body block is a BLUF purpose contract: applicability, problem, and resulting
       capability are explicit, falsifiable, and true to the code.
+- [ ] Purpose prose names the project-specific subject, operator, consequential failure, and
+      authority boundary; it does not use a stock sentence shared across unrelated projects.
+- [ ] Canonical meaning has purpose-built human and agent projections rather than separately
+      maintained copies; each projection identifies its authority and applicability.
+- [ ] Consequential tasks teach the model, procedure, and judgment boundary, including permissions,
+      side effects, verification, recovery, abstention, and escalation where applicable.
+- [ ] Executable examples and audience-task evaluations prove correct action and at least one
+      negative boundary; retrieval units remain intelligible outside their original page.

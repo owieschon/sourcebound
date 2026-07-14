@@ -354,10 +354,10 @@ def test_hostile_model_context_is_filtered_and_cannot_change_gate_results(
     prompt = json.loads(provider.last_prompt)
     assert prompt["standard"]["voice"]["register"] == "helpful senior colleague"
     assert prompt["standard"]["purpose_contract"]["judgment"] == [
-        "names who the page is for and when it applies",
-        "states the reader problem rather than listing features",
-        "states a falsifiable resulting capability",
-        "matches the implementation and cited sources",
+        "defines the project-specific subject and intended operator",
+        "names the consequential failure or decision the page addresses",
+        "states the authority boundary and a falsifiable resulting capability",
+        "uses authored language grounded in the implementation and cited sources",
     ]
     assert replay.model.prompt_sha256 == plan.model.prompt_sha256
     assert replay.model.response_sha256 == plan.model.response_sha256

@@ -40,10 +40,10 @@ def test_default_pack_is_available_as_package_data() -> None:
     assert pack["policy"]["require_purpose_contract"] is True
     assert pack["style"]["voice"]["register"] == "helpful senior colleague"
     assert pack["style"]["purpose_contract"]["judgment"] == [
-        "names who the page is for and when it applies",
-        "states the reader problem rather than listing features",
-        "states a falsifiable resulting capability",
-        "matches the implementation and cited sources",
+        "defines the project-specific subject and intended operator",
+        "names the consequential failure or decision the page addresses",
+        "states the authority boundary and a falsifiable resulting capability",
+        "uses authored language grounded in the implementation and cited sources",
     ]
     assert any(
         "subject-derived memorable element" in check for check in pack["checklist"]
@@ -77,6 +77,19 @@ def test_policy_uses_compiled_booster_registry() -> None:
         ("prohibited-booster", 7)
     ]
     assert json.dumps(pack, sort_keys=True)
+
+
+def test_policy_rejects_stock_purpose_language() -> None:
+    content = (
+        "# Queue\n\n<!-- clean-docs:purpose -->\n"
+        "Read this page before changing or relying on Queue so you can preserve its contract.\n"
+        "<!-- clean-docs:end purpose -->\n"
+    )
+    findings = check_document("README.md", content, load_default_pack())
+    assert [(finding.rule, finding.line) for finding in findings] == [
+        ("purpose-contract", 4)
+    ]
+    assert "stock purpose language" in findings[0].detail
 
 
 def test_rejects_modified_policy_pack(tmp_path: Path) -> None:
@@ -183,7 +196,7 @@ def test_prohibited_boosters_do_not_treat_headings_as_prose() -> None:
     assert check_document("README.md", content, load_default_pack()) == []
 
 
-def test_bootstrap_marks_author_prose_and_replaces_a_title_restatement() -> None:
+def test_bootstrap_marks_author_prose_and_refuses_a_title_restatement() -> None:
     authored = "# Project\n\nMaintainers use this guide before changing the API.\n\n## Next\n"
     marked = ensure_purpose_contract(authored)
 
@@ -192,8 +205,12 @@ def test_bootstrap_marks_author_prose_and_replaces_a_title_restatement() -> None
     assert ensure_purpose_contract(marked) == marked
 
     replaced = ensure_purpose_contract("# Project guide\n\nThis is the project guide.\n")
-    assert "This is the project guide." not in replaced
-    assert "Use this page when you need to understand Project guide" in replaced
+    assert replaced == "# Project guide\n\nThis is the project guide.\n"
+
+    replaced = ensure_purpose_contract(
+        "# Project guide\n\nThis is the project guide.\n", fallback=True
+    )
+    assert replaced == "# Project guide\n\nThis is the project guide.\n"
 
 
 def test_bootstrap_moves_authored_prose_ahead_of_logos_and_badges() -> None:
