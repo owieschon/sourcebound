@@ -251,7 +251,7 @@ def render_static_demo(evidence: DemoEvidence, output: Path) -> str:
         "drift": "The source changed; the README did not. The gate names the stale binding.",
         "repaired": "The declared region is regenerated, then the same check passes.",
     }
-    state_cards = []
+    state_cards: list[str] = []
     for state in evidence.states:
         steps = []
         for step in state.steps:
