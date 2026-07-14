@@ -1,15 +1,22 @@
-participant: 51F7DD94-22EF-4CE7-9488-FC56B6D80821
+participant_id: 970fe2c3-a376-4b56-a68c-474d3c9bfe45
 profile: codex-gpt-5-5-high
 independent: true
 context: published-docs-only
-completed_at: 2026-07-13T22:59:42Z
-result: PASS
+completed_at: 2026-07-14T01:36:16Z
 task: repair-drift
-evidence:
-  Published binding reference used:
-  README.md, section "Manifest reference" documents region bindings with extractor python-literal, source path and symbol, renderer markdown-table, and destination markers clean-docs:begin/end.
+result: PASS
 
-  Configured binding added to .clean-docs.yml:
+Evidence:
+Fixture path:
+  workspace/repair-fixture-970fe2c3
+
+Published repair path used:
+  README.md, section "Protect a repository" says that after bound source drift, run clean-docs check, clean-docs drive, clean-docs project, and clean-docs verify.
+
+Published binding reference used:
+  README.md, section "Manifest reference" documents a region binding with extractor python-literal, source path and symbol, renderer markdown-table, and clean-docs:begin/end destination markers.
+
+Manifest fragment:
   - id: actions
     type: region
     doc: README.md
@@ -19,9 +26,22 @@ evidence:
     renderer: markdown-table
     columns: [name, tier]
 
-  Command: /Users/owieschon/clean-docs-reader-trials-rc17/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs drive && git diff -- .clean-docs.yml README.md llms.txt && /Users/owieschon/clean-docs-reader-trials-rc17/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs project && git diff -- .clean-docs.yml README.md llms.txt && /Users/owieschon/clean-docs-reader-trials-rc17/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check && /Users/owieschon/clean-docs-reader-trials-rc17/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs verify
-  Exit code: 0
-  Baseline output:
+Before source excerpt:
+  ACTIONS = [
+      {"name": "alpha", "tier": "stable"},
+  ]
+
+Baseline document excerpt after drive:
+  <!-- clean-docs:begin actions -->
+  | name | tier |
+  | --- | --- |
+  | alpha | stable |
+  <!-- clean-docs:end actions -->
+
+Baseline command:
+  TMPDIR=/Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs drive && git diff -- .clean-docs.yml README.md llms.txt src/fixture_app/actions.py && TMPDIR=/Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs project && git diff -- .clean-docs.yml README.md llms.txt src/fixture_app/actions.py && TMPDIR=/Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check && TMPDIR=/Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs verify
+Exit code: 0
+Relevant output:
   [current] repository-surface: README.md
   [repaired] actions: README.md
   drive: repaired 1 document(s); implemented policy checks passed
@@ -30,36 +50,29 @@ evidence:
   [current] repository-surface: README.md
   [current] actions: README.md
   [current] projection:llms.txt: llms.txt
-  verify ok: true
+  "ok": true
   bindings.total: 2
   bindings.current: 2
   bindings.drifted: 0
-  projections.total: 1
-  projections.current: 1
-  network_requests: 0
 
-  Generated region baseline:
-  | name | tier |
-  | --- | --- |
-  | alpha | stable |
-
-  Command: git add README.md .clean-docs.yml llms.txt src/fixture_app/actions.py && git -c user.name='Reader Trial' -c user.email='reader-trial@example.invalid' commit -m 'Protect fixture docs and action binding' && /Users/owieschon/clean-docs-reader-trials-rc17/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check
-  Exit code: 0
-  Relevant output:
-  [main 88af410] Protect fixture docs and action binding
-   3 files changed, 47 insertions(+)
-   create mode 100644 .clean-docs.yml
-   create mode 100644 llms.txt
+Baseline commit command:
+  git add README.md .clean-docs.yml llms.txt src/fixture_app/actions.py && git -c user.name='Reader Trial' -c user.email='reader-trial@example.invalid' commit -m 'Protect action binding baseline' && TMPDIR=/Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check
+Exit code: 0
+Relevant output:
+  [main 6482b95] Protect action binding baseline
   [current] repository-surface: README.md
   [current] actions: README.md
   [current] projection:llms.txt: llms.txt
 
-  Source change:
-  src/fixture_app/actions.py changed from {"name": "alpha", "tier": "stable"} to {"name": "beta", "tier": "stable"}.
+After source excerpt:
+  ACTIONS = [
+      {"name": "beta", "tier": "stable"},
+  ]
 
-  Command: /Users/owieschon/clean-docs-reader-trials-rc17/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check
-  Exit code: 1
-  First failure output:
+First post-drift check command:
+  TMPDIR=/Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check
+Exit code: 1
+Relevant output:
   [current] repository-surface: README.md
   [drift] actions: README.md
   --- README.md
@@ -73,9 +86,10 @@ evidence:
    <!-- clean-docs:end actions -->
   [current] projection:llms.txt: llms.txt
 
-  Command: /Users/owieschon/clean-docs-reader-trials-rc17/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs drive && git diff -- README.md llms.txt src/fixture_app/actions.py .clean-docs.yml && /Users/owieschon/clean-docs-reader-trials-rc17/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs project && git diff -- README.md llms.txt src/fixture_app/actions.py .clean-docs.yml && /Users/owieschon/clean-docs-reader-trials-rc17/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check && /Users/owieschon/clean-docs-reader-trials-rc17/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs verify
-  Exit code: 0
-  Repair output:
+Repair command:
+  TMPDIR=/Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs drive && git diff -- README.md llms.txt src/fixture_app/actions.py .clean-docs.yml && TMPDIR=/Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs project && git diff -- README.md llms.txt src/fixture_app/actions.py .clean-docs.yml && TMPDIR=/Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check && TMPDIR=/Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs verify
+Exit code: 0
+Relevant output:
   [current] repository-surface: README.md
   [repaired] actions: README.md
   drive: repaired 1 document(s); implemented policy checks passed
@@ -85,18 +99,26 @@ evidence:
   [current] actions: README.md
   [current] projection:llms.txt: llms.txt
 
-  Repair diff excerpts:
-  README.md:
+Documentation diff after repair:
+  diff --git a/README.md b/README.md
+  @@ -9,7 +9,7 @@
+   <!-- clean-docs:begin actions -->
+   | name | tier |
+   | --- | --- |
   -| alpha | stable |
   +| beta | stable |
+   <!-- clean-docs:end actions -->
 
-  llms.txt:
-  -sha256: 1df160a2656343b12dc67dddc2d738cd8289a9b86fe578a663f3ac7626d97bde
-  +sha256: 0459b7b1f2c110e158ba43a55c85d6374ca095a0f81c8b7ada8d2606baefdbf4
+Projection diff after repair:
+  diff --git a/llms.txt b/llms.txt
+  @@ -4,4 +4,4 @@
+   ## Canonical documentation
+  -- [README.md](README.md): bindings: actions, repository-surface; sha256: 6bff03e5105eddb8f4bc886c27d6e0efbfd5520ed37d20a4079e5b144cfa1dc7
+  +- [README.md](README.md): bindings: actions, repository-surface; sha256: 32ea70ae5a4afaca08ea35a8d83d0c99c6d125805670aa2530b63b007d709aab
 
-  Final verification fields:
+Final verification fields:
   schema: clean-docs.outcome.v1
-  version: 1.0.0rc17
+  version: 1.0.0rc19
   ok: true
   protected_baseline_current: true
   coverage_complete: true
@@ -107,5 +129,6 @@ evidence:
   projections.current: 1
   projections.stale: 0
   network_requests: 0
-documentation_gaps: none
 
+Documentation defects encountered:
+  none

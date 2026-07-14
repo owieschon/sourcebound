@@ -1,111 +1,152 @@
-participant: 1df96ff3-a3d2-4817-8538-62f439080119
+participant_id: 33c28db4-66f2-407a-8916-e2b8af63b4e1
 profile: anthropic-sonnet-5
 independent: true
 context: published-docs-only
-completed_at: 2026-07-13T22:58:21Z
-result: PASS
+completed_at: 2026-07-14T01:22:47Z
 task: repair-drift
+result: PASS
 
-evidence:
 Instructions followed: README.md "Protect a repository" section's
-explicit repair sequence (lines 53-58):
+explicit repair sequence:
 
     clean-docs check       # exits 1 and names the stale binding
     clean-docs drive       # repairs recognized bound regions
     clean-docs project     # refreshes projections that include the repaired document
     clean-docs verify      # exits 0 only when the repository is current
 
-Source-to-document binding: the `repository-surface` region binding
-declared in .clean-docs.yml by `clean-docs init --no-model` during the
-protect-fixture task -- this is a supported binding type (type: region,
-per README's manifest reference table) and was already established with
-a passing baseline, committed as fe492d1 "protected baseline (clean-docs
-init)" in the protect-fixture task.
+1. Supported source-to-documentation region binding (declared by
+   `clean-docs init --no-model` during the protect-fixture task; type
+   "region" is one of the three supported binding types per README's
+   manifest reference table). Manifest fragment (.clean-docs.yml,
+   unmodified, inspected only):
 
-.clean-docs.yml binding (unmodified, inspected only):
-  bindings:
-    - id: repository-surface
-      type: region
-      doc: README.md
-      region: repository-surface
-      extractor: repository-overview
-      source: {path: .}
-      renderer: markdown-fragment
+   bindings:
+     - id: repository-surface
+       type: region
+       doc: README.md
+       region: repository-surface
+       extractor: repository-overview
+       source: {path: .}
+       renderer: markdown-fragment
 
-change to the bound source: renamed the public function
-`add(a, b)` to `total(a, b)` in src/fixture_pkg/__init__.py (body/
-docstring unchanged), so the source no longer matches the bound
-repository-surface table, which had recorded `add`.
+2. Passing baseline: already established and committed during
+   protect-fixture as eb3b636 "protected baseline (clean-docs init)".
 
-commands, exit codes, and output:
+3. Changed the defining source without editing the bound documentation:
+   renamed the public function `add(a, b)` to `total(a, b)` in
+   src/fixture_pkg/__init__.py (body/docstring unchanged). No edit was
+   made to README.md.
 
-$ clean-docs check
-[drift] repository-surface: README.md
---- README.md
-+++ README.md (derived)
-@@ -13,9 +13,9 @@
- <!-- clean-docs:begin repository-surface -->
- | surface | discovered | examples |
- | --- | ---: | --- |
--| api-symbol | 1 | `add` |
-+| api-symbol | 1 | `total` |
- | package | 1 | `fixture-pkg` |
- | runtime-constraint | 1 | `Python >=3.10` |
+   before (src/fixture_pkg/__init__.py):
+     def add(a: int, b: int) -> int:
+         """Return the sum of a and b."""
+         return a + b
 
--<!-- clean-docs:inventory-sha256 f4010a8c...ffc0906 -->
-+<!-- clean-docs:inventory-sha256 fa04042f...3f07a50 -->
- <!-- clean-docs:end repository-surface -->
-[current] projection:llms.txt: llms.txt
-check_before_repair_exit=1
-(first check fails, and names the stale binding "repository-surface",
-as required)
+   after (src/fixture_pkg/__init__.py):
+     def total(a: int, b: int) -> int:
+         """Return the sum of a and b."""
+         return a + b
 
-$ clean-docs drive
-[repaired] repository-surface: README.md
-drive: repaired 1 document(s); implemented policy checks passed
-drive_exit=0
-(the declared documentation region -- README.md's repository-surface
-block -- changed to reflect `total` in place of `add`)
+   $ git diff --stat
+    src/fixture_pkg/__init__.py | 2 +-
+    1 file changed, 1 insertion(+), 1 deletion(-)
+   (confirms only the source file changed; README.md untouched before
+   the repair)
 
-$ clean-docs check
-[current] repository-surface: README.md
-[drift] projection:llms.txt: llms.txt
---- llms.txt
-+++ llms.txt (projected)
-@@ -4,4 +4,4 @@
- ## Canonical documentation
--- [README.md](README.md): bindings: repository-surface; sha256: 82ea229a...c5a81aba
-+- [README.md](README.md): bindings: repository-surface; sha256: ac615fe9...d6265ee2e
-check_after_drive_exit=1
-(region now current, but the llms.txt projection is stale -- matches
-README's documented "drive does not refresh projections" behavior, so
-the separate `project` step is required)
+4. First post-drift check fails and names the stale binding:
 
-$ clean-docs project
-[projected] llms.txt
-project: wrote 1 file(s)
-project_exit=0
-(dependent projection refreshed)
+   $ clean-docs check
+   [drift] repository-surface: README.md
+   --- README.md
+   +++ README.md (derived)
+   @@ -13,9 +13,9 @@
+    <!-- clean-docs:begin repository-surface -->
+    | surface | discovered | examples |
+    | --- | ---: | --- |
+   -| api-symbol | 1 | `add` |
+   +| api-symbol | 1 | `total` |
+    | package | 1 | `fixture-pkg` |
+    | runtime-constraint | 1 | `Python >=3.10` |
 
-$ clean-docs check
-[current] repository-surface: README.md
-[current] projection:llms.txt: llms.txt
-check_final_exit=0
+   -<!-- clean-docs:inventory-sha256 f4010a8c...ffc0906 -->
+   +<!-- clean-docs:inventory-sha256 fa04042f...3f07a50 -->
+    <!-- clean-docs:end repository-surface -->
+   [current] projection:llms.txt: llms.txt
+   check_before_repair_exit=1
 
-$ clean-docs verify
-{"schema": "clean-docs.outcome.v1", "version": "1.0.0rc17", "ref": "WORKTREE",
- "ok": true, "outcomes": {"protected_baseline_current": true,
- "coverage_complete": true, "direct_coverage_complete": false,
- "drift_caught_before_merge": 0}, "bindings": {"total": 1, "current": 1,
- "drifted": 0}, "projections": {"total": 1, "current": 1, "stale": 0},
- "network_requests": 0}
-verify_final_exit=0
+5. Published repair path:
 
-result: the first check failed as required (exit 1, named the stale
-"repository-surface" binding); the bound documentation region changed
-via `clean-docs drive` (published procedure only, no manual editing);
-the dependent llms.txt projection was refreshed via `clean-docs
-project`; the final check and verify both pass (exit 0, ok: true,
-network_requests: 0).
+   $ clean-docs drive
+   [repaired] repository-surface: README.md
+   --- README.md
+   +++ README.md (derived)
+   @@ -13,9 +13,9 @@
+    <!-- clean-docs:begin repository-surface -->
+    | surface | discovered | examples |
+    | --- | ---: | --- |
+   -| api-symbol | 1 | `add` |
+   +| api-symbol | 1 | `total` |
+    | package | 1 | `fixture-pkg` |
+    | runtime-constraint | 1 | `Python >=3.10` |
 
-documentation_gaps: none
+   -<!-- clean-docs:inventory-sha256 f4010a8c...ffc0906 -->
+   +<!-- clean-docs:inventory-sha256 fa04042f...3f07a50 -->
+    <!-- clean-docs:end repository-surface -->
+   drive: repaired 1 document(s); implemented policy checks passed
+   drive_exit=0
+
+   README.md repository-surface region after drive (documentation
+   diff -- the declared region now matches source):
+   <!-- clean-docs:begin repository-surface -->
+   | surface | discovered | examples |
+   | --- | ---: | --- |
+   | api-symbol | 1 | `total` |
+   | package | 1 | `fixture-pkg` |
+   | runtime-constraint | 1 | `Python >=3.10` |
+
+   <!-- clean-docs:inventory-sha256 fa04042ffcca2994de0acf6ef9b382bb18a767dba9f4c8e59b8a68b333f07a50 -->
+   <!-- clean-docs:end repository-surface -->
+
+   $ clean-docs check
+   [current] repository-surface: README.md
+   [drift] projection:llms.txt: llms.txt
+   --- llms.txt
+   +++ llms.txt (projected)
+   @@ -4,4 +4,4 @@
+    ## Canonical documentation
+   -- [README.md](README.md): bindings: repository-surface; sha256: 82ea229a...c5a81aba
+   +- [README.md](README.md): bindings: repository-surface; sha256: ac615fe9...d6265ee2e
+   check_after_drive_exit=1
+   (region now current, but the llms.txt projection is stale, matching
+   README's documented "drive does not refresh projections" behavior)
+
+6. Refresh dependent projection:
+
+   $ clean-docs project
+   [projected] llms.txt
+   project: wrote 1 file(s)
+   project_exit=0
+
+7. Final check and verification pass:
+
+   $ clean-docs check
+   [current] repository-surface: README.md
+   [current] projection:llms.txt: llms.txt
+   check_final_exit=0
+
+   $ clean-docs verify
+   {"schema": "clean-docs.outcome.v1", "version": "1.0.0rc19", "ref": "WORKTREE",
+    "ok": true, "outcomes": {"protected_baseline_current": true,
+    "coverage_complete": true, "direct_coverage_complete": false,
+    "drift_caught_before_merge": 0}, "bindings": {"total": 1, "current": 1,
+    "drifted": 0}, "projections": {"total": 1, "current": 1, "stale": 0},
+    "network_requests": 0}
+   verify_final_exit=0
+
+result: the bound source change failed the first check (exit 1, named
+"repository-surface"); the declared documentation region changed via
+`clean-docs drive`; the dependent llms.txt projection was refreshed via
+`clean-docs project`; the final check and verify both pass (exit 0,
+ok: true, network_requests: 0).
+
+documentation defect encountered: none.
