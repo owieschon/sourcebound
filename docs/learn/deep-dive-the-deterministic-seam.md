@@ -4,13 +4,14 @@
 This explanation is for maintainers deciding where model judgment may enter a documentation pipeline without weakening its gate. It separates evidence selection, prose phrasing, repository writes, and pass or fail authority so you can inspect the boundary in both the architecture and the implementation.
 <!-- clean-docs:end purpose -->
 
-The short version is memorable because it is mechanical: a model may hold the pen, but it never
-gets the keys. Facts enter from declared evidence, writes stay bounded to planned documents, and a
-deterministic result decides whether the repository is current.
+The short version is mechanical: a model may choose a fact identifier and an allowlisted template,
+but deterministic code renders the sentence and keeps the keys. Facts enter from declared evidence,
+writes stay bounded to planned documents, and a deterministic result decides whether the repository
+is current.
 
 The [product system map](../../README.md#how-the-pieces-fit) shows the complete path and its text
-equivalent. This page follows the three authority handoffs inside it: evidence enters, phrasing may
-change its form, and deterministic checks retain the verdict.
+equivalent. This page follows the three authority handoffs inside it: evidence enters, a provider
+may select an allowed presentation, and deterministic checks retain rendering and verdict authority.
 
 ## Evidence authority
 
@@ -30,7 +31,7 @@ exist. Its prompt exposes an allowlist of prose templates and asks for fact iden
 names, not open-ended product copy. The parser rejects unknown facts, duplicate facts, unsupported
 templates, malformed responses, and more than five drafts.
 
-The returned sentence is therefore a presentation of supplied evidence. It is not evidence. If the
+The deterministic renderer turns the returned fact/template selection into a presentation of supplied evidence. It is not evidence. If the
 provider fails, the operation stops before a repository write. The [security model](../SECURITY_MODEL.md)
 defines the surrounding process and host boundaries without duplicating them here.
 
@@ -53,7 +54,8 @@ keeps both tools in their honest roles:
 | Responsibility | Owner | Why |
 | --- | --- | --- |
 | Select facts and scope | Manifest plus extractor | The input must be reproducible at a repository ref |
-| Phrase supplied facts | Deterministic renderer or bounded model path | Presentation may vary without changing authority |
+| Select a supplied fact/template pair | Bounded model path | Selection may vary without changing factual authority |
+| Render final text | Deterministic renderer | The provider cannot add prose or facts |
 | Write documentation | Explicit derive or drive path | Unrelated prose must remain untouched |
 | Decide pass or fail | Deterministic checks | CI needs the same answer without credentials or judgment drift |
 
