@@ -127,10 +127,10 @@ def _style_contract(text: str, checks: list[str]) -> dict[str, Any]:
                 "purpose prose does not restate the H1",
             ],
             "judgment": [
-                "names who the page is for and when it applies",
-                "states the reader problem rather than listing features",
-                "states a falsifiable resulting capability",
-                "matches the implementation and cited sources",
+                "defines the project-specific subject and intended operator",
+                "names the consequential failure or decision the page addresses",
+                "states the authority boundary and a falsifiable resulting capability",
+                "uses authored language grounded in the implementation and cited sources",
             ],
         },
     }

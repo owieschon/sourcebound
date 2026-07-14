@@ -22,7 +22,7 @@ def _track(root: Path) -> None:
         content = path.read_text()
         if len([line for line in content.splitlines() if line.strip()]) == 1:
             content = content.rstrip() + f"\n\nUse {path.stem} when its repository details are required.\n"
-        path.write_text(ensure_purpose_contract(content))
+        path.write_text(ensure_purpose_contract(content, fallback=True))
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
 
 

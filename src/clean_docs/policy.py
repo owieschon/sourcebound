@@ -31,6 +31,11 @@ TITLE_FILLER = {
 }
 PURPOSE_BEGIN = "<!-- clean-docs:purpose -->"
 PURPOSE_END = "<!-- clean-docs:end purpose -->"
+CANNED_PURPOSE_STEMS = (
+    "read this page before changing or relying on",
+    "defines the repository's current contract for this surface",
+    "it gathers the relevant scope and constraints in one place",
+)
 NON_PROSE_STARTS = ("#", "- ", "* ", ">", "|", "```", "![", "[![", "<img", "<picture")
 
 
@@ -123,6 +128,14 @@ def _purpose_contract(doc: str, text: str, pack: dict[str, Any]) -> list[PolicyF
             "purpose-contract",
             "write the purpose contract as one plain prose block",
         )]
+    lowered_prose = prose.lower()
+    if any(stem in lowered_prose for stem in CANNED_PURPOSE_STEMS):
+        return [PolicyFinding(
+            doc,
+            begin_lines[0] + 2,
+            "purpose-contract",
+            "replace stock purpose language with the subject, operator, consequential failure, and authority boundary",
+        )]
     first_sentence = re.split(r"(?<=[.!?])\s+", prose, maxsplit=1)[0]
     title_tokens = _title_tokens(title)
     sentence_tokens = _title_tokens(first_sentence)
@@ -143,15 +156,10 @@ def _substantive_purpose(lines: list[str]) -> bool:
         return False
     if all(re.match(r"^(?:\*\*)?[^:]{1,32}:(?:\*\*)?\s*", line.strip()) for line in lines):
         return False
-    signals = {
-        "use", "when", "for", "before", "without", "after", "lets", "gives",
-        "exposes", "accepts", "describes", "documents", "captures", "flags",
-        "prevents", "allows", "provides", "returns", "helps",
-    }
-    return len(words) >= 30 or bool(signals & set(words))
+    return True
 
 
-def ensure_purpose_contract(text: str, *, fallback: bool = True) -> str:
+def ensure_purpose_contract(text: str, *, fallback: bool = False) -> str:
     """Move substantive authored prose to the opening contract or add an optional fallback."""
     if PURPOSE_BEGIN in text or PURPOSE_END in text:
         return text
@@ -217,16 +225,7 @@ def ensure_purpose_contract(text: str, *, fallback: bool = True) -> str:
     if selected is None:
         if not fallback:
             return text
-        topic = " ".join(title.split())
-        opening = (
-            f"Use this page when you need to understand {topic} before changing this repository. "
-            "Without the documented scope and constraints, a change can rely on behavior the "
-            "project does not promise; after reading, you can work from the stated contract."
-        )
-        purpose_lines = [opening]
-        remaining = lines
-        for start, end in reversed(rejected_restatements):
-            remaining = remaining[:start] + remaining[end:]
+        return text
     else:
         start, end, purpose_lines = selected
         remaining = lines[:start] + lines[end:]
