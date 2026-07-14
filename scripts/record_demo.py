@@ -78,7 +78,7 @@ def record() -> dict[str, object]:
         raise RuntimeError(f"demo fixture returned unexpected exit codes: {expected}")
     return {
         "schema": "clean-docs.demo-evidence.v1",
-        "title": "A source change should break stale docs.",
+        "title": "Make stale prose fail loudly.",
         "intended_reader": (
             "Maintainers deciding whether source-bound documentation is worth adding to a repository."
         ),

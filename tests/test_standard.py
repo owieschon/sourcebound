@@ -45,6 +45,13 @@ def test_default_pack_is_available_as_package_data() -> None:
         "states a falsifiable resulting capability",
         "matches the implementation and cited sources",
     ]
+    assert any(
+        "subject-derived memorable element" in check for check in pack["checklist"]
+    )
+    assert any(
+        "whimsy never carries a required fact or action" in check
+        for check in pack["checklist"]
+    )
 
 
 def test_standard_change_makes_pack_stale(tmp_path: Path) -> None:
@@ -109,10 +116,18 @@ def test_product_overview_does_not_duplicate_release_version() -> None:
 
 
 def test_product_overview_explains_why_source_binding_is_needed() -> None:
-    assert PRODUCT_OVERVIEW.startswith("Documentation drift is easy to miss:")
-    assert "the prose still sounds plausible" in PRODUCT_OVERVIEW
+    assert PRODUCT_OVERVIEW.startswith("A stale sentence does not fail loudly.")
+    assert "keeps a straight face after the code has moved on" in PRODUCT_OVERVIEW
     assert "no mechanical way to know which claim became false" in PRODUCT_OVERVIEW
     assert "relationship between a claim and its source reproducible in CI" in PRODUCT_OVERVIEW
+
+
+def test_reader_facing_concept_pages_apply_bounded_personality() -> None:
+    evaluation = (ROOT / "docs/EVALUATION.md").read_text()
+    demo = (ROOT / "docs/demo/index.html").read_text()
+
+    assert "a receipt for one task, not a halo around the whole corpus" in evaluation
+    assert "Make stale prose fail loudly." in demo
 
 
 @pytest.mark.parametrize(

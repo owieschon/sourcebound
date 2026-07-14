@@ -1,8 +1,8 @@
 """Public capability registry rendered into the clean-docs README."""
 
 PRODUCT_OVERVIEW = (
-    "Documentation drift is easy to miss: code changes, the prose still sounds plausible, and "
-    "reviewers have no mechanical way to know which claim became false. Human review and "
+    "A stale sentence does not fail loudly. It keeps a straight face after the code has moved on, "
+    "leaving reviewers no mechanical way to know which claim became false. Human review and "
     "general-purpose agents can improve wording, but neither makes the relationship between a "
     "claim and its source reproducible in CI.\n\n"
     "clean-docs exists to make that relationship explicit. Source owns the facts; the packaged "

@@ -53,6 +53,6 @@
       ]
     }
   ],
-  "title": "A source change should break stale docs.",
+  "title": "Make stale prose fail loudly.",
   "value": "One binding connects a command in source to its README claim. When the source changes alone, the check fails with the exact stale region; repair rewrites that region and nothing else."
 }

@@ -55,6 +55,7 @@ def test_static_demo_is_byte_stable_accessible_and_runtime_free(tmp_path: Path) 
     assert "clean-docs check" in first
     assert "clean-docs drive" in first
     assert "exit 1" in first
+    assert "Make stale prose fail loudly." in first
     assert "../../README.md#command" in first
     assert "<script" not in first
     assert "fetch(" not in first
