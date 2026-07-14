@@ -1,34 +1,34 @@
-participant: 1df96ff3-a3d2-4817-8538-62f439080119
+participant_id: 33c28db4-66f2-407a-8916-e2b8af63b4e1
 profile: anthropic-sonnet-5
 independent: true
 context: published-docs-only
-completed_at: 2026-07-13T22:58:21Z
-result: PASS
+completed_at: 2026-07-14T01:22:47Z
 task: identify-purpose
+result: PASS
 
-evidence:
 Source read: README.md, first body block only (text between the
 <!-- clean-docs:purpose --> and <!-- clean-docs:end purpose --> markers,
-lines 3-5):
+lines 3-4). No later README section was used for this answer.
 
-"Use clean-docs when code changes faster than its documentation and
-reviewers cannot tell which claims are stale. It gives maintainers a
-local, deterministic path from source change to repaired, verified
-docs; models may phrase facts, but they never decide the facts or gate
-results."
+"clean-docs is a source-bound documentation engine and CLI for
+maintainers whose code changes faster than its documentation. It
+identifies stale claims and provides a local, deterministic path from
+source change to repaired, verified docs; models may phrase facts, but
+they never choose the facts or gate results."
 
-Audience: maintainers of a repository whose documentation and code have
-drifted apart -- specifically reviewers/maintainers who can no longer
-tell which documentation claims still match the source.
+1. Who clean-docs applies to: maintainers of a repository whose code
+   changes faster than its documentation -- i.e. the people responsible
+   for keeping docs and source in sync as the source evolves.
 
-Reader problem: code changes faster than its documentation, so a
-reviewer cannot tell which documentation claims are stale versus still
-accurate. Undetected drift lets docs silently misrepresent the code.
+2. The problem it addresses: stale claims in documentation -- prose that
+   no longer matches the source it describes, with no mechanical way for
+   a maintainer to tell which claims have gone stale as the code moves
+   on.
 
-Resulting capability: a local, deterministic path from a source change
-to repaired and verified documentation. Any model involved may only
-phrase the resulting facts in prose; it never decides what the facts
-are and never gates the pass/fail outcome -- that stays deterministic
-and local (no network calls, no model-gated results).
+3. The capability it gives that reader: a local, deterministic path from
+   a source change to repaired, verified documentation. A model may be
+   used to phrase the resulting facts in prose, but it never chooses
+   what the facts are and never gates the pass/fail outcome -- that
+   determination is deterministic and local.
 
-documentation_gaps: none
+documentation defect encountered: none.
