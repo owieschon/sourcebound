@@ -1,13 +1,13 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `4d09ffcd72d5e8b89b17168044e5fa2b1c290bf6d860041f12b644a114d92d3b`
+- Corpus sha256: `cc13715084a12ab8e1c794b71c75a430a5df25e0c7c0219380949035d57da882`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `4e71800a2e9ea6e7b1f3d07b92f24a5b7611dba6b1beb6bcfbbd3ff36cb254f5`
+- Content sha256: `4289b0409955e0ce025e67cdf718814f0c0d77971663fe779809a64aa8e39d05`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
@@ -20,7 +20,7 @@ clean-docs is a source-bound documentation engine and CLI for maintainers whose 
 ## Why clean-docs exists
 
 <!-- clean-docs:begin product-overview -->
-Documentation drift is easy to miss: code changes, the prose still sounds plausible, and reviewers have no mechanical way to know which claim became false. Human review and general-purpose agents can improve wording, but neither makes the relationship between a claim and its source reproducible in CI.
+A stale sentence does not fail loudly. It keeps a straight face after the code has moved on, leaving reviewers no mechanical way to know which claim became false. Human review and general-purpose agents can improve wording, but neither makes the relationship between a claim and its source reproducible in CI.
 
 clean-docs exists to make that relationship explicit. Source owns the facts; the packaged standard owns their form. clean-docs audits tracked Markdown, binds claims to source evidence, repairs declared regions, and fails CI when either the facts or the documentation contract drift.
 
@@ -174,14 +174,17 @@ See the [recorded drift demonstration](https://owieschon.github.io/clean-docs/) 
 ## Canonical document: docs/EVALUATION.md
 
 - Source: [docs/EVALUATION.md](../../docs/EVALUATION.md)
-- Content sha256: `aaf5640377fc0aca3fc046eed8f3c2e6d06b89f3b4e6ae56f610b796bedd8b70`
+- Content sha256: `efbcce90691ec594da793977b33ba62add79dd47c0ac9452443e826d28e1bb2f`
 
 <!-- clean-docs:canonical docs/EVALUATION.md begin -->
 # Evaluate documentation tasks
 
 <!-- clean-docs:purpose -->
-Use this guide when repository docs must prove that a person or agent can finish a declared task from published pages alone. It shows you how to build replayable evaluations whose passing result names the observed capability without turning one response into a general quality score.
+Use this guide when repository docs must prove that a person or agent can finish a declared task from published pages alone. It shows you how to build replayable evaluations and record a content-addressed result tied to the declared task.
 <!-- clean-docs:end purpose -->
+
+A passing evaluation is a receipt for one task, not a halo around the whole corpus. It records who
+attempted what, which context they saw, how the result was scored, and whether it passed.
 
 ## Prerequisites
 

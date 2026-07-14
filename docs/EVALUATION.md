@@ -1,8 +1,11 @@
 # Evaluate documentation tasks
 
 <!-- clean-docs:purpose -->
-Use this guide when repository docs must prove that a person or agent can finish a declared task from published pages alone. It shows you how to build replayable evaluations whose passing result names the observed capability without turning one response into a general quality score.
+Use this guide when repository docs must prove that a person or agent can finish a declared task from published pages alone. It shows you how to build replayable evaluations and record a content-addressed result tied to the declared task.
 <!-- clean-docs:end purpose -->
+
+A passing evaluation is a receipt for one task, not a halo around the whole corpus. It records who
+attempted what, which context they saw, how the result was scored, and whether it passed.
 
 ## Prerequisites
 

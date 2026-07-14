@@ -137,6 +137,36 @@ as decoration or as the only record of a fact.
 - **Link the first meaningful mention.** Use descriptive link text, point to the exact destination,
   and deep-link into the product when the reader's next action happens there. Never use "click here".
 
+### Whimsy: give precision a pulse
+
+Precise does not mean bloodless. Dry wit, a physical metaphor, or a lightly playful example can
+make a mechanism easier to remember. That personality is part of the teaching, not frosting spread
+across the page.
+
+- **Personality has a budget.** Overview, conceptual, and tutorial pages get at least one
+  subject-derived memorable element unless the entire topic sits in a literal zone. Spend at most
+  one flourish in a conceptual section. A page does not owe the reader a joke.
+- **Earn the whimsy from the mechanism.** A metaphor must preserve how the system works. "The cache
+  has not developed opinions; two configuration layers disagree" earns its dry aside by naming the
+  real failure immediately. A generic quip teaches nothing.
+- **Give examples a small, coherent world.** Prefer plausible names with a little character, such as
+  Acorn Bakery or Moonbase Support, over `foo`, `test123`, and a different joke in every block. Keep
+  runnable commands and security-sensitive values literal.
+- **Keep the searchable noun in playful headings.** "Retries: when the queue refuses to take a
+  hint" is findable. "Here we go again" is not.
+- **Let visuals carry character only when the motif explains the system.** A tether can represent a
+  source binding; a decorative mascot cannot. Preserve high contrast, useful alt text, and a complete
+  text equivalent.
+
+Commands, configuration, error messages, repair steps, security and privacy boundaries,
+accessibility text, and API or option reference are literal zones. Do not put wit between a reader
+and an exact action, failure, or fact. Never use sarcasm at the reader, stacked puns, meme or
+pop-culture references, emoji decoration, or anthropomorphism that invents agency.
+
+Run two judgment checks. The **truth test** asks whether the source or mechanism supports the
+metaphor. The **deletion test** removes the flourish and confirms that the technical claim, warning,
+and next action remain complete. If either test fails, cut it.
+
 ---
 
 ## 3. How to explain something technical simply (the actual techniques)
@@ -425,6 +455,10 @@ Run this against any doc before shipping. Each line is a fail/pass check.
 - [ ] No booster adjectives (`seamless`, `powerful`, `simply`, `comprehensive`, `leverage`, `utilize`). <!-- slop-ok: banned-word registry for the checklist -->
 - [ ] Every clause adds information; claims needing separate evidence are split; the system is named
       as an actor; reader actions are imperative.
+- [ ] Every overview, conceptual, or tutorial page has at least one subject-derived memorable element
+      unless its topic is wholly literal; each flourish passes the truth and deletion tests.
+- [ ] Commands, configuration, errors, repair steps, security and privacy boundaries, accessibility
+      text, and reference facts stay literal; whimsy never carries a required fact or action.
 - [ ] Headings use sentence case; UI controls use semantic bold; link text names its destination.
 - [ ] Sections end by linking outward; version notes are inline at the claim.
 - [ ] No process artifact (report, handoff, dispatch, status, blocked-note) is on the

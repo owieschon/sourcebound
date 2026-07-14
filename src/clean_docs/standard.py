@@ -95,6 +95,7 @@ def _style_contract(text: str, checks: list[str]) -> dict[str, Any]:
         "concrete_verbs": "Plain, concrete verbs",
         "direct_facts": "State facts without hedging",
         "senior_colleague": "helpful senior colleague",
+        "bounded_personality": "Personality has a budget",
         "bluf": "BLUF purpose contract",
     }
     missing = [name for name, phrase in required_phrases.items() if phrase not in normalized]
@@ -104,6 +105,8 @@ def _style_contract(text: str, checks: list[str]) -> dict[str, Any]:
         )
     if not any("BLUF purpose contract" in check for check in checks):
         raise ConfigurationError("standard checklist is missing the BLUF purpose contract")
+    if not any("subject-derived memorable element" in check for check in checks):
+        raise ConfigurationError("standard checklist is missing bounded personality review")
     return {
         "voice": {
             "register": "helpful senior colleague",
