@@ -5,7 +5,7 @@
 ## Canonical documentation
 
 - [CLEAN_DOCS_SPEC.md](CLEAN_DOCS_SPEC.md): declared canonical context; sha256: b0df161645ff6f5356913658789990083c09a7d041f385541df97e9e259e99d1
-- [README.md](README.md): bindings: manifest-reference, product-overview, supported-bindings; sha256: b3d947ea15bd363b589a256b91affbd9d954b8b78667aa34432e8d0478cc5358
+- [README.md](README.md): bindings: manifest-reference, product-overview, supported-bindings; sha256: 6871c726b77813f5fb1c24617c36d6c9c2de78b8e237cb6022ea82b1a25d06e5
 - [SECURITY.md](SECURITY.md): declared canonical context; sha256: 9b73fcc18efa2ff39d64d8271a6c33b278de5dc625d7ac7c319587edf0c31621
 - [STANDARD.md](STANDARD.md): declared canonical context; sha256: 3f4be354d592890635947a35f13785ac05c440b680b2aaa30437cb423cc7ae79
 - [docs/CLI.md](docs/CLI.md): bindings: cli-reference; sha256: dae82eebf8e8712dce8b4c17e480f13912155078b3e34fb0159ff2f2c45510bc
@@ -15,7 +15,7 @@
 - [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md): bindings: security-model; sha256: 29d9f2582186f19d72823e163512fa12f6d7459f4da273ca3d8be56d5befd2bf
 - [docs/SUPPORT.md](docs/SUPPORT.md): bindings: support-guide; sha256: bc0055417eb4be09a5e8722aaa0bfa7454877b3909e38a72b7d03f9fbd7576ab
 - [docs/SURFACE.md](docs/SURFACE.md): bindings: repository-surface; sha256: 7cc29bb2ccdf1a92a0740a114181a97ffdca8b5eb4744c64000aa6119b415c26
-- [docs/learn/deep-dive-the-deterministic-seam.md](docs/learn/deep-dive-the-deterministic-seam.md): bindings: deterministic-seam-evidence, deterministic-seam-gate, deterministic-seam-phrasing; sha256: d4dcc2aaf7e6fa917d5474bb8e265eb60c0dca7332e099c5342c5bd79fb83371
+- [docs/learn/deep-dive-the-deterministic-seam.md](docs/learn/deep-dive-the-deterministic-seam.md): bindings: deterministic-seam-evidence, deterministic-seam-gate, deterministic-seam-phrasing; sha256: 74a8dd1b22899c90930b87c44acdab2f3e1bab137565052b5bf6be66529bc17e
 - [docs/learn/index.md](docs/learn/index.md): declared canonical context; sha256: 54ca471c870ac4b295b0bfe72d51561891084c7483a649f3586517204ac974fb
 - [docs/learn/postmortem-the-readme-that-lied.md](docs/learn/postmortem-the-readme-that-lied.md): bindings: postmortem-examples, postmortem-measurements; sha256: 2616fe1ad837581461ccbd07bcfd7e0c6aa799f762e64f40ed34a637f3460cb2
 - [docs/learn/tutorial-catch-a-lying-doc.md](docs/learn/tutorial-catch-a-lying-doc.md): bindings: tutorial-outcomes; sha256: b5aeabb02e76c64e328d637b28ee7ca8458964ca402f3ce5b915b6d10ff0c51a

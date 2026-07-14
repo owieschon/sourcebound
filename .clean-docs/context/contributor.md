@@ -1,19 +1,19 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `4de14e204a537a326c3881119c5d39f9efea575cf1c7355f9a573d1a8c85c279`
+- Corpus sha256: `9693f0e9ebe7a750389fb7af9034253d8b0a37154c80b1ed2361e0893e1c99d4`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `b3d947ea15bd363b589a256b91affbd9d954b8b78667aa34432e8d0478cc5358`
+- Content sha256: `6871c726b77813f5fb1c24617c36d6c9c2de78b8e237cb6022ea82b1a25d06e5`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
 
 <!-- clean-docs:purpose -->
-clean-docs is a source-bound documentation engine and CLI for maintainers whose code changes faster than its documentation. It identifies stale claims and provides a local, deterministic path from source change to repaired, verified docs; models may phrase facts, but they never choose the facts or gate results.
+clean-docs is a source-bound documentation engine and CLI for maintainers whose code changes faster than its documentation. It identifies stale claims and provides a local, deterministic path from source change to repaired, verified docs. Models may select among allowlisted phrasing templates for source-derived facts; deterministic code renders the final text and owns validation and gate results.
 <!-- clean-docs:end purpose -->
 <!-- clean-docs:allow doc-length reason="The canonical overview keeps installation, first protection, manifest shape, and current boundaries in one reader path" -->
 
@@ -47,8 +47,9 @@ evidence through static extraction or declared, bounded execution. Source bindin
 evidence to documentation regions, claims, and symbols. The clean-docs engine combines those
 bindings with the packaged writing standard, then produces three outcomes: repaired documentation,
 a read-only CI gate that rejects stale changes, and verified context projections such as `llms.txt`,
-context bundles, and release facts. Models may phrase supplied evidence outside this deterministic
-path; they do not choose facts or decide whether the gate passes.
+context bundles, and release facts. In the optional model path, a provider selects fact identifiers
+and allowlisted templates. Deterministic code renders the sentence, validates it, and decides whether
+the gate passes.
 
 ## Install and audit
 
