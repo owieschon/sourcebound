@@ -127,6 +127,8 @@ These are the starting conditions for the version plan. Existing artifacts remai
 - Grounded release-note skeletons from evidence deltas.
 - Local CLI, pre-commit integration, and GitHub Actions integration.
 - One static demonstration page generated from recorded fixture evidence.
+- One governed learning corpus with a tutorial, a source-grounded postmortem, an explanation, and
+  a short index that connects them.
 - A documented extractor and renderer extension API.
 
 ### Not in scope
@@ -140,6 +142,7 @@ These are the starting conditions for the version plan. Existing artifacts remai
 - Maintaining separate human and agent copies of the same facts.
 - Requiring a hosted service, backend, database, account system, or runtime dashboard.
 - Sending repository activity or CLI usage to an analytics service.
+- Creating a second documentation site for the learning corpus.
 
 ## 6. System model
 
@@ -887,6 +890,107 @@ Version 0 preservation work at the start of Version 0.1:
 - Audit fails on a missing, misplaced, malformed, or title-restating purpose contract, and generated stepwise docs pass the same rule.
 - Functional tests prove that the phrasing prompt carries the structured voice and purpose rubrics while release-note fragments are not misclassified as complete documents.
 - The public guarantee matches the boundary in section 1.
+
+### Version 1.1: Governed learning layer
+
+**Start condition:** the Version 1.0 stable release is published and its release DoD is green. The
+non-blocking pilot observation window may continue in parallel; it does not delay this version.
+
+**Claim:** the repository teaches why source-bound documentation matters, how to use it, and where
+its deterministic boundary sits. clean-docs keeps the checkable spine of that teaching corpus
+current in the same repository.
+
+#### Build
+
+- Set the public repository description to a one-sentence category and purpose contract.
+- Add the topics `documentation`, `docs-as-code`, `developer-experience`, `context-engineering`,
+  `llm`, `ai`, `cli`, `python`, `pre-commit`, and `technical-writing`.
+- Render `docs/assets/clean-docs-social.png` from the system-map source at the repository social
+  preview aspect ratio, then set it as the repository preview image.
+- Keep the README purpose contract as its first body block. Add a compact status, license, and
+  package badge row plus a **Start here** link to `docs/learn/index.md` before the product detail.
+- Add `docs/learn/index.md` with the thesis that documentation drift is a source-derivation problem,
+  then route readers through the product overview and three lessons.
+- Add `docs/learn/tutorial-catch-a-lying-doc.md`, a runnable tutorial that binds one fact, creates
+  deliberate drift, observes the failed check, repairs the region, and verifies the result.
+- Add `docs/learn/postmortem-the-readme-that-lied.md`, a source-grounded case study built from the
+  archived ultra-csm before-and-after evidence without exposing process artifacts as current docs.
+- Add `docs/learn/deep-dive-the-deterministic-seam.md`, an explanation of why models may phrase
+  supplied evidence but never select facts, widen scope, or decide whether the gate passes.
+- Add the four learning pages to the canonical `llms.txt` projection. Link to existing reference
+  facts instead of copying the CLI, supported-binding, security, or compatibility registries.
+- Bind tutorial output to a deterministic fixture, render postmortem measurements from a typed
+  historical evidence record, and bind deep-dive implementation claims to stable source locators.
+
+#### Phase order
+
+1. **Repository legibility:** description, topics, verified badges, README entry point, and social
+   preview. Ship this as one reversible metadata and documentation change.
+2. **Case study:** convert the archived before-and-after material into typed evidence and the
+   postmortem, then prove that changing the evidence makes the bound prose fail.
+3. **Tutorial:** build the clean-room fixture and execute every published command against the
+   installed stable wheel.
+4. **Explanation:** write and source-bind the deterministic-seam argument after the runnable path
+   and concrete case establish its vocabulary.
+5. **Learning spine:** publish the index, wire the README and `llms.txt`, then run the corpus and
+   independent-reader checks. Do not add a fourth lesson.
+
+#### Functional E2E tests
+
+1. **public repository legibility**
+   - Given the public repository and a fresh browser request.
+   - When its metadata and README first screen are inspected.
+   - Then the description and topics match the declared contract, every badge resolves, the social
+     preview uses the generated PNG, and **Start here** reaches the learning index.
+2. **tutorial from a clean room**
+   - Given only the stable wheel, its offline dependencies, the tutorial, and an empty temporary git
+     repository.
+   - When every command is run in order with network blocked.
+   - Then the baseline passes, deliberate source drift fails with the named binding, repair changes
+     only the declared region, projection refresh succeeds, and final check and verify exit `0`.
+3. **postmortem facts cannot drift**
+   - Given the typed historical evidence and its rendered measurement and example regions.
+   - When one recorded value or cited locator changes in a fixture.
+   - Then check fails before repair, drive regenerates the bound passage, and unbound analysis stays
+     byte-for-byte unchanged.
+4. **deterministic-seam boundary**
+   - Given the deep dive and the implementation sources it cites.
+   - When a command, source locator, or authority boundary changes.
+   - Then a source binding or link check fails; no copied registry can remain plausibly stale.
+5. **additive learning corpus**
+   - Given the complete `docs/learn/` directory.
+   - When audit and project checks run.
+   - Then all four pages have first-position purpose contracts, stay within the standard length
+     ceilings, add no near-duplicate fact, resolve every link, and appear in `llms.txt`.
+6. **fresh-reader learning path**
+   - Given fresh sessions from two model families with only the README first screen, learning index,
+     and linked published pages.
+   - When each reader chooses a lesson for an orientation, hands-on, and mechanism question, then
+     completes the tutorial and explains who owns facts and gate results.
+   - Then both choose the matching page, produce the observed tutorial outcomes, and preserve the
+     deterministic authority boundary. Receipts bind the corpus digest and task outputs.
+
+#### Definition of done
+
+- The Version 1.0 start condition is satisfied before any Version 1.1 implementation commit lands.
+- Public repository description, topics, badges, and social preview pass the legibility E2E test.
+- `docs/learn/` contains exactly the index and three named lessons; no separate learning site or
+  fourth piece exists.
+- The tutorial, postmortem, and deep dive are respectively a learning procedure, a case study, and
+  an explanation. Each states its learning outcome in its first body block.
+- Every tutorial command runs from the published stable artifact without network, hidden context,
+  or repository-local installation.
+- Tutorial outputs, historical measurements, and implementation-boundary claims are source-bound;
+  changing their defining evidence makes check fail before repair.
+- Existing canonical reference tables and version facts are linked, never copied into the lessons.
+- `clean-docs audit`, `check`, `project --check`, and `verify` pass with zero new or baselined finding
+  for the learning corpus, and all inherited release E2E suites remain green.
+- The README links the learning index above product detail, the index links every lesson in the
+  declared reading order, and `llms.txt` contains all four pages with current digests.
+- Two independent fresh-reader receipts pass all routing, tutorial, and authority-boundary tasks;
+  judgment evidence remains distinct from the deterministic merge gates.
+- The work stops at the bounded learning corpus. It does not add a backend, a second site, a fourth
+  lesson, multi-SDK reference volume, or unrelated subject-matter tutorials.
 
 ## 14. Test architecture
 

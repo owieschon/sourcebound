@@ -4,7 +4,7 @@
 
 ## Canonical documentation
 
-- [CLEAN_DOCS_SPEC.md](CLEAN_DOCS_SPEC.md): declared canonical context; sha256: 1eb9ee346edd4595ee35e087c50ed54115cef4538287dbfd51584a1b69b972f3
+- [CLEAN_DOCS_SPEC.md](CLEAN_DOCS_SPEC.md): declared canonical context; sha256: b0df161645ff6f5356913658789990083c09a7d041f385541df97e9e259e99d1
 - [README.md](README.md): bindings: manifest-reference, product-overview, supported-bindings; sha256: 4289b0409955e0ce025e67cdf718814f0c0d77971663fe779809a64aa8e39d05
 - [SECURITY.md](SECURITY.md): declared canonical context; sha256: 9b73fcc18efa2ff39d64d8271a6c33b278de5dc625d7ac7c319587edf0c31621
 - [STANDARD.md](STANDARD.md): declared canonical context; sha256: 2af7b40f7ac3a91b4d3877e98b1d33420f47b36e30202eb8b493f9c1ee4d6792
@@ -14,5 +14,5 @@
 - [docs/RELEASES.md](docs/RELEASES.md): bindings: release-guide; sha256: 0c9024977bca84b77106d85b91a756bf97124638ed65601cdc79cc90bf007161
 - [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md): bindings: security-model; sha256: 29d9f2582186f19d72823e163512fa12f6d7459f4da273ca3d8be56d5befd2bf
 - [docs/SUPPORT.md](docs/SUPPORT.md): bindings: support-guide; sha256: bc0055417eb4be09a5e8722aaa0bfa7454877b3909e38a72b7d03f9fbd7576ab
-- [docs/SURFACE.md](docs/SURFACE.md): bindings: repository-surface; sha256: c64682528e86b4a907ab788ada41846827a3fa962570692723ee37bf70299e85
+- [docs/SURFACE.md](docs/SURFACE.md): bindings: repository-surface; sha256: a4dfbe4cc61e7368aedc05c4c30422fc0194fe21e8e7c0477705495c16e688bf
 - [skill/SKILL.md](skill/SKILL.md): declared canonical context; sha256: 77f0b257236a184c5b202e8327c27785f3ab4abe9c1ae9c3c082f8fa06428da9
