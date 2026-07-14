@@ -108,6 +108,13 @@ def test_product_overview_does_not_duplicate_release_version() -> None:
     assert re.search(r"\bVersion \d+\.\d+", PRODUCT_OVERVIEW) is None
 
 
+def test_product_overview_explains_why_source_binding_is_needed() -> None:
+    assert PRODUCT_OVERVIEW.startswith("Documentation drift is easy to miss:")
+    assert "the prose still sounds plausible" in PRODUCT_OVERVIEW
+    assert "no mechanical way to know which claim became false" in PRODUCT_OVERVIEW
+    assert "relationship between a claim and its source reproducible in CI" in PRODUCT_OVERVIEW
+
+
 @pytest.mark.parametrize(
     ("content", "detail"),
     [
