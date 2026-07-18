@@ -8,6 +8,7 @@ from pathlib import Path
 from clean_docs import __version__
 from clean_docs.audit import audit
 from clean_docs.changed import ChangedReport, check_changed
+from clean_docs.claims import scan_source_claims
 from clean_docs.engine import evaluate
 from clean_docs.errors import ConfigurationError
 from clean_docs.manifest import load_manifest
@@ -34,6 +35,10 @@ class OutcomeReceipt:
     cataloged_inventory_items: int
     ignored_inventory_items: int
     standard_gaps: int
+    source_claims: int
+    current_source_claims: int
+    drifted_source_claims: int
+    missing_source_claims: int
     changed: ChangedReport | None = None
 
     @property
@@ -42,6 +47,8 @@ class OutcomeReceipt:
             self.hygiene_findings == 0
             and self.drifted_bindings == 0
             and self.stale_projections == 0
+            and self.drifted_source_claims == 0
+            and self.missing_source_claims == 0
             and (self.changed is None or self.changed.ok)
         )
 
@@ -64,6 +71,7 @@ class OutcomeReceipt:
             "assurance": {
                 "scope": "configured-contract",
                 "bound_claims_checked": True,
+                "accepted_source_claims_checked": True,
                 "cataloged_surfaces_check_prose": False,
                 "judgment_prose_certified": False,
             },
@@ -104,6 +112,12 @@ class OutcomeReceipt:
                 "current": self.current_projections,
                 "stale": self.stale_projections,
             },
+            "source_claims": {
+                "total": self.source_claims,
+                "current": self.current_source_claims,
+                "drifted": self.drifted_source_claims,
+                "missing": self.missing_source_claims,
+            },
             "changed": changed,
             "network_requests": 0,
         }
@@ -131,6 +145,15 @@ def build_outcome_receipt(
     projections = (
         evaluate_projections(root, manifest) if manifest.projections is not None else []
     )
+    source_claim_report = (
+        scan_source_claims(
+            root,
+            manifest.source_claim_checks,
+            discover=False,
+        )
+        if manifest.source_claim_checks
+        else None
+    )
     changed = None
     if base is not None and head is not None:
         changed = check_changed(
@@ -157,5 +180,13 @@ def build_outcome_receipt(
         cataloged_items,
         ignored_items,
         standard_gaps,
+        0 if source_claim_report is None else len(source_claim_report.results),
+        0
+        if source_claim_report is None
+        else sum(item.status == "current" for item in source_claim_report.results),
+        0
+        if source_claim_report is None
+        else sum(item.status == "drift" for item in source_claim_report.results),
+        0 if source_claim_report is None else len(source_claim_report.missing),
         changed,
     )
