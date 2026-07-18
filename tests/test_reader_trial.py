@@ -196,7 +196,7 @@ def test_reader_trial_rejects_substituted_or_duplicate_model_profiles(
         verify_reader_trial(tmp_path, "1.0.0")
 
 
-def test_stable_release_requires_reader_trial_while_candidate_build_does_not(
+def test_version_10_stable_release_requires_reader_trial_while_candidate_does_not(
     tmp_path: Path,
 ) -> None:
     project = tmp_path / "pyproject.toml"
@@ -213,11 +213,27 @@ def test_stable_release_requires_reader_trial_while_candidate_build_does_not(
     _write_trial(tmp_path)
     summary = verify_release_reader_trial(tmp_path)
     assert summary["required"] is True
+    assert summary["status"] == "verified"
     assert set(summary["participants"]) == {
         "anthropic-opus-4-8",
         "anthropic-sonnet-5",
         "codex-gpt-5-5-high",
         "codex-gpt-5-6-sol-high",
+    }
+
+
+def test_version_11_reader_calibration_is_reported_but_does_not_gate_release(
+    tmp_path: Path,
+) -> None:
+    project = tmp_path / "pyproject.toml"
+    project.write_text('[project]\nname = "fixture"\nversion = "1.1.0"\n')
+    rubric = tmp_path / ".clean-docs/reader-trial-rubric-v1.1.yml"
+    rubric.parent.mkdir(parents=True)
+    shutil.copyfile(ROOT / ".clean-docs/reader-trial-rubric-v1.1.yml", rubric)
+
+    assert verify_release_reader_trial(tmp_path) == {
+        "required": False,
+        "status": "not-attested",
     }
 
 
