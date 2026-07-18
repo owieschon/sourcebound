@@ -39,7 +39,7 @@ Baseline document excerpt after drive:
   <!-- clean-docs:end actions -->
 
 Baseline command:
-  TMPDIR=/Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs drive && git diff -- .clean-docs.yml README.md llms.txt src/fixture_app/actions.py && TMPDIR=/Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs project && git diff -- .clean-docs.yml README.md llms.txt src/fixture_app/actions.py && TMPDIR=/Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check && TMPDIR=/Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs verify
+  TMPDIR=/home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs drive && git diff -- .clean-docs.yml README.md llms.txt src/fixture_app/actions.py && TMPDIR=/home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs project && git diff -- .clean-docs.yml README.md llms.txt src/fixture_app/actions.py && TMPDIR=/home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check && TMPDIR=/home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs verify
 Exit code: 0
 Relevant output:
   [current] repository-surface: README.md
@@ -56,7 +56,7 @@ Relevant output:
   bindings.drifted: 0
 
 Baseline commit command:
-  git add README.md .clean-docs.yml llms.txt src/fixture_app/actions.py && git -c user.name='Reader Trial' -c user.email='reader-trial@example.invalid' commit -m 'Protect action binding baseline' && TMPDIR=/Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check
+  git add README.md .clean-docs.yml llms.txt src/fixture_app/actions.py && git -c user.name='Reader Trial' -c user.email='reader-trial@example.invalid' commit -m 'Protect action binding baseline' && TMPDIR=/home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check
 Exit code: 0
 Relevant output:
   [main 6482b95] Protect action binding baseline
@@ -70,7 +70,7 @@ After source excerpt:
   ]
 
 First post-drift check command:
-  TMPDIR=/Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check
+  TMPDIR=/home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check
 Exit code: 1
 Relevant output:
   [current] repository-surface: README.md
@@ -87,7 +87,7 @@ Relevant output:
   [current] projection:llms.txt: llms.txt
 
 Repair command:
-  TMPDIR=/Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs drive && git diff -- README.md llms.txt src/fixture_app/actions.py .clean-docs.yml && TMPDIR=/Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs project && git diff -- README.md llms.txt src/fixture_app/actions.py .clean-docs.yml && TMPDIR=/Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check && TMPDIR=/Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs verify
+  TMPDIR=/home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs drive && git diff -- README.md llms.txt src/fixture_app/actions.py .clean-docs.yml && TMPDIR=/home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs project && git diff -- README.md llms.txt src/fixture_app/actions.py .clean-docs.yml && TMPDIR=/home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check && TMPDIR=/home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs verify
 Exit code: 0
 Relevant output:
   [current] repository-surface: README.md

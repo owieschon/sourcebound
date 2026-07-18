@@ -24,12 +24,12 @@ Command:
   git init && git add README.md pyproject.toml src/fixture_app/__init__.py src/fixture_app/api.py && git -c user.name='Reader Trial' -c user.email='reader-trial@example.invalid' commit -m 'Create protect fixture'
 Exit code: 0
 Relevant output:
-  Initialized empty Git repository in /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/protect-fixture-970fe2c3/.git/
+  Initialized empty Git repository in /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/protect-fixture-970fe2c3/.git/
   [main (root-commit) 9ad3276] Create protect fixture
    4 files changed, 15 insertions(+)
 
 Command:
-  TMPDIR=/Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs init --no-model && git diff -- README.md .clean-docs.yml llms.txt && TMPDIR=/Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check && TMPDIR=/Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs verify
+  TMPDIR=/home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs init --no-model && git diff -- README.md .clean-docs.yml llms.txt && TMPDIR=/home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs check && TMPDIR=/home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-5-high/workspace/.venv/bin/clean-docs verify
 Exit code: 0
 Relevant output:
   [applied] write README.md: bind detected repository surfaces

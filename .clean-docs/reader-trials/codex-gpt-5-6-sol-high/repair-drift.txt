@@ -9,7 +9,7 @@ evidence:
   Published binding shape: README.md, "Manifest reference", lines 87-121.
   Published repair path: README.md, "Protect a repository", lines 67-79.
   Fresh fixture: workspace/repair-fixture
-  Initialization command: /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs init --no-model
+  Initialization command: /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs init --no-model
   Initialization exit code: 0
   Initialization output:
     [applied] write README.md: bind detected repository surfaces
@@ -32,7 +32,7 @@ evidence:
     ACTIONS = [
         {"name": "inspect", "tier": "stable"},
     ]
-  Initial repair command: /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs drive
+  Initial repair command: /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs drive
   Exit code: 0
   Relevant output:
     [repaired] actions: README.md
@@ -40,7 +40,7 @@ evidence:
     +| --- | --- |
     +| inspect | stable |
     drive: repaired 1 document(s); implemented policy checks passed
-  Initial projection command: /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs project
+  Initial projection command: /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs project
   Exit code: 0
   Output:
     [projected] llms.txt
@@ -51,13 +51,13 @@ evidence:
     | --- | --- |
     | inspect | stable |
     <!-- clean-docs:end actions -->
-  Baseline check command: /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs check
+  Baseline check command: /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs check
   Exit code: 0
   Output:
     [current] repository-surface: README.md
     [current] actions: README.md
     [current] projection:llms.txt: llms.txt
-  Baseline verification command: /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs verify
+  Baseline verification command: /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs verify
   Exit code: 0
   Relevant output:
     "version": "1.0.0rc19"
@@ -76,7 +76,7 @@ evidence:
     | --- | --- |
     | inspect | stable |
     <!-- clean-docs:end actions -->
-  First post-drift check command: /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs check
+  First post-drift check command: /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs check
   Exit code: 1
   Output:
     [current] repository-surface: README.md
@@ -91,7 +91,7 @@ evidence:
      <!-- clean-docs:end actions -->
     [current] projection:llms.txt: llms.txt
   Observed failure: the first check after changing only src/actions.py failed before repair and named the stale actions binding.
-  Repair command: /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs drive
+  Repair command: /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs drive
   Exit code: 0
   Output:
     [current] repository-surface: README.md
@@ -105,7 +105,7 @@ evidence:
     +| publish | preview |
      <!-- clean-docs:end actions -->
     drive: repaired 1 document(s); implemented policy checks passed
-  Projection refresh command: /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs project
+  Projection refresh command: /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs project
   Exit code: 0
   Output:
     [projected] llms.txt
@@ -131,13 +131,13 @@ evidence:
     | inspect | stable |
     | publish | preview |
     <!-- clean-docs:end actions -->
-  Final check command: /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs check
+  Final check command: /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs check
   Exit code: 0
   Output:
     [current] repository-surface: README.md
     [current] actions: README.md
     [current] projection:llms.txt: llms.txt
-  Final verification command: /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs verify
+  Final verification command: /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs verify
   Exit code: 0
   Relevant output:
     "schema": "clean-docs.outcome.v1"

@@ -18,7 +18,7 @@ evidence:
   Command: git init -b main .
   Exit code: 0
   Output:
-    Initialized empty Git repository in /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/protect-fixture/.git/
+    Initialized empty Git repository in /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/protect-fixture/.git/
   Commands: git config user.name 'Clean Docs Trial'; git config user.email 'trial@example.invalid'; git add src/widget.py
   Exit codes: 0, 0, 0
   Output: <empty for all three commands>
@@ -28,7 +28,7 @@ evidence:
     [main (root-commit) c9fac3a] Create undocumented fixture
      1 file changed, 6 insertions(+)
      create mode 100644 src/widget.py
-  Command: /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs init --no-model
+  Command: /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs init --no-model
   Exit code: 0
   Output:
     [applied] write README.md: bind detected repository surfaces
@@ -76,12 +76,12 @@ evidence:
     # Repository documentation
     ## Canonical documentation
     - README.md: bindings: repository-surface; sha256: 9dd5c656ab7b915f0d9516ccb6e4e1144c220b73b7dfce887299854a790d7326
-  Command: /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs check
+  Command: /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs check
   Exit code: 0
   Output:
     [current] repository-surface: README.md
     [current] projection:llms.txt: llms.txt
-  Command: /Users/owieschon/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs verify
+  Command: /home/reader/clean-docs-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/clean-docs verify
   Exit code: 0
   Relevant output:
     "schema": "clean-docs.outcome.v1"
