@@ -1,13 +1,13 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `84c6873c3ebc61a921d781d7f2ca15c29cc0a20895475ebd2e765fde01d12475`
+- Corpus sha256: `7cb81f98fee5d04ea553fe44e12f23857cb20cd2a6025996da0613d316be4846`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `1618f85c133cad92337b7f7b99ba7cfdfc17768c6ee8612a90a43af8116ff8d7`
+- Content sha256: `2d86c57d1e5678bc376b737ec28173d2dd95243e504cfe60ee1d07628bc9a12c`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
@@ -19,7 +19,7 @@ clean-docs is a source-bound documentation engine and CLI for maintainers who ne
 
 [![CI](https://github.com/owieschon/clean-docs/actions/workflows/ci.yml/badge.svg)](https://github.com/owieschon/clean-docs/actions/workflows/ci.yml) [![Release](https://img.shields.io/github/v/release/owieschon/clean-docs?display_name=tag&sort=semver)](https://github.com/owieschon/clean-docs/releases/latest) [![License: MIT](https://img.shields.io/badge/license-MIT-25225f.svg)](LICENSE)
 
-**[Install clean-docs and catch your first stale claim](docs/learn/tutorial-catch-a-lying-doc.md)**.
+**[Install the stable release and catch your first stale claim](docs/learn/tutorial-catch-a-lying-doc.md)**.
 
 The final `clean-docs verify` command prints a [`clean-docs.outcome.v1` receipt](docs/SUPPORT.md#record-local-outcomes) with `"ok": true`.
 
@@ -35,61 +35,74 @@ The final `clean-docs verify` command prints a [`clean-docs.outcome.v1` receipt]
 <!-- clean-docs:begin product-overview -->
 A stale sentence does not fail loudly. It keeps a straight face after the code has moved on, and reviewers have no mechanical way to identify the false claim. clean-docs gives each protected fact a source, then checks that relationship again in CI.
 
-Source owns the facts. A packaged writing standard owns their form. Static adapters read common code and schema formats, while declared commands run under explicit process controls. The verified result can repair bound regions, reject drift, and publish context such as `llms.txt` with local receipts.
+Declared sources own the protected facts. A packaged policy enforces the deterministic form floor; authored judgment still owns motivation, pedagogy, and voice. Static adapters read common code and schema formats, while declared commands run under explicit process controls. The engine can repair bound regions, reject drift, and publish context such as `llms.txt` with local receipts.
 <!-- clean-docs:end product-overview -->
 
 Human review can improve a sentence. It cannot make the sentence fail when its defining source changes. The [deterministic seam](docs/learn/deep-dive-the-deterministic-seam.md) explains how clean-docs separates source evidence, optional phrasing, and gate authority.
 
-## Install and prove the loop
+## Install in the repository you want to protect
+
+From that repository, download the latest stable wheel, install it in an isolated environment, and
+run the manifest-free audit:
 
 ```bash
-git clone https://github.com/owieschon/clean-docs.git && cd clean-docs
+release_dir="$(mktemp -d)"
+gh release download --repo owieschon/clean-docs \
+  --pattern 'clean_docs-*-py3-none-any.whl' --dir "$release_dir"
 python3 -m venv .venv
 source .venv/bin/activate
-python3 -m pip install -e ".[dev]"
+python -m pip install "$release_dir"/clean_docs-*.whl
 clean-docs audit
 ```
 
-Protect a repository after the audit passes:
+After the audit passes, inspect the files that `init` proposes before accepting the baseline:
 
 ```bash
 clean-docs init --no-model
-git diff
+git diff -- .clean-docs.yml README.md llms.txt
 clean-docs check
 clean-docs verify
 ```
 
-After a bound source changes, run `check`, then `drive`, then `project`, then `verify`. The [tutorial](docs/learn/tutorial-catch-a-lying-doc.md) shows the failure before the repair. The [support guide](docs/SUPPORT.md) covers release wheels and mature-repository adoption.
+After a bound source changes, run `check`, then `drive`, then `project`, then `verify`. The [tutorial](docs/learn/tutorial-catch-a-lying-doc.md) shows the failure before the repair. The [install guide](docs/INSTALL.md) owns release wheels; the [support guide](docs/SUPPORT.md) covers mature-repository adoption.
 
 ## How the pieces fit
 
 ![Architecture diagram showing repository evidence flowing through source bindings and the writing standard into repair, CI, and context outputs](docs/assets/clean-docs-system-map.svg)
 
-Repository sources become typed evidence. Bindings assign that evidence to document regions, claims, and symbols. The engine applies the packaged standard, then repairs documentation, rejects drift, or publishes verified context. The [manifest page](docs/REFERENCE.md) lists each binding and projected output.
+Repository sources become typed evidence. Bindings assign that evidence to document regions, claims, and symbols. The engine checks the implemented policy floor, then repairs declared regions, rejects drift, or publishes verified context. The [manifest page](docs/REFERENCE.md) lists each binding and projected output.
 
 ## Current boundaries
 
-- Catalog coverage detects source additions, removals, and replacements. Protect a specific prose claim with a binding.
+- Catalog coverage detects source additions, removals, and replacements; it does not validate prose. Protect a specific claim with a binding.
 - `drive` repairs bound regions. Run `project` afterward when a projection includes the repaired document.
 - Declared processes use time, I/O, and environment controls. The host owns network isolation; see the [security model](docs/SECURITY_MODEL.md).
+- Authored purpose and the manifest decide what matters. clean-docs does not infer product goals or certify judgment prose.
 - `audit`, `check`, `verify`, and `release` do not change documentation.
 - Exit `1` means drift, exit `2` means invalid configuration, and exit `3` means extraction failed.
 
-Use the [learning path](docs/learn/index.md) for the product map and evidence-backed examples. The [product contract](CLEAN_DOCS_SPEC.md) holds the complete behavior and version plan.
+Use the [learning path](docs/learn/index.md) for the product map and evidence-backed examples. The [current product contract](CLEAN_DOCS_SPEC.md) states the exact assurance boundary.
 <!-- clean-docs:canonical README.md end -->
 
 ## Canonical document: docs/EVALUATION.md
 
 - Source: [docs/EVALUATION.md](../../docs/EVALUATION.md)
-- Content sha256: `863e849cb7063a0054ffd4e5e0c7e7de7b2fa7a5605bbcc17749bcd7164f8947`
+- Content sha256: `bc1e0d3543ec88db415151b51ef89483c21ee9e034b0e26a37fb9edfb4c3174d`
 
 <!-- clean-docs:canonical docs/EVALUATION.md begin -->
 # Evaluate documentation tasks
 
 <!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
-Use this guide when repository docs must prove that a person or agent can finish a declared task from published pages alone. It shows you how to build replayable evaluations and record a content-addressed result tied to the declared task.
+A documentation task earns evidence only when the intended person or agent can finish it from the
+declared context. This guide lets maintainers build replayable evaluations and bind each result to
+the exact task, corpus, response, and scorer.
 <!-- clean-docs:end purpose -->
+
+**[Run the recorded tasks](#run-recorded-tasks)**.
+
+A passing run prints the attempted and passed counts for each audience. Those counts are the proof
+for that run; a history file binds them to the corpus, prompt, response, model, and scorer digests.
 
 A passing evaluation is a receipt for one task, not a halo around the whole corpus. It records who
 attempted what, which context they saw, how the result was scored, and whether it passed.

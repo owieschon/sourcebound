@@ -92,8 +92,13 @@ def _parser() -> argparse.ArgumentParser:
     benchmark.add_argument("--iterations", type=int, default=7)
     benchmark.add_argument("--out", type=Path)
     derive = sub.add_parser("derive", help=_command_help("derive"))
-    derive.add_argument("--write", action="store_true", help="write derived regions atomically")
-    derive.add_argument("--check", action="store_true", help="exit 1 when a region would change")
+    derive_mode = derive.add_mutually_exclusive_group()
+    derive_mode.add_argument(
+        "--write", action="store_true", help="write derived regions atomically"
+    )
+    derive_mode.add_argument(
+        "--check", action="store_true", help="exit 1 when a region would change"
+    )
     derive.add_argument("--binding", help="evaluate one binding id")
     derive.add_argument("--ref", help="read bound sources from an immutable git ref")
     derive.add_argument("--format", choices=("text", "json"), default="text")
@@ -160,6 +165,23 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _validate_arguments(args: argparse.Namespace) -> None:
+    if args.command != "check":
+        return
+    changed_only = (
+        args.base is not None
+        or args.head is not None
+        or args.project != Path(".")
+        or args.no_cache
+    )
+    if changed_only and not args.changed:
+        raise ConfigurationError(
+            "--base, --head, --project, and --no-cache require check --changed"
+        )
+    if args.changed and (args.base is None or args.head is None):
+        raise ConfigurationError("check --changed requires both --base and --head")
+
+
 def _json(results: list[BindingResult], *, repaired: bool = False) -> str:
     return json.dumps({
         "ok": not any(
@@ -203,6 +225,11 @@ def _text(results: list[BindingResult], *, repaired: bool = False) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    try:
+        _validate_arguments(args)
+    except CleanDocsError as exc:
+        print(f"clean-docs: {exc}", file=sys.stderr)
+        return exc.exit_code
     root = args.root.resolve()
     if args.command == "audit":
         try:

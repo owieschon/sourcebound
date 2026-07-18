@@ -17,15 +17,17 @@ PROJECT = Path(__file__).parents[1]
 
 
 def test_reader_install_and_repair_guidance_matches_candidate_artifacts() -> None:
+    install = (PROJECT / "docs/INSTALL.md").read_text()
     support = (PROJECT / "docs/SUPPORT.md").read_text()
     readme = (PROJECT / "README.md").read_text()
 
-    assert "python -m pip install --no-index --find-links ./wheelhouse ./clean_docs-*.whl" in support
-    assert "The version output must match the wheel filename" in support
-    checksum_section = support.split("### Verify release artifacts", 1)[1]
+    assert "python -m pip install --no-index --find-links ./wheelhouse ./clean_docs-*.whl" in install
+    assert "The version must match the wheel filename" in install
+    checksum_section = install.split("## Verify release artifacts", 1)[1]
     assert "python3 - <<'PY'" in checksum_section
     assert "\npython - <<'PY'" not in checksum_section
-    assert "expected one wheel" in support
+    assert "expected one wheel" in install
+    assert "non-ignored untracked Markdown files enter the corpus" in support
     assert "`drive` repairs bound regions" in readme
     assert "Run `project` afterward when a projection includes the repaired document" in readme
 
@@ -122,6 +124,12 @@ def test_local_outcome_receipt_reports_baseline_and_changed_impact(
         "coverage_complete": True,
         "direct_coverage_complete": False,
         "drift_caught_before_merge": 0,
+    }
+    assert baseline.as_dict()["assurance"] == {
+        "scope": "configured-contract",
+        "bound_claims_checked": True,
+        "cataloged_surfaces_check_prose": False,
+        "judgment_prose_certified": False,
     }
     assert not changed.ok
     assert changed.as_dict()["outcomes"]["drift_caught_before_merge"] >= 1

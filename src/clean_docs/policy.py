@@ -48,6 +48,8 @@ POLICY_YIELD = re.compile(
 ABSTRACTION_SUFFIX = re.compile(r"[a-z]+(?:tion|sion|ment|ance|ence|ivity)\b", re.I)
 QUALIFIER = re.compile(r"\b(?:may|only|unless|except)\b", re.I)
 MARKDOWN_LINK = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
+INLINE_CODE = re.compile(r"`[^`]*`")
+HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 
 
 def _prose_lines(text: str) -> list[tuple[int, str]]:
@@ -134,6 +136,13 @@ def _preamble_contract(doc: str, text: str, pack: dict[str, Any]) -> list[Policy
     has_proof = (
         any(line.startswith("[![") for line in window)
         or bool(re.search(r"\b(?:clean-docs\s+)?verify\b", joined, re.I))
+        or bool(
+            re.search(
+                r"\b(?:proof|proves|receipt|outcome|verification)\b",
+                joined,
+                re.I,
+            )
+        )
         or any(
             re.search(r"\b(?:proof|receipt|result|outcome|verification)\b", label, re.I)
             for label, _target in MARKDOWN_LINK.findall(joined)
@@ -163,6 +172,10 @@ def _paragraphs(text: str) -> list[tuple[int, str]]:
     current: list[str] = []
     start = 0
     in_fence = False
+    visible_text = HTML_COMMENT.sub(
+        lambda match: "\n" * match.group(0).count("\n"),
+        text,
+    )
 
     def flush() -> None:
         nonlocal current, start
@@ -171,7 +184,7 @@ def _paragraphs(text: str) -> list[tuple[int, str]]:
             current = []
             start = 0
 
-    for line_number, line in enumerate(text.splitlines(), start=1):
+    for line_number, line in enumerate(visible_text.splitlines(), start=1):
         stripped = line.strip()
         if stripped.startswith("```"):
             flush()
@@ -197,6 +210,11 @@ def _sentences(paragraph: str) -> list[str]:
         for sentence in re.split(r"(?<=[.!?])\s+", paragraph)
         if sentence.strip()
     ]
+
+
+def _visible_sentence(sentence: str) -> str:
+    without_targets = MARKDOWN_LINK.sub(lambda match: match.group(1), sentence)
+    return INLINE_CODE.sub("", without_targets)
 
 
 def _section_titles(text: str) -> list[tuple[int, str]]:
@@ -255,7 +273,7 @@ def _register_findings(doc: str, text: str, pack: dict[str, Any]) -> list[Policy
         for sentence in sentences:
             sentence_line = line_number + paragraph[:offset].count("\n")
             offset += len(sentence) + 1
-            lowered = sentence.lower()
+            lowered = _visible_sentence(sentence).lower()
             if (
                 not _rule_allowed(text, "nominalization-density")
                 and "nominalization-density" not in paragraph_yields

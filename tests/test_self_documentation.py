@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from clean_docs.capabilities import CLI_REFERENCE
-from clean_docs.cli import _parser
+from clean_docs.cli import _parser, _validate_arguments
 from clean_docs.engine import evaluate
 from clean_docs.manifest import MANIFEST_REFERENCE, load_manifest
 
@@ -49,7 +49,7 @@ def test_cli_reference_examples_parse() -> None:
                 _parser().parse_args(argv)
             assert exc.value.code == 0
         else:
-            _parser().parse_args(argv)
+            _validate_arguments(_parser().parse_args(argv))
 
 
 @pytest.mark.parametrize(

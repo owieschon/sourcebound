@@ -372,7 +372,7 @@ def test_independent_reader_release_requires_receipts_and_published_tasks_work(
         assert command in supplied_docs
     assert "not an operating-system sandbox" in security
     assert "Network access is denied unless" not in specification
-    assert "cannot revoke host network access" in specification
+    assert "not an operating-system sandbox" in specification
 
     published = tmp_path / "published-clean-docs"
     shutil.copytree(

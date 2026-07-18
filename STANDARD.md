@@ -5,6 +5,10 @@
 STANDARD.md is the canonical writing and documentation policy packaged with clean-docs. Use it when writing or reviewing repository documentation for people or agents: it prevents correct facts from becoming hard to find, easy to misread, or detached from source, and it defines how to choose the right medium, voice, canonical home, and evidence boundary for each claim.
 <!-- clean-docs:end purpose -->
 
+**[Start with the governing principle](#the-one-principle-everything-else-follows)**.
+
+The [pre-publish checklist](#pre-publish-checklist) is the proof surface for an authored review.
+
 <!-- clean-docs:allow audience reason="This standard names agent-workflow signals as policy examples rather than addressing an agent" -->
 
 Derived from a close reading of a developer-documentation corpus spanning overview,
@@ -43,9 +47,14 @@ Repositories adopt this register floor by adding
 explicit: an upgrade does not turn pre-existing prose into unrelated repair failures before its
 maintainers can baseline and rewrite the corpus.
 
+The marker activates the implemented deterministic floor, not every judgment in this standard.
+`clean-docs audit` can reject a missing purpose block, a broken route, or a registered prose tell.
+It cannot certify that the chosen motivation matters, the teaching sequence works, or the page has
+earned its personality. Those checks remain authored or advisory evidence.
+
 When two rules cannot both pass, move the detail one layer deeper before cutting it. Depth is the
-standard pressure valve: the overview keeps the decision and route, while a guide or reference page
-keeps the qualification, evidence, or schema. Delete only material that no reader layer needs.
+standard pressure valve: the overview keeps the choice and route. A guide or lookup page keeps the
+caveat, source proof, or schema. Delete only material that no reader layer needs.
 
 Mark an unavoidable loss instead of hiding it:
 
@@ -202,8 +211,8 @@ and next action remain complete. If either test fails, cut it.
 ## 3. How to explain something technical simply (the actual techniques)
 
 The bar: a competent reader who has never seen this system grasps what it is and does from the
-first screen. Concretely, the first sentence is a plain definition ("X is a Y that does A, B, C"),
-every abstraction is grounded on first use or cut, and each sentence carries one claim. The
+first screen. The first sentence plainly names its category ("X is a Y that does A, B, C").
+Ground each new term on first use or cut it, and give each sentence one claim. The
 measure is a blind read: hand the doc to a reader with no prior context and check whether they can
 state back what the system is. The docs hit that bar with specific, repeatable moves:
 
@@ -237,9 +246,9 @@ list describes the implementation instead of the reader's problem. Booster prose
 A scope claim the page or product does not deliver is documentation drift.
 
 The deterministic floor checks that one purpose block exists, appears before any body content, and
-does not restate the H1. Judgment checks whether an overview names a true category and whether the
-purpose contract names a real audience, problem, and resulting capability without overselling the
-implementation. Category truth cannot be inferred from sentence shape: "X is a platform" passes a
+does not restate the H1. A reviewer checks whether an overview names a true category and whether the
+purpose contract names who should read, what problem they face, and what they can do afterward
+without overselling the tool. Category truth cannot be inferred from sentence shape: "X is a platform" passes a
 regex and can still be false. A mechanical pass never substitutes for that truth check.
 
 ### Use repeatable explanation techniques
@@ -348,7 +357,7 @@ corpus of individually-clean docs still sprawls. Each rule below is a check a re
 - **Length forces depth.** README pages over 90 lines and guides over 150 lines fail. Reference
   pages are exempt because lookup tables are their content. A section over 40 lines moves its
   second job behind a link. A length allowance is a subtraction receipt naming what moved, split,
-  or was cut; "comprehensive" and "keeps everything together" are not reasons.
+  or was cut; "comprehensive" and "keeps everything together" are not reasons. <!-- slop-ok: rejected rationales named as negative examples -->
 - **Prefer the denser medium.** An inline 3-to-7-item enumeration (vendor classes, data
   sources, tested dimensions) is a table or list, not a sentence.
 
@@ -375,13 +384,21 @@ Use this routing-table shape:
 
 The deterministic register floor catches five repeatable failures:
 
+<!-- clean-docs:yield rule="nominalization-density" to="truth-honesty"
+     reason="The rule definition must name nominalization and its abstraction suffixes" -->
 1. **Nominalization density.** A reader-facing sentence with three or more abstraction-suffix
    tokens (`-tion`, `-sion`, `-ment`, `-ance`, `-ence`, `-ivity`) fails after the narrow allowlist
    for `documentation`, `application`, `section`, and `configuration`.
+<!-- clean-docs:yield rule="nominalization-density" to="truth-honesty"
+     reason="The rule definition must preserve its exact sentence-variance terms" -->
 2. **Sentence variance.** A paragraph of at least three sentences fails when every sentence is
    15-35 words. Give the reader one short beat.
+<!-- clean-docs:yield rule="nominalization-density" to="truth-honesty"
+     reason="The rule definition must preserve its exact assurance and execution terms" -->
 3. **Assurance deduplication.** Each authority or execution boundary has one canonical home.
    Overview pages link to it instead of repeating it.
+<!-- clean-docs:yield rule="significance-narration" to="truth-honesty"
+     reason="The rule definition must quote each phrase that it rejects" -->
 4. **Significance narration.** Cut "exactly the", "the very", "this demonstrates",
    "deliberately", "is itself", and "which is precisely" when the page praises its own system.
    State the consequence instead.
@@ -389,8 +406,8 @@ The deterministic register floor catches five repeatable failures:
    or `except` guards in one sentence. Limits and security sections are exempt because guarding is
    their job.
 
-These are diagnostics, not a license to flatten honest prose. The constitution decides every
-collision. Each rule ships with a tension fixture that pins the precedence-correct resolution.
+These diagnostics do not license flat prose. The constitution decides which rule wins. Each rule
+ships with a collision fixture that pins that choice.
 
 ### Give the corpus a navigation contract
 
@@ -419,9 +436,9 @@ disclosure, diagrams, and narrative. An agent surface may use stable identifiers
 compact context bundles, and explicit relationships. Neither projection may invent a second source
 of truth.
 
-Canonical content should carry enough structure to generate or validate the projections that need
-it: content type, applicability, authority, version, prerequisites, side effects, verification,
-and links between concepts, tasks, decisions, and reference definitions. Keep those fields only
+Canonical content should carry the fields each projection needs: what it is, where it applies, who
+controls it, which release it describes, what must exist first, what it changes, how to check it,
+and where related concepts, tasks, choices, and definitions live. Keep those fields only
 when they change behavior; metadata without a consumer is another form of documentation theater.
 
 Teach every consequential surface at three levels:
@@ -433,8 +450,8 @@ Teach every consequential surface at three levels:
 3. **Judgment:** state when to choose the path, when not to, what evidence changes the choice, and
    when the documentation is insufficient and the reader must abstain or escalate.
 
-Structure is semantic. Label content as concept, tutorial, task, reference, troubleshooting,
-decision, migration, policy, or ADR when tooling consumes that distinction. A high-consequence task
+Structure is semantic. Label content as concept, tutorial, task, lookup, troubleshooting, design
+choice, upgrade, policy, or ADR when tooling relies on that label. A high-consequence task
 also states permissions, reversibility, side effects, blast radius, approval, and rollback. Agents
 must not infer authorization from capability.
 
@@ -445,8 +462,8 @@ entity boundaries; preferred terms and deprecated synonyms are part of the contr
 
 Examples are executable lessons. Reuse tested assets, pin their environment, show expected output,
 and include the failure or counterexample that defines the negative boundary. Documentation tests
-therefore include audience tasks: correct selection, parameters, preconditions, recovery,
-abstention, and citation of the governing rule. Schema, spelling, and link checks cannot prove that
+therefore ask readers to choose the right path, supply parameters, meet preconditions, recover,
+stop when needed, and cite the governing rule. Schema, spelling, and link checks cannot prove that
 the material teaches correct behavior.
 
 Authority and uncertainty stay visible. Distinguish requirements, guidance, examples, history,
@@ -490,10 +507,11 @@ its projections, and rerun the failed task.
 
 ### What only judgment can check (the honest seam)
 
-The deterministic linter (`doc-hygiene.py`) sees names, lengths, token overlap, and
-vocabulary. Three corpus rules resist mechanization, so a reviewer or an eventual LLM-judge
-pass owns them. Each is stated so a human can run it today; none is faked into a brittle
-regex, because a judge-by-pattern check for a judgment call misfires in both directions.
+`clean-docs audit` sees names, structure, lengths, links, token overlap, registered prose tells,
+and exact accepted debt. Patterns cannot decide several corpus and teaching rules. A reviewer or
+an advisory judge owns them. Each rule is stated so a human can run it today; none is faked into a
+brittle regex, because a pattern pretending to judge purpose or pedagogy misfires in both
+directions.
 
 - **An executed or superseded plan is process exhaust; a live plan is a reference.** The
   filename does not separate them: `EVAL_PLAN.md` is an active landing page, while a
@@ -510,9 +528,9 @@ regex, because a judge-by-pattern check for a judgment call misfires in both dir
 
 **A rule enforced mechanically is a floor, not a finish.** This document's own no-em-dash rule,
 applied by find-replace, once turned every em dash into a double hyphen: rule-compliant, and a
-typewriter-ism in the one file that cannot afford one. The repair was to rephrase each sentence
-by hand, choosing a colon, a period, or a restructure by what the sentence was doing, because
-only judgment knows which. That is the same seam as the sentence gate and the three rules above:
+typewriter-ism in the one file that cannot afford one. The repair rephrased each line by hand,
+choosing a colon, a period, or a new structure according to the line's job. Only a reviewer can
+choose. That is the same seam as the sentence gate and the three rules above:
 a checker enforces the letter of a rule, but whether the result reads well is the judgment it
 cannot make. Read every mechanical pass as the floor you start from, never the standard you ship.
 
@@ -612,7 +630,7 @@ Run this against any doc before shipping. Each line is a fail/pass check.
       authority boundary; it does not use a stock sentence shared across unrelated projects.
 - [ ] Canonical meaning has purpose-built human and agent projections rather than separately
       maintained copies; each projection identifies its authority and applicability.
-- [ ] Consequential tasks teach the model, procedure, and judgment boundary, including permissions,
-      side effects, verification, recovery, abstention, and escalation where applicable.
+- [ ] Consequential tasks teach the model, procedure, and judgment boundary. They state permissions
+      and side effects, show how to verify and recover, and tell the reader when to stop or ask.
 - [ ] Executable examples and audience-task evaluations prove correct action and at least one
       negative boundary; retrieval units remain intelligible outside their original page.
