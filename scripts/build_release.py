@@ -109,7 +109,10 @@ def _verify_reader_candidate(
     reader_trial: dict[str, object],
     parent: Path,
 ) -> None:
-    if reader_trial.get("required") is not True:
+    if (
+        reader_trial.get("required") is not True
+        and reader_trial.get("status") != "verified"
+    ):
         return
     candidate = str(reader_trial["candidate_commit"])
     _run("git", "merge-base", "--is-ancestor", candidate, final_ref)
