@@ -8,7 +8,7 @@ from pathlib import Path
 
 import yaml
 
-from clean_docs.changed import check_changed, git_output, inventory_at_ref
+from clean_docs.changed import _git, _inventory, check_changed
 from clean_docs.errors import ConfigurationError
 from clean_docs.manifest import load_manifest
 from clean_docs.models import Manifest, SymbolBinding
@@ -201,7 +201,7 @@ def _project_path(prefix: str, path: str) -> str:
 
 
 def _blob_id(root: Path, ref: str, path: str) -> str | None:
-    output = git_output(root, "ls-tree", ref, "--", path).strip()
+    output = _git(root, "ls-tree", ref, "--", path).strip()
     if not output:
         return None
     fields = output.split(None, 3)
@@ -429,7 +429,7 @@ def build_impact_plan(
 
     requested_base = RepositorySnapshot(root, base).label
     head_sha = RepositorySnapshot(root, head).label
-    merge_base = git_output(root, "merge-base", requested_base, head_sha).strip()
+    merge_base = _git(root, "merge-base", requested_base, head_sha).strip()
     if not merge_base:
         raise ConfigurationError("impact planning could not resolve a merge base")
     changed = check_changed(
@@ -444,10 +444,10 @@ def build_impact_plan(
     project_changed = tuple(
         _project_path(prefix, path) for path in changed.changed_files
     )
-    base_inventory, _ = inventory_at_ref(
+    base_inventory, _ = _inventory(
         root, changed.base, project, use_cache=use_cache
     )
-    head_inventory, _ = inventory_at_ref(
+    head_inventory, _ = _inventory(
         root, changed.head, project, use_cache=use_cache
     )
     base_items = {item.id: item for item in base_inventory}
