@@ -38,7 +38,7 @@ exclude:
     reason: Archived fixtures are intentionally outside the active surface.
 """)
     (root / "README.md").write_text(
-        "# Product\n\nforeign-token\n\n/" + "Users/example/private/file.txt\n"
+        "# Product\n\nforeign-token\n\n/" + "Users/alicebuild/private/file.txt\n"
     )
     cache = root / "src/__pycache__"
     cache.mkdir(parents=True)
@@ -84,6 +84,29 @@ rules:
 
     assert [(finding.rule, finding.doc, finding.line) for finding in findings] == [
         ("cross-project-residue", "README.md", 3),
+    ]
+
+
+def test_local_path_rule_ignores_placeholders_and_embedded_route_names(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    (root / "README.md").write_text(
+        "# Paths\n\n"
+        "/Users/<you>/project\n"
+        "/Users/username/project\n"
+        "/Users/YOUR_USERNAME/project\n"
+        "/Users/me/project\n"
+        "/home/user/project\n"
+        "/Accounts/Users/Relationships\n"
+        "/" + "Users/alicebuild/private/project\n"
+    )
+    _track(root)
+
+    findings = scan_residue(root)
+
+    assert [(finding.rule, finding.line) for finding in findings] == [
+        ("local-path-residue", 9),
     ]
 
 

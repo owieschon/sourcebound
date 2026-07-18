@@ -42,15 +42,40 @@ Rules resolve in this order: **truth and honesty → grounding → reader budget
 A lower rule never degrades a higher one. A repair must not widen a claim beyond its evidence, drop
 a limitation, detach a receipt, or weaken the page's point to make a lower-priority check pass.
 
-Repositories adopt this register floor by adding
-`<!-- clean-docs:policy register-v2 -->` after the document title. The marker keeps migration
-explicit: an upgrade does not turn pre-existing prose into unrelated repair failures before its
-maintainers can baseline and rewrite the corpus.
+Classify the document's job before applying a rule. An overview orients. A tutorial teaches ordered
+steps, a task page gets work done, and troubleshooting moves from symptom to recovery. A reference
+supports lookup. An architecture record preserves boundaries and time horizons, while an evidence
+record preserves observations. An agent procedure constrains actions, and a template is runtime
+input.
 
-The marker activates the implemented deterministic floor, not every judgment in this standard.
-`clean-docs audit` can reject a missing purpose block, a broken route, or a registered prose tell.
-It cannot certify that the chosen motivation matters, the teaching sequence works, or the page has
-earned its personality. Those checks remain authored or advisory evidence.
+Prefer path, filename, frontmatter, title, and repository convention as role evidence. When those
+signals are ambiguous, declare `<!-- clean-docs:role reference -->` with the narrowest matching role.
+The supported roles are `overview`, `component-overview`, `tutorial`, `task`, `troubleshooting`,
+`reference`, `architecture`, `plan`, `evidence`, `agent-procedure`, and `template`. A role marker
+scopes rules; it never suppresses broken links, source drift, unreadable bytes, or concrete residue.
+A rule that helps one role can damage another. Purpose and routing checks help an overview; they
+corrupt a two-line prompt template. Fixed page budgets can expose a sprawling guide; they can split
+a safety constraint from the step it governs or make a reference harder to scan.
+
+Repositories may adopt the clean-docs register for one document by adding
+`<!-- clean-docs:policy register-v2 -->` after its title. The marker selects a policy profile; it
+does not decide which rules fit. The document's role still selects rules one by one. The marker
+never changes that role, overrides a repository-native form, or turns an uncertain editorial call
+into a mechanical failure.
+
+Every rule passes three gates. **Applicability** asks whether the rule helps this document role.
+**Evidence strength** separates a demonstrable defect from an editorial inference. **Enforcement
+ownership** asks whether the repository accepted that compatible policy rule as a gate.
+
+A provably broken local link, unreadable document, concrete machine-specific residue, or stale
+source binding has a mechanical witness, but a witness alone is not authority to gate an untouched
+repository. Before setup, integrity defects, role-compatible writing-policy candidates, and
+repository-neutral corpus signals cannot become blockers. The default assessment reports integrity
+and corpus signals; `audit --preview-policy` adds bounded, role-compatible house-policy candidates.
+A manifest accepts repository integrity checks as gates. A policy marker accepts compatible
+deterministic policy rules for that document. Neither activates an incompatible rule, makes a guess
+true, nor certifies that the chosen motivation matters, the teaching sequence works, or the page
+has earned its personality.
 
 When two rules cannot both pass, move the detail one layer deeper before cutting it. Depth is the
 standard pressure valve: the overview keeps the choice and route. A guide or lookup page keeps the
@@ -231,9 +256,12 @@ category and boundary. "QueueKit processes jobs quickly" states behavior but nev
 Procedural pages whose subject is already established link to its canonical definition and open with
 the purpose contract instead of repeating it.
 
-Every doc opens with the documentation equivalent of a function contract. State the bottom line
-before the explanation so the wrong reader can leave and the right reader knows what the page will
-change for them.
+Every standalone overview, concept, tutorial, and task page opens with the documentation equivalent
+of a function contract. State the bottom line before the explanation so the wrong reader can leave
+and the right reader knows what the page will change for them. A reference opens with scope and
+authority. An architecture record, plan, or evidence record opens with status and time horizon. An
+agent procedure opens with typed identity and execution constraints. A template adds no reader
+preamble because its bytes are product input.
 
 | Contract slot | The opener answers |
 | --- | --- |
@@ -245,11 +273,12 @@ Keep the contract falsifiable and true to the code. A title restatement adds no 
 list describes the implementation instead of the reader's problem. Booster prose cannot be checked.
 A scope claim the page or product does not deliver is documentation drift.
 
-The deterministic floor checks that one purpose block exists, appears before any body content, and
-does not restate the H1. A reviewer checks whether an overview names a true category and whether the
-purpose contract names who should read, what problem they face, and what they can do afterward
-without overselling the tool. Category truth cannot be inferred from sentence shape: "X is a platform" passes a
-regex and can still be false. A mechanical pass never substitutes for that truth check.
+For applicable, registered reader pages, the deterministic floor checks that one purpose block
+exists, appears before body content, and does not restate the H1. A reviewer checks whether an
+overview names a true category and whether the purpose contract names who should read, what problem
+they face, and what they can do afterward without overselling the tool. Category truth cannot be
+inferred from sentence shape: "X is a platform" passes a regex and can still be false. A mechanical
+pass never substitutes for that truth check.
 
 ### Use repeatable explanation techniques
 
@@ -335,13 +364,16 @@ The rules above make one doc good. These decide whether a doc should exist, how 
 be, and whether its content already lives elsewhere. This is the level most prose fails at: a
 corpus of individually-clean docs still sprawls. Each rule below is a check a reviewer can run.
 
-- **Published surface ≠ process log.** A per-run report, handoff, dispatch ledger, status
-  update, or blocked-note is build exhaust; it belongs in git history, a PR, or an issue,
-  never as a committed reader-facing doc. Enforce it by location (gitignore / an `archive/`
-  outside the doc tree), not by willpower. Test: if a doc's second person is "the next
-  executor" and its body is worktree state, branch ownership, or task accounting, it fails.
-- **Every published doc's audience is a reader, not a future agent.** If it reads as
-  agent-to-agent pickup, it is not documentation; cut it from the surface.
+- **A record must earn its surface, but its filename does not decide.** Ephemeral worktree state,
+  branch ownership, or task accounting belongs in git history, a PR, or an issue. A package-owned
+  review or incident record may be durable evidence. The same holds for a longitudinal study or
+  live plan. Preserve the record until its owner and time horizon prove it is exhaust. A scanner may
+  flag the ambiguity; it must not move or delete the file.
+- **Match the document to its real reader.** A published guide addresses a person doing its task.
+  An agent skill or prompt legitimately addresses an agent and may use imperative execution
+  constraints, typed frontmatter, and deliberate repetition. Do not rewrite an executable agent
+  procedure into a generic human guide. Do not disguise a branch handoff as durable agent
+  documentation.
 - **One canonical home per fact.** A fact shared by a family of docs lives in exactly one doc;
   siblings cite it and state only their own deviations. (Same invariant as the second brain:
   link, never copy.) N sibling pages each re-deriving one shared spec is the tell.
@@ -349,15 +381,17 @@ corpus of individually-clean docs still sprawls. Each rule below is a check a re
   deltas from a prior baseline, and `(Program N)` / `(Wave N)` tags do not belong inside a
   reference doc. Test: if a passage would be equally true with its history deleted, delete the
   history.
-- **No sentence restates a prior one in different words.** This is the highest-yield concision
-  check. The per-sentence "does this add information" test is blind to redundancy at paragraph
-  scale; this one catches it.
+- **No sentence restates a prior one without a local reason.** This is the highest-yield concision
+  check for explanatory prose. Repeat a safety boundary at each irreversible action when distance
+  would make the procedure easier to misuse; preserve the constraint, not merely the wording.
 - **Each section leads with its takeaway in one sentence, then supports it or is cut.** A
   section whose takeaway is "see the table" means the prose should *be* the table.
-- **Length forces depth.** README pages over 90 lines and guides over 150 lines fail. Reference
-  pages are exempt because lookup tables are their content. A section over 40 lines moves its
-  second job behind a link. A length allowance is a subtraction receipt naming what moved, split,
-  or was cut; "comprehensive" and "keeps everything together" are not reasons. <!-- slop-ok: rejected rationales named as negative examples -->
+- **Length prompts a depth review.** README pages over 90 lines and guides over 150 lines receive an
+  advisory. A section over 40 lines receives the same review. A line count cannot prove that a
+  second job exists. Move one behind a link when it does; keep a complete safety sequence,
+  diagnostic chain, or lookup surface together when splitting would make the page harder to use.
+  A length allowance is a subtraction receipt naming what moved, split, or was cut; breadth alone
+  and "keeps everything together" are not reasons.
 - **Prefer the denser medium.** An inline 3-to-7-item enumeration (vendor classes, data
   sources, tested dimensions) is a table or list, not a sentence.
 
@@ -507,9 +541,10 @@ its projections, and rerun the failed task.
 
 ### What only judgment can check (the honest seam)
 
-`clean-docs audit` sees names, structure, lengths, links, token overlap, registered prose tells,
-and exact accepted debt. Patterns cannot decide several corpus and teaching rules. A reviewer or
-an advisory judge owns them. Each rule is stated so a human can run it today; none is faked into a
+`clean-docs audit` sees document roles, names, structure, lengths, links, token overlap, registered
+prose tells, and exact accepted debt. Its role classifier is evidence for applicability, not proof
+of editorial intent. Patterns cannot decide several corpus and teaching rules. A reviewer or an
+advisory judge owns them. Each rule is stated so a human can run it today; none is faked into a
 brittle regex, because a pattern pretending to judge purpose or pedagogy misfires in both
 directions.
 
@@ -568,9 +603,10 @@ customer emails." No amount of voice or structure work catches that; only ground
 
 Run this against any doc before shipping. Each line is a fail/pass check.
 
-- [ ] The first 15 lines contain the purpose, a primary action, and one proof.
-- [ ] The README is at most 90 lines, a guide is at most 150 lines, and reference material lives
-      on a reference page instead of using a comprehensiveness allowance.
+- [ ] In an overview, the first 15 lines contain the purpose, a primary action, and one proof;
+      other roles open with the information their reader needs first.
+- [ ] Review a README over 90 lines, a guide over 150 lines, or a section over 40 lines for a second
+      job. Split by reader job, but keep one complete safety, diagnostic, or lookup sequence intact.
 - [ ] The README routes decisions, first tasks, concepts, and lookup work through an
       `If you need to... | Start with | You will leave with...` table.
 - [ ] Each explanatory section over 80 words links to the deeper page that owns its detail.
@@ -604,9 +640,11 @@ Run this against any doc before shipping. Each line is a fail/pass check.
       text, and reference facts stay literal; whimsy never carries a required fact or action.
 - [ ] Headings use sentence case; UI controls use semantic bold; link text names its destination.
 - [ ] Sections end by linking outward; version notes are inline at the claim.
-- [ ] No process artifact (report, handoff, dispatch, status, blocked-note) is on the
-      reader-facing doc surface; that content lives in git, PRs, or issues.
-- [ ] Every published doc's audience is a reader, not a future agent.
+- [ ] The document's role is explicit in its structure, and every applied rule helps that role.
+- [ ] Ephemeral task state lives in git, PRs, or issues; durable evidence records and live plans
+      retain their declared owner, time horizon, and evidence boundary.
+- [ ] The audience matches the role: human task pages address people; executable agent procedures
+      preserve their runtime contract instead of imitating human prose.
 - [ ] No fact is restated across sibling docs; shared facts have one canonical home, cited.
 - [ ] The page fits the corpus navigation contract and its genre follows the reader's intended path.
 - [ ] Procedures include an observable result and verification; troubleshooting proceeds from
@@ -616,16 +654,20 @@ Run this against any doc before shipping. Each line is a fail/pass check.
 - [ ] Every deterministic rule has positive and negative fixtures, a repair, a severity, and a scoped
       exception model.
 - [ ] No reference doc carries provenance, receipts, or baseline deltas; those go in a changelog.
-- [ ] No sentence restates a prior sentence; each section leads with its takeaway.
-- [ ] Each doc names its one job in its first line; docs >120 lines and sections >40 lines
-      justify staying whole or split.
+- [ ] No sentence restates a prior sentence without a local safety or execution reason; each
+      explanatory section leads with its takeaway.
+- [ ] Each standalone reader page names its job near the opening. Overview, tutorial, and task pages
+      over their budgets split only when the split preserves safety and lookup; references,
+      architecture records, evidence, agent procedures, and templates do not inherit those budgets.
 - [ ] Every factual claim (capabilities, flags, counts, routes) traces to a source in the code,
       not to memory or an old draft.
 - [ ] For every product, system, or concept overview, the first screen defines what category the
       subject belongs to with an ontological definition, not merely what it does; a reader with no
       context could state it back.
-- [ ] The first body block is a BLUF purpose contract: applicability, problem, and resulting
-      capability are explicit, falsifiable, and true to the code.
+- [ ] Every overview, concept, tutorial, and task page opens with the applicable part of a BLUF
+      purpose contract: reader situation, consequential problem, and resulting capability are
+      explicit, falsifiable, and true to the code. References, evidence, agent procedures, and
+      templates use their role-specific opening instead of filler.
 - [ ] Purpose prose names the project-specific subject, operator, consequential failure, and
       authority boundary; it does not use a stock sentence shared across unrelated projects.
 - [ ] Canonical meaning has purpose-built human and agent projections rather than separately

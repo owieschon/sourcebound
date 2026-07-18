@@ -16,7 +16,7 @@ The table is generated from the command registry used by the parser:
 <!-- clean-docs:begin cli-reference -->
 | command | job | writes | example |
 | --- | --- | --- | --- |
-| audit | Inventory and check repository documentation | with --update-baseline | clean-docs audit --format json |
+| audit | Assess documentation and enforce adopted scopes | with --update-baseline | clean-docs audit --format json |
 | inventory | List detected repository surfaces and coverage | no | clean-docs inventory --format json |
 | init | Write a source-bound documentation baseline | yes | clean-docs init --no-model |
 | explain | Explain a finding or coverage state | no | clean-docs explain purpose-contract --format json |

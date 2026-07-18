@@ -95,11 +95,27 @@ def _git_visible_markdown(root: Path) -> list[Path] | None:
         return None
     if proc.returncode != 0:
         return None
-    return sorted({
-        root / line
-        for line in proc.stdout.splitlines()
-        if line.strip() and (root / line).is_file()
-    })
+    candidates = sorted(
+        {
+            root / line
+            for line in proc.stdout.splitlines()
+            if line.strip() and (root / line).is_file()
+        },
+        key=lambda path: (path.is_symlink(), path.as_posix()),
+    )
+    canonical: dict[Path, Path] = {}
+    for path in candidates:
+        try:
+            identity = path.resolve(strict=True)
+        except OSError:
+            identity = path.absolute()
+        canonical.setdefault(identity, path)
+    return sorted(canonical.values())
+
+
+def _hidden_document(relative: Path) -> bool:
+    hidden = [part for part in relative.parts if part.startswith(".")]
+    return bool(hidden) and relative.parts[0] != ".agents"
 
 
 def list_documents(root: Path) -> list[Path]:
@@ -113,9 +129,7 @@ def list_documents(root: Path) -> list[Path]:
             for path in visible
             if "archive" not in path.relative_to(root).parts
             and _is_document_candidate(path.relative_to(root), fallback=False)
-            and not any(
-                part.startswith(".") for part in path.relative_to(root).parts
-            )
+            and not _hidden_document(path.relative_to(root))
         ]
     return sorted(
         path
@@ -123,7 +137,7 @@ def list_documents(root: Path) -> list[Path]:
         if _is_document_candidate(path.relative_to(root), fallback=True)
         and "archive" not in path.relative_to(root).parts
         and ".clean-docs" not in path.relative_to(root).parts
-        and not any(part.startswith(".") for part in path.relative_to(root).parts)
+        and not _hidden_document(path.relative_to(root))
     )
 
 
@@ -222,7 +236,11 @@ def _duplicate_findings(
     return findings
 
 
-def scan_corpus(root: Path, *, include_lengths: bool = True) -> list[PolicyFinding]:
+def scan_corpus(
+    root: Path,
+    *,
+    include_lengths: bool = True,
+) -> list[PolicyFinding]:
     """Run the tuned Version 0 corpus rules with stable finding identifiers."""
     root = root.resolve()
     base = root if root.is_dir() else root.parent

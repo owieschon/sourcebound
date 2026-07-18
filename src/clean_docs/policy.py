@@ -320,7 +320,10 @@ def _register_findings(doc: str, text: str, pack: dict[str, Any]) -> list[Policy
 
 
 def _purpose_contract(doc: str, text: str, pack: dict[str, Any]) -> list[PolicyFinding]:
-    if not pack["policy"].get("require_purpose_contract", False):
+    if (
+        REGISTER_PROFILE not in text
+        or not pack["policy"].get("require_purpose_contract", False)
+    ):
         return []
     contract = pack["style"]["purpose_contract"]
     begin = str(contract["begin_marker"])
@@ -489,6 +492,8 @@ def ensure_purpose_contract(text: str, *, fallback: bool = False) -> str:
 
 
 def check_prose(doc: str, text: str, pack: dict[str, Any]) -> list[PolicyFinding]:
+    if REGISTER_PROFILE not in text:
+        return []
     policy = pack["policy"]
     boosters = tuple(str(word) for word in policy["prohibited_boosters"])
     pattern = re.compile(r"\b(?:" + "|".join(re.escape(word) for word in boosters) + r")\b", re.I)

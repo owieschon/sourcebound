@@ -44,7 +44,13 @@ The workflow rejects tags, branches, abbreviated commits, and non-hexadecimal in
 
 ## Adopt an existing documentation corpus
 
-`init` is strict by default. It rolls back every bootstrap write when the current corpus has a hygiene finding. It also stops before writing when a page has no substantive authored opening that can be marked as its purpose contract. Metadata, status labels, feature fragments, and generated title boilerplate do not satisfy that boundary. A mature repository can preserve strict future checks while recording its current debt:
+Before init, `audit` is assessment-only unless documents already carry policy markers. `init` is
+strict by default: its manifest accepts repository integrity checks as gates, and init rolls back
+every bootstrap write when that configured corpus has a blocking integrity or opted-in policy
+finding. Unmarked documents keep their native voice; role-compatible policy candidates and
+repository-neutral corpus questions do not become accepted debt. Use `audit --preview-policy` to
+inspect the compatible policy candidates as bounded advisories before adopting them. A mature
+repository can preserve strict future checks while recording existing blocking debt:
 
 ```bash
 clean-docs init --no-model --accept-hygiene-baseline
@@ -52,15 +58,19 @@ git diff -- .clean-docs/audit-baseline.json
 clean-docs audit
 ```
 
-The committed baseline records each exact rule, path, line, detail, and fingerprint, including
-unresolved purpose-contract findings. Adoption mode does not archive or move existing documents.
-Ambiguous names such as `DEPLOYMENT_PLAN.md` and `ARCHITECTURE_NOTES.md` remain active documentation;
-only unambiguous process artifacts and exact duplicates are archive candidates outside adoption
-mode. Files named `*.fixture.md` are explicit test inputs rather than reader documentation. Git
-tracked and non-ignored untracked Markdown files enter the corpus; Git-ignored files and hidden
-configuration trees stay out. `audit` fails when a new finding appears. It also fails with
-`stale-baseline` when a recorded finding is resolved, because the baseline must shrink to match
-current debt.
+The committed baseline records each exact blocking rule, path, line, detail, and fingerprint. Init
+does not archive or move existing documents from a filename or similarity heuristic. Ambiguous
+plans, package-owned evidence, compatibility aliases, prompt templates, and agent procedures keep
+their native form. Files named `*.fixture.md` are explicit test inputs rather than reader
+documentation. Git-tracked and non-ignored untracked Markdown files enter the corpus; `.agents`
+documentation is active, other hidden configuration trees stay out, and tracked MDX is disclosed
+as unsupported. `audit` fails when a new blocker appears. It also fails with `stale-baseline` when
+a recorded blocker is resolved, because the baseline must shrink to match current debt.
+
+For an established README that has not adopted the policy profile, init writes detected source
+facts to `.clean-docs/repository-surface.md` and leaves the README unchanged. The manifest binds
+that generated file, while `llms.txt` still indexes the README as canonical context. A new or
+registered README may own the generated region directly.
 
 The JSON content plan emits at most 100 representative facts and 4,000 bytes of diff per operation.
 Large repositories stay reviewable. `fact_count`, `facts_omitted`, `diff_truncated`, the full-plan

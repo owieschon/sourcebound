@@ -142,9 +142,9 @@ def test_local_outcome_receipt_reports_baseline_and_changed_impact(
 def test_local_outcome_receipt_exposes_accepted_hygiene_debt(tmp_path: Path) -> None:
     root, manifest, _base, _head = _fixture(tmp_path)
     (root / "STATUS.md").write_text(
-        "# Existing status\n\n<!-- clean-docs:purpose -->\n"
-        "Use this page when checking the fixture's existing process debt. It preserves one accepted hygiene finding for the receipt.\n"
-        "<!-- clean-docs:end purpose -->\n"
+        "# Existing status\n\n"
+        "<!-- clean-docs:policy register-v2 -->\n"
+        "[Missing historical receipt](receipts/missing.md)\n"
     )
     subprocess.run(["git", "-C", str(root), "add", "STATUS.md"], check=True)
     write_audit_baseline(root)

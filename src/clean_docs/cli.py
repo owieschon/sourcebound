@@ -7,6 +7,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from clean_docs import __version__
+from clean_docs.applicability import ROLE_DESCRIPTIONS
 from clean_docs.audit import AUDIT_BASELINE_PATH, audit, write_audit_baseline
 from clean_docs.bootstrap import apply_bootstrap_plan, build_bootstrap_plan
 from clean_docs.capabilities import CLI_REFERENCE
@@ -52,6 +53,11 @@ def _parser() -> argparse.ArgumentParser:
         "--update-baseline",
         action="store_true",
         help="replace the exact existing-debt baseline with current findings",
+    )
+    audit_parser.add_argument(
+        "--preview-policy",
+        action="store_true",
+        help="report compatible house-policy candidates without accepting them as gates",
     )
     inventory_parser = sub.add_parser("inventory", help=_command_help("inventory"))
     inventory_parser.add_argument("--format", choices=("text", "json"), default="text")
@@ -235,16 +241,39 @@ def main(argv: list[str] | None = None) -> int:
         try:
             if args.update_baseline:
                 write_audit_baseline(root)
-            report = audit(root)
+            report = audit(root, preview_policy=args.preview_policy)
         except CleanDocsError as exc:
             print(f"clean-docs: {exc}", file=sys.stderr)
             return exc.exit_code
         if args.format == "json":
             print(json.dumps({
+                "schema": "clean-docs.audit.v1",
                 "ok": report.ok,
                 "documents": list(report.documents),
                 "ignored_documents": list(report.ignored_documents),
+                "unsupported_documents": list(report.unsupported_documents),
+                "document_profiles": {
+                    profile.path: profile.role
+                    for profile in report.document_profiles
+                },
+                "registered_documents": [
+                    profile.path
+                    for profile in report.document_profiles
+                    if profile.registered
+                ],
+                "enforcement": {
+                    "repository_integrity": report.repository_integrity_enforced,
+                    "policy_documents": [
+                        profile.path
+                        for profile in report.document_profiles
+                        if profile.registered
+                    ],
+                },
+                "policy_preview": report.policy_preview,
+                "role_definitions": ROLE_DESCRIPTIONS,
                 "findings": [asdict(finding) for finding in report.findings],
+                "advisories": [asdict(finding) for finding in report.advisories],
+                "advisory_totals": dict(report.advisory_totals),
                 "baselined_findings": [
                     asdict(finding) for finding in report.baselined_findings
                 ],
@@ -253,10 +282,21 @@ def main(argv: list[str] | None = None) -> int:
                 ],
             }, indent=2))
         else:
+            document_roles = {
+                profile.path: profile.role
+                for profile in report.document_profiles
+            }
             for audit_finding in report.findings:
                 print(
                     f"[{audit_finding.rule}] {audit_finding.path}:{audit_finding.line} "
                     f"{audit_finding.detail}"
+                )
+            for advisory in report.advisories:
+                print(
+                    f"[advisory:{advisory.rule} "
+                    f"role={document_roles.get(advisory.path, 'unknown')}] "
+                    f"{advisory.path}:{advisory.line} "
+                    f"{advisory.detail}"
                 )
             for stale_finding in report.stale_baseline:
                 print(
@@ -269,8 +309,13 @@ def main(argv: list[str] | None = None) -> int:
                 f"audit: {len(report.documents)} active document(s), "
                 f"{len(report.ignored_documents)} archived, "
                 f"{len(report.findings)} finding(s); "
+                f"{sum(count for _rule, count in report.advisory_totals)} "
+                f"advisory candidate(s), {len(report.advisories)} shown; "
                 f"{len(report.baselined_findings)} baselined; "
-                f"{len(report.stale_baseline)} stale"
+                f"{len(report.stale_baseline)} stale; "
+                f"{len(report.unsupported_documents)} unsupported; "
+                "integrity "
+                f"{'enforced' if report.repository_integrity_enforced else 'assessment-only'}"
             )
         return 0 if report.ok else 1
     if args.command == "inventory":
@@ -395,13 +440,15 @@ def main(argv: list[str] | None = None) -> int:
                     f"[{state}] write {AUDIT_BASELINE_PATH}: "
                     "record exact existing documentation debt after bootstrap"
                 )
+            for gap in plan.gaps:
+                print(f"[gap] {gap}")
             print(
                 f"init: {state} "
                 f"{len(plan.writes) + len(plan.moves) + int(plan.accept_hygiene_baseline)} "
                 "operation(s); "
                 f"{len(plan.facts)} grounded fact(s)"
             )
-        return 0
+        return 2 if plan.gaps else 0
     if args.command == "doctor":
         manifest = args.manifest if args.manifest.is_absolute() else root / args.manifest
         bundle = build_diagnostic_bundle(root, manifest)

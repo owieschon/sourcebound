@@ -11,6 +11,13 @@ clean-docs is a source-bound documentation engine and CLI for maintainers who ne
 
 The final `clean-docs verify` command prints a [`clean-docs.outcome.v1` receipt](docs/SUPPORT.md#record-local-outcomes) with `"ok": true`.
 
+Audit starts from the document's job. On an untouched repository it is an assessment: broken links,
+machine-specific residue, and repository-neutral corpus signals remain bounded advisories. Run
+`clean-docs audit --preview-policy` to add compatible house-policy candidates without accepting
+them as gates. A manifest accepts repository integrity checks as gates; a policy marker accepts
+compatible writing rules for one document. Neither makes an incompatible rule applicable or
+authorizes clean-docs to flatten repository-native forms.
+
 | If you need to... | Start with | You will leave with... |
 | --- | --- | --- |
 | Try the repair loop | [Runnable tutorial](docs/learn/tutorial-catch-a-lying-doc.md) | A failed drift check and a repaired page |
@@ -43,14 +50,18 @@ python -m pip install "$release_dir"/clean_docs-*.whl
 clean-docs audit
 ```
 
-After the audit passes, inspect the files that `init` proposes before accepting the baseline:
+After reviewing the assessment, inspect the files that `init` proposes before accepting its gate:
 
 ```bash
 clean-docs init --no-model
-git diff -- .clean-docs.yml README.md llms.txt
+git diff -- .clean-docs.yml .clean-docs/repository-surface.md README.md llms.txt
 clean-docs check
 clean-docs verify
 ```
+
+An established, unregistered README stays byte-for-byte authored. Init writes its detected catalog
+to `.clean-docs/repository-surface.md`; a new README or one that adopted the register may own that
+region directly.
 
 After a bound source changes, run `check`, then `drive`, then `project`, then `verify`. The [tutorial](docs/learn/tutorial-catch-a-lying-doc.md) shows the failure before the repair. The [install guide](docs/INSTALL.md) owns release wheels; the [support guide](docs/SUPPORT.md) covers mature-repository adoption.
 

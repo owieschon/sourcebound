@@ -8,7 +8,8 @@ import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from clean_docs.audit import AUDIT_BASELINE_PATH, PROCESS_NAME, audit, write_audit_baseline
+from clean_docs.applicability import classify_document
+from clean_docs.audit import AUDIT_BASELINE_PATH, audit, write_audit_baseline
 from clean_docs.corpus import list_documents
 from clean_docs.emit import render_llms_txt
 from clean_docs.engine import evaluate
@@ -24,7 +25,7 @@ from clean_docs.models import (
     Source,
 )
 from clean_docs.phrasing import GroundedDraft, ModelRecord, PhrasingProvider, build_model_record
-from clean_docs.policy import ensure_purpose_contract
+from clean_docs.policy import REGISTER_PROFILE, ensure_purpose_contract
 from clean_docs.projections import evaluate_projections
 from clean_docs.regions import atomic_write, replace_region
 from clean_docs.renderers import render
@@ -33,11 +34,12 @@ from clean_docs.write_gate import redact_secrets
 
 
 REFERENCE_REGION = "repository-surface"
+GENERATED_REFERENCE = ".clean-docs/repository-surface.md"
 PLAN_FACT_LIMIT = 100
 PLAN_DIFF_LIMIT = 4000
 CANONICAL_DOCUMENT_LIMIT = 8
 REFERENCE_SECTION = re.compile(
-    r"^## (?:Commands|CLI|Repository surface)\s*\n.*?(?=^## |\Z)", re.MULTILINE | re.DOTALL
+    r"^## Repository surface\s*\n.*?(?=^## |\Z)", re.MULTILINE | re.DOTALL
 )
 
 
@@ -161,12 +163,18 @@ def _reference_document(
     root: Path, document: str, drafts: tuple[GroundedDraft, ...] = ()
 ) -> str:
     readme = root / document
-    current = readme.read_text(encoding="utf-8") if readme.exists() else "# Repository\n"
-    current = ensure_purpose_contract(current, fallback=False)
-    if "<!-- clean-docs:purpose -->" not in current:
+    existing = readme.exists()
+    title = "# Repository surface\n" if document == GENERATED_REFERENCE else "# Repository\n"
+    current = readme.read_text(encoding="utf-8") if existing else title
+    current, _redaction_rules = redact_secrets(current)
+    registered = REGISTER_PROFILE in current
+    if registered:
+        current = ensure_purpose_contract(current, fallback=False)
+    if not existing and document != GENERATED_REFERENCE:
         lines = current.splitlines()
         heading = next((index for index, line in enumerate(lines) if line.startswith("# ")), 0)
         purpose = [
+            REGISTER_PROFILE,
             "<!-- clean-docs:purpose -->",
             "Use this repository guide when you need to run or change this project. Without a "
             "source-bound overview, entry points and public surfaces can drift from the "
@@ -220,30 +228,11 @@ def _planned_write(root: Path, path: str, content: str, reason: str) -> PlannedW
 
 
 def _archive_moves(root: Path) -> list[PlannedMove]:
-    documents = sorted(
-        path for path in root.rglob("*.md")
-        if path.is_file()
-        and path.name != "README.md"
-        and "docs/archive" not in path.relative_to(root).as_posix()
-        and not set(path.relative_to(root).parts) & {".git", ".venv", "node_modules"}
-    )
-    moves: dict[str, PlannedMove] = {}
-    for path in documents:
-        relative = path.relative_to(root).as_posix()
-        if PROCESS_NAME.search(path.stem):
-            destination = f"docs/archive/clean-docs-init/{relative.removeprefix('docs/')}"
-            moves[relative] = PlannedMove(relative, destination, "process-only document")
-    by_digest: dict[str, list[Path]] = {}
-    for path in documents:
-        normalized = "\n".join(line.rstrip() for line in path.read_text(encoding="utf-8").splitlines()).strip()
-        if normalized:
-            by_digest.setdefault(hashlib.sha256(normalized.encode()).hexdigest(), []).append(path)
-    for group in by_digest.values():
-        for path in sorted(group)[1:]:
-            relative = path.relative_to(root).as_posix()
-            destination = f"docs/archive/clean-docs-init/{relative.removeprefix('docs/')}"
-            moves.setdefault(relative, PlannedMove(relative, destination, "duplicate document"))
-    return sorted(moves.values(), key=lambda item: item.source)
+    # Filename and text-overlap heuristics cannot prove that a record is
+    # obsolete or that two files have the same owner. Init only plans
+    # reversible generated writes; archival remains an explicit operator act.
+    del root
+    return []
 
 
 def _canonical_documents(
@@ -286,13 +275,26 @@ def build_bootstrap_plan(
     if not root.is_dir():
         raise ConfigurationError(f"repository root does not exist or is not a directory: {root}")
     readme_path = _readme_path(root)
+    readme = root / readme_path
+    binding_document = readme_path
+    if readme.exists() and REGISTER_PROFILE not in readme.read_text(encoding="utf-8"):
+        binding_document = GENERATED_REFERENCE
+        generated_reference = root / binding_document
+        if (
+            generated_reference.exists()
+            and f"<!-- clean-docs:begin {REFERENCE_REGION} -->"
+            not in generated_reference.read_text(encoding="utf-8")
+        ):
+            raise ConfigurationError(
+                f"init cannot replace the reserved generated document: {binding_document}"
+            )
     archive_candidates = _archive_moves(root)
     moves = [] if accept_hygiene_baseline else archive_candidates
     canonical_documents = _canonical_documents(
         root, readme_path, {item.source for item in archive_candidates}
     )
     existing_manifest = root / ".clean-docs.yml"
-    manifest_text = _manifest_text(readme_path, canonical_documents)
+    manifest_text = _manifest_text(binding_document, canonical_documents)
     if existing_manifest.exists() and existing_manifest.read_text(encoding="utf-8") != manifest_text:
         raise ConfigurationError(
             "init cannot replace an existing manifest; remove it or run inventory and add bindings"
@@ -300,18 +302,22 @@ def build_bootstrap_plan(
     report = scan_inventory(root)
     facts = tuple(item for item in report.items if item.kind in INCLUDED_KINDS)
     model = build_model_record(root, facts, provider) if provider else None
-    readme = _reference_document(root, readme_path, model.drafts if model else ())
+    reference = _reference_document(
+        root,
+        binding_document,
+        model.drafts if model else (),
+    )
     moved = {item.source for item in moves}
     manifest = Manifest(
         path=root / ".clean-docs.yml",
         version=1,
-        bindings=(_binding(readme_path),),
+        bindings=(_binding(binding_document),),
         projections=ProjectionConfig(
             llms_txt=LlmsTxtProjection(
                 Path("llms.txt"),
                 "Repository documentation",
                 "Bound facts and explicitly declared canonical repository context.",
-                tuple(Path(path) for path in canonical_documents if path != readme_path),
+                tuple(Path(path) for path in canonical_documents if path != binding_document),
             )
         ),
     )
@@ -320,12 +326,13 @@ def build_bootstrap_plan(
     assert llms_config is not None
     indexed_documents = {
         path: (
-            readme.encode("utf-8")
-            if path == readme_path
+            reference.encode("utf-8")
+            if path == binding_document
             else (root / path).read_bytes()
         )
         for path in canonical_documents
     }
+    indexed_documents[binding_document] = reference.encode("utf-8")
     llms = render_llms_txt(
         manifest,
         title=llms_config.title,
@@ -335,7 +342,12 @@ def build_bootstrap_plan(
     )
     writes = [
         item for item in (
-            _planned_write(root, readme_path, readme, "bind detected repository surfaces"),
+            _planned_write(
+                root,
+                binding_document,
+                reference,
+                "bind detected repository surfaces",
+            ),
             _planned_write(root, ".clean-docs.yml", manifest_text, "declare the generated binding"),
             _planned_write(root, "llms.txt", llms, "index the source-bound documentation"),
         ) if item is not None
@@ -343,9 +355,14 @@ def build_bootstrap_plan(
     purpose_gaps: list[str] = []
     for path in list_documents(root):
         relative = path.relative_to(root).as_posix()
-        if relative == readme_path or relative in moved:
+        if relative == binding_document or relative in moved:
             continue
         current = path.read_text(encoding="utf-8")
+        if REGISTER_PROFILE not in current:
+            continue
+        profile = classify_document(path.relative_to(root), current)
+        if not profile.applies("purpose-contract"):
+            continue
         updated = ensure_purpose_contract(current, fallback=False)
         if "<!-- clean-docs:purpose -->" not in updated:
             purpose_gaps.append(
@@ -369,6 +386,9 @@ def build_bootstrap_plan(
         ).encode("utf-8")
         for path in canonical_documents
     }
+    indexed_documents[binding_document] = (
+        planned_content.get(binding_document, reference).encode("utf-8")
+    )
     final_llms = render_llms_txt(
         manifest,
         title=llms_config.title,
@@ -386,6 +406,10 @@ def build_bootstrap_plan(
         for language in report.languages
         if language not in supported
     )
+    if not facts and not report.languages:
+        gaps += (
+            "no supported source facts detected; use a complete source checkout or add a binding manually",
+        )
     if not accept_hygiene_baseline:
         gaps += tuple(purpose_gaps)
     introduced_secret = False
@@ -426,6 +450,10 @@ def apply_bootstrap_plan(root: Path, plan: BootstrapPlan) -> None:
         raise ConfigurationError("cannot initialize unsupported surfaces: " + "; ".join(plan.gaps))
     originals = {
         write.path: (root / write.path).read_bytes() if (root / write.path).exists() else None
+        for write in plan.writes
+    }
+    parent_existed = {
+        (root / write.path).parent: (root / write.path).parent.exists()
         for write in plan.writes
     }
     baseline_key = AUDIT_BASELINE_PATH.as_posix()
@@ -477,6 +505,16 @@ def apply_bootstrap_plan(root: Path, plan: BootstrapPlan) -> None:
                 (root / AUDIT_BASELINE_PATH).parent.rmdir()
             except OSError:
                 pass
+        for parent, existed in sorted(
+            parent_existed.items(),
+            key=lambda item: len(item[0].parts),
+            reverse=True,
+        ):
+            if not existed:
+                try:
+                    parent.rmdir()
+                except OSError:
+                    pass
         for move in reversed(completed_moves):
             source = root / move.source
             destination = root / move.path

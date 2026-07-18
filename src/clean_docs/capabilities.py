@@ -58,7 +58,7 @@ SUPPORTED_BINDINGS = {
 CLI_REFERENCE = (
     {
         "command": "audit",
-        "job": "Inventory and check repository documentation",
+        "job": "Assess documentation and enforce adopted scopes",
         "writes": "with --update-baseline",
         "example": "clean-docs audit --format json",
     },

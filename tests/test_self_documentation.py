@@ -57,8 +57,8 @@ def test_cli_reference_examples_parse() -> None:
     [
         (
             "capabilities.py",
-            "Inventory and check repository documentation",
-            "Scan repository documentation",
+            "Assess documentation and enforce adopted scopes",
+            "Assess repository documentation",
             "cli-reference",
         ),
         (

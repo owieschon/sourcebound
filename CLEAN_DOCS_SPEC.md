@@ -41,12 +41,26 @@ surface. A catalog entry is a change detector, not a prose claim.
 
 ## Operator workflows
 
-Use `audit` before a manifest exists. It checks the active Markdown corpus, local links, purpose
-contracts, implemented register rules, process residue, and the exact accepted-debt baseline.
+Use `audit` before a manifest exists. It classifies each Markdown document by its job, applies
+mechanically provable integrity defects, and previews only the page-shape and register rules that
+fit that job. An untouched repository is assessment-only: integrity and compatible policy
+candidates cannot become blockers. The default assessment reports mechanically witnessed
+integrity candidates and repository-neutral corpus signals. `audit --preview-policy` adds bounded,
+role-compatible house-policy candidates for compatibility review. A manifest accepts repository
+integrity checks as gates; a document policy marker accepts compatible deterministic writing rules
+for that page. Unclear ownership, process status, audience fit, historical marks, and text overlap
+remain advisories in either state. The JSON report exposes the enforcement state, policy-preview
+state, every document profile, advisory totals, unsupported MDX paths, and the exact accepted-debt
+baseline under schema `clean-docs.audit.v1`. A maintainer can replace an ambiguous role guess with
+a checked `<!-- clean-docs:role reference -->` marker; invalid role names fail instead of falling
+back.
 
-Use `init --no-model` once to add a repository-surface binding, `llms.txt`, and purpose markers where
-substantive authored prose already exists. It stops instead of replacing an existing manifest or
-inventing purpose for an ambiguous page.
+Use `init --no-model` once to add a repository-surface binding and `llms.txt`. It preserves existing
+documents, repository-native structure, evidence records, and compatibility aliases. A new README
+receives the packaged overview shape; an existing README keeps its authored opening unless it
+already opted into the register. Otherwise, the generated catalog lives at
+`.clean-docs/repository-surface.md`. Init stops instead of replacing an existing manifest,
+overwriting its reserved generated file, or inventing purpose for an ambiguous page.
 
 Use `check` for configured binding and projection drift. Use `check --changed --base REF --head REF`
 to classify affected bindings and newly detected public surface. Unsupported or uncovered public
@@ -90,9 +104,15 @@ boundary.
 ## Writing policy and model boundary
 
 The packaged policy compiles from [`STANDARD.md`](STANDARD.md). `audit` and `drive` enforce its
-implemented deterministic floor. The complete standard also asks reviewers to judge why the page
-matters, how it teaches, where it belongs, and whether its personality helps. A green mechanical
-result does not certify those qualities.
+implemented deterministic floor where each rule applies. `audit --preview-policy` reports
+compatible policy candidates on unmarked documents as bounded advisories. The per-document profile
+marker accepts those deterministic rules as gates, but cannot change a template or executable
+agent procedure into an overview. Architecture records keep their time horizon. Evidence keeps its
+observations, and references keep their lookup shape. A manifest accepts mechanically witnessed
+repository integrity defects as gates; without one, audit reports them for assessment. The
+complete standard also asks reviewers to judge why the page matters, how it teaches, where it
+belongs, and whether its personality helps. A green mechanical result does not certify those
+qualities.
 
 The optional phrasing path accepts recorded provider output that selects at most five known fact
 identifiers and allowlisted templates. Deterministic code renders the resulting sentences. Required

@@ -76,6 +76,7 @@ def test_policy_uses_compiled_booster_registry() -> None:
     findings = check_document(
         "README.md",
         "# Product\n\n"
+        f"{REGISTER_PROFILE}\n"
         '<!-- clean-docs:allow preamble-contract reason="Fixture isolates booster policy" -->\n'
         "<!-- clean-docs:purpose -->\n"
         "Use this page when product behavior changes without an obvious reference. "
@@ -85,7 +86,7 @@ def test_policy_uses_compiled_booster_registry() -> None:
         pack,
     )
     assert [(finding.rule, finding.line) for finding in findings] == [
-        ("prohibited-booster", 8)
+        ("prohibited-booster", 9)
     ]
     assert json.dumps(pack, sort_keys=True)
 
@@ -93,6 +94,7 @@ def test_policy_uses_compiled_booster_registry() -> None:
 def test_policy_rejects_stock_purpose_language() -> None:
     content = (
         "# Queue\n\n"
+        f"{REGISTER_PROFILE}\n"
         '<!-- clean-docs:allow preamble-contract reason="Fixture isolates purpose policy" -->\n'
         "<!-- clean-docs:purpose -->\n"
         "Read this page before changing or relying on Queue so you can preserve its contract.\n"
@@ -100,7 +102,7 @@ def test_policy_rejects_stock_purpose_language() -> None:
     )
     findings = check_document("README.md", content, load_default_pack())
     assert [(finding.rule, finding.line) for finding in findings] == [
-        ("purpose-contract", 5)
+        ("purpose-contract", 6)
     ]
     assert "stock purpose language" in findings[0].detail
 
@@ -187,6 +189,7 @@ def test_purpose_contract_enforces_presence_position_and_non_restatement(
         'reason="Fixture isolates purpose policy" -->\n',
         1,
     )
+    content = content.replace("\n", f"\n{REGISTER_PROFILE}\n", 1)
     findings = check_document("README.md", content, load_default_pack())
 
     assert len(findings) == 1
@@ -197,6 +200,7 @@ def test_purpose_contract_enforces_presence_position_and_non_restatement(
 def test_purpose_contract_ignores_headings_and_markers_inside_code_fences() -> None:
     content = (
         "# Project\n\n"
+        f"{REGISTER_PROFILE}\n"
         '<!-- clean-docs:allow preamble-contract reason="Fixture isolates fence parsing" -->\n'
         "<!-- clean-docs:purpose -->\n"
         "Use this page when source claims can drift. It gives maintainers a checked repair path.\n"
@@ -211,6 +215,7 @@ def test_purpose_contract_ignores_headings_and_markers_inside_code_fences() -> N
 def test_prohibited_boosters_do_not_treat_headings_as_prose() -> None:
     content = (
         "# Project\n\n"
+        f"{REGISTER_PROFILE}\n"
         '<!-- clean-docs:allow preamble-contract reason="Fixture isolates heading policy" -->\n'
         "<!-- clean-docs:purpose -->\n"
         "Use this page when source claims can drift. It gives maintainers a checked repair path.\n"

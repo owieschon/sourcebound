@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import subprocess
 from pathlib import Path
 
@@ -7,7 +8,7 @@ import pytest
 
 from clean_docs.audit import audit, write_audit_baseline
 from clean_docs.cli import main
-from clean_docs.policy import ensure_purpose_contract
+from clean_docs.policy import REGISTER_PROFILE, ensure_purpose_contract
 
 
 def _repo(tmp_path: Path) -> Path:
@@ -41,6 +42,8 @@ def _track(root: Path, *, allow_readme_routing: bool = True) -> None:
                 'reason="Fixture isolates a different audit rule" -->\n',
                 1,
             )
+        if REGISTER_PROFILE not in content:
+            content = content.rstrip() + f"\n\n{REGISTER_PROFILE}\n"
         path.write_text(content)
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
 
@@ -55,9 +58,10 @@ def test_audit_needs_no_manifest_and_reports_corpus_failures(tmp_path: Path) -> 
 
     assert {finding.rule for finding in report.findings} == {
         "broken-local-link",
+    }
+    assert {finding.rule for finding in report.advisories} >= {
         "process-artifact",
     }
-    assert len(report.findings) == 2
 
 
 def test_audit_includes_untracked_markdown_but_honors_gitignore(
@@ -80,7 +84,7 @@ def test_audit_includes_untracked_markdown_but_honors_gitignore(
     assert "ignored.md" not in report.documents
     assert any(
         finding.path == "NEW.md" and finding.rule == "broken-local-link"
-        for finding in report.findings
+        for finding in report.advisories
     )
 
 
@@ -112,7 +116,7 @@ def test_comprehensiveness_is_not_a_length_allowance(tmp_path: Path) -> None:
     _track(root)
 
     assert "invalid-length-allowance" in {
-        finding.rule for finding in audit(root).findings
+        finding.rule for finding in audit(root).advisories
     }
 
 
@@ -131,7 +135,7 @@ def test_readme_budget_and_reference_exemption_resolve_by_depth(tmp_path: Path) 
     (root / "REFERENCE.md").write_text(reference)
     _track(root)
 
-    findings = audit(root).findings
+    findings = audit(root).advisories
 
     assert any(item.rule == "doc-length" and item.path == "README.md" for item in findings)
     assert not any(item.rule == "doc-length" and item.path == "REFERENCE.md" for item in findings)
@@ -173,7 +177,7 @@ def test_assurance_dedup_points_to_the_canonical_boundary(tmp_path: Path) -> Non
 
     assert any(
         finding.rule == "assurance-dedup" and finding.path == "README.md"
-        for finding in audit(root).findings
+        for finding in audit(root).advisories
     )
 
 
@@ -189,7 +193,7 @@ def test_audit_runs_corpus_rules_and_accepts_named_reasoned_allowances(tmp_path:
 
     report = audit(root)
 
-    assert [(finding.rule, finding.line) for finding in report.findings] == [
+    assert [(finding.rule, finding.line) for finding in report.advisories] == [
         ("provenance", 9),
     ]
 
@@ -198,6 +202,7 @@ def test_audit_requires_the_purpose_contract_before_body_content(tmp_path: Path)
     root = _repo(tmp_path)
     (root / "README.md").write_text(
         "# Project\n"
+        "<!-- clean-docs:policy register-v2 -->\n"
         '<!-- clean-docs:allow preamble-contract reason="Fixture isolates purpose policy" -->\n'
         '<!-- clean-docs:allow readme-routing reason="Fixture isolates purpose policy" -->\n\n'
         "Body content arrives first.\n"
@@ -215,6 +220,7 @@ def test_audit_applies_sentence_policy_to_reader_documents(tmp_path: Path) -> No
     root = _repo(tmp_path)
     (root / "README.md").write_text(
         "# Project\n"
+        "<!-- clean-docs:policy register-v2 -->\n"
         '<!-- clean-docs:allow preamble-contract reason="Fixture isolates booster policy" -->\n'
         '<!-- clean-docs:allow readme-routing reason="Fixture isolates booster policy" -->\n\n'
         "<!-- clean-docs:purpose -->\n"
@@ -224,7 +230,7 @@ def test_audit_applies_sentence_policy_to_reader_documents(tmp_path: Path) -> No
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
 
     assert [(finding.rule, finding.line) for finding in audit(root).findings] == [
-        ("prohibited-booster", 9),
+        ("prohibited-booster", 10),
     ]
 
 
@@ -274,7 +280,7 @@ def test_audit_rejects_a_repeated_stock_purpose_shell_across_the_corpus(
         if finding.rule == "purpose-template"
     ]
 
-    assert {finding.path for finding in findings} == set(pages)
+    assert {finding.path for finding in findings} == {"README.md", "GUIDE.md"}
 
 
 def test_audit_allows_two_literal_pages_to_share_a_purpose_opening(
@@ -370,6 +376,370 @@ def test_vcsless_audit_skips_build_outputs_and_test_fixtures(tmp_path: Path) -> 
     assert report.documents == ("README.md",)
 
 
+def test_unregistered_documents_preview_compatible_policy_without_gating_it(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    long_body = "\n".join(f"A powerful status line {index}." for index in range(180))
+    (root / "STATUS.md").write_text(f"# Current status\n\n{long_body}\n")
+    (root / "README.md").write_text(
+        "# Project\n\n"
+        "A powerful guide with no purpose marker.\n\n"
+        "[Missing](docs/missing.md)\n"
+    )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    assessment = audit(root)
+    report = audit(root, preview_policy=True)
+
+    assert assessment.findings == ()
+    assert dict(assessment.advisory_totals) == {
+        "broken-local-link": 1,
+        "process-artifact": 1,
+    }
+    assert report.findings == ()
+    assert not report.repository_integrity_enforced
+    assert report.policy_preview
+    assert dict(report.advisory_totals) == {
+        "broken-local-link": 1,
+        "preamble-contract": 1,
+        "prohibited-booster": 1,
+        "process-artifact": 1,
+        "purpose-contract": 1,
+        "readme-routing": 1,
+    }
+
+
+def test_manifest_accepts_repository_integrity_findings_as_gates(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    (root / ".clean-docs.yml").write_text("version: 1\nbindings: []\n")
+    (root / "README.md").write_text(
+        "# Project\n\n[Missing](docs/missing.md)\n"
+    )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    report = audit(root)
+
+    assert report.repository_integrity_enforced
+    assert [(finding.rule, finding.path) for finding in report.findings] == [
+        ("broken-local-link", "README.md"),
+    ]
+
+
+def test_cli_separates_assessment_from_policy_compatibility_preview(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    root = _repo(tmp_path)
+    (root / "README.md").write_text(
+        "# Project\n\nA powerful guide.\n\n[Missing](docs/missing.md)\n"
+    )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    assert main(["--root", str(root), "audit", "--format", "json"]) == 0
+    assessment = json.loads(capsys.readouterr().out)
+    assert assessment["enforcement"]["repository_integrity"] is False
+    assert assessment["policy_preview"] is False
+    assert assessment["findings"] == []
+    assert assessment["advisory_totals"] == {"broken-local-link": 1}
+
+    assert main([
+        "--root",
+        str(root),
+        "audit",
+        "--preview-policy",
+        "--format",
+        "json",
+    ]) == 0
+    preview = json.loads(capsys.readouterr().out)
+    assert preview["policy_preview"] is True
+    assert preview["advisory_totals"]["prohibited-booster"] == 1
+
+
+def test_registered_document_activates_the_packaged_register(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    (root / "README.md").write_text(
+        f"# Project\n\n{REGISTER_PROFILE}\n\nA powerful guide with no purpose block.\n"
+    )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    assert {finding.rule for finding in audit(root).findings} == {
+        "preamble-contract",
+        "prohibited-booster",
+        "purpose-contract",
+        "readme-routing",
+    }
+
+
+def test_registration_does_not_turn_runtime_templates_into_reader_pages(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    template = root / "services/mcp/templates/env-context.md"
+    template.parent.mkdir(parents=True)
+    template.write_text(
+        f"{REGISTER_PROFILE}\n\n{{{{defined_groups}}}}\n{{{{metadata}}}}\n"
+    )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    report = audit(root)
+
+    assert report.ok
+    assert report.findings == ()
+    assert report.advisories == ()
+    assert [(profile.path, profile.role) for profile in report.document_profiles] == [
+        ("services/mcp/templates/env-context.md", "template"),
+    ]
+
+
+def test_explicit_role_overrides_a_heuristic_without_suppressing_integrity(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    (root / "README.md").write_text(
+        "# Generated prompt input\n\n"
+        "<!-- clean-docs:role template -->\n"
+        f"{REGISTER_PROFILE}\n"
+        "{{runtime_instructions}}\n"
+        "[Missing](missing.md)\n"
+    )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    report = audit(root)
+
+    assert report.document_profiles[0].role == "template"
+    assert {finding.rule for finding in report.findings} == {"broken-local-link"}
+
+
+def test_invalid_explicit_role_fails_instead_of_silently_using_a_guess(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    (root / "README.md").write_text(
+        "# Project\n\n<!-- clean-docs:role brochure -->\n"
+    )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    assert [
+        (finding.rule, finding.detail) for finding in audit(root).findings
+    ] == [
+        ("invalid-document-role", "unsupported clean-docs role: brochure"),
+    ]
+
+
+def test_agent_procedure_keeps_its_execution_contract_under_registration(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    skill = root / ".agents/skills/repair/SKILL.md"
+    skill.parent.mkdir(parents=True)
+    skill.write_text(
+        "---\nname: repair\ndescription: Repair one bound document.\n---\n\n"
+        f"{REGISTER_PROFILE}\n\n"
+        "The next executor must use the worktree, verify the diff budget, and stop on drift.\n"
+    )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    report = audit(root)
+
+    assert report.ok
+    assert report.findings == ()
+    assert report.advisories == ()
+    assert report.document_profiles[0].role == "agent-procedure"
+
+
+def test_architecture_and_reference_density_are_not_page_length_failures(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    for name, title in (
+        ("ARCHITECTURE.md", "Architecture"),
+        ("API_REFERENCE.md", "API reference"),
+    ):
+        body = "\n".join(f"| field-{index} | boundary-{index} |" for index in range(180))
+        (root / name).write_text(
+            f"# {title}\n\n"
+            f"{REGISTER_PROFILE}\n"
+            "<!-- clean-docs:purpose -->\n"
+            "Maintainers use this page to inspect the current system boundary before changing it.\n"
+            "<!-- clean-docs:end purpose -->\n\n"
+            f"{body}\n"
+        )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    report = audit(root)
+
+    assert not {
+        finding.rule
+        for finding in [*report.findings, *report.advisories]
+    } & {"doc-length", "section-length"}
+    assert {profile.role for profile in report.document_profiles} == {
+        "architecture",
+        "reference",
+    }
+
+
+def test_support_page_keeps_complete_operational_sequences(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    support = root / "docs" / "SUPPORT.md"
+    support.parent.mkdir()
+    support.write_text(
+        "# Support\n\n"
+        f"{REGISTER_PROFILE}\n"
+        "<!-- clean-docs:purpose -->\n"
+        "Operators use this page to diagnose and recover a failing service.\n"
+        "<!-- clean-docs:end purpose -->\n\n"
+        "## Recover the service\n\n"
+        + "\n".join(f"{index}. Run recovery check {index}." for index in range(45))
+        + "\n"
+    )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    report = audit(root)
+
+    profiles = {profile.path: profile for profile in report.document_profiles}
+    assert profiles["docs/SUPPORT.md"].role == "troubleshooting"
+    assert "section-length" not in {finding.rule for finding in report.findings}
+
+
+def test_contributor_and_compromise_records_keep_their_native_jobs(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    (root / "CONTRIBUTING.md").write_text(
+        "# Contributing\n\nChoose a product area, then follow its local checks.\n"
+    )
+    (root / "COMPROMISES.md").write_text(
+        "# Compromises\n\nDeliberate scope cuts and the follow-up each one implies.\n"
+    )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    report = audit(root, preview_policy=True)
+
+    profiles = {profile.path: profile.role for profile in report.document_profiles}
+    assert profiles == {
+        "COMPROMISES.md": "architecture",
+        "CONTRIBUTING.md": "component-overview",
+    }
+    assert "purpose-contract" not in dict(report.advisory_totals)
+
+
+def test_corpus_advisories_are_bounded_without_hiding_totals(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    for index in range(12):
+        (root / f"STATUS-{index}.md").write_text(
+            f"# Status {index}\n\nRecorded state for run {index}.\n"
+        )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    report = audit(root)
+
+    process = [
+        finding for finding in report.advisories
+        if finding.rule == "process-artifact"
+    ]
+    assert len(process) == 3
+    assert dict(report.advisory_totals)["process-artifact"] == 12
+    assert report.ok
+
+
+def test_audit_uses_canonical_document_identity_for_symlink_aliases(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    canonical = root / "AGENTS.md"
+    canonical.write_text(
+        "# Agent contract\n\n"
+        "Repository agents use this contract before changing source-owned documentation.\n"
+    )
+    (root / "CLAUDE.md").symlink_to("AGENTS.md")
+    _track(root)
+
+    report = audit(root)
+
+    assert report.ok
+    assert report.documents == ("AGENTS.md",)
+    assert not any(finding.rule == "near-duplicate" for finding in report.findings)
+
+
+def test_link_checks_use_repository_identity_and_ignore_literal_examples(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    docs = root / "docs"
+    docs.mkdir()
+    tracked = docs / "present.md"
+    tracked.write_text("# Present\n")
+    (docs / "guide.md").write_text("# Guide\n")
+    (root / "README.md").write_text(
+        "# Project\n\n"
+        "[Sparse target](docs/present.md)\n"
+        "[Repository root](/docs/present.md)\n"
+        "[Extensionless](docs/guide)\n"
+        "[Published route](/handbook/engineering/start)\n"
+        "[Template ellipsis](…)\n"
+        "[Template path](docs/<package>/README.md)\n"
+        "[Angle-wrapped missing](<docs/also-missing.md>)\n"
+        "`![literal](inline-missing.png)`\n\n"
+        "```markdown\n"
+        "[Fenced literal](fenced-missing.md)\n"
+        "```\n\n"
+        "[Actually missing](docs/missing.md)\n"
+    )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+    tracked.unlink()
+
+    report = audit(root)
+
+    link_findings = [
+        finding for finding in report.advisories
+        if finding.rule == "broken-local-link"
+    ]
+    assert [(finding.rule, finding.detail) for finding in link_findings] == [
+        ("broken-local-link", "target does not exist: <docs/also-missing.md>"),
+        ("broken-local-link", "target does not exist: docs/missing.md"),
+    ]
+    assert not report.repository_integrity_enforced
+
+
+def test_audit_discloses_mdx_without_claiming_to_check_it(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    (root / "README.md").write_text("# Project\n")
+    (root / "guide.mdx").write_text("# MDX guide\n\n<Component />\n")
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    report = audit(root)
+
+    assert report.ok
+    assert report.documents == ("README.md",)
+    assert report.unsupported_documents == ("guide.mdx",)
+
+
+def test_agent_documentation_is_active_while_tool_context_stays_internal(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    skill = root / ".agents/skills/inspect/SKILL.md"
+    skill.parent.mkdir(parents=True)
+    skill.write_text("# Inspect\n\n[Missing](references/missing.md)\n")
+    context = root / ".clean-docs/context/contributor.md"
+    context.parent.mkdir(parents=True)
+    context.write_text("# Generated context\n")
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    report = audit(root)
+
+    assert report.documents == (".agents/skills/inspect/SKILL.md",)
+    assert report.ignored_documents == (".clean-docs/context/contributor.md",)
+    assert [(finding.rule, finding.path) for finding in report.advisories] == [
+        ("broken-local-link", ".agents/skills/inspect/SKILL.md"),
+    ]
+
+
 def test_fixture_markdown_and_ambiguous_operational_names_are_not_process_history(
     tmp_path: Path,
 ) -> None:
@@ -402,6 +772,9 @@ def test_fixture_markdown_and_ambiguous_operational_names_are_not_process_histor
         "DEPLOYMENT_PLAN.md",
         "README.md",
     )
+    assert {
+        profile.path: profile.role for profile in report.document_profiles
+    }["DEPLOYMENT_PLAN.md"] == "plan"
 
 
 def test_exact_baseline_fails_on_new_and_resolved_findings(tmp_path: Path) -> None:
@@ -422,8 +795,9 @@ def test_exact_baseline_fails_on_new_and_resolved_findings(tmp_path: Path) -> No
     (root / "STATUS.md").write_text("# Status\n")
     _track(root)
     report = audit(root)
-    assert not report.ok
-    assert [item.rule for item in report.findings] == ["process-artifact"]
+    assert report.ok
+    assert report.findings == ()
+    assert [item.rule for item in report.advisories] == ["process-artifact"]
     assert report.stale_baseline == ()
 
     (root / "docs").mkdir()
@@ -431,7 +805,8 @@ def test_exact_baseline_fails_on_new_and_resolved_findings(tmp_path: Path) -> No
     _track(root)
     report = audit(root)
     assert not report.ok
-    assert [item.rule for item in report.findings] == ["process-artifact"]
+    assert report.findings == ()
+    assert [item.rule for item in report.advisories] == ["process-artifact"]
     assert [item.rule for item in report.stale_baseline] == ["broken-local-link"]
 
 
@@ -442,13 +817,18 @@ def test_update_baseline_is_explicit_and_tampering_is_rejected(
     (root / "STATUS.md").write_text("# Status\n")
     _track(root)
 
-    assert main(["--root", str(root), "audit"]) == 1
+    assert main(["--root", str(root), "audit"]) == 0
     capsys.readouterr()
     assert main(["--root", str(root), "audit", "--update-baseline"]) == 0
     capsys.readouterr()
     assert audit(root).ok
 
     baseline = root / ".clean-docs/audit-baseline.json"
-    baseline.write_text(baseline.read_text().replace('"line": 1', '"line": 2'))
+    assert main(["--root", str(root), "audit", "--update-baseline"]) == 0
+    baseline.write_text(
+        '{"schema":"clean-docs.audit-baseline.v1","findings":['
+        '{"fingerprint":"tampered","rule":"broken-local-link",'
+        '"path":"README.md","line":1,"detail":"target does not exist: missing.md"}]}'
+    )
     assert main(["--root", str(root), "audit"]) == 2
     assert "fingerprint does not match" in capsys.readouterr().err
