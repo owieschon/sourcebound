@@ -93,7 +93,7 @@ def _affected_paths(
     return tuple(sorted(matched))
 
 
-def _git(root: Path, *args: str) -> str:
+def git_output(root: Path, *args: str) -> str:
     proc = subprocess.run(
         ["git", "-C", str(root), *args],
         text=True,
@@ -108,14 +108,14 @@ def _git(root: Path, *args: str) -> str:
 
 
 def _cache_root(root: Path) -> Path:
-    git_dir = _git(root, "rev-parse", "--git-dir").strip()
+    git_dir = git_output(root, "rev-parse", "--git-dir").strip()
     path = Path(git_dir)
     if not path.is_absolute():
         path = root / path
     return path.resolve() / "clean-docs-cache"
 
 
-def _inventory(
+def inventory_at_ref(
     root: Path, ref: str, project: Path, *, use_cache: bool
 ) -> tuple[tuple[InventoryItem, ...], bool]:
     key_payload = json.dumps(
@@ -186,7 +186,9 @@ def check_changed(
     base_sha = RepositorySnapshot(root, base).label
     head_sha = RepositorySnapshot(root, head).label
     all_changed_files = tuple(sorted(
-        line for line in _git(root, "diff", "--name-only", base_sha, head_sha).splitlines()
+        line for line in git_output(
+            root, "diff", "--name-only", base_sha, head_sha
+        ).splitlines()
         if line
     ))
     prefix = "" if project == Path(".") else project.as_posix().rstrip("/") + "/"
@@ -196,10 +198,10 @@ def check_changed(
     project_changed_files = tuple(
         path.removeprefix(prefix) if prefix else path for path in changed_files
     )
-    base_inventory, base_hit = _inventory(
+    base_inventory, base_hit = inventory_at_ref(
         root, base_sha, project, use_cache=use_cache
     )
-    head_inventory, head_hit = _inventory(
+    head_inventory, head_hit = inventory_at_ref(
         root, head_sha, project, use_cache=use_cache
     )
     base_items = {item.id: item for item in base_inventory}

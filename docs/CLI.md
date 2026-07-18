@@ -26,6 +26,7 @@ The table is generated from the command registry used by the parser:
 | benchmark | Measure changed-check time and memory budgets | with --out | clean-docs benchmark --base HEAD~1 --head HEAD |
 | derive | Preview or write generated region changes | with --write | clean-docs derive --check |
 | drive | Repair bound regions after deterministic policy checks | yes | clean-docs drive |
+| plan | Build an immutable read-only documentation impact plan | no | clean-docs plan --base origin/main --head HEAD --format json |
 | check | Fail on binding drift or uncovered changed surface | no | clean-docs check --changed --base origin/main --head HEAD |
 | project | Regenerate configured documentation projections | unless --check | clean-docs project --check |
 | eval | Score human tasks and replayable agent round trips | with --history or live recording | clean-docs eval --fixtures .clean-docs/eval.yml |
@@ -38,5 +39,30 @@ The table is generated from the command registry used by the parser:
 | standard build | Compile the canonical standard | yes | clean-docs standard build |
 | standard check | Fail when the policy pack is stale | no | clean-docs standard check |
 <!-- clean-docs:end cli-reference -->
+
+## Impact plans
+
+Use `plan` before a repair when you need to know which documentation contracts a branch can affect.
+The command compares the merge base with the requested head, traverses accepted bindings,
+projections, and evaluations, and writes nothing to the worktree:
+
+```bash
+clean-docs plan --base origin/main --head HEAD --format json
+```
+
+The JSON records every changed path with its base and head blob, adapter decision, coverage state,
+and graph roots. Its digest binds those inputs to the resulting findings.
+
+| `impact` | Meaning |
+| --- | --- |
+| `required` | An accepted contract creates documentation work. |
+| `recommended` | A known downstream task deserves review but has no gate authority. |
+| `none` | Every changed artifact is classified, and the affected graph creates no documentation obligation. |
+| `unknown` | A plausible public surface lacks enough adapter or relationship coverage. This is never reported as no impact. |
+
+A valid plan exits zero even when `impact` is `required` or `unknown`; the exit code says the receipt
+was built, not that the branch is documentation-complete. Use `check --changed` for the existing
+blocking gate. A projection output is evidence of prior work, so changing only that generated file
+does not recursively make it an impact root.
 
 Run `clean-docs <command> --help` for command-specific flags. Return to the [project overview](../README.md) for installation and the supported binding surface.
