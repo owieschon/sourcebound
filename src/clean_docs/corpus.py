@@ -44,6 +44,32 @@ STOPWORDS = frozenset(
 WORD_RE = re.compile(r"[a-z][a-z0-9-]{2,}")
 FENCE_RE = re.compile(r"^```")
 HTML_COMMENT_RE = re.compile(r"^\s*<!--.*?-->\s*$")
+FALLBACK_SKIP_PARTS = frozenset({
+    ".git",
+    ".nox",
+    ".pytest_cache",
+    ".tox",
+    ".venv",
+    "__pycache__",
+    "build",
+    "dist",
+    "node_modules",
+})
+
+
+def _is_document_candidate(relative: Path, *, fallback: bool) -> bool:
+    """Return whether a Markdown path can belong to the reader-facing corpus."""
+    parts = relative.parts
+    packaged_standard = any(
+        parts[index:index + 2] == ("clean_docs", "standards")
+        for index in range(len(parts) - 1)
+    )
+    return not (
+        parts[:2] == ("tests", "fixtures")
+        or packaged_standard
+        or ".fixture." in relative.name.lower()
+        or (fallback and bool(set(parts) & FALLBACK_SKIP_PARTS))
+    )
 
 
 def _git_tracked_markdown(root: Path) -> list[Path] | None:
@@ -77,20 +103,17 @@ def list_documents(root: Path) -> list[Path]:
             path
             for path in tracked
             if "archive" not in path.relative_to(root).parts
-            and path.relative_to(root).parts[:2] != ("tests", "fixtures")
-            and ".fixture." not in path.name.lower()
+            and _is_document_candidate(path.relative_to(root), fallback=False)
             and not any(
                 part.startswith(".") for part in path.relative_to(root).parts
             )
         ]
-    skipped = {
-        "node_modules", ".venv", ".git", ".pytest_cache", "archive", ".clean-docs"
-    }
     return sorted(
         path
         for path in root.rglob("*.md")
-        if not set(path.relative_to(root).parts) & skipped
-        and ".fixture." not in path.name.lower()
+        if _is_document_candidate(path.relative_to(root), fallback=True)
+        and "archive" not in path.relative_to(root).parts
+        and ".clean-docs" not in path.relative_to(root).parts
         and not any(part.startswith(".") for part in path.relative_to(root).parts)
     )
 

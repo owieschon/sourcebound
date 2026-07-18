@@ -267,6 +267,29 @@ def test_packaged_standard_assets_are_not_reader_documents(tmp_path: Path) -> No
     assert report.ignored_documents == ()
 
 
+def test_vcsless_audit_skips_build_outputs_and_test_fixtures(tmp_path: Path) -> None:
+    root = tmp_path / "published"
+    root.mkdir()
+    (root / "README.md").write_text(ensure_purpose_contract(
+        "# Project\n\n"
+        "Project checks source-bound prose for maintainers who need stale claims to fail.\n"
+    ))
+    for relative in (
+        "src/clean_docs/standards/exemplars.md",
+        "build/lib/clean_docs/standards/exemplars.md",
+        "tests/fixtures/v10_upgrade/README.md",
+        "dist/generated/README.md",
+    ):
+        path = root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("# Internal fixture\n\n[Broken](missing.md)\n")
+
+    report = audit(root)
+
+    assert report.ok
+    assert report.documents == ("README.md",)
+
+
 def test_fixture_markdown_and_ambiguous_operational_names_are_not_process_history(
     tmp_path: Path,
 ) -> None:

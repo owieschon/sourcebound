@@ -7,7 +7,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from clean_docs.corpus import scan_corpus
+from clean_docs.corpus import _is_document_candidate, scan_corpus
 from clean_docs.errors import ConfigurationError
 from clean_docs.policy import REGISTER_PROFILE, check_document
 from clean_docs.regions import atomic_write
@@ -139,16 +139,15 @@ def _tracked_markdown(root: Path) -> list[Path]:
             for line in proc.stdout.splitlines()
             if line
             and (root / (relative := Path(line))).is_file()
-            and relative.parts[:2] != ("tests", "fixtures")
-            and relative.parts[:3] != ("src", "clean_docs", "standards")
-            and ".fixture." not in relative.name.lower()
+            and _is_document_candidate(relative, fallback=False)
         ]
     return sorted(
-        path.relative_to(root)
+        relative
         for path in root.rglob("*.md")
-        if ".git" not in path.parts
-        and path.parts[-4:-1] != ("src", "clean_docs", "standards")
-        and ".fixture." not in path.name.lower()
+        if _is_document_candidate(
+            relative := path.relative_to(root),
+            fallback=True,
+        )
     )
 
 
