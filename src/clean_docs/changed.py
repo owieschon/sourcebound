@@ -9,6 +9,7 @@ from pathlib import Path
 
 from clean_docs.engine import evaluate
 from clean_docs.errors import ConfigurationError, ExtractionError
+from clean_docs.claims import scan_source_claims
 from clean_docs.inventory import InventoryItem, scan_inventory
 from clean_docs.manifest import load_manifest
 from clean_docs.models import Binding, ClaimBinding, RegionBinding
@@ -237,25 +238,83 @@ def check_changed(
                     f"binding {result.binding_id} changed behind {doc}",
                     f"clean-docs{root_arg} drive --binding {result.binding_id}",
                 ))
+        affected_claim_checks = []
+        for claim_check in loaded.source_claim_checks:
+            paths = tuple(
+                sorted(
+                    set(project_changed_files)
+                    & {
+                        claim_check.doc.as_posix(),
+                        claim_check.source.as_posix(),
+                        manifest_relative.as_posix(),
+                    }
+                )
+            )
+            if not paths:
+                continue
+            dependencies[f"source-claim:{claim_check.id}"] = paths
+            affected_claim_checks.append(claim_check)
+        if affected_claim_checks:
+            claim_report = scan_source_claims(
+                head_project,
+                tuple(affected_claim_checks),
+                discover=False,
+            )
+            for claim_result in claim_report.results:
+                if claim_result.status != "drift":
+                    continue
+                rule = "source-claim-drift"
+                doc = prefix + claim_result.doc
+                source = prefix + claim_result.source
+                required.append(
+                    ChangedFinding(
+                        _finding_id(rule, doc, source, claim_result.locator),
+                        rule,
+                        doc,
+                        source,
+                        claim_result.locator,
+                        claim_result.detail,
+                        "update the documented value or accepted relationship, "
+                        "then run clean-docs claims",
+                    )
+                )
+            for missing_claim in claim_report.missing:
+                rule = "source-claim-contract-missing"
+                doc = prefix + missing_claim.doc
+                source = prefix + missing_claim.source
+                required.append(
+                    ChangedFinding(
+                        _finding_id(rule, doc, source, missing_claim.locator),
+                        rule,
+                        doc,
+                        source,
+                        missing_claim.locator,
+                        f"accepted source claim {missing_claim.id} cannot be verified: "
+                        f"{missing_claim.detail}",
+                        "restore the documented claim and source locator or remove "
+                        "the obsolete relationship from .clean-docs.yml",
+                    )
+                )
 
     gaps: list[ChangedFinding] = []
     ignored: list[ChangedFinding] = []
     for identifier in sorted(set(head_items) - set(base_items)):
-        item = head_items[identifier]
+        inventory_item = head_items[identifier]
         rule = "new-public-surface"
-        source = prefix + item.source
+        source = prefix + inventory_item.source
         finding = ChangedFinding(
-            _finding_id(rule, "", source, item.locator),
+            _finding_id(rule, "", source, inventory_item.locator),
             rule,
             "",
             source,
-            item.locator,
-            f"new {item.kind} {item.name!r} has coverage state {item.coverage}",
+            inventory_item.locator,
+            f"new {inventory_item.kind} {inventory_item.name!r} has coverage "
+            f"state {inventory_item.coverage}",
             "add a source binding or a specific .clean-docs-ignore.yml record",
         )
-        if item.coverage == "ignored":
+        if inventory_item.coverage == "ignored":
             ignored.append(finding)
-        elif item.coverage not in {"bound", "cataloged"}:
+        elif inventory_item.coverage not in {"bound", "cataloged"}:
             gaps.append(finding)
     return ChangedReport(
         base_sha,

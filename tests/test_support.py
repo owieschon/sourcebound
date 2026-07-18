@@ -131,6 +131,7 @@ def test_local_outcome_receipt_reports_baseline_and_changed_impact(
     assert baseline.as_dict()["assurance"] == {
         "scope": "configured-contract",
         "bound_claims_checked": True,
+        "accepted_source_claims_checked": True,
         "cataloged_surfaces_check_prose": False,
         "judgment_prose_certified": False,
     }

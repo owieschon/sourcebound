@@ -58,6 +58,17 @@ Binding = RegionBinding | ClaimBinding | SymbolBinding
 
 
 @dataclass(frozen=True)
+class SourceClaimCheck:
+    id: str
+    kind: str
+    doc: Path
+    anchor: str
+    subject: str
+    source: Path
+    locator: str
+
+
+@dataclass(frozen=True)
 class CommandSpec:
     id: str
     argv: tuple[str, ...]
@@ -110,6 +121,7 @@ class Manifest:
     commands: tuple[CommandSpec, ...] = ()
     plugins: tuple[PluginSpec, ...] = ()
     projections: ProjectionConfig | None = None
+    source_claim_checks: tuple[SourceClaimCheck, ...] = ()
 
 
 @dataclass(frozen=True)
