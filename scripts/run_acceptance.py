@@ -84,6 +84,7 @@ EXPECTED_IDS_BY_RELEASE = {
         "coverage-complete-no-impact",
         "implementation-is-not-interface",
         "typescript-interface-fingerprint",
+        "line-move-not-public-impact",
         "unknown-cannot-become-no-impact",
         "public-default-obligations",
         "affected-contract-traversal",

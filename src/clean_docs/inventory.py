@@ -42,6 +42,20 @@ TS_CLI_OPTION = re.compile(r"\.option\(\s*['\"]([^'\"]+)['\"]")
 TS_MCP_TOOL = re.compile(r"\.(?:tool|registerTool)\(\s*['\"]([^'\"]+)['\"]")
 HTTP_METHODS = {"get", "put", "post", "delete", "patch", "head", "options", "trace"}
 PYTHON_TOOLING_MODULES = {"conftest.py", "noxfile.py", "setup.py"}
+PUBLIC_SURFACE_KINDS = frozenset(
+    {
+        "api-endpoint",
+        "api-symbol",
+        "cli-command",
+        "cli-option",
+        "config-key",
+        "mcp-tool",
+        "package",
+        "package-script",
+        "runtime-constraint",
+        "schema",
+    }
+)
 
 
 @dataclass(frozen=True)

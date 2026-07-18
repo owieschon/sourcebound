@@ -12,27 +12,14 @@ import yaml
 from clean_docs import __version__
 from clean_docs.changed import _git, _inventory, check_changed
 from clean_docs.errors import ConfigurationError
+from clean_docs.inventory import PUBLIC_SURFACE_KINDS
 from clean_docs.manifest import load_manifest
 from clean_docs.models import Manifest, SymbolBinding
 from clean_docs.projections import evaluate_projections
 from clean_docs.snapshot import RepositorySnapshot
 
 
-PUBLIC_KINDS = frozenset(
-    {
-        "api-endpoint",
-        "api-symbol",
-        "cli-command",
-        "cli-option",
-        "ci-job",
-        "config-key",
-        "mcp-tool",
-        "package",
-        "package-script",
-        "runtime-constraint",
-        "schema",
-    }
-)
+PUBLIC_KINDS = PUBLIC_SURFACE_KINDS | {"ci-job"}
 SOURCE_SUFFIXES = frozenset(
     {
         ".c",
@@ -802,6 +789,8 @@ def build_impact_plan(
         inventory_item = after or before
         assert inventory_item is not None
         if inventory_item.source not in events_by_path:
+            continue
+        if inventory_item.kind not in PUBLIC_KINDS:
             continue
         change = (
             "added"

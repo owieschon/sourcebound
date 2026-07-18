@@ -14,6 +14,7 @@ def test_version_12a_registry_names_every_scenario() -> None:
         "coverage-complete-no-impact",
         "implementation-is-not-interface",
         "typescript-interface-fingerprint",
+        "line-move-not-public-impact",
         "unknown-cannot-become-no-impact",
         "public-default-obligations",
         "affected-contract-traversal",

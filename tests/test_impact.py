@@ -241,6 +241,34 @@ def test_internal_unsupported_script_does_not_expand_the_plan(
     }
 
 
+def test_document_line_moves_do_not_invent_semantic_events(
+    tmp_path: Path,
+) -> None:
+    root = _symbol_repository(tmp_path)
+    readme = root / "README.md"
+    readme.write_text(
+        readme.read_text() + "\nSee [the source](src/api.py).\n"
+    )
+    base = _commit(root, "base")
+    readme.write_text(
+        readme.read_text().replace(
+            "\nSee [the source]", "\nRead this first.\n\nSee [the source]"
+        )
+    )
+    head = _commit(root, "move link down")
+
+    plan = build_impact_plan(
+        root, root / ".clean-docs.yml", base=base, head=head
+    )
+
+    assert plan.impact == "none"
+    assert plan.events == ()
+    assert plan.artifacts[0].coverage == "graph-covered"
+    assert {item.rule for item in plan.unrelated} == {
+        "no-public-contract-delta"
+    }
+
+
 def test_unsupported_runtime_control_is_unknown(
     tmp_path: Path,
 ) -> None:

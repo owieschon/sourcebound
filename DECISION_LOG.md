@@ -345,3 +345,14 @@ surface change migrates the region to the current extractor. Tests prove four ca
 bodies stay out, changed signatures enter, old receipts pass, and renamed symbols fail. Reversible:
 a future manifest migration can retire legacy receipt acceptance after adopted repositories have
 rewritten their regions.
+
+## 33. Let only public inventory kinds create changed-surface gaps (2026-07-18)
+
+Context: document links use their line number as an inventory locator. Moving an unchanged link
+therefore creates one removed record and one added record, and the changed check had labeled the
+added record a new public surface. Chose one shared set of public kinds for the changed gate and
+impact planner. Documents, links, and tests remain enumerated evidence, but only APIs, commands,
+configuration, packages, runtimes, and schemas can create a public-surface gap. The planner emits
+semantic events from the same set, so prose movement cannot invent a contract change. Tests move a
+link inside a bound document and require both the stable gate and impact plan to stay clear.
+Reversible: a new public kind can join the shared set when an adapter defines its contract.

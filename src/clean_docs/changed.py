@@ -10,7 +10,11 @@ from pathlib import Path
 from clean_docs.engine import evaluate
 from clean_docs.errors import ConfigurationError, ExtractionError
 from clean_docs.claims import scan_source_claims
-from clean_docs.inventory import InventoryItem, scan_inventory
+from clean_docs.inventory import (
+    PUBLIC_SURFACE_KINDS,
+    InventoryItem,
+    scan_inventory,
+)
 from clean_docs.manifest import load_manifest
 from clean_docs.models import Binding, ClaimBinding, RegionBinding
 from clean_docs.regions import atomic_write
@@ -302,6 +306,8 @@ def check_changed(
     ignored: list[ChangedFinding] = []
     for identifier in sorted(set(head_items) - set(base_items)):
         inventory_item = head_items[identifier]
+        if inventory_item.kind not in PUBLIC_SURFACE_KINDS:
+            continue
         rule = "new-public-surface"
         source = prefix + inventory_item.source
         finding = ChangedFinding(
