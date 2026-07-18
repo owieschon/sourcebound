@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import json
 import subprocess
+from collections import Counter
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
@@ -9,6 +12,7 @@ import pytest
 import clean_docs.impact as impact_module
 from clean_docs.cli import main
 from clean_docs.impact import build_impact_plan
+from clean_docs.snapshot import RepositorySnapshot
 
 
 def _commit(root: Path, message: str) -> str:
@@ -136,6 +140,38 @@ def test_python_interface_fingerprints_request_stable_empty_ast_fields(
     assert payload["arguments"]
 
 
+def test_impact_plan_materializes_each_immutable_revision_once(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = _projection_repository(tmp_path)
+    base = _commit(root, "base")
+    source = root / "src/actions.py"
+    source.write_text(source.read_text().replace("report", "publish"))
+    head = _commit(root, "change action")
+    counts: Counter[str] = Counter()
+    original = RepositorySnapshot.materialized_root
+
+    @contextmanager
+    def counted(snapshot: RepositorySnapshot) -> Iterator[Path]:
+        counts[snapshot.label] += 1
+        with original(snapshot) as materialized:
+            yield materialized
+
+    monkeypatch.setattr(RepositorySnapshot, "materialized_root", counted)
+
+    plan = build_impact_plan(
+        root,
+        root / ".clean-docs.yml",
+        base=base,
+        head=head,
+        use_cache=False,
+    )
+
+    assert plan.coverage_complete
+    assert counts == Counter({base: 1, head: 1})
+
+
 def test_private_refactor_produces_coverage_complete_stable_no_impact(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -179,7 +215,7 @@ def test_private_refactor_produces_coverage_complete_stable_no_impact(
     assert payload["schema"] == "clean-docs.impact-plan.v1"
     assert payload["producer"] == {
         "name": "clean-docs",
-        "version": "1.2.0rc1",
+        "version": "1.2.0rc2",
     }
     assert payload["digest"] == first.digest
     assert payload["no_impact"] is True
