@@ -41,7 +41,7 @@ class PerformanceReceipt:
 
     def as_dict(self) -> dict[str, object]:
         return {
-            "schema": "clean-docs.performance.v1",
+            "schema": "clean-docs.performance.v2",
             "ok": self.ok,
             "base": self.base,
             "head": self.head,
@@ -56,7 +56,11 @@ class PerformanceReceipt:
             "normalized_result_sha256": self.result_sha256,
             "required": self.required,
             "coverage_gaps": self.gaps,
-            "network_requests": 0,
+            "execution": {
+                "declared_processes": "may-run-when-required-by-changed-scope",
+                "network_isolation": "not-provided",
+                "network_observation": "not-instrumented",
+            },
         }
 
 

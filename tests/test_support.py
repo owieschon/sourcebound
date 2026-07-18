@@ -130,14 +130,22 @@ def test_local_outcome_receipt_reports_baseline_and_changed_impact(
     }
     assert baseline.as_dict()["assurance"] == {
         "scope": "configured-contract",
-        "bound_claims_checked": True,
-        "accepted_source_claims_checked": True,
+        "region_bytes_checked": True,
+        "command_pin_output_checked": False,
+        "command_pin_prose_checked": False,
+        "symbol_existence_checked": False,
+        "accepted_source_claim_prose_checked": False,
         "cataloged_surfaces_check_prose": False,
         "judgment_prose_certified": False,
     }
     assert not changed.ok
     assert changed.as_dict()["outcomes"]["drift_caught_before_merge"] >= 1
-    assert changed.as_dict()["network_requests"] == 0
+    assert changed.as_dict()["execution"] == {
+        "mode": "trusted",
+        "declared_processes": "permitted-by-manifest",
+        "network_isolation": "not-provided",
+        "network_observation": "not-instrumented",
+    }
 
 
 def test_local_outcome_receipt_exposes_accepted_hygiene_debt(tmp_path: Path) -> None:
@@ -168,7 +176,7 @@ def test_verify_writes_the_same_local_receipt_it_prints(tmp_path: Path) -> None:
 
     assert command.returncode == 0, command.stderr
     assert command.stdout == (root / "outcome.json").read_text()
-    assert json.loads(command.stdout)["schema"] == "clean-docs.outcome.v1"
+    assert json.loads(command.stdout)["schema"] == "clean-docs.outcome.v2"
 
 
 def test_outcome_does_not_claim_complete_baseline_with_standard_gaps(
@@ -216,7 +224,7 @@ def test_benchmark_reports_reproducible_time_and_memory_budget(tmp_path: Path) -
     assert receipt.required >= 1
     assert receipt.p95_seconds <= receipt.time_budget_seconds
     assert receipt.peak_memory_mb <= receipt.memory_budget_mb
-    assert receipt.as_dict()["network_requests"] == 0
+    assert receipt.as_dict()["execution"]["network_observation"] == "not-instrumented"
 
 
 def test_diagnostic_bundle_excludes_repository_and_environment_content(
@@ -231,8 +239,12 @@ def test_diagnostic_bundle_excludes_repository_and_environment_content(
         os.environ.pop("CLEAN_DOCS_TEST_SECRET")
 
     serialized = json.dumps(bundle)
-    assert bundle["schema"] == "clean-docs.diagnostic.v1"
-    assert bundle["network_requests"] == 0
+    assert bundle["schema"] == "clean-docs.diagnostic.v2"
+    assert bundle["execution"] == {
+        "declared_processes_run": 0,
+        "network_isolation": "not-provided",
+        "network_observation": "not-instrumented",
+    }
     assert secret not in serialized
     assert "environment variables" in bundle["excluded_data"]
     assert "source contents" in bundle["excluded_data"]

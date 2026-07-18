@@ -69,7 +69,9 @@ def test_distribution_integrations_are_strict() -> None:
     assert "${{ inputs.package-ref }}" not in install["run"]
     gate = next(step for step in steps if step.get("name") == "Evaluate documentation gate")
     assert "clean-docs audit --format json > clean-docs-audit.json" in gate["run"]
-    assert "clean-docs check --format json > clean-docs-check.json" in gate["run"]
+    assert 'execution_args+=(--no-exec)' in gate["run"]
+    assert 'if [ "$GITHUB_EVENT_NAME" = "pull_request" ]' in gate["run"]
+    assert "clean-docs check \"${execution_args[@]}\"" in gate["run"]
     assert "clean-docs check --changed --base \"$base\" --head \"$head\"" in gate["run"]
     assert "--format sarif > clean-docs-changed.sarif" in gate["run"]
     annotations = next(
@@ -79,7 +81,8 @@ def test_distribution_integrations_are_strict() -> None:
     assert "command_property" in annotations["run"]
     action_receipt = next(step for step in steps if step.get("name") == "Write action receipt")
     assert action_receipt["if"] == "always()"
-    assert "clean-docs.action-run.v1" in action_receipt["run"]
+    assert "clean-docs.action-run.v2" in action_receipt["run"]
+    assert '"bindings_complete"' in action_receipt["run"]
     assert action_receipt["env"]["CLEAN_DOCS_REPOSITORY_SHA"] == "${{ github.sha }}"
     upload = next(step for step in steps if step.get("name") == "Upload clean-docs evidence")
     assert upload["if"] == "always()"
@@ -130,7 +133,7 @@ def test_reusable_action_writes_self_contained_evidence_receipt(tmp_path: Path) 
         f"Metadata-Version: 2.1\nName: clean-docs\nVersion: {__version__}\n"
     )
     audit.write_text('{"ok":true,"findings":[]}\n')
-    check.write_text('{"ok":true,"results":[]}\n')
+    check.write_text('{"ok":true,"complete":true,"results":[]}\n')
     package_ref = "a" * 40
     source_sha = "b" * 40
     workflow_sha = "c" * 40
@@ -159,7 +162,7 @@ def test_reusable_action_writes_self_contained_evidence_receipt(tmp_path: Path) 
 
     assert completed.returncode == 0, completed.stderr
     receipt = json.loads((tmp_path / "clean-docs-run.json").read_text())
-    assert receipt["schema"] == "clean-docs.action-run.v1"
+    assert receipt["schema"] == "clean-docs.action-run.v2"
     assert receipt["package"]["ref"] == package_ref
     assert receipt["package"]["version"] == __version__
     assert receipt["source"] == {
@@ -178,6 +181,7 @@ def test_reusable_action_writes_self_contained_evidence_receipt(tmp_path: Path) 
     assert receipt["results"] == {
         "audit": True,
         "bindings": True,
+        "bindings_complete": True,
         "changed": None,
         "ok": True,
     }

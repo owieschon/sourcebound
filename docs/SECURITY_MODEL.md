@@ -35,6 +35,11 @@ You can still use `audit`, `inventory`, static `init`, static bindings, projecti
 scoring, and release facts when no declared process is trusted. Those paths do not run repository
 code unless the manifest explicitly adds a command or plugin.
 
+For an untrusted pull request, run `plan`, `check`, and `verify` with `--no-exec`. clean-docs skips
+manifest commands and plugins, labels the missing assurance, and fails a changed-surface check when
+the pull request affects that skipped relationship. The reusable workflow fixes this policy for
+pull-request events; a pull request cannot turn trusted execution back on.
+
 ## Adversarial checks
 
 Required CI covers prompt injection, escaping symlinks, shell metacharacters, secret output, oversized output, hanging processes, extension identity collisions, and attempts to change files through relative paths. Each test asserts the exit contract and verifies that no caller-owned file changed.

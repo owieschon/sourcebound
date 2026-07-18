@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 
 from clean_docs.errors import ConfigurationError, ExtractionError
+from clean_docs.execution import ExecutionPolicy
 from clean_docs.extractors import (
     extract_command,
     extract_file,
@@ -73,11 +74,12 @@ def _claim_result(root: Path, snapshot: RepositorySnapshot, manifest: Manifest, 
     expected = json.dumps(binding.assertion.expected, sort_keys=True)
     observed = json.dumps(evidence.value, sort_keys=True)
     diff = "" if not changed else (
-        f"claim {binding.doc}#{binding.anchor}: expected {expected}, observed {observed}\n"
+        f"command pin {binding.doc}#{binding.anchor}: "
+        f"expected {expected}, observed {observed}\n"
     )
     return BindingResult(
         binding.id, binding.doc.as_posix(), changed, expected, observed, diff,
-        evidence.provenance, "claim",
+        evidence.provenance, "command-pin",
     )
 
 
@@ -117,12 +119,55 @@ def evaluate(
     *,
     ref: str | None = None,
     binding_id: str | None = None,
+    execution_policy: ExecutionPolicy = ExecutionPolicy.TRUSTED,
 ) -> list[BindingResult]:
     manifest = load_manifest(manifest_path)
     snapshot = RepositorySnapshot(root=root, ref=ref)
     results: list[BindingResult] = []
     documents: dict[str, str] = {}
     for binding in _select(manifest.bindings, binding_id):
+        uses_plugin = (
+            isinstance(binding, RegionBinding)
+            and (
+                binding.extractor.startswith("plugin:")
+                or binding.renderer.startswith("plugin:")
+            )
+        )
+        if execution_policy is ExecutionPolicy.STATIC_ONLY and (
+            isinstance(binding, ClaimBinding) or uses_plugin
+        ):
+            locator = (
+                binding.command
+                if isinstance(binding, ClaimBinding)
+                else binding.id
+            )
+            mechanism = (
+                "command-pin" if isinstance(binding, ClaimBinding) else "plugin"
+            )
+            provenance = Provenance(
+                snapshot.label,
+                binding.doc.as_posix(),
+                locator,
+                f"{mechanism}@skipped",
+                hashlib.sha256(locator.encode()).hexdigest(),
+            )
+            results.append(
+                BindingResult(
+                    binding_id=binding.id,
+                    doc=binding.doc.as_posix(),
+                    changed=True,
+                    expected="trusted declared execution",
+                    observed="skipped by static-only execution policy",
+                    diff=(
+                        f"{mechanism} {binding.id} was not evaluated because "
+                        "repository-declared execution is disabled\n"
+                    ),
+                    provenance=provenance,
+                    binding_type=mechanism,
+                    state="skipped-untrusted-execution",
+                )
+            )
+            continue
         if isinstance(binding, ClaimBinding):
             results.append(_claim_result(root, snapshot, manifest, binding))
             continue

@@ -47,7 +47,8 @@ RENDERERS = {
     "fenced-text", "markdown-fragment", "markdown-list", "markdown-table", "scalar"
 }
 EXECUTION_KEYS = {"commands", "allowed_commands"}
-COMMAND_KEYS = {"argv", "timeout_seconds", "network"}
+COMMAND_KEYS = {"argv", "timeout_seconds"}
+LEGACY_COMMAND_KEYS = COMMAND_KEYS | {"network"}
 ASSERTION_KEYS = {"json_path", "operator", "expected"}
 PROJECTION_KEYS = {"llms_txt", "bundles", "demo"}
 LLMS_TXT_KEYS = {"output", "title", "summary", "include"}
@@ -73,7 +74,7 @@ MANIFEST_REFERENCE = (
     {
         "binding": "claim",
         "required": "id, type, doc, anchor, command, assertion",
-        "verifies": "Observed command value matches the assertion",
+        "verifies": "Command output matches the assertion; anchored prose is not inspected",
     },
     {
         "binding": "symbol",
@@ -209,8 +210,9 @@ def load_manifest(path: Path) -> Manifest:
 
     root = _mapping(raw, "manifest")
     _reject_unknown(root, ROOT_KEYS, "manifest")
-    if root.get("version") != 1:
-        raise ConfigurationError("manifest version must be 1")
+    version = root.get("version")
+    if version not in {1, 2}:
+        raise ConfigurationError("manifest version must be 1 or 2")
     raw_bindings = root.get("bindings")
     if not isinstance(raw_bindings, list) or not raw_bindings:
         raise ConfigurationError("manifest bindings must be a non-empty list")
@@ -260,6 +262,7 @@ def load_manifest(path: Path) -> Manifest:
         )
 
     commands: list[CommandSpec] = []
+    deprecations: list[str] = []
     execution = root.get("execution")
     if execution is not None:
         execution_data = _mapping(execution, "execution")
@@ -268,11 +271,15 @@ def load_manifest(path: Path) -> Manifest:
             raise ConfigurationError("execution.commands must be deny")
         allowed = _mapping(execution_data.get("allowed_commands", {}), "execution.allowed_commands")
         for command_id, raw_command in allowed.items():
-            command = _mapping(raw_command, f"execution.allowed_commands.{command_id}")
-            _reject_unknown(command, COMMAND_KEYS, f"execution.allowed_commands.{command_id}")
+            where = f"execution.allowed_commands.{command_id}"
+            command = _mapping(raw_command, where)
+            _reject_unknown(
+                command,
+                LEGACY_COMMAND_KEYS if version == 1 else COMMAND_KEYS,
+                where,
+            )
             argv = command.get("argv")
             timeout = command.get("timeout_seconds", 30)
-            network = command.get("network", False)
             if not isinstance(argv, list) or not argv or not all(isinstance(item, str) and item for item in argv):
                 raise ConfigurationError(f"execution.allowed_commands.{command_id}.argv must be a non-empty string list")
             if PYTHON_EXECUTABLE_TOKEN in argv[1:]:
@@ -282,9 +289,11 @@ def load_manifest(path: Path) -> Manifest:
                 )
             if not isinstance(timeout, int) or not 1 <= timeout <= 300:
                 raise ConfigurationError(f"execution.allowed_commands.{command_id}.timeout_seconds must be 1..300")
-            if network is not False:
+            if version == 1 and command.get("network", False) is not False:
                 raise ConfigurationError(f"execution.allowed_commands.{command_id}.network must be false")
-            commands.append(CommandSpec(command_id, tuple(argv), timeout, network))
+            if version == 1 and "network" in command:
+                deprecations.append(f"{where}.network")
+            commands.append(CommandSpec(command_id, tuple(argv), timeout))
 
     source_claim_checks: list[SourceClaimCheck] = []
     raw_source_claim_checks = root.get("source_claim_checks", [])
@@ -549,10 +558,11 @@ def load_manifest(path: Path) -> Manifest:
     )
     return Manifest(
         path=path,
-        version=1,
+        version=version,
         bindings=tuple(bindings),
         commands=tuple(commands),
         plugins=tuple(plugins),
         projections=projections,
         source_claim_checks=tuple(source_claim_checks),
+        deprecations=tuple(deprecations),
     )

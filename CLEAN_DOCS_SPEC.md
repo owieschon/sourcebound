@@ -31,7 +31,9 @@ The table below is part of the shipped capability registry:
 <!-- clean-docs:begin assurance-boundaries -->
 | surface | clean-docs proves | clean-docs does not prove |
 | --- | --- | --- |
-| Bound region, claim, or symbol | Configured evidence and documentation still agree | Unbound prose is accurate or complete |
+| Generated region | Rendered region bytes match configured source evidence | Authored prose outside the region is accurate or complete |
+| Legacy command pin (`type: claim`) | Allowlisted command output matches the configured expected value and the document anchor exists | The prose under that anchor states the command result |
+| Symbol reference | The configured source path or Python symbol exists | The surrounding prose describes that symbol accurately |
 | Repository catalog | Detected additions, removals, and replacements stay visible | Every cataloged item needs or has a reader-facing explanation |
 | Accepted static source claim | The documented count or identifier set matches its accepted source locator | A ranked candidate names the right semantic relationship |
 | Packaged writing policy | Implemented deterministic rules pass | Motivation, pedagogy, personality, or usefulness pass judgment |

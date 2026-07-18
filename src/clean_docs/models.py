@@ -73,7 +73,6 @@ class CommandSpec:
     id: str
     argv: tuple[str, ...]
     timeout_seconds: int
-    network: bool
 
 
 @dataclass(frozen=True)
@@ -122,6 +121,7 @@ class Manifest:
     plugins: tuple[PluginSpec, ...] = ()
     projections: ProjectionConfig | None = None
     source_claim_checks: tuple[SourceClaimCheck, ...] = ()
+    deprecations: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -150,3 +150,4 @@ class BindingResult:
     diff: str
     provenance: Provenance
     binding_type: str = "region"
+    state: str | None = None
