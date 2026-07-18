@@ -11,6 +11,7 @@ from clean_docs.changed import ChangedReport, check_changed
 from clean_docs.claims import scan_source_claims
 from clean_docs.engine import evaluate
 from clean_docs.errors import ConfigurationError
+from clean_docs.execution import ExecutionPolicy
 from clean_docs.manifest import load_manifest
 from clean_docs.inventory import scan_inventory
 from clean_docs.projections import evaluate_projections
@@ -27,6 +28,10 @@ class OutcomeReceipt:
     bindings: int
     current_bindings: int
     drifted_bindings: int
+    skipped_bindings: int
+    regions: int
+    command_pins: int
+    symbols: int
     projections: int
     current_projections: int
     stale_projections: int
@@ -39,6 +44,8 @@ class OutcomeReceipt:
     current_source_claims: int
     drifted_source_claims: int
     missing_source_claims: int
+    execution_mode: str = ExecutionPolicy.TRUSTED.value
+    manifest_deprecations: tuple[str, ...] = ()
     changed: ChangedReport | None = None
 
     @property
@@ -46,6 +53,7 @@ class OutcomeReceipt:
         return (
             self.hygiene_findings == 0
             and self.drifted_bindings == 0
+            and self.skipped_bindings == 0
             and self.stale_projections == 0
             and self.drifted_source_claims == 0
             and self.missing_source_claims == 0
@@ -64,14 +72,17 @@ class OutcomeReceipt:
                 "ok": self.changed.ok,
             }
         return {
-            "schema": "clean-docs.outcome.v1",
+            "schema": "clean-docs.outcome.v2",
             "version": __version__,
             "ref": self.ref,
             "ok": self.ok,
             "assurance": {
                 "scope": "configured-contract",
-                "bound_claims_checked": True,
-                "accepted_source_claims_checked": True,
+                "region_bytes_checked": self.regions > 0,
+                "command_pin_output_checked": self.command_pins > 0,
+                "command_pin_prose_checked": False,
+                "symbol_existence_checked": self.symbols > 0,
+                "accepted_source_claim_prose_checked": self.source_claims > 0,
                 "cataloged_surfaces_check_prose": False,
                 "judgment_prose_certified": False,
             },
@@ -106,6 +117,10 @@ class OutcomeReceipt:
                 "total": self.bindings,
                 "current": self.current_bindings,
                 "drifted": self.drifted_bindings,
+                "skipped": self.skipped_bindings,
+                "regions": self.regions,
+                "command_pins": self.command_pins,
+                "symbols": self.symbols,
             },
             "projections": {
                 "total": self.projections,
@@ -119,7 +134,17 @@ class OutcomeReceipt:
                 "missing": self.missing_source_claims,
             },
             "changed": changed,
-            "network_requests": 0,
+            "execution": {
+                "mode": self.execution_mode,
+                "declared_processes": (
+                    "skipped"
+                    if self.execution_mode == ExecutionPolicy.STATIC_ONLY.value
+                    else "permitted-by-manifest"
+                ),
+                "network_isolation": "not-provided",
+                "network_observation": "not-instrumented",
+            },
+            "deprecations": list(self.manifest_deprecations),
         }
 
 
@@ -130,6 +155,7 @@ def build_outcome_receipt(
     base: str | None = None,
     head: str | None = None,
     project: Path = Path("."),
+    execution_policy: ExecutionPolicy = ExecutionPolicy.TRUSTED,
 ) -> OutcomeReceipt:
     if (base is None) != (head is None):
         raise ConfigurationError("verify requires both --base and --head")
@@ -141,7 +167,7 @@ def build_outcome_receipt(
     cataloged_items = sum(item.coverage == "cataloged" for item in inventory.items)
     ignored_items = sum(item.coverage == "ignored" for item in inventory.items)
     standard_gaps = sum(item.coverage == "standard-gap" for item in inventory.items)
-    bindings = evaluate(root, manifest_path)
+    bindings = evaluate(root, manifest_path, execution_policy=execution_policy)
     projections = (
         evaluate_projections(root, manifest) if manifest.projections is not None else []
     )
@@ -162,6 +188,7 @@ def build_outcome_receipt(
             base=base,
             head=head,
             project=project,
+            execution_policy=execution_policy,
         )
     return OutcomeReceipt(
         RepositorySnapshot(root).label,
@@ -171,7 +198,18 @@ def build_outcome_receipt(
         len(audit_report.baselined_findings),
         len(bindings),
         sum(not item.changed for item in bindings),
-        sum(item.changed for item in bindings),
+        sum(
+            item.changed and item.state != "skipped-untrusted-execution"
+            for item in bindings
+        ),
+        sum(item.state == "skipped-untrusted-execution" for item in bindings),
+        sum(item.binding_type == "region" for item in bindings),
+        sum(
+            item.binding_type == "command-pin"
+            and item.state != "skipped-untrusted-execution"
+            for item in bindings
+        ),
+        sum(item.binding_type == "symbol" for item in bindings),
         len(projections),
         sum(not item.changed for item in projections),
         sum(item.changed for item in projections),
@@ -188,5 +226,7 @@ def build_outcome_receipt(
         if source_claim_report is None
         else sum(item.status == "drift" for item in source_claim_report.results),
         0 if source_claim_report is None else len(source_claim_report.missing),
+        execution_policy.value,
+        manifest.deprecations,
         changed,
     )

@@ -67,7 +67,7 @@
     <circle cx="791" cy="231" r="4" fill="#302d78"/>
     <path d="M777 220l10-5M777 224l10 5" stroke="#302d78" stroke-width="2"/>
     <text x="818" y="220" class="card-title">Source bindings</text>
-    <text x="762" y="270" class="body">Regions, claims, and symbols</text>
+    <text x="762" y="270" class="body">Regions, command pins, and symbols</text>
     <text x="762" y="298" class="body">Facts keep a canonical owner</text>
   </g>
 

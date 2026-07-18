@@ -87,6 +87,87 @@ def test_claim_drift_is_read_only_and_reports_values(tmp_path: Path) -> None:
     assert (root / "README.md").read_text() == before
 
 
+def test_command_pin_does_not_claim_to_check_anchored_prose(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    readme = root / "README.md"
+    readme.write_text(readme.read_text().replace("340 records.", "999 records."))
+
+    checked = _run(root, "check", "--format", "json")
+
+    assert checked.returncode == 0
+    result = json.loads(checked.stdout)["results"][0]
+    assert result["mechanism"] == "command-pin"
+    assert result["status"] == "current"
+    assert result["assurance"] == {
+        "command_output_checked": True,
+        "anchor_exists": True,
+        "anchored_prose_checked": False,
+    }
+
+
+def test_static_only_skips_command_and_fails_when_affected(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    base = subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "HEAD"],
+        text=True,
+        capture_output=True,
+        check=True,
+    ).stdout.strip()
+    marker = root / "command-ran.txt"
+    (root / "scripts/count.py").write_text(
+        "from pathlib import Path\n"
+        "Path('command-ran.txt').write_text('ran')\n"
+        'print(\'{"collected": 340}\')\n'
+    )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "-c",
+            "user.name=Fixture",
+            "-c",
+            "user.email=fixture@example.test",
+            "commit",
+            "-qm",
+            "hostile command",
+        ],
+        check=True,
+    )
+    head = subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "HEAD"],
+        text=True,
+        capture_output=True,
+        check=True,
+    ).stdout.strip()
+
+    baseline = _run(root, "check", "--no-exec", "--format", "json")
+    changed = _run(
+        root,
+        "check",
+        "--changed",
+        "--base",
+        base,
+        "--head",
+        head,
+        "--no-exec",
+        "--format",
+        "json",
+    )
+
+    baseline_payload = json.loads(baseline.stdout)
+    assert baseline.returncode == 0
+    assert baseline_payload["ok"] is True
+    assert baseline_payload["complete"] is False
+    assert baseline_payload["results"][0]["status"] == "skipped-untrusted-execution"
+    assert changed.returncode == 1
+    assert json.loads(changed.stdout)["required"][0]["rule"] == "execution-skipped"
+    assert not marker.exists()
+
+
 def test_symbol_rename_is_documentation_drift(tmp_path: Path) -> None:
     root = _repo(tmp_path)
     (root / "src/service.py").write_text("def renamed():\n    return True\n")

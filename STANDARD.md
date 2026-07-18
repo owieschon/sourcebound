@@ -587,7 +587,8 @@ it matches the system. It is the truth tier.
   tests pass" is checked by running the tests. A changelog entry comes from the code delta, not
   from what a commit said it did.
 - **Bind a factual claim to its source so drift is detectable:** a generated region re-renders and
-  diffs, a claim assertion re-runs, a cited symbol is checked to still exist.
+  diffs, an accepted source-claim check compares bounded prose with static evidence, and a cited
+  symbol is checked to still exist. A command pin checks configured output, not anchored prose.
 - **State the honest boundary.** Grounding makes the derivable spine drift-proof. It does not make
   the judgment prose (the why, the framing, the positioning) drift-proof; that stays a human or
   advisory-review concern, never a silent gate. Claim "the documented spine cannot silently

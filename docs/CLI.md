@@ -66,4 +66,15 @@ was built, not that the branch is documentation-complete. Use `check --changed` 
 blocking gate. A projection output is evidence of prior work, so changing only that generated file
 does not recursively make it an impact root.
 
+## Static-only pull-request checks
+
+Add `--no-exec` to `plan`, `check`, or `verify` when the repository revision is untrusted. Static
+first-party extractors continue to run. clean-docs reports each command pin or plugin result as
+`skipped-untrusted-execution` and does not start that process.
+
+An unscoped `check --no-exec` can pass its static findings while returning `complete: false`.
+`check --changed --no-exec` fails when the pull request affects a skipped relationship because its
+state is unknown. The reusable pull-request workflow always selects this mode. Run trusted command
+and plugin checks in a separately configured default-branch or scheduled job.
+
 Run `clean-docs <command> --help` for command-specific flags. Return to the [project overview](../README.md) for installation and the supported binding surface.

@@ -18,6 +18,7 @@ from clean_docs.emit import emit_llms_txt, emit_stepwise_skill
 from clean_docs.engine import drive, evaluate, write_results
 from clean_docs.evaluation import run_evaluation, write_evaluation_history
 from clean_docs.errors import CleanDocsError, ConfigurationError
+from clean_docs.execution import ExecutionPolicy
 from clean_docs.explain import explain
 from clean_docs.impact import build_impact_plan, render_impact_plan
 from clean_docs.plugins import scan_extended_inventory
@@ -96,6 +97,11 @@ def _parser() -> argparse.ArgumentParser:
     verify.add_argument("--head")
     verify.add_argument("--project", type=Path, default=Path("."))
     verify.add_argument("--out", type=Path)
+    verify.add_argument(
+        "--no-exec",
+        action="store_true",
+        help="skip repository-declared commands and plugins",
+    )
     benchmark = sub.add_parser("benchmark", help=_command_help("benchmark"))
     benchmark.add_argument("--base", required=True)
     benchmark.add_argument("--head", required=True)
@@ -125,6 +131,11 @@ def _parser() -> argparse.ArgumentParser:
     )
     plan.add_argument("--no-cache", action="store_true", help="bypass immutable-ref cache")
     plan.add_argument("--format", choices=("text", "json"), default="text")
+    plan.add_argument(
+        "--no-exec",
+        action="store_true",
+        help="skip repository-declared commands and plugins",
+    )
     check = sub.add_parser("check", help=_command_help("check"))
     check.add_argument("--binding", help="evaluate one binding id")
     check.add_argument("--ref", help="read bound sources from an immutable git ref")
@@ -134,6 +145,11 @@ def _parser() -> argparse.ArgumentParser:
     check.add_argument("--project", type=Path, default=Path("."), help="monorepo project path")
     check.add_argument("--no-cache", action="store_true", help="bypass immutable-ref cache")
     check.add_argument("--format", choices=("text", "json", "sarif"), default="text")
+    check.add_argument(
+        "--no-exec",
+        action="store_true",
+        help="skip repository-declared commands and plugins",
+    )
     project = sub.add_parser("project", help=_command_help("project"))
     project.add_argument(
         "--check", action="store_true", help="exit 1 instead of writing stale projections"
@@ -202,19 +218,53 @@ def _validate_arguments(args: argparse.Namespace) -> None:
 
 
 def _json(results: list[BindingResult], *, repaired: bool = False) -> str:
+    assurance = {
+        "region": {
+            "source_evidence_checked": True,
+            "document_bytes_checked": True,
+        },
+        "command-pin": {
+            "command_output_checked": True,
+            "anchor_exists": True,
+            "anchored_prose_checked": False,
+        },
+        "symbol": {
+            "source_locator_exists": True,
+            "anchored_prose_checked": False,
+        },
+        "source-claim": {
+            "document_value_checked": True,
+            "source_value_checked": True,
+        },
+        "plugin": {
+            "plugin_executed": False,
+            "result_checked": False,
+        },
+        "projection": {
+            "configured_output_checked": True,
+            "source_document_prose_certified": False,
+        },
+    }
     return json.dumps({
         "ok": not any(
-            result.changed and not (repaired and result.binding_type == "region")
+            result.changed
+            and result.state != "skipped-untrusted-execution"
+            and not (repaired and result.binding_type == "region")
             for result in results
+        ),
+        "complete": not any(
+            result.state == "skipped-untrusted-execution" for result in results
         ),
         "results": [
             {
                 "binding": result.binding_id,
+                "mechanism": result.binding_type,
                 "doc": result.doc,
-                "status": "repaired" if repaired and result.changed
+                "status": result.state or (
+                    "repaired" if repaired and result.changed
                 and result.binding_type == "region" else (
                     "drift" if result.changed else "current"
-                ),
+                )),
                 "diff": result.diff,
                 "provenance": {
                     "ref": result.provenance.ref,
@@ -223,6 +273,7 @@ def _json(results: list[BindingResult], *, repaired: bool = False) -> str:
                     "extractor": result.provenance.extractor,
                     "digest": result.provenance.digest,
                 },
+                "assurance": assurance[result.binding_type],
             }
             for result in results
         ],
@@ -233,9 +284,9 @@ def _text(results: list[BindingResult], *, repaired: bool = False) -> str:
     lines: list[str] = []
     for result in results:
         was_repaired = repaired and result.changed and result.binding_type == "region"
-        status = "repaired" if was_repaired else (
+        status = result.state or ("repaired" if was_repaired else (
             "drift" if result.changed else "current"
-        )
+        ))
         lines.append(f"[{status}] {result.binding_id}: {result.doc}")
         if result.diff:
             lines.append(result.diff.rstrip())
@@ -527,6 +578,11 @@ def main(argv: list[str] | None = None) -> int:
                     base=args.base,
                     head=args.head,
                     project=args.project,
+                    execution_policy=(
+                        ExecutionPolicy.STATIC_ONLY
+                        if args.no_exec
+                        else ExecutionPolicy.TRUSTED
+                    ),
                 )
                 payload = outcome_report.as_dict()
                 ok = outcome_report.ok
@@ -687,6 +743,11 @@ def main(argv: list[str] | None = None) -> int:
                 head=args.head,
                 use_cache=not args.no_cache,
                 project=args.project,
+                execution_policy=(
+                    ExecutionPolicy.STATIC_ONLY
+                    if args.no_exec
+                    else ExecutionPolicy.TRUSTED
+                ),
             )
             if args.format == "json":
                 print(json.dumps(impact_plan.as_dict(), indent=2))
@@ -708,6 +769,11 @@ def main(argv: list[str] | None = None) -> int:
                 head=args.head,
                 use_cache=not args.no_cache,
                 project=args.project,
+                execution_policy=(
+                    ExecutionPolicy.STATIC_ONLY
+                    if args.no_exec
+                    else ExecutionPolicy.TRUSTED
+                ),
             )
             if args.format == "json":
                 print(json.dumps(changed_report.as_dict(), indent=2))
@@ -729,6 +795,11 @@ def main(argv: list[str] | None = None) -> int:
             manifest,
             ref=args.ref,
             binding_id=args.binding,
+            execution_policy=(
+                ExecutionPolicy.STATIC_ONLY
+                if args.command == "check" and args.no_exec
+                else ExecutionPolicy.TRUSTED
+            ),
         )
         if (
             args.command == "check"
@@ -753,7 +824,10 @@ def main(argv: list[str] | None = None) -> int:
                 )
         output = _json(results) if args.format == "json" else _text(results)
         sys.stdout.write(output)
-        drift = any(result.changed for result in results)
+        drift = any(
+            result.changed and result.state != "skipped-untrusted-execution"
+            for result in results
+        )
         if args.command == "derive" and args.write and drift:
             write_results(root, results)
             sys.stdout.write(f"wrote {sum(result.changed for result in results)} document(s)\n")

@@ -8,14 +8,24 @@ PRODUCT_OVERVIEW = (
     "floor; authored judgment still owns motivation, pedagogy, and voice. Static adapters read "
     "common code and schema formats, while declared commands run under explicit process controls. "
     "The engine can repair bound regions, rank static count and column candidates, enforce accepted "
-    "claim relationships, and publish context such as `llms.txt` with local receipts."
+    "source-claim relationships, and publish context such as `llms.txt` with local receipts."
 )
 
 ASSURANCE_BOUNDARIES = (
     {
-        "surface": "Bound region, claim, or symbol",
-        "clean-docs proves": "Configured evidence and documentation still agree",
-        "clean-docs does not prove": "Unbound prose is accurate or complete",
+        "surface": "Generated region",
+        "clean-docs proves": "Rendered region bytes match configured source evidence",
+        "clean-docs does not prove": "Authored prose outside the region is accurate or complete",
+    },
+    {
+        "surface": "Legacy command pin (`type: claim`)",
+        "clean-docs proves": "Allowlisted command output matches the configured expected value and the document anchor exists",
+        "clean-docs does not prove": "The prose under that anchor states the command result",
+    },
+    {
+        "surface": "Symbol reference",
+        "clean-docs proves": "The configured source path or Python symbol exists",
+        "clean-docs does not prove": "The surrounding prose describes that symbol accurately",
     },
     {
         "surface": "Repository catalog",
@@ -40,10 +50,10 @@ ASSURANCE_BOUNDARIES = (
 )
 
 SUPPORTED_BINDINGS = {
-    "claim": {
-        "binding": "claim",
+    "command-pin": {
+        "binding": "command pin (`type: claim`)",
         "source": "Allowlisted JSON command",
-        "output": "Assertion at a document anchor",
+        "output": "Configured assertion plus an existing document anchor",
         "check": "Compare typed expected and observed values",
     },
     "region": {

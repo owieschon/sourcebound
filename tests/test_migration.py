@@ -69,3 +69,42 @@ def test_v0_to_v1_migration_matches_golden_and_preserves_evidence(
     rolled_back = _run(root, "migrate", "--rollback")
     assert rolled_back.returncode == 0, rolled_back.stderr
     assert manifest.read_text() == original
+
+
+def test_v1_to_v2_migration_removes_only_network_declaration(
+    tmp_path: Path,
+) -> None:
+    manifest = tmp_path / ".clean-docs.yml"
+    manifest.write_text(
+        "version: 1\n"
+        "execution:\n"
+        "  commands: deny\n"
+        "  allowed_commands:\n"
+        "    summary:\n"
+        "      argv: [python3, scripts/summary.py]\n"
+        "      timeout_seconds: 17\n"
+        "      network: false\n"
+        "bindings:\n"
+        "  - id: summary\n"
+        "    type: claim\n"
+        "    doc: README.md\n"
+        "    anchor: summary\n"
+        "    extractor: command\n"
+        "    command: summary\n"
+        "    assertion: {json_path: $.count, operator: equals, expected: 3}\n"
+    )
+
+    plan = build_migration_plan(manifest)
+
+    assert plan.source_version == 1
+    assert plan.target_version == 2
+    assert "network" not in plan.migrated
+    assert "timeout_seconds: 17" in plan.migrated
+    assert "argv:" in plan.migrated
+    backup = apply_migration(manifest, plan)
+    assert backup == backup_path(manifest, 1)
+    assert load_manifest(manifest).version == 2
+
+    rollback_migration(manifest)
+    assert "network: false" in manifest.read_text()
+    assert not backup.exists()

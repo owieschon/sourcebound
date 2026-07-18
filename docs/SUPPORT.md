@@ -99,7 +99,7 @@ required manifest change before it reads source evidence.
 
 ## Record local outcomes
 
-`verify` runs audit, binding, and projection checks and prints `clean-docs.outcome.v1`. Add immutable refs to include pull-request impact, and write the same bytes to a local receipt with:
+`verify` runs audit, binding, and projection checks and prints `clean-docs.outcome.v2`. Add immutable refs to include pull-request impact, and write the same bytes to a local receipt with:
 
 ```bash
 clean-docs verify --base origin/main --head HEAD --out .clean-docs/outcome.json
@@ -108,9 +108,12 @@ clean-docs verify --base origin/main --head HEAD --out .clean-docs/outcome.json
 The receipt counts current bindings, caught drift, coverage gaps, active and baselined hygiene findings, and projection state. `bound` means a source-specific binding covers the detected locator. `cataloged` means a repository-wide inventory binding tracks the surface but no source-specific documentation claim covers it. `coverage_complete` permits either form; `direct_coverage_complete` requires source-specific bindings or reasoned ignores for the whole detected surface.
 
 Read the receipt's `assurance` object before interpreting a green result. Its
-`cataloged_surfaces_check_prose` and `judgment_prose_certified` fields remain `false`: a passing
-configured contract does not certify unbound claims or prose quality. The receipt records
-`network_requests: 0` and sends nothing.
+`command_pin_prose_checked`, `cataloged_surfaces_check_prose`, and
+`judgment_prose_certified` fields remain `false`: a passing command pin checks configured output,
+not the anchored sentence, and a passing configured contract does not certify unbound prose. The
+receipt records an `execution` object with `network_isolation: not-provided` and
+`network_observation: not-instrumented`. clean-docs sends no feedback from this command, but an
+allowed command can use the host network when the runner permits it.
 
 Measure the changed-check P95 and peak process memory on a repository with:
 

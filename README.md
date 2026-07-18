@@ -9,7 +9,7 @@ clean-docs is a source-bound documentation engine and CLI for maintainers who ne
 
 **[Install the stable release and catch your first stale claim](docs/learn/tutorial-catch-a-lying-doc.md)**.
 
-The final `clean-docs verify` command prints a [`clean-docs.outcome.v1` receipt](docs/SUPPORT.md#record-local-outcomes) with `"ok": true`.
+The final `clean-docs verify` command prints a [`clean-docs.outcome.v2` receipt](docs/SUPPORT.md#record-local-outcomes) with `"ok": true`.
 
 Audit starts from the document's job. On an untouched repository it is an assessment: broken links,
 machine-specific residue, and repository-neutral corpus signals remain bounded advisories. Run
@@ -31,7 +31,7 @@ authorizes clean-docs to flatten repository-native forms.
 <!-- clean-docs:begin product-overview -->
 A stale sentence does not fail loudly. It keeps a straight face after the code has moved on, and reviewers have no mechanical way to identify the false claim. clean-docs gives each protected fact a source, then checks that relationship again in CI.
 
-Declared sources own the protected facts. A packaged policy enforces the deterministic form floor; authored judgment still owns motivation, pedagogy, and voice. Static adapters read common code and schema formats, while declared commands run under explicit process controls. The engine can repair bound regions, rank static count and column candidates, enforce accepted claim relationships, and publish context such as `llms.txt` with local receipts.
+Declared sources own the protected facts. A packaged policy enforces the deterministic form floor; authored judgment still owns motivation, pedagogy, and voice. Static adapters read common code and schema formats, while declared commands run under explicit process controls. The engine can repair bound regions, rank static count and column candidates, enforce accepted source-claim relationships, and publish context such as `llms.txt` with local receipts.
 <!-- clean-docs:end product-overview -->
 
 Human review can improve a sentence. It cannot make the sentence fail when its defining source changes. The [deterministic seam](docs/learn/deep-dive-the-deterministic-seam.md) explains how clean-docs separates source evidence, optional phrasing, and gate authority.
@@ -70,7 +70,7 @@ After a bound source changes, run `check`, then `drive`, then `project`, then `v
 
 ![Architecture diagram showing repository evidence flowing through source bindings and the writing standard into repair, CI, and context outputs](docs/assets/clean-docs-system-map.svg)
 
-Repository sources become typed evidence. Bindings assign that evidence to document regions, claims, and symbols. The engine checks the implemented policy floor, then repairs declared regions, rejects drift, or publishes verified context. The [manifest page](docs/REFERENCE.md) lists each binding and projected output.
+Repository sources become typed evidence. Bindings assign that evidence to generated regions, command pins, and symbols. Accepted source-claim checks compare bounded prose values with static source locators. The engine checks the implemented policy floor, then repairs declared regions, rejects drift, or publishes verified context. The [manifest page](docs/REFERENCE.md) lists each mechanism and projected output.
 
 ## Current boundaries
 

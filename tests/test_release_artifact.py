@@ -110,6 +110,15 @@ def test_release_workflow_attests_wheel_and_sbom() -> None:
     assert "expected one SBOM" in resolver["run"]
     upload = next(step for step in steps if step.get("uses") == UPLOAD_ARTIFACT)
     assert upload["with"]["if-no-files-found"] == "error"
+    publisher = next(step for step in steps if step.get("name") == "Publish release assets")
+    assert "python scripts/publish_release.py" in publisher["run"]
+    assert "--source-digest \"$GITHUB_SHA\"" in publisher["run"]
+    assert "gh release create" not in publisher["run"]
+    publication_upload = next(
+        step for step in steps if step.get("name") == "Upload publication receipt"
+    )
+    assert publication_upload["with"]["path"] == "release-publication.json"
+    assert publication_upload["with"]["if-no-files-found"] == "error"
 
 
 def test_stable_release_accepts_only_reader_candidate_version_and_receipts(

@@ -46,22 +46,32 @@ def build_migration_plan(path: Path) -> MigrationPlan:
         raw = _mapping(yaml.safe_load(original))
     except yaml.YAMLError as exc:
         raise ConfigurationError(f"invalid YAML in {path}: {exc}") from exc
-    if raw.get("version") != 0:
-        raise ConfigurationError("manifest migration requires source version 0")
+    source_version = raw.get("version")
+    if source_version not in {0, 1}:
+        raise ConfigurationError("manifest migration requires source version 0 or 1")
     migrated_data = dict(raw)
-    migrated_data["version"] = 1
+    target_version = source_version + 1
+    migrated_data["version"] = target_version
+    if source_version == 1:
+        execution = migrated_data.get("execution")
+        if isinstance(execution, dict):
+            allowed = execution.get("allowed_commands")
+            if isinstance(allowed, dict):
+                for command in allowed.values():
+                    if isinstance(command, dict):
+                        command.pop("network", None)
     migrated = yaml.safe_dump(migrated_data, sort_keys=False, allow_unicode=True)
     diff = "".join(
         difflib.unified_diff(
             original.splitlines(keepends=True),
             migrated.splitlines(keepends=True),
             fromfile=path.name,
-            tofile=f"{path.name} (version 1)",
+            tofile=f"{path.name} (version {target_version})",
         )
     )
     return MigrationPlan(
-        0,
-        1,
+        source_version,
+        target_version,
         hashlib.sha256(original.encode()).hexdigest(),
         hashlib.sha256(migrated.encode()).hexdigest(),
         original,
@@ -70,12 +80,12 @@ def build_migration_plan(path: Path) -> MigrationPlan:
     )
 
 
-def backup_path(path: Path) -> Path:
-    return path.with_name(path.name + ".v0.bak")
+def backup_path(path: Path, source_version: int = 0) -> Path:
+    return path.with_name(path.name + f".v{source_version}.bak")
 
 
 def apply_migration(path: Path, plan: MigrationPlan) -> Path:
-    backup = backup_path(path)
+    backup = backup_path(path, plan.source_version)
     if backup.exists():
         raise ConfigurationError(f"migration backup already exists: {backup}")
     try:
@@ -94,7 +104,12 @@ def apply_migration(path: Path, plan: MigrationPlan) -> Path:
 
 
 def rollback_migration(path: Path) -> None:
-    backup = backup_path(path)
+    backups = sorted(path.parent.glob(path.name + ".v*.bak"))
+    if len(backups) != 1:
+        raise ConfigurationError(
+            f"manifest rollback requires one backup, found {len(backups)}"
+        )
+    backup = backups[0]
     try:
         original = backup.read_text(encoding="utf-8")
     except OSError as exc:

@@ -56,9 +56,22 @@ jobs:
       - name: Publish release assets
         env:
           GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
-          args=(--repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes)
+          args=(
+            --repo "$GITHUB_REPOSITORY"
+            --tag "$GITHUB_REF_NAME"
+            --source-digest "$GITHUB_SHA"
+            --dist dist
+            --out release-publication.json
+          )
           if [[ "$GITHUB_REF_NAME" == *rc* ]]; then
             args+=(--prerelease)
           fi
-          gh release create "$GITHUB_REF_NAME" dist/* "${args[@]}"
+          python scripts/publish_release.py "${args[@]}"
+      - name: Upload publication receipt
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: clean-docs-release-publication-${{ github.sha }}
+          path: release-publication.json
+          if-no-files-found: error

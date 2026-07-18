@@ -5,7 +5,6 @@ execution:
     quickstart-audit:
       argv: ["{python}", -m, clean_docs, --root, ., audit]
       timeout_seconds: 30
-      network: false
 bindings:
   - id: repository-surface
     type: region

@@ -346,7 +346,15 @@ def test_v05_manifest_and_evidence_remain_compatible_at_v10(tmp_path: Path) -> N
     command = _run(root, "check", "--format", "json")
 
     assert command.returncode == 0, command.stderr
-    assert json.loads(command.stdout) == expected
+    observed = json.loads(command.stdout)
+    assert observed["ok"] == expected["ok"]
+    assert observed["complete"] is True
+    assert len(observed["results"]) == len(expected["results"])
+    for result, prior in zip(observed["results"], expected["results"], strict=True):
+        assert {
+            key: result[key]
+            for key in ("binding", "doc", "status", "diff", "provenance")
+        } == prior
     manifest = load_manifest(root / ".clean-docs.yml")
     assert manifest.version == 1
     assert not any(item.changed for item in evaluate(root, manifest.path))

@@ -76,7 +76,7 @@ def test_readme_architecture_follows_the_first_action_and_has_text_equivalent() 
         "Repository sources",
         "typed evidence",
         "Bindings",
-        "document regions",
+        "generated regions",
         "implemented policy floor",
         "repairs declared regions",
         "rejects drift",
