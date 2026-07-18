@@ -12,6 +12,7 @@ from clean_docs.manifest import load_manifest
 from clean_docs.policy import (
     PURPOSE_BEGIN,
     PURPOSE_END,
+    REGISTER_PROFILE,
     check_document,
     check_prose,
     ensure_purpose_contract,
@@ -39,6 +40,15 @@ def test_default_pack_is_available_as_package_data() -> None:
     assert pack["policy"]["require_definition_first"] is True
     assert pack["policy"]["require_purpose_contract"] is True
     assert pack["style"]["voice"]["register"] == "helpful senior colleague"
+    assert pack["style"]["precedence"] == [
+        "truth and honesty",
+        "grounding",
+        "reader budget",
+        "register",
+        "warmth",
+    ]
+    assert "A stale README keeps a straight face." in pack["generation"]["exemplars"]
+    assert pack["generation"]["exemplars_sha256"]
     assert pack["style"]["purpose_contract"]["judgment"] == [
         "defines the project-specific subject and intended operator",
         "names the consequential failure or decision the page addresses",
@@ -66,6 +76,7 @@ def test_policy_uses_compiled_booster_registry() -> None:
     findings = check_document(
         "README.md",
         "# Product\n\n"
+        '<!-- clean-docs:allow preamble-contract reason="Fixture isolates booster policy" -->\n'
         "<!-- clean-docs:purpose -->\n"
         "Use this page when product behavior changes without an obvious reference. "
         "It gives maintainers one checked path to the current behavior.\n"
@@ -74,20 +85,22 @@ def test_policy_uses_compiled_booster_registry() -> None:
         pack,
     )
     assert [(finding.rule, finding.line) for finding in findings] == [
-        ("prohibited-booster", 7)
+        ("prohibited-booster", 8)
     ]
     assert json.dumps(pack, sort_keys=True)
 
 
 def test_policy_rejects_stock_purpose_language() -> None:
     content = (
-        "# Queue\n\n<!-- clean-docs:purpose -->\n"
+        "# Queue\n\n"
+        '<!-- clean-docs:allow preamble-contract reason="Fixture isolates purpose policy" -->\n'
+        "<!-- clean-docs:purpose -->\n"
         "Read this page before changing or relying on Queue so you can preserve its contract.\n"
         "<!-- clean-docs:end purpose -->\n"
     )
     findings = check_document("README.md", content, load_default_pack())
     assert [(finding.rule, finding.line) for finding in findings] == [
-        ("purpose-contract", 4)
+        ("purpose-contract", 5)
     ]
     assert "stock purpose language" in findings[0].detail
 
@@ -131,8 +144,9 @@ def test_product_overview_does_not_duplicate_release_version() -> None:
 def test_product_overview_explains_why_source_binding_is_needed() -> None:
     assert PRODUCT_OVERVIEW.startswith("A stale sentence does not fail loudly.")
     assert "keeps a straight face after the code has moved on" in PRODUCT_OVERVIEW
-    assert "no mechanical way to know which claim became false" in PRODUCT_OVERVIEW
-    assert "relationship between a claim and its source reproducible in CI" in PRODUCT_OVERVIEW
+    assert "no mechanical way to identify the false claim" in PRODUCT_OVERVIEW
+    assert "gives each protected fact a source" in PRODUCT_OVERVIEW
+    assert "checks that relationship again in CI" in PRODUCT_OVERVIEW
 
 
 def test_reader_facing_concept_pages_apply_bounded_personality() -> None:
@@ -167,6 +181,12 @@ def test_purpose_contract_enforces_presence_position_and_non_restatement(
     content: str,
     detail: str,
 ) -> None:
+    content = content.replace(
+        "\n",
+        '\n<!-- clean-docs:allow preamble-contract '
+        'reason="Fixture isolates purpose policy" -->\n',
+        1,
+    )
     findings = check_document("README.md", content, load_default_pack())
 
     assert len(findings) == 1
@@ -176,7 +196,9 @@ def test_purpose_contract_enforces_presence_position_and_non_restatement(
 
 def test_purpose_contract_ignores_headings_and_markers_inside_code_fences() -> None:
     content = (
-        "# Project\n\n<!-- clean-docs:purpose -->\n"
+        "# Project\n\n"
+        '<!-- clean-docs:allow preamble-contract reason="Fixture isolates fence parsing" -->\n'
+        "<!-- clean-docs:purpose -->\n"
         "Use this page when source claims can drift. It gives maintainers a checked repair path.\n"
         "<!-- clean-docs:end purpose -->\n\n"
         "```markdown\n# Example\n<!-- clean-docs:purpose -->\n"
@@ -188,7 +210,9 @@ def test_purpose_contract_ignores_headings_and_markers_inside_code_fences() -> N
 
 def test_prohibited_boosters_do_not_treat_headings_as_prose() -> None:
     content = (
-        "# Project\n\n<!-- clean-docs:purpose -->\n"
+        "# Project\n\n"
+        '<!-- clean-docs:allow preamble-contract reason="Fixture isolates heading policy" -->\n'
+        "<!-- clean-docs:purpose -->\n"
         "Use this page when source claims can drift. It gives maintainers a checked repair path.\n"
         "<!-- clean-docs:end purpose -->\n\n## Work simply\n"
     )
@@ -232,3 +256,138 @@ def test_bootstrap_moves_authored_prose_ahead_of_logos_and_badges() -> None:
 
 def test_fragment_policy_does_not_require_a_document_contract() -> None:
     assert check_prose("<fragment>", "The command reports the current facts.", load_default_pack()) == []
+
+
+def test_preamble_contract_requires_point_action_and_proof_in_first_fifteen_lines() -> None:
+    missing = (
+        f"# Queue\n\n{REGISTER_PROFILE}\n<!-- clean-docs:purpose -->\n"
+        "Queue is a task runner for maintainers who need source-bound operating facts.\n"
+        "<!-- clean-docs:end purpose -->\n"
+    )
+    assert [
+        finding.rule for finding in check_document("README.md", missing, load_default_pack())
+    ] == ["preamble-contract"]
+
+    decorative = (
+        missing
+        + "\n![Decorative diagram](docs/diagram.svg)\n\n"
+        + "```yaml\nmode: preview\n```\n"
+    )
+    assert [
+        finding.rule for finding in check_document("README.md", decorative, load_default_pack())
+    ] == ["preamble-contract"]
+
+    complete = (
+        missing
+        + "\n**[Run the first task](docs/start.md)**\n\n"
+        + "[Verification result](docs/result.md)\n"
+    )
+    assert check_document("README.md", complete, load_default_pack()) == []
+
+
+@pytest.mark.parametrize(
+    ("sentence", "rule"),
+    [
+        (
+            "Coordination, implementation, and validation obscure who does the work.",
+            "nominalization-density",
+        ),
+        (
+            "This demonstrates the boundary instead of naming its consequence.",
+            "significance-narration",
+        ),
+        (
+            "The model may phrase only supplied facts unless a reviewer intervenes except in references.",
+            "qualifier-density",
+        ),
+    ],
+)
+def test_register_rules_fire_on_known_bad_shapes(sentence: str, rule: str) -> None:
+    content = (
+        f"# Queue\n\n{REGISTER_PROFILE}\n<!-- clean-docs:purpose -->\n"
+        "Queue is a task runner for maintainers who need source-bound operating facts.\n"
+        "<!-- clean-docs:end purpose -->\n\n"
+        "**[Run the first task](docs/start.md)**\n\n"
+        "[Verification result](docs/result.md)\n\n"
+        f"{sentence}\n"
+    )
+
+    assert rule in {
+        finding.rule for finding in check_document("README.md", content, load_default_pack())
+    }
+
+
+def test_register_rules_accept_concrete_varied_prose() -> None:
+    content = (
+        f"# Queue\n\n{REGISTER_PROFILE}\n<!-- clean-docs:purpose -->\n"
+        "Queue is a task runner for maintainers who need source-bound operating facts.\n"
+        "<!-- clean-docs:end purpose -->\n\n"
+        "**[Run the first task](docs/start.md)**\n\n"
+        "[Verification result](docs/result.md)\n\n"
+        "The source owns the command. Bind it once. The gate names the stale row after the "
+        "source changes, so the maintainer knows what to repair.\n"
+    )
+
+    assert check_document("README.md", content, load_default_pack()) == []
+
+
+def test_truth_yield_preserves_an_honest_qualifier_collision() -> None:
+    content = (
+        f"# Queue\n\n{REGISTER_PROFILE}\n<!-- clean-docs:purpose -->\n"
+        "Queue is a task runner for maintainers who need source-bound operating facts.\n"
+        "<!-- clean-docs:end purpose -->\n\n"
+        "**[Run the first task](docs/start.md)**\n\n"
+        "[Verification result](docs/result.md)\n\n"
+        '<!-- clean-docs:yield rule="qualifier-density" to="truth-honesty" '
+        'reason="Three independent safety boundaries must remain attached" -->\n'
+        "The model may phrase only supplied facts unless the provider fails, except in replay.\n"
+    )
+
+    assert check_document("README.md", content, load_default_pack()) == []
+
+
+def test_truth_yield_does_not_disable_the_rule_for_later_prose() -> None:
+    content = (
+        f"# Queue\n\n{REGISTER_PROFILE}\n<!-- clean-docs:purpose -->\n"
+        "Queue is a task runner for maintainers who need source-bound operating facts.\n"
+        "<!-- clean-docs:end purpose -->\n\n"
+        "**[Run the first task](docs/start.md)**\n\n"
+        "[Verification result](docs/result.md)\n\n"
+        '<!-- clean-docs:yield rule="qualifier-density" to="truth-honesty" '
+        'reason="Three independent safety boundaries must remain attached" -->\n'
+        "The model may phrase only supplied facts unless the provider fails, except in replay.\n\n"
+        "The runner may write only one file unless the plan expands, except in migration.\n"
+    )
+
+    findings = [
+        finding
+        for finding in check_document("README.md", content, load_default_pack())
+        if finding.rule == "qualifier-density"
+    ]
+
+    assert len(findings) == 1
+    assert findings[0].line == 15
+
+
+def test_sentence_variance_tension_keeps_required_presence_but_changes_rhythm() -> None:
+    content = (
+        f"# Queue\n\n{REGISTER_PROFILE}\n<!-- clean-docs:purpose -->\n"
+        "Queue is a task runner for maintainers who need source-bound operating facts.\n"
+        "<!-- clean-docs:end purpose -->\n\n"
+        "**[Run the first task](docs/start.md)**\n\n"
+        "[Verification result](docs/result.md)\n\n"
+        "The source records each public command before the renderer builds the page for repository maintainers today. "
+        "The binding compares that source with the declared table during every repository check made by maintainers. "
+        "The gate then names the stale binding before the change can merge into the repository's protected branch.\n"
+    )
+    assert "sentence-variance" in {
+        finding.rule for finding in check_document("README.md", content, load_default_pack())
+    }
+
+    repaired = content.replace(
+        "The binding compares that source with the declared table during every repository check made by maintainers. ",
+        "The binding is the tripwire. ",
+    )
+    assert "sentence-variance" not in {
+        finding.rule for finding in check_document("README.md", repaired, load_default_pack())
+    }

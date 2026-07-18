@@ -25,6 +25,17 @@ def _pack_digest(pack: dict[str, Any]) -> str:
     return _digest(canonical)
 
 
+def _exemplar_asset(standard: Path) -> tuple[str, str]:
+    local = standard.parent / "src/clean_docs/standards/exemplars.md"
+    if local.exists():
+        text = local.read_text(encoding="utf-8")
+    else:
+        resource = resources.files("clean_docs").joinpath("standards/exemplars.md")
+        with resources.as_file(resource) as path:
+            text = path.read_text(encoding="utf-8")
+    return text, _digest(text)
+
+
 def _headings(lines: list[str]) -> list[dict[str, Any]]:
     result = []
     for line_number, line in enumerate(lines, start=1):
@@ -66,9 +77,33 @@ def _checklist(lines: list[str]) -> list[str]:
 
 
 def _mechanical_policy(text: str, checks: list[str]) -> dict[str, Any]:
-    length = re.search(r"docs >(?P<doc>\d+) lines and sections >(?P<section>\d+) lines", text)
-    if not length:
-        raise ConfigurationError("standard is missing document and section length limits")
+    length = re.search(
+        r"README pages over (?P<readme>\d+) lines and guides over (?P<guide>\d+) lines",
+        text,
+    )
+    section = re.search(r"A section over (?P<section>\d+) lines", text)
+    preamble = re.search(r"first (?P<preamble>\d+) lines", text)
+    nominalizations = re.search(
+        r"sentence with (?P<nominalizations>\w+) or more abstraction-suffix", text
+    )
+    qualifiers = re.search(r"gets at most (?P<qualifiers>\w+) `may`", text)
+    if not all((length, section, preamble, nominalizations, qualifiers)):
+        raise ConfigurationError(
+            "standard is missing page budgets, preamble window, or register thresholds"
+        )
+    number_words = {
+        "zero": 0,
+        "one": 1,
+        "two": 2,
+        "three": 3,
+        "four": 4,
+        "five": 5,
+    }
+    assert length is not None
+    assert section is not None
+    assert preamble is not None
+    assert nominalizations is not None
+    assert qualifiers is not None
     booster_check = next((check for check in checks if "booster adjectives" in check), None)
     if booster_check is None:
         raise ConfigurationError("standard is missing the booster-adjective check")
@@ -76,13 +111,40 @@ def _mechanical_policy(text: str, checks: list[str]) -> dict[str, Any]:
     if len(boosters) < 3:
         raise ConfigurationError("standard booster-adjective check has no usable registry")
     return {
-        "doc_max_lines": int(length.group("doc")),
-        "section_max_lines": int(length.group("section")),
+        "readme_max_lines": int(length.group("readme")),
+        "guide_max_lines": int(length.group("guide")),
+        "section_max_lines": int(section.group("section")),
+        "preamble_window_lines": int(preamble.group("preamble")),
+        "nominalization_threshold": number_words[nominalizations.group("nominalizations")],
+        "nominalization_allowlist": [
+            "documentation",
+            "application",
+            "section",
+            "configuration",
+        ],
+        "sentence_variance_min_words": 15,
+        "sentence_variance_max_words": 35,
+        "qualifier_threshold": number_words[qualifiers.group("qualifiers")],
+        "significance_phrases": [
+            "exactly the",
+            "the very",
+            "this demonstrates",
+            "deliberately",
+            "is itself",
+            "which is precisely",
+        ],
         "prohibited_boosters": boosters,
         "require_grounded_facts": any("factual claim" in check for check in checks),
         "require_definition_first": any("first screen defines" in check for check in checks),
         "require_one_job": any("one job" in check for check in checks),
         "require_purpose_contract": any("BLUF purpose contract" in check for check in checks),
+        "require_preamble_contract": any(
+            "first 15 lines contain the purpose" in check for check in checks
+        ),
+        "require_readme_routes": any("README routes decisions" in check for check in checks),
+        "require_depth_links": any(
+            "explanatory section over 80 words" in check for check in checks
+        ),
     }
 
 
@@ -108,6 +170,13 @@ def _style_contract(text: str, checks: list[str]) -> dict[str, Any]:
     if not any("subject-derived memorable element" in check for check in checks):
         raise ConfigurationError("standard checklist is missing bounded personality review")
     return {
+        "precedence": [
+            "truth and honesty",
+            "grounding",
+            "reader budget",
+            "register",
+            "warmth",
+        ],
         "voice": {
             "register": "helpful senior colleague",
             "reader_actions": "second person and imperative",
@@ -155,6 +224,7 @@ def compile_standard(path: Path) -> dict[str, Any]:
         raise ConfigurationError(f"standard is missing required tier heading(s): {', '.join(missing)}")
     checks = _checklist(lines)
     style = _style_contract(text, checks)
+    exemplars, exemplar_sha256 = _exemplar_asset(path)
     pack: dict[str, Any] = {
         "pack_version": PACK_VERSION,
         "profile": DEFAULT_PROFILE,
@@ -172,6 +242,9 @@ def compile_standard(path: Path) -> dict[str, Any]:
             "constraint": "Phrase only the supplied evidence and preserve its scope.",
             "voice": style["voice"],
             "purpose_contract": style["purpose_contract"],
+            "precedence": style["precedence"],
+            "exemplars": exemplars,
+            "exemplars_sha256": exemplar_sha256,
         },
     }
     pack["pack_sha256"] = _pack_digest(pack)

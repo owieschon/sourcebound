@@ -353,6 +353,15 @@ def test_hostile_model_context_is_filtered_and_cannot_change_gate_results(
     serialized = json.dumps(plan.as_dict(), sort_keys=True)
     prompt = json.loads(provider.last_prompt)
     assert prompt["standard"]["voice"]["register"] == "helpful senior colleague"
+    assert prompt["standard"]["precedence"] == [
+        "truth and honesty",
+        "grounding",
+        "reader budget",
+        "register",
+        "warmth",
+    ]
+    assert "A stale README keeps a straight face." in prompt["standard"]["exemplars"]
+    assert "The binding gives it a tripwire." in prompt["standard"]["exemplars"]
     assert prompt["standard"]["purpose_contract"]["judgment"] == [
         "defines the project-specific subject and intended operator",
         "names the consequential failure or decision the page addresses",

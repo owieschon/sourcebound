@@ -1,10 +1,10 @@
 # clean-docs decision log
 
+<!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
 Use this log when a current clean-docs behavior needs its design rationale or reversal path. It keeps consequential choices out of task docs so maintainers can change a decision without mistaking old process history for product truth.
 <!-- clean-docs:end purpose -->
 
-<!-- clean-docs:allow doc-length reason="Product decisions stay in one chronological canonical log" -->
 
 ## 1. Define the reader-facing surface by the repo's own index, not by filename alone (2026-07-12)
 

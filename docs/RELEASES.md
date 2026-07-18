@@ -1,5 +1,6 @@
 # Grounded release notes
 
+<!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
 Use this guide when release notes must describe the difference between two repository refs without trusting a narrative draft to choose the changes. It shows maintainers how to render the source-bound delta and reject prose that omits, alters, duplicates, or uncites a fact.
 <!-- clean-docs:end purpose -->

@@ -1,5 +1,6 @@
 # Evaluate documentation tasks
 
+<!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
 Use this guide when repository docs must prove that a person or agent can finish a declared task from published pages alone. It shows you how to build replayable evaluations and record a content-addressed result tied to the declared task.
 <!-- clean-docs:end purpose -->
@@ -55,7 +56,7 @@ tasks:
     scorer:
       type: cited-limit
       answer: The canonical limitation text
-      citation: README.md#current-limits
+      citation: README.md#current-boundaries
       forbidden: [unsupported inference]
 ```
 

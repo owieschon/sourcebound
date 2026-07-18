@@ -1,22 +1,25 @@
 # Postmortem: the README that lied
 
+<!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
 This case study is for maintainers whose documentation corpus feels polished but has lost a trustworthy reader path. It shows how one real repository separated current guidance from process exhaust, measured the result, and exposed which improvements still required human judgment.
 <!-- clean-docs:end purpose -->
+
+**[Inspect the archived before-and-after record](../archive/v0/ultra-csm-before-after.md)**.
+
+The [recorded result](../archive/v0/ultra-csm-before-after.md) supplies the measurements and
+examples rendered below.
 
 The repository did not have one spectacularly false page. It had a quieter failure: current
 guidance, superseded prompts, handoff notes, and authoring history all looked equally official.
 Nothing in the prose announced which layer a reader had entered.
 
-This is a recorded historical cleanup of `ultra-csm`, not a claim about that repository's current
-state. The typed record is derived from the archived before-and-after account at
-[`docs/archive/v0/ultra-csm-before-after.md`](../archive/v0/ultra-csm-before-after.md). clean-docs
-renders the tables below from that record.
+This is a historical cleanup of `ultra-csm`, not a claim about that repository's current state.
 
 ## What the scan found
 
-The first pass reported 280 findings across structure, duplication, length, provenance, and
-audience signals:
+The first pass reported 280 findings. It grouped them by structure, repeated text, length, source
+history, and intended reader:
 
 <!-- clean-docs:begin postmortem-measurements -->
 | measure | before | after |
@@ -33,7 +36,8 @@ audience signals:
 
 The count fell because the reader surface got smaller and the checker lost false positives. It did
 not fall because thresholds were loosened. The remaining findings were reviewed and justified in
-the source repository.
+the source repository. The [archived case](../archive/v0/ultra-csm-before-after.md) owns the
+complete record.
 
 ## Three changes did most of the work
 
@@ -55,13 +59,15 @@ them.
 
 The result was not tidier wording. It was a corpus whose paths had different meanings.
 
+The [archived case](../archive/v0/ultra-csm-before-after.md) preserves the full before-and-after
+page inventory behind these three changes.
+
 ## What the numbers do not prove
 
 A lower hygiene count does not prove that every sentence is accurate, helpful, or well taught.
-Several remaining findings were legitimate long references or shared concepts, and three reductions
+Several remaining findings were legitimate long references or shared concepts. Three reductions
 came from correcting the linter itself. The evidence supports a narrower claim: structural noise
-became measurable, most of it was removed from the current reader path, and the exceptions became
-explicit.
+became measurable, most of it left the current reader path, and the exceptions became explicit.
 
 That boundary matters. Corpus checks can find likely process exhaust, duplicate language, and
 misplaced provenance. A source binding is still required when a specific product claim must fail

@@ -1,0 +1,355 @@
+{
+  "schema": "clean-docs.audit-baseline.v1",
+  "findings": [
+    {
+      "fingerprint": "6f9461b4c8e21d7806ab4d1dd5515b59fe52540acfceae8caaf20bf2edb1d946",
+      "rule": "preamble-contract",
+      "path": "CLEAN_DOCS_SPEC.md",
+      "line": 1,
+      "detail": "put primary action, proof inside the first 15 lines"
+    },
+    {
+      "fingerprint": "e9eef59ea7a35e84f0a9334ab2664f1b3e3626f3d3757d7d7d815dbe6a40c71a",
+      "rule": "nominalization-density",
+      "path": "CLEAN_DOCS_SPEC.md",
+      "line": 5,
+      "detail": "replace clustered abstractions with actors and concrete verbs: version, implementation, acceptance"
+    },
+    {
+      "fingerprint": "87752d57286cc6f63bd00694e0fe265d3d243d527c04562e242096b9b8260a5c",
+      "rule": "assurance-dedup",
+      "path": "CLEAN_DOCS_SPEC.md",
+      "line": 68,
+      "detail": "link to docs/learn/deep-dive-the-deterministic-seam.md instead of restating this authority boundary"
+    },
+    {
+      "fingerprint": "d601e2e050c44f375f24b7aed3ed55c478cb53c14d89b852515b78a9e8329d8d",
+      "rule": "nominalization-density",
+      "path": "CLEAN_DOCS_SPEC.md",
+      "line": 169,
+      "detail": "replace clustered abstractions with actors and concrete verbs: enforcement, validation, extraction"
+    },
+    {
+      "fingerprint": "5266c28567c863555c19dbce8c206c0c1cff3a2df6d0d75f8c1d9ab6208cfae9",
+      "rule": "nominalization-density",
+      "path": "CLEAN_DOCS_SPEC.md",
+      "line": 395,
+      "detail": "replace clustered abstractions with actors and concrete verbs: judgment, audience, implementation"
+    },
+    {
+      "fingerprint": "098f5879d0bed39e6ffdfea3b0eca5d9bfb3a3e9021a40f9b719c1f330a2ba56",
+      "rule": "nominalization-density",
+      "path": "CLEAN_DOCS_SPEC.md",
+      "line": 492,
+      "detail": "replace clustered abstractions with actors and concrete verbs: version, preservation, version"
+    },
+    {
+      "fingerprint": "21a9c094d2b20e13d0530c8578b9bcab5a8e2fd9280b7d0e174a10a55d098fcd",
+      "rule": "assurance-dedup",
+      "path": "CLEAN_DOCS_SPEC.md",
+      "line": 865,
+      "detail": "link to docs/SECURITY_MODEL.md instead of restating this authority boundary"
+    },
+    {
+      "fingerprint": "49de3605bd65878c4054d9f65d2f2c7bd7f0d353ed7113457c0122cd2fd06808",
+      "rule": "preamble-contract",
+      "path": "DECISION_LOG.md",
+      "line": 1,
+      "detail": "put primary action, proof inside the first 15 lines"
+    },
+    {
+      "fingerprint": "28cfb5e09f33ae8b608d8ab19e64d80d9118d300ff8a887ce4726c76da1f0791",
+      "rule": "nominalization-density",
+      "path": "DECISION_LOG.md",
+      "line": 14,
+      "detail": "replace clustered abstractions with actors and concrete verbs: evidence, evidence, curation"
+    },
+    {
+      "fingerprint": "5593d6f23dc3463436607dd5cf377b7f428e7f9e16c39eb2fa605b1bc27c5e43",
+      "rule": "sentence-variance",
+      "path": "DECISION_LOG.md",
+      "line": 164,
+      "detail": "add one short sentence beat or combine claims that share evidence"
+    },
+    {
+      "fingerprint": "223a7d2096e799848b8b30220ed2bb0241e8b0b1141423b5aad91c629a0569ed",
+      "rule": "nominalization-density",
+      "path": "DECISION_LOG.md",
+      "line": 193,
+      "detail": "replace clustered abstractions with actors and concrete verbs: projection, selection, projection"
+    },
+    {
+      "fingerprint": "9d8ea9a759d4a43cdf1623e21ebf580cd80f5dc995e81e33e5cfbb060d2fc45f",
+      "rule": "nominalization-density",
+      "path": "DECISION_LOG.md",
+      "line": 218,
+      "detail": "replace clustered abstractions with actors and concrete verbs: projection, deployment, evaluation"
+    },
+    {
+      "fingerprint": "c505b3714cfa421f7887a7eb37e95bda91c3fd8178c6be2e501177f98254496f",
+      "rule": "nominalization-density",
+      "path": "DECISION_LOG.md",
+      "line": 238,
+      "detail": "replace clustered abstractions with actors and concrete verbs: omission, contradiction, violation, citation"
+    },
+    {
+      "fingerprint": "64d42ad522d69f698c83a8f4992873af3d377514abe50448026d0d2c2e40a8f4",
+      "rule": "nominalization-density",
+      "path": "DECISION_LOG.md",
+      "line": 255,
+      "detail": "replace clustered abstractions with actors and concrete verbs: extension, extension, evidence"
+    },
+    {
+      "fingerprint": "8f090ab315dd31b829d9fefcf117dc83f3d401113ffaf00508dc05fab576bb2d",
+      "rule": "sentence-variance",
+      "path": "DECISION_LOG.md",
+      "line": 255,
+      "detail": "add one short sentence beat or combine claims that share evidence"
+    },
+    {
+      "fingerprint": "f3c025cccd0302c74ec8d5e4f611c3beff19575d04b683ce2ea077195e9d91cf",
+      "rule": "nominalization-density",
+      "path": "DECISION_LOG.md",
+      "line": 305,
+      "detail": "replace clustered abstractions with actors and concrete verbs: presence, position, restatement, rejection, judgment"
+    },
+    {
+      "fingerprint": "c6d6ae2230f34a5cbc7169ae59140c771dcd2730e014e91682d902baefc02c13",
+      "rule": "sentence-variance",
+      "path": "DECISION_LOG.md",
+      "line": 324,
+      "detail": "add one short sentence beat or combine claims that share evidence"
+    },
+    {
+      "fingerprint": "8ada6cfd808886172d5e6c1097795681087a7e03584413e5c70c9e2f277abb19",
+      "rule": "preamble-contract",
+      "path": "SECURITY.md",
+      "line": 1,
+      "detail": "put primary action, proof inside the first 15 lines"
+    },
+    {
+      "fingerprint": "a4adbe0da760054fe8c12857307b463344a769ebd90598dc6974a5c07518b0b3",
+      "rule": "nominalization-density",
+      "path": "SECURITY.md",
+      "line": 25,
+      "detail": "replace clustered abstractions with actors and concrete verbs: execution, environment, isolation"
+    },
+    {
+      "fingerprint": "ed674edaec78013a93083de8da5b5977a82d6d5b178e7b8cb4bf02df4b7731de",
+      "rule": "preamble-contract",
+      "path": "STANDARD.md",
+      "line": 1,
+      "detail": "put primary action, proof inside the first 15 lines"
+    },
+    {
+      "fingerprint": "039da8e4966c4b90dbec9a24c429d40dce4421755462c83b0e698cb84d48d185",
+      "rule": "nominalization-density",
+      "path": "STANDARD.md",
+      "line": 46,
+      "detail": "replace clustered abstractions with actors and concrete verbs: decision, reference, qualification, evidence"
+    },
+    {
+      "fingerprint": "b16e570d1731a28ee9376220b1c94a236246c853d2efdeade60f3895054de16d",
+      "rule": "nominalization-density",
+      "path": "STANDARD.md",
+      "line": 205,
+      "detail": "replace clustered abstractions with actors and concrete verbs: sentence, definition, abstraction, sentence"
+    },
+    {
+      "fingerprint": "25f834b8d7c9f1a1e9b1ef99242845a73a5763fac74f9c5a41c1149f21ac5c07",
+      "rule": "nominalization-density",
+      "path": "STANDARD.md",
+      "line": 240,
+      "detail": "replace clustered abstractions with actors and concrete verbs: judgment, audience, implementation"
+    },
+    {
+      "fingerprint": "afca6bd43e660f4ed2dd661f44962070978559eef9a2d7f992fd0bab0cf6160f",
+      "rule": "prohibited-booster",
+      "path": "STANDARD.md",
+      "line": 351,
+      "detail": "remove 'comprehensive' or state the claim directly"
+    },
+    {
+      "fingerprint": "3745cf38bafdff4ecff7a401a8721c8618691a79e92453a572e882749f547d63",
+      "rule": "nominalization-density",
+      "path": "STANDARD.md",
+      "line": 378,
+      "detail": "replace clustered abstractions with actors and concrete verbs: nominalization, sentence, abstraction"
+    },
+    {
+      "fingerprint": "51baccdedbd47355039ec96cc4e85d16a90017bb29dc55f2379ed7d8a311282e",
+      "rule": "nominalization-density",
+      "path": "STANDARD.md",
+      "line": 381,
+      "detail": "replace clustered abstractions with actors and concrete verbs: sentence, variance, sentence"
+    },
+    {
+      "fingerprint": "ca166acaf89f1cbbefb43d39c25012235b68d4562ff7c37c44077bd0ceb54574",
+      "rule": "nominalization-density",
+      "path": "STANDARD.md",
+      "line": 383,
+      "detail": "replace clustered abstractions with actors and concrete verbs: assurance, deduplication, execution"
+    },
+    {
+      "fingerprint": "3342311118b077f2d7099f89399bfc725c8089862b938bc96549ef5fb439a765",
+      "rule": "significance-narration",
+      "path": "STANDARD.md",
+      "line": 385,
+      "detail": "replace 'exactly the' with the consequence for the reader"
+    },
+    {
+      "fingerprint": "a5f08cbeac227ca8bed815304e55b44624f77d357d5d5faa60540d6fcbaee122",
+      "rule": "nominalization-density",
+      "path": "STANDARD.md",
+      "line": 393,
+      "detail": "replace clustered abstractions with actors and concrete verbs: tension, precedence, resolution"
+    },
+    {
+      "fingerprint": "49174fa6ae3b36933c9c5f46c135fb5c89b9194924322e450c68dee5f778e5e8",
+      "rule": "nominalization-density",
+      "path": "STANDARD.md",
+      "line": 422,
+      "detail": "replace clustered abstractions with actors and concrete verbs: version, verification, reference"
+    },
+    {
+      "fingerprint": "58562f2d5c7aa2a3257b7ecda5eba1b7aaa35bc550ba8552bcc6f1c6d00701a1",
+      "rule": "nominalization-density",
+      "path": "STANDARD.md",
+      "line": 436,
+      "detail": "replace clustered abstractions with actors and concrete verbs: reference, decision, migration, distinction"
+    },
+    {
+      "fingerprint": "dabc03dfca2ca2dbb483ef3d085944c859b3b7c08b8fba2a1db51edb1cbd7f8b",
+      "rule": "nominalization-density",
+      "path": "STANDARD.md",
+      "line": 447,
+      "detail": "replace clustered abstractions with actors and concrete verbs: audience, selection, abstention, citation"
+    },
+    {
+      "fingerprint": "7417c68dd74a968d3003b1ee14f3708d7bc6065215fd330960dd8e82692996cc",
+      "rule": "nominalization-density",
+      "path": "STANDARD.md",
+      "line": 513,
+      "detail": "replace clustered abstractions with actors and concrete verbs: sentence, sentence, judgment"
+    },
+    {
+      "fingerprint": "2844f1933dbb0786ed4b44edac7812bb6e3661531ac3ada4969cc0bfc5039a6f",
+      "rule": "nominalization-density",
+      "path": "STANDARD.md",
+      "line": 616,
+      "detail": "replace clustered abstractions with actors and concrete verbs: verification, abstention, escalation"
+    },
+    {
+      "fingerprint": "d8146f042c0debf629b8af4506301ba2a2815191c113665c5a0556cf11b7e2eb",
+      "rule": "preamble-contract",
+      "path": "docs/CLI.md",
+      "line": 1,
+      "detail": "put primary action, proof inside the first 15 lines"
+    },
+    {
+      "fingerprint": "b9b072fa334c3a1d0f0f8a08ed88de3dee2a71f745e89782061688e1d1ebf690",
+      "rule": "preamble-contract",
+      "path": "docs/EVALUATION.md",
+      "line": 1,
+      "detail": "put primary action, proof inside the first 15 lines"
+    },
+    {
+      "fingerprint": "6a8745ff011c2d7cd0bcbb6c351fa44d1beea8434b99d86892d9dc19332e5c29",
+      "rule": "preamble-contract",
+      "path": "docs/EXTENSIONS.md",
+      "line": 1,
+      "detail": "put primary action, proof inside the first 15 lines"
+    },
+    {
+      "fingerprint": "5880c97f523091521d846d2f2e72c26527aff37ab26857394b3bdeaeb531c507",
+      "rule": "nominalization-density",
+      "path": "docs/EXTENSIONS.md",
+      "line": 26,
+      "detail": "replace clustered abstractions with actors and concrete verbs: version, operation, operation"
+    },
+    {
+      "fingerprint": "97eb8e97a37498071f2794cb75c3580f2291dfa0663abde9acd65ddb0d398178",
+      "rule": "nominalization-density",
+      "path": "docs/EXTENSIONS.md",
+      "line": 41,
+      "detail": "replace clustered abstractions with actors and concrete verbs: execution, environment, isolation"
+    },
+    {
+      "fingerprint": "9680635de32f3ae0bc0fed9ac6e82669f8e0a204474851010ba080e7c38ca483",
+      "rule": "nominalization-density",
+      "path": "docs/EXTENSIONS.md",
+      "line": 62,
+      "detail": "replace clustered abstractions with actors and concrete verbs: version, version, migration"
+    },
+    {
+      "fingerprint": "d83201fb5370137e476b94e3980a6e6d33e1a4d0cedc29fd9744bab36cb6d478",
+      "rule": "preamble-contract",
+      "path": "docs/RELEASES.md",
+      "line": 1,
+      "detail": "put proof inside the first 15 lines"
+    },
+    {
+      "fingerprint": "45ec263908fdf8e8a69629fb8f9c4b23c367e2ca6c55e26bfe3cc43c38735bfd",
+      "rule": "preamble-contract",
+      "path": "docs/SECURITY_MODEL.md",
+      "line": 1,
+      "detail": "put primary action, proof inside the first 15 lines"
+    },
+    {
+      "fingerprint": "acf1a7d3af1864262fd3eb746788a41ddfe9a622750ddda96213c4744e32557a",
+      "rule": "nominalization-density",
+      "path": "docs/SECURITY_MODEL.md",
+      "line": 29,
+      "detail": "replace clustered abstractions with actors and concrete verbs: evaluation, extraction, execution"
+    },
+    {
+      "fingerprint": "109a550fac2946e0b68a003435b1d7ac8f59b4cb2750a4c20d602df028430021",
+      "rule": "preamble-contract",
+      "path": "docs/SUPPORT.md",
+      "line": 1,
+      "detail": "put primary action, proof inside the first 15 lines"
+    },
+    {
+      "fingerprint": "72245a4de25768c05fa2b1e29948283c09a1a7b7809afc6528306c771462eade",
+      "rule": "nominalization-density",
+      "path": "docs/SUPPORT.md",
+      "line": 5,
+      "detail": "replace clustered abstractions with actors and concrete verbs: production, evidence, installation"
+    },
+    {
+      "fingerprint": "fadea785e983b3f916b28a6ead83e0be633ff12c7c6404808f9743a15a9aa263",
+      "rule": "assurance-dedup",
+      "path": "docs/SUPPORT.md",
+      "line": 19,
+      "detail": "link to docs/SECURITY_MODEL.md instead of restating this authority boundary"
+    },
+    {
+      "fingerprint": "eac19e1d886b7f68dab0ac63971bbe016737a2de118544780d05a27b0e69827d",
+      "rule": "sentence-variance",
+      "path": "docs/SUPPORT.md",
+      "line": 46,
+      "detail": "add one short sentence beat or combine claims that share evidence"
+    },
+    {
+      "fingerprint": "74df5cc02afe2da6fa9e3d62df5c56f946d5fbef7e62c3ae65dd515c923706ab",
+      "rule": "nominalization-density",
+      "path": "docs/SUPPORT.md",
+      "line": 62,
+      "detail": "replace clustered abstractions with actors and concrete verbs: migration, action, extraction"
+    },
+    {
+      "fingerprint": "7d768568c40ef4c8fef6b69c5002c5d48f158453da6a7c7a02320fb686803d7d",
+      "rule": "nominalization-density",
+      "path": "docs/SUPPORT.md",
+      "line": 119,
+      "detail": "replace clustered abstractions with actors and concrete verbs: attestation, execution, environment"
+    },
+    {
+      "fingerprint": "6a35d5fad474e444c59508ec5175620d8addb54c957a4094170e2370efb82e05",
+      "rule": "preamble-contract",
+      "path": "docs/SURFACE.md",
+      "line": 1,
+      "detail": "put primary action inside the first 15 lines"
+    }
+  ]
+}

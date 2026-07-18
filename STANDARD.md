@@ -1,10 +1,10 @@
 # Documentation style guide: clean, grounded developer docs
 
+<!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
 STANDARD.md is the canonical writing and documentation policy packaged with clean-docs. Use it when writing or reviewing repository documentation for people or agents: it prevents correct facts from becoming hard to find, easy to misread, or detached from source, and it defines how to choose the right medium, voice, canonical home, and evidence boundary for each claim.
 <!-- clean-docs:end purpose -->
 
-<!-- clean-docs:allow doc-length reason="The four documentation tiers form one canonical standard and must be evaluated together" -->
 <!-- clean-docs:allow audience reason="This standard names agent-workflow signals as policy examples rather than addressing an agent" -->
 
 Derived from a close reading of a developer-documentation corpus spanning overview,
@@ -31,6 +31,36 @@ clean-docs packages this file as its canonical default standard.
 
 A page is just this rule applied sentence by sentence. Reference pages look different from
 tutorials only because a reference reader looks-up more often than a tutorial reader orients.
+
+### The rule constitution
+
+Rules resolve in this order: **truth and honesty → grounding → reader budget → register → warmth**.
+A lower rule never degrades a higher one. A repair must not widen a claim beyond its evidence, drop
+a limitation, detach a receipt, or weaken the page's point to make a lower-priority check pass.
+
+Repositories adopt this register floor by adding
+`<!-- clean-docs:policy register-v2 -->` after the document title. The marker keeps migration
+explicit: an upgrade does not turn pre-existing prose into unrelated repair failures before its
+maintainers can baseline and rewrite the corpus.
+
+When two rules cannot both pass, move the detail one layer deeper before cutting it. Depth is the
+standard pressure valve: the overview keeps the decision and route, while a guide or reference page
+keeps the qualification, evidence, or schema. Delete only material that no reader layer needs.
+
+Mark an unavoidable loss instead of hiding it:
+
+```markdown
+<!-- clean-docs:yield rule="qualifier-density" to="truth-honesty"
+     reason="The sentence preserves two independent safety boundaries" -->
+```
+
+The reason names the winning rule and the fact that would otherwise be lost. A repeated yield at
+the same boundary means the threshold is wrong. Fix the rule instead of teaching the corpus to
+ignore it.
+
+Author all applicable rules before rewriting a page. Then make one whole-document repair against
+the complete battery and this precedence order. Sequential per-rule repair is forbidden because
+the last repair silently wins.
 
 ---
 
@@ -247,7 +277,6 @@ regex and can still be false. A mechanical pass never substitutes for that truth
 
 ## 5. Page shape by genre
 
-<!-- clean-docs:allow section-length reason="The genre contracts form one comparison set and splitting them would hide their boundaries" -->
 
 **Overview** (decide): plain definition and value → supported environments and essential capabilities
 → visual model where useful → routes to setup, concepts, and common jobs. It answers what this is,
@@ -316,12 +345,52 @@ corpus of individually-clean docs still sprawls. Each rule below is a check a re
   scale; this one catches it.
 - **Each section leads with its takeaway in one sentence, then supports it or is cut.** A
   section whose takeaway is "see the table" means the prose should *be* the table.
-- **Length forces a justification.** A section over ~40 lines splits or states in its first
-  line why it stays whole; a doc over ~120 lines justifies being one file. Name the doc's one
-  job in its first line; content serving a second job links out. This is the only check that
-  bites a 300-line dossier of individually-tight sentences.
+- **Length forces depth.** README pages over 90 lines and guides over 150 lines fail. Reference
+  pages are exempt because lookup tables are their content. A section over 40 lines moves its
+  second job behind a link. A length allowance is a subtraction receipt naming what moved, split,
+  or was cut; "comprehensive" and "keeps everything together" are not reasons.
 - **Prefer the denser medium.** An inline 3-to-7-item enumeration (vendor classes, data
   sources, tested dimensions) is a table or list, not a sentence.
+
+### Put the point, action, and proof on the first screen
+
+The first 15 lines of a reader-facing page contain three things: the marked purpose prose, the
+primary action, and one proof. The action is a runnable command or a bold route to the next task.
+The proof is a receipt or result link, a badge, or a verification command. A reader who stops there
+can answer what this is, what to do first, and how to know it worked.
+
+The README is a hub, not a warehouse. It owns the point, first action, proof, and a routing table.
+Reference facts, schemas, and configuration examples longer than 12 lines live on reference pages.
+An explanatory section over 80 words links to the deeper page that owns its detail. Link to the
+canonical home instead of making the overview carry both the decision and its appendix.
+
+Use this routing-table shape:
+
+| If you need to... | Start with | You will leave with... |
+| --- | --- | --- |
+| Reach a first verified result | A focused tutorial | A working baseline and its proof |
+| Look up exact behavior | The reference | The current command, schema, or boundary |
+
+### Keep the register concrete
+
+The deterministic register floor catches five repeatable failures:
+
+1. **Nominalization density.** A reader-facing sentence with three or more abstraction-suffix
+   tokens (`-tion`, `-sion`, `-ment`, `-ance`, `-ence`, `-ivity`) fails after the narrow allowlist
+   for `documentation`, `application`, `section`, and `configuration`.
+2. **Sentence variance.** A paragraph of at least three sentences fails when every sentence is
+   15-35 words. Give the reader one short beat.
+3. **Assurance deduplication.** Each authority or execution boundary has one canonical home.
+   Overview pages link to it instead of repeating it.
+4. **Significance narration.** Cut "exactly the", "the very", "this demonstrates",
+   "deliberately", "is itself", and "which is precisely" when the page praises its own system.
+   State the consequence instead.
+5. **Qualifier density.** Overview and learning prose gets at most two `may`, `only`, `unless`,
+   or `except` guards in one sentence. Limits and security sections are exempt because guarding is
+   their job.
+
+These are diagnostics, not a license to flatten honest prose. The constitution decides every
+collision. Each rule ships with a tension fixture that pins the precedence-correct resolution.
 
 ### Give the corpus a navigation contract
 
@@ -343,7 +412,6 @@ Treat each path as a contract:
 
 ### One source, purpose-built projections
 
-<!-- clean-docs:allow section-length reason="The dual-audience contract keeps canonical-source, teaching, retrieval, authority, and evaluation requirements together because they govern one projection system" -->
 
 The documentation corpus is a maintained teaching system, not a pile of readable files. Encode
 meaning once, then project it for the audience's task. A human surface may use progressive
@@ -479,10 +547,22 @@ customer emails." No amount of voice or structure work catches that; only ground
 
 ## 8. Pre-publish checklist
 
-<!-- clean-docs:allow section-length reason="The checklist is the executable review surface for every tier of this standard" -->
 
 Run this against any doc before shipping. Each line is a fail/pass check.
 
+- [ ] The first 15 lines contain the purpose, a primary action, and one proof.
+- [ ] The README is at most 90 lines, a guide is at most 150 lines, and reference material lives
+      on a reference page instead of using a comprehensiveness allowance.
+- [ ] The README routes decisions, first tasks, concepts, and lookup work through an
+      `If you need to... | Start with | You will leave with...` table.
+- [ ] Each explanatory section over 80 words links to the deeper page that owns its detail.
+- [ ] No reader-facing sentence crosses the nominalization, significance-narration, or scoped
+      qualifier-density thresholds.
+- [ ] Paragraph rhythm includes a short sentence when three or more sentences would otherwise all
+      land between 15 and 35 words.
+- [ ] Authority and execution assurances have one canonical home; overview pages link there.
+- [ ] A rule collision resolves by truth, grounding, budget, register, then warmth; any unavoidable
+      loss has an explicit yield naming the winning rule.
 - [ ] Every code block has a prose lead-in ending in `:` and (where useful) a follow-up.
 - [ ] No table encodes precedence or an ordering rule; those are prose or numbered lists.
 - [ ] Every comparison table's columns are the reader's actual questions; ordered logic stays

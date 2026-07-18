@@ -21,7 +21,7 @@ def test_public_first_screen_defines_the_product_and_routes_to_learning() -> Non
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     purpose = readme.index("<!-- clean-docs:purpose -->")
     badges = readme.index("[![CI]")
-    start = readme.index("**[Start here]")
+    start = readme.index("**[Install clean-docs and catch your first stale claim]")
     detail = readme.index("## Why clean-docs exists")
 
     assert purpose < badges < start < detail
@@ -64,18 +64,21 @@ def test_learning_surface_contains_only_the_index_and_three_lessons() -> None:
     ]
     for path in LEARN.iterdir():
         text = path.read_text(encoding="utf-8")
-        assert text.splitlines()[2] == "<!-- clean-docs:purpose -->"
+        lines = text.splitlines()
+        assert lines[2] == "<!-- clean-docs:policy register-v2 -->"
+        assert lines[3] == "<!-- clean-docs:purpose -->"
 
 
 def test_learning_index_routes_each_reader_job_without_copying_reference() -> None:
     index = (LEARN / "index.md").read_text(encoding="utf-8")
+    routing_table = index.split("| If you need to...", 1)[1]
     ordered = (
         "../../README.md",
         "tutorial-catch-a-lying-doc.md",
         "postmortem-the-readme-that-lied.md",
         "deep-dive-the-deterministic-seam.md",
     )
-    positions = [index.index(path) for path in ordered]
+    positions = [routing_table.index(path) for path in ordered]
     assert positions == sorted(positions)
     assert "../CLI.md" in index
     assert "../SUPPORT.md" in index
@@ -197,7 +200,7 @@ def test_additive_learning_corpus_passes_audit_projection_and_links() -> None:
     test_llms_projection_contains_every_learning_page()
     for document in LEARN.iterdir():
         text = document.read_text(encoding="utf-8")
-        assert len(text.splitlines()) <= 120
+        assert len(text.splitlines()) <= 150
     for command in (
         [sys.executable, "-m", "clean_docs", "--root", str(ROOT), "audit"],
         [sys.executable, "-m", "clean_docs", "--root", str(ROOT), "project", "--check"],

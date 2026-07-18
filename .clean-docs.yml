@@ -25,7 +25,7 @@ bindings:
     renderer: markdown-fragment
   - id: supported-bindings
     type: region
-    doc: README.md
+    doc: docs/REFERENCE.md
     region: supported-bindings
     extractor: python-literal
     source:
@@ -45,7 +45,7 @@ bindings:
     columns: [command, job, writes, example]
   - id: manifest-reference
     type: region
-    doc: README.md
+    doc: docs/REFERENCE.md
     region: manifest-reference
     extractor: python-literal
     source:
@@ -147,6 +147,7 @@ projections:
       - docs/EVALUATION.md
       - docs/EXTENSIONS.md
       - docs/RELEASES.md
+      - docs/REFERENCE.md
       - docs/SECURITY_MODEL.md
       - docs/SUPPORT.md
       - docs/SURFACE.md

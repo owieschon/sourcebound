@@ -1,8 +1,14 @@
 # Deep dive: the deterministic seam
 
+<!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
-This explanation is for maintainers deciding where model judgment may enter a documentation pipeline without weakening its gate. It separates evidence selection, prose phrasing, repository writes, and pass or fail authority so you can inspect the boundary in both the architecture and the implementation.
+This explanation is for maintainers deciding where a model may enter a documentation pipeline without weakening its gate. It shows who selects facts, phrases prose, writes files, and decides pass or fail, so you can inspect each boundary in the architecture and code.
 <!-- clean-docs:end purpose -->
+
+**[Run the drift tutorial](tutorial-catch-a-lying-doc.md)** to see the boundary fail and recover.
+
+The final check produces a [verification result](../SUPPORT.md#record-local-outcomes) whose
+`"ok"` field is `true`.
 
 The short version is mechanical: a model may choose a fact identifier and an allowlisted template,
 but deterministic code renders the sentence and keeps the keys. Facts enter from declared evidence,
@@ -22,7 +28,7 @@ same route through typed results.
 
 This is the first side of the seam: source configuration selects which facts exist. A model does not
 discover an extra capability, widen the selected repository scope, or turn an unsupported surface
-into an accepted claim.
+into an accepted claim. The [manifest page](../REFERENCE.md) owns the supported binding surface.
 
 ## Phrasing boundary
 
@@ -31,9 +37,10 @@ exist. Its prompt exposes an allowlist of prose templates and asks for fact iden
 names, not open-ended product copy. The parser rejects unknown facts, duplicate facts, unsupported
 templates, malformed responses, and more than five drafts.
 
-The deterministic renderer turns the returned fact/template selection into a presentation of supplied evidence. It is not evidence. If the
-provider fails, the operation stops before a repository write. The [security model](../SECURITY_MODEL.md)
-defines the surrounding process and host boundaries without duplicating them here.
+The deterministic renderer turns the selected fact and template into prose. That prose is not a
+source. If the provider fails, the operation stops before a repository write. The
+[security model](../SECURITY_MODEL.md) defines the surrounding process and host boundaries without
+duplicating them here.
 
 ## Gate authority
 

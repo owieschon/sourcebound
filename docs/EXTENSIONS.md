@@ -1,5 +1,6 @@
 # Extension API
 
+<!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
 Use this reference when first-party adapters cannot cover a repository surface and you need an external extractor, discoverer, renderer, or policy check. It gives plugin authors the versioned process protocol and isolation boundary required to add evidence without taking control of facts or coverage.
 <!-- clean-docs:end purpose -->

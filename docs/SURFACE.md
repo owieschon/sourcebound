@@ -1,5 +1,6 @@
 # Detected repository surface
 
+<!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
 Use this reference when deciding whether clean-docs directly documents a detected source locator or only tracks it through the repository catalog. It prevents catalog coverage from being mistaken for a source-specific reader claim and gives maintainers the current detected surface behind the coverage receipt.
 <!-- clean-docs:end purpose -->

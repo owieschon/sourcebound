@@ -17,12 +17,31 @@ def _repo(tmp_path: Path) -> Path:
     return root
 
 
-def _track(root: Path) -> None:
+def _track(root: Path, *, allow_readme_routing: bool = True) -> None:
     for path in root.rglob("*.md"):
         content = path.read_text()
         if len([line for line in content.splitlines() if line.strip()]) == 1:
             content = content.rstrip() + f"\n\nUse {path.stem} when its repository details are required.\n"
-        path.write_text(ensure_purpose_contract(content, fallback=True))
+        content = ensure_purpose_contract(content, fallback=True)
+        if "clean-docs:allow preamble-contract" not in content:
+            content = content.replace(
+                "\n",
+                '\n<!-- clean-docs:allow preamble-contract '
+                'reason="Fixture isolates a different audit rule" -->\n',
+                1,
+            )
+        if (
+            path.name == "README.md"
+            and allow_readme_routing
+            and "clean-docs:allow readme-routing" not in content
+        ):
+            content = content.replace(
+                "\n",
+                '\n<!-- clean-docs:allow readme-routing '
+                'reason="Fixture isolates a different audit rule" -->\n',
+                1,
+            )
+        path.write_text(content)
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
 
 
@@ -47,7 +66,7 @@ def test_archive_and_reasoned_length_allowance_are_explicit(tmp_path: Path) -> N
     archive.mkdir(parents=True)
     (archive / "REPORT.md").write_text("# Historical report\n")
     long_doc = "# Reference\n\n" + (
-        '<!-- clean-docs:allow doc-length reason="Canonical generated reference stays whole" -->\n'
+        '<!-- clean-docs:allow doc-length reason="Lookup rows moved to the generated reference" -->\n'
     ) + "\n".join(f"line {index}" for index in range(130))
     (root / "REFERENCE.md").write_text(long_doc)
     _track(root)
@@ -56,6 +75,82 @@ def test_archive_and_reasoned_length_allowance_are_explicit(tmp_path: Path) -> N
 
     assert report.findings == ()
     assert report.ignored_documents == ("docs/archive/REPORT.md",)
+
+
+def test_comprehensiveness_is_not_a_length_allowance(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    body = "\n".join(f"line {index}" for index in range(160))
+    (root / "GUIDE.md").write_text(
+        "# Guide\n\n"
+        '<!-- clean-docs:allow doc-length reason="Everything stays together for completeness" -->\n'
+        f"{body}\n"
+    )
+    _track(root)
+
+    assert "invalid-length-allowance" in {
+        finding.rule for finding in audit(root).findings
+    }
+
+
+def test_readme_budget_and_reference_exemption_resolve_by_depth(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    readme = (
+        "# Project\n\n"
+        "<!-- clean-docs:policy register-v2 -->\n"
+        '<!-- clean-docs:allow preamble-contract reason="Fixture isolates the page budget" -->\n'
+        + "\n".join(f"overview line {index}" for index in range(95))
+    )
+    reference = "# Reference\n\n" + "\n".join(
+        f"| key-{index} | value-{index} |" for index in range(180)
+    )
+    (root / "README.md").write_text(readme)
+    (root / "REFERENCE.md").write_text(reference)
+    _track(root)
+
+    findings = audit(root).findings
+
+    assert any(item.rule == "doc-length" and item.path == "README.md" for item in findings)
+    assert not any(item.rule == "doc-length" and item.path == "REFERENCE.md" for item in findings)
+
+
+def test_readme_requires_routing_and_moves_large_reference_blocks(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    block = "\n".join(f"key_{index}: value" for index in range(13))
+    (root / "README.md").write_text(
+        "# Project\n\n"
+        "<!-- clean-docs:policy register-v2 -->\n"
+        '<!-- clean-docs:allow preamble-contract reason="Fixture isolates reference depth" -->\n'
+        "<!-- clean-docs:purpose -->\n"
+        "Project maps repository facts for maintainers who must catch stale documentation.\n"
+        "<!-- clean-docs:end purpose -->\n"
+        "```yaml\n"
+        f"{block}\n"
+        "```\n"
+    )
+    _track(root, allow_readme_routing=False)
+
+    rules = {finding.rule for finding in audit(root).findings}
+
+    assert {"readme-routing", "readme-reference-depth"} <= rules
+
+
+def test_assurance_dedup_points_to_the_canonical_boundary(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    canonical = root / "docs/learn/deep-dive-the-deterministic-seam.md"
+    canonical.parent.mkdir(parents=True)
+    canonical.write_text(
+        "# Boundary\n\nDeterministic code owns the gate result in this canonical explanation.\n"
+    )
+    (root / "README.md").write_text(
+        "# Project\n\n<!-- clean-docs:policy register-v2 -->\n"
+        "Deterministic code owns the gate result in this overview.\n"
+    )
+    _track(root)
+
+    assert any(
+        finding.rule == "assurance-dedup" and finding.path == "README.md"
+        for finding in audit(root).findings
+    )
 
 
 def test_audit_runs_corpus_rules_and_accepts_named_reasoned_allowances(tmp_path: Path) -> None:
@@ -71,13 +166,18 @@ def test_audit_runs_corpus_rules_and_accepts_named_reasoned_allowances(tmp_path:
     report = audit(root)
 
     assert [(finding.rule, finding.line) for finding in report.findings] == [
-        ("provenance", 8),
+        ("provenance", 9),
     ]
 
 
 def test_audit_requires_the_purpose_contract_before_body_content(tmp_path: Path) -> None:
     root = _repo(tmp_path)
-    (root / "README.md").write_text("# Project\n\nBody content arrives first.\n")
+    (root / "README.md").write_text(
+        "# Project\n"
+        '<!-- clean-docs:allow preamble-contract reason="Fixture isolates purpose policy" -->\n'
+        '<!-- clean-docs:allow readme-routing reason="Fixture isolates purpose policy" -->\n\n'
+        "Body content arrives first.\n"
+    )
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
 
     report = audit(root)
@@ -90,14 +190,17 @@ def test_audit_requires_the_purpose_contract_before_body_content(tmp_path: Path)
 def test_audit_applies_sentence_policy_to_reader_documents(tmp_path: Path) -> None:
     root = _repo(tmp_path)
     (root / "README.md").write_text(
-        "# Project\n\n<!-- clean-docs:purpose -->\n"
+        "# Project\n"
+        '<!-- clean-docs:allow preamble-contract reason="Fixture isolates booster policy" -->\n'
+        '<!-- clean-docs:allow readme-routing reason="Fixture isolates booster policy" -->\n\n'
+        "<!-- clean-docs:purpose -->\n"
         "Use this page when source claims can drift. It gives maintainers a checked repair path.\n"
         "<!-- clean-docs:end purpose -->\n\nA powerful workflow.\n"
     )
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
 
     assert [(finding.rule, finding.line) for finding in audit(root).findings] == [
-        ("prohibited-booster", 7),
+        ("prohibited-booster", 9),
     ]
 
 
@@ -147,6 +250,21 @@ def test_hidden_configuration_markdown_is_not_reader_documentation(tmp_path: Pat
     assert report.ok
     assert report.documents == ("README.md",)
     assert report.ignored_documents == (".agent/commands/STATUS.md",)
+
+
+def test_packaged_standard_assets_are_not_reader_documents(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    asset = root / "src/clean_docs/standards/exemplars.md"
+    asset.parent.mkdir(parents=True)
+    asset.write_text("# Prompt exemplars\n\nInternal before and after pairs.\n")
+    (root / "README.md").write_text("# Project\n")
+    _track(root)
+
+    report = audit(root)
+
+    assert report.ok
+    assert report.documents == ("README.md",)
+    assert report.ignored_documents == ()
 
 
 def test_fixture_markdown_and_ambiguous_operational_names_are_not_process_history(

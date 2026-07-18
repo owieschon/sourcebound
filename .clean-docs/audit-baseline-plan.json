@@ -1,0 +1,37 @@
+{
+  "schema": "clean-docs.audit-baseline-plan.v1",
+  "recorded_at": "2026-07-18",
+  "purpose": "Track the subtraction move for pre-existing register findings outside the README, learning, and reference proof case.",
+  "rules": [
+    {
+      "rule": "preamble-contract",
+      "count": 11,
+      "resolution": "Move each page's primary action and proof into its first 15 lines. Move secondary setup behind a link."
+    },
+    {
+      "rule": "nominalization-density",
+      "count": 30,
+      "resolution": "Name the actor and concrete verb during the next whole-document pass. Keep technical terms that carry the fact."
+    },
+    {
+      "rule": "sentence-variance",
+      "count": 4,
+      "resolution": "Add a short sentence beat or combine claims that share one receipt."
+    },
+    {
+      "rule": "assurance-dedup",
+      "count": 3,
+      "resolution": "Keep authority claims in the deterministic-seam or security page and replace copies with links."
+    },
+    {
+      "rule": "significance-narration",
+      "count": 1,
+      "resolution": "Replace self-narration with the consequence for the reader."
+    },
+    {
+      "rule": "prohibited-booster",
+      "count": 1,
+      "resolution": "State the coverage claim directly or delete it."
+    }
+  ]
+}

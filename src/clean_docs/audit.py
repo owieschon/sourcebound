@@ -9,7 +9,7 @@ from pathlib import Path
 
 from clean_docs.corpus import scan_corpus
 from clean_docs.errors import ConfigurationError
-from clean_docs.policy import check_document
+from clean_docs.policy import REGISTER_PROFILE, check_document
 from clean_docs.regions import atomic_write
 from clean_docs.residue import scan_residue
 from clean_docs.standard import load_default_pack
@@ -140,12 +140,15 @@ def _tracked_markdown(root: Path) -> list[Path]:
             if line
             and (root / (relative := Path(line))).is_file()
             and relative.parts[:2] != ("tests", "fixtures")
+            and relative.parts[:3] != ("src", "clean_docs", "standards")
             and ".fixture." not in relative.name.lower()
         ]
     return sorted(
         path.relative_to(root)
         for path in root.rglob("*.md")
-        if ".git" not in path.parts and ".fixture." not in path.name.lower()
+        if ".git" not in path.parts
+        and path.parts[-4:-1] != ("src", "clean_docs", "standards")
+        and ".fixture." not in path.name.lower()
     )
 
 
@@ -156,6 +159,14 @@ def _allowances(lines: list[str]) -> set[str]:
         if match and len(match.group(2).strip()) >= 12:
             allowed.add(match.group(1))
     return allowed
+
+
+def _allowance_records(lines: list[str]) -> list[tuple[int, str, str]]:
+    records: list[tuple[int, str, str]] = []
+    for line_number, line in enumerate(lines, start=1):
+        if match := ALLOW.search(line):
+            records.append((line_number, match.group(1), match.group(2).strip()))
+    return records
 
 
 def _section_ranges(lines: list[str]) -> list[tuple[str, int, int, set[str]]]:
@@ -175,13 +186,172 @@ def _local_link(target: str) -> bool:
     return not target.startswith(("#", "http://", "https://", "mailto:"))
 
 
+def _outside_fences(lines: list[str]) -> list[tuple[int, str]]:
+    result: list[tuple[int, str]] = []
+    in_fence = False
+    for line_number, line in enumerate(lines, start=1):
+        if line.startswith("```"):
+            in_fence = not in_fence
+            continue
+        if not in_fence:
+            result.append((line_number, line))
+    return result
+
+
+def _page_type(relative: Path, text: str) -> str:
+    name = relative.name.upper()
+    if relative.name == "README.md":
+        return "readme"
+    if (
+        "REFERENCE" in name
+        or name in {
+            "STANDARD.MD",
+            "CLEAN_DOCS_SPEC.MD",
+            "DECISION_LOG.MD",
+            "CLI.MD",
+            "RELEASES.MD",
+            "SURFACE.MD",
+        }
+        or text.lstrip().lower().startswith("# reference")
+    ):
+        return "reference"
+    return "guide"
+
+
+def _section_depth_findings(
+    normalized: str,
+    lines: list[str],
+    *,
+    require_routes: bool,
+    require_depth_links: bool,
+) -> list[AuditFinding]:
+    findings: list[AuditFinding] = []
+    text = "\n".join(lines)
+    if REGISTER_PROFILE not in text:
+        return findings
+    allowances = _allowances(lines)
+    if (
+        require_routes
+        and normalized == "README.md"
+        and "readme-routing" not in allowances
+    ):
+        if not all(
+            marker in text
+            for marker in ("If you need to", "Start with", "You will leave with")
+        ):
+            findings.append(AuditFinding(
+                "readme-routing",
+                normalized,
+                1,
+                "add the required job-to-page routing table near the first action",
+            ))
+        in_fence = False
+        fence_start = 0
+        for line_number, line in enumerate(lines, start=1):
+            if line.startswith("```"):
+                if in_fence and line_number - fence_start > 13:
+                    findings.append(AuditFinding(
+                        "readme-reference-depth",
+                        normalized,
+                        fence_start,
+                        "move configuration or schema examples over 12 lines to a reference page",
+                    ))
+                else:
+                    fence_start = line_number
+                in_fence = not in_fence
+        table_start = 0
+        table_lines = 0
+        for line_number, line in enumerate([*lines, ""], start=1):
+            if line.startswith("|"):
+                if table_lines == 0:
+                    table_start = line_number
+                table_lines += 1
+            else:
+                if table_lines > 14:
+                    findings.append(AuditFinding(
+                        "readme-reference-depth",
+                        normalized,
+                        table_start,
+                        "move lookup tables over 12 data rows to a reference page",
+                    ))
+                table_lines = 0
+    if (
+        require_depth_links
+        and "elaboration-depth" not in allowances
+        and (normalized == "README.md" or normalized.startswith("docs/learn/"))
+    ):
+        for title, section_line, _count, _allowances_for_section in _section_ranges(lines):
+            start = section_line - 1
+            following = [
+                index
+                for index, line in enumerate(lines[start + 1:], start=start + 1)
+                if HEADING.match(line)
+            ]
+            end = following[0] if following else len(lines)
+            body = "\n".join(lines[start + 1:end])
+            words = re.findall(r"\b[\w'-]+\b", re.sub(r"`[^`]+`", "", body))
+            deeper_link = any(
+                target.split("#", 1)[0].endswith((".md", "/"))
+                for target in LINK.findall(body)
+            )
+            if len(words) > 80 and not deeper_link:
+                findings.append(AuditFinding(
+                    "elaboration-depth",
+                    normalized,
+                    section_line,
+                    f"{title!r} has {len(words)} words without a deeper-page route",
+                ))
+    return findings
+
+
+def _assurance_findings(documents: dict[str, str]) -> list[AuditFinding]:
+    rules = (
+        (
+            "model-authority",
+            "docs/learn/deep-dive-the-deterministic-seam.md",
+            re.compile(
+                r"(?:deterministic code.{0,80}(?:owns|decides)|"
+                r"models? may select|models?.{0,80}(?:cannot|never).{0,40}gate)",
+                re.I,
+            ),
+        ),
+        (
+            "execution-boundary",
+            "docs/SECURITY_MODEL.md",
+            re.compile(
+                r"(?:does not (?:execute|revoke)|without (?:importing|executing) "
+                r"(?:repository|target) code)",
+                re.I,
+            ),
+        ),
+    )
+    findings: list[AuditFinding] = []
+    for _boundary, canonical, pattern in rules:
+        for doc, text in documents.items():
+            if (
+                doc == canonical
+                or REGISTER_PROFILE not in text
+                or "assurance-dedup" in _allowances(text.splitlines())
+            ):
+                continue
+            for line_number, line in _outside_fences(text.splitlines()):
+                if pattern.search(line):
+                    findings.append(AuditFinding(
+                        "assurance-dedup",
+                        doc,
+                        line_number,
+                        f"link to {canonical} instead of restating this authority boundary",
+                    ))
+    return findings
+
+
 def _scan_audit(root: Path) -> AuditReport:
     root = root.resolve()
     pack = load_default_pack()
-    doc_limit = int(pack["policy"]["doc_max_lines"])
     section_limit = int(pack["policy"]["section_max_lines"])
     active: list[str] = []
     ignored: list[str] = []
+    active_texts: dict[str, str] = {}
     findings: list[AuditFinding] = []
     for relative in _tracked_markdown(root):
         normalized = relative.as_posix()
@@ -196,6 +366,7 @@ def _scan_audit(root: Path) -> AuditReport:
             findings.append(AuditFinding("unreadable-document", normalized, 1, str(exc)))
             continue
         lines = text.splitlines()
+        active_texts[normalized] = text
         allowances = _allowances(lines)
         findings.extend(
             AuditFinding(item.rule, item.doc, item.line, item.detail)
@@ -208,21 +379,49 @@ def _scan_audit(root: Path) -> AuditReport:
                 1,
                 "move process history under an archive directory",
             ))
-        if len(lines) > doc_limit and "doc-length" not in allowances:
+        page_type = _page_type(relative, text)
+        doc_limit = (
+            int(pack["policy"]["readme_max_lines"])
+            if page_type == "readme"
+            else int(pack["policy"]["guide_max_lines"])
+        )
+        for allowance_line, rule, reason in _allowance_records(lines):
+            if rule in {"doc-length", "section-length"} and not re.search(
+                r"\b(?:cut|moved|split|linked|reference)\b", reason, re.I
+            ):
+                findings.append(AuditFinding(
+                    "invalid-length-allowance",
+                    normalized,
+                    allowance_line,
+                    "replace comprehensiveness rationale with a subtraction receipt",
+                ))
+        if (
+            page_type != "reference"
+            and len(lines) > doc_limit
+            and "doc-length" not in allowances
+        ):
             findings.append(AuditFinding(
                 "doc-length",
                 normalized,
                 1,
-                f"{len(lines)} lines exceeds {doc_limit}; split it or add a reasoned allowance",
+                f"{len(lines)} lines exceeds the {page_type} budget of {doc_limit}; move a second job behind a link",
             ))
         for title, section_line, count, section_allowances in _section_ranges(lines):
             if count > section_limit and "section-length" not in section_allowances:
+                if page_type == "reference":
+                    continue
                 findings.append(AuditFinding(
                     "section-length",
                     normalized,
                     section_line,
-                    f"{title!r} is {count} lines; split it or add a reasoned allowance",
+                    f"{title!r} is {count} lines; move its second job behind a link",
                 ))
+        findings.extend(_section_depth_findings(
+            normalized,
+            lines,
+            require_routes=bool(pack["policy"].get("require_readme_routes")),
+            require_depth_links=bool(pack["policy"].get("require_depth_links")),
+        ))
         for line_number, document_line in enumerate(lines, start=1):
             for match in LINK.finditer(document_line):
                 target = match.group(1).split("#", 1)[0].replace("%20", " ")
@@ -233,6 +432,7 @@ def _scan_audit(root: Path) -> AuditReport:
                         line_number,
                         f"target does not exist: {target}",
                     ))
+    findings.extend(_assurance_findings(active_texts))
     corpus_rule_names = {
         "surface": "process-artifact",
         "audience": "audience",
@@ -241,17 +441,17 @@ def _scan_audit(root: Path) -> AuditReport:
         "restatement": "restatement",
     }
     for corpus_finding in scan_corpus(root, include_lengths=False):
-        rule = corpus_rule_names.get(corpus_finding.rule)
-        if rule is None:
+        corpus_rule = corpus_rule_names.get(corpus_finding.rule)
+        if corpus_rule is None:
             continue
         try:
             text = (root / corpus_finding.doc).read_text(encoding="utf-8")
         except OSError:
             continue
-        if rule in _allowances(text.splitlines()):
+        if corpus_rule in _allowances(text.splitlines()):
             continue
         candidate = AuditFinding(
-            rule,
+            corpus_rule,
             corpus_finding.doc,
             corpus_finding.line,
             corpus_finding.detail,

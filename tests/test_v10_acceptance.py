@@ -382,6 +382,7 @@ def test_independent_reader_release_requires_receipts_and_published_tasks_work(
             ".git",
             ".venv",
             ".pytest_cache",
+            ".claude",
             "README_ACCESSIBILITY_TEST.md",
         ),
     )

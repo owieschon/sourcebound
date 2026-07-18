@@ -1,9 +1,9 @@
 # Support and lifecycle
 
+<!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
 Use this guide when adopting, upgrading, rolling back, diagnosing, or requesting help for clean-docs. It prevents unsupported assumptions from entering a production gate and gives operators the exact compatibility, evidence, and recovery procedures for a supported installation.
 <!-- clean-docs:end purpose -->
-<!-- clean-docs:allow doc-length reason="One canonical lifecycle guide keeps adoption and recovery procedures together" -->
 ## Supported environments
 
 | Surface | Supported contract |

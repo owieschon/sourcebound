@@ -2,21 +2,12 @@
 
 PRODUCT_OVERVIEW = (
     "A stale sentence does not fail loudly. It keeps a straight face after the code has moved on, "
-    "leaving reviewers no mechanical way to know which claim became false. Human review and "
-    "general-purpose agents can improve wording, but neither makes the relationship between a "
-    "claim and its source reproducible in CI.\n\n"
-    "clean-docs exists to make that relationship explicit. Source owns the facts; the packaged "
-    "standard owns their form. clean-docs audits tracked "
-    "Markdown, binds claims to source evidence, repairs declared regions, and fails CI when "
-    "either the facts or the documentation contract drift.\n\n"
-    "Static adapters cover Python, TypeScript, OpenAPI, JSON Schema, package metadata, and MCP "
-    "tools without importing repository code. Declared commands and versioned plugins run in "
-    "disposable copies with bounded I/O and minimal environments.\n\n"
-    "The same verified graph produces `llms.txt`, named context bundles, grounded release facts, "
-    "and task evaluations for people and agents. Local receipts make those checks inspectable "
-    "without telemetry.\n\n"
-    "`derive` previews changes unless you pass `--write`. `audit`, `check`, `verify`, and "
-    "`release` never change documentation."
+    "and reviewers have no mechanical way to identify the false claim. clean-docs gives each "
+    "protected fact a source, then checks that relationship again in CI.\n\n"
+    "Source owns the facts. A packaged writing standard owns their form. Static adapters read "
+    "common code and schema formats, while declared commands run under explicit process controls. "
+    "The verified result can repair bound regions, reject drift, and publish context such as "
+    "`llms.txt` with local receipts."
 )
 
 SUPPORTED_BINDINGS = {

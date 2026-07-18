@@ -31,12 +31,23 @@ TITLE_FILLER = {
 }
 PURPOSE_BEGIN = "<!-- clean-docs:purpose -->"
 PURPOSE_END = "<!-- clean-docs:end purpose -->"
+REGISTER_PROFILE = "<!-- clean-docs:policy register-v2 -->"
 CANNED_PURPOSE_STEMS = (
     "read this page before changing or relying on",
     "defines the repository's current contract for this surface",
     "it gathers the relevant scope and constraints in one place",
 )
 NON_PROSE_STARTS = ("#", "- ", "* ", ">", "|", "```", "![", "[![", "<img", "<picture")
+POLICY_ALLOW = re.compile(
+    r'<!--\s*clean-docs:allow\s+([a-z][a-z-]+)\s+reason="([^"]+)"\s*-->'
+)
+POLICY_YIELD = re.compile(
+    r'<!--\s*clean-docs:yield\s+rule="([a-z][a-z-]+)"\s+'
+    r'to="([a-z][a-z-]+)"\s+reason="([^"]+)"\s*-->'
+)
+ABSTRACTION_SUFFIX = re.compile(r"[a-z]+(?:tion|sion|ment|ance|ence|ivity)\b", re.I)
+QUALIFIER = re.compile(r"\b(?:may|only|unless|except)\b", re.I)
+MARKDOWN_LINK = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 
 
 def _prose_lines(text: str) -> list[tuple[int, str]]:
@@ -69,6 +80,225 @@ def _outside_fences(lines: list[str]) -> list[tuple[int, str]]:
         if not in_fence:
             result.append((index, line))
     return result
+
+
+def _rule_allowed(text: str, rule: str) -> bool:
+    return any(
+        match.group(1) == rule and len(match.group(2).strip()) >= 12
+        for match in POLICY_ALLOW.finditer(text)
+    )
+
+
+def _yielded_rules(text: str) -> dict[int, set[str]]:
+    yielded: dict[int, set[str]] = {}
+    lines = text.splitlines()
+    valid_winners = {
+        "truth-honesty",
+        "grounding",
+        "reader-budget",
+        "register",
+        "warmth",
+    }
+    for match in POLICY_YIELD.finditer(text):
+        if match.group(2) not in valid_winners or len(match.group(3).strip()) < 12:
+            continue
+        end_line = text.count("\n", 0, match.end()) + 1
+        for target_line in range(end_line + 1, len(lines) + 1):
+            stripped = lines[target_line - 1].strip()
+            if not stripped or stripped.startswith("<!--"):
+                continue
+            yielded.setdefault(target_line, set()).add(match.group(1))
+            break
+    return yielded
+
+
+def _preamble_contract(doc: str, text: str, pack: dict[str, Any]) -> list[PolicyFinding]:
+    policy = pack["policy"]
+    if (
+        doc == "<fragment>"
+        or REGISTER_PROFILE not in text
+        or not policy.get("require_preamble_contract", False)
+        or _rule_allowed(text, "preamble-contract")
+    ):
+        return []
+    window_size = int(policy["preamble_window_lines"])
+    lines = text.splitlines()
+    window = lines[:window_size]
+    joined = "\n".join(window)
+    has_purpose = PURPOSE_BEGIN in window and PURPOSE_END in window
+    has_fence = any(
+        re.match(r"```(?:bash|sh|shell|console)\b", line, re.I)
+        for line in window
+    )
+    has_bold_route = bool(re.search(r"\*\*\[[^\]]+\]\([^)]+\)\*\*", joined))
+    has_proof = (
+        any(line.startswith("[![") for line in window)
+        or bool(re.search(r"\b(?:clean-docs\s+)?verify\b", joined, re.I))
+        or any(
+            re.search(r"\b(?:proof|receipt|result|outcome|verification)\b", label, re.I)
+            for label, _target in MARKDOWN_LINK.findall(joined)
+        )
+    )
+    missing = [
+        label
+        for label, present in (
+            ("marked purpose", has_purpose),
+            ("primary action", has_fence or has_bold_route),
+            ("proof", has_proof),
+        )
+        if not present
+    ]
+    if not missing:
+        return []
+    return [PolicyFinding(
+        doc,
+        1,
+        "preamble-contract",
+        f"put {', '.join(missing)} inside the first {window_size} lines",
+    )]
+
+
+def _paragraphs(text: str) -> list[tuple[int, str]]:
+    paragraphs: list[tuple[int, str]] = []
+    current: list[str] = []
+    start = 0
+    in_fence = False
+
+    def flush() -> None:
+        nonlocal current, start
+        if current:
+            paragraphs.append((start, "\n".join(part.strip() for part in current)))
+            current = []
+            start = 0
+
+    for line_number, line in enumerate(text.splitlines(), start=1):
+        stripped = line.strip()
+        if stripped.startswith("```"):
+            flush()
+            in_fence = not in_fence
+            continue
+        if (
+            in_fence
+            or not stripped
+            or stripped.startswith(("#", "<!--", "|", "- ", "* ", ">", "![", "[!["))
+        ):
+            flush()
+            continue
+        if not current:
+            start = line_number
+        current.append(stripped)
+    flush()
+    return paragraphs
+
+
+def _sentences(paragraph: str) -> list[str]:
+    return [
+        sentence.strip()
+        for sentence in re.split(r"(?<=[.!?])\s+", paragraph)
+        if sentence.strip()
+    ]
+
+
+def _section_titles(text: str) -> list[tuple[int, str]]:
+    return [
+        (line_number, line.lstrip("#").strip().lower())
+        for line_number, line in enumerate(text.splitlines(), start=1)
+        if line.startswith("##")
+    ]
+
+
+def _literal_section(line_number: int, sections: list[tuple[int, str]]) -> bool:
+    title = ""
+    for section_line, candidate in sections:
+        if section_line > line_number:
+            break
+        title = candidate
+    return "limit" in title or "security" in title or "privacy" in title
+
+
+def _register_findings(doc: str, text: str, pack: dict[str, Any]) -> list[PolicyFinding]:
+    if REGISTER_PROFILE not in text:
+        return []
+    policy = pack["policy"]
+    findings: list[PolicyFinding] = []
+    allowlist = {
+        str(token).lower() for token in policy["nominalization_allowlist"]
+    }
+    significance = tuple(
+        str(phrase).lower() for phrase in policy["significance_phrases"]
+    )
+    yielded = _yielded_rules(text)
+    sections = _section_titles(text)
+    qualifier_scope = doc == "README.md" or doc.startswith("docs/learn/")
+    for line_number, paragraph in _paragraphs(text):
+        sentences = _sentences(paragraph)
+        paragraph_yields = yielded.get(line_number, set())
+        if (
+            len(sentences) >= 3
+            and not _rule_allowed(text, "sentence-variance")
+            and "sentence-variance" not in paragraph_yields
+        ):
+            counts = [len(WORD_RE.findall(sentence)) for sentence in sentences]
+            if all(
+                int(policy["sentence_variance_min_words"])
+                <= count
+                <= int(policy["sentence_variance_max_words"])
+                for count in counts
+            ):
+                findings.append(PolicyFinding(
+                    doc,
+                    line_number,
+                    "sentence-variance",
+                    "add one short sentence beat or combine claims that share evidence",
+                ))
+        offset = 0
+        for sentence in sentences:
+            sentence_line = line_number + paragraph[:offset].count("\n")
+            offset += len(sentence) + 1
+            lowered = sentence.lower()
+            if (
+                not _rule_allowed(text, "nominalization-density")
+                and "nominalization-density" not in paragraph_yields
+            ):
+                abstractions = [
+                    token
+                    for token in ABSTRACTION_SUFFIX.findall(lowered)
+                    if token not in allowlist
+                ]
+                if len(abstractions) >= int(policy["nominalization_threshold"]):
+                    findings.append(PolicyFinding(
+                        doc,
+                        sentence_line,
+                        "nominalization-density",
+                        "replace clustered abstractions with actors and concrete verbs: "
+                        + ", ".join(abstractions),
+                    ))
+            if (
+                not _rule_allowed(text, "significance-narration")
+                and "significance-narration" not in paragraph_yields
+                and (match := next((phrase for phrase in significance if phrase in lowered), None))
+            ):
+                findings.append(PolicyFinding(
+                    doc,
+                    sentence_line,
+                    "significance-narration",
+                    f"replace {match!r} with the consequence for the reader",
+                ))
+            if (
+                qualifier_scope
+                and not _literal_section(sentence_line, sections)
+                and not _rule_allowed(text, "qualifier-density")
+                and "qualifier-density" not in paragraph_yields
+            ):
+                guards = QUALIFIER.findall(sentence)
+                if len(guards) > int(policy["qualifier_threshold"]):
+                    findings.append(PolicyFinding(
+                        doc,
+                        sentence_line,
+                        "qualifier-density",
+                        "move a guard to the canonical limits page or split the authority boundary",
+                    ))
+    return findings
 
 
 def _purpose_contract(doc: str, text: str, pack: dict[str, Any]) -> list[PolicyFinding]:
@@ -104,7 +334,11 @@ def _purpose_contract(doc: str, text: str, pack: dict[str, Any]) -> list[PolicyF
     first_body = h1_index + 1
     while first_body < len(lines):
         stripped = lines[first_body].strip()
-        if not stripped or stripped.startswith("<!-- clean-docs:allow "):
+        if (
+            not stripped
+            or stripped.startswith("<!-- clean-docs:allow ")
+            or stripped == REGISTER_PROFILE
+        ):
             first_body += 1
             continue
         break
@@ -254,7 +488,12 @@ def check_prose(doc: str, text: str, pack: dict[str, Any]) -> list[PolicyFinding
 
 
 def check_document(doc: str, text: str, pack: dict[str, Any]) -> list[PolicyFinding]:
-    return _purpose_contract(doc, text, pack) + check_prose(doc, text, pack)
+    return (
+        _purpose_contract(doc, text, pack)
+        + _preamble_contract(doc, text, pack)
+        + check_prose(doc, text, pack)
+        + _register_findings(doc, text, pack)
+    )
 
 
 def check_documents(documents: dict[str, str], pack: dict[str, Any]) -> list[PolicyFinding]:

@@ -14,14 +14,18 @@ ROOT = Path(__file__).parents[1]
 
 
 def _quickstart(readme: str) -> str:
-    start = readme.index("## Install and audit")
+    start = readme.index("## Install and prove the loop")
     end = readme.index("\n## ", start + 3)
+    section = readme[start:end]
+    command_block = section.split("```bash", 1)[1].split("```", 1)[0]
     return (
         "# Quickstart fixture\n\n<!-- clean-docs:purpose -->\n"
         "Use this fixture when testing the published install path. It lets a new reader install clean-docs and run the first audit from this page alone.\n"
         "<!-- clean-docs:end purpose -->\n\n"
-        + readme[start:end].strip()
-        + "\n"
+        "Run the exact install block published in the README:\n\n"
+        "```bash"
+        + command_block
+        + "```\n"
     )
 
 
@@ -29,8 +33,8 @@ def test_human_quickstart_installs_and_runs_from_declared_docs(tmp_path: Path) -
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     quickstart = _quickstart(readme)
     for command in (
-        "python -m venv .venv",
-        'pip install -e ".[dev]"',
+        "python3 -m venv .venv",
+        'python3 -m pip install -e ".[dev]"',
         "clean-docs audit",
     ):
         assert command in quickstart
@@ -99,5 +103,5 @@ def test_limitation_retrieval_cites_canonical_limit_without_inference() -> None:
     )
     response = (ROOT / ".clean-docs/evaluation/responses/limitation.txt").read_text()
     assert result.ok
-    assert "README.md#current-limits" in response
+    assert "README.md#current-boundaries" in response
     assert "clean-docs enforces network isolation" not in response.lower()

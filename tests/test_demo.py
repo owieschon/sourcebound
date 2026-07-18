@@ -63,38 +63,24 @@ def test_static_demo_is_byte_stable_accessible_and_runtime_free(tmp_path: Path) 
     assert "Evidence sha256:" in first
 
 
-def test_readme_architecture_precedes_the_install_path_and_has_text_equivalent() -> None:
+def test_readme_architecture_follows_the_first_action_and_has_text_equivalent() -> None:
     readme = (ROOT / "README.md").read_text()
     graphic = (ROOT / "docs/assets/clean-docs-system-map.svg").read_text()
 
+    install = readme.index("## Install and prove the loop")
     architecture = readme.index("## How the pieces fit")
-    install = readme.index("## Install and audit")
-    architecture_section = readme[architecture:install]
-    assert architecture < install
+    architecture_section = readme[architecture:readme.index("## Current boundaries")]
+    assert install < architecture
     assert "docs/assets/clean-docs-system-map.svg" in architecture_section
     for concept in (
         "Repository sources",
-        "code",
-        "schemas",
-        "commands",
-        "package metadata",
-        "API metadata",
         "typed evidence",
-        "static extraction",
-        "declared, bounded execution",
-        "Source bindings",
-        "regions",
-        "claims",
-        "symbols",
-        "clean-docs engine",
-        "packaged writing standard",
-        "repaired documentation",
-        "read-only CI gate",
-        "rejects stale changes",
-        "verified context projections",
-        "llms.txt",
-        "context bundles",
-        "release facts",
+        "Bindings",
+        "document regions",
+        "packaged standard",
+        "repairs documentation",
+        "rejects drift",
+        "publishes verified context",
     ):
         assert concept in architecture_section
     assert "<title" in graphic

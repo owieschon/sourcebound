@@ -1,10 +1,10 @@
 # clean-docs product specification
 
+<!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
 Use this specification when deciding what clean-docs must ship or whether a release claim is earned. It keeps product scope, version order, functional tests, and definitions of done in one contract so implementation and acceptance cannot drift apart.
 <!-- clean-docs:end purpose -->
 
-<!-- clean-docs:allow doc-length reason="The release contract and inherited E2E requirements must remain one versioned reference" -->
 
 The product combines two workflows over one evidence model:
 
@@ -228,7 +228,6 @@ The canonical file is `.clean-docs.yml`. Paths are repository-relative. Unknown 
 
 #### Complete example
 
-<!-- clean-docs:allow section-length reason="The manifest example must show one coherent repository contract" -->
 
 ```yaml
 version: 1
