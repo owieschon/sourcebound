@@ -56,14 +56,17 @@ remain advisories in either state. The JSON report exposes the enforcement state
 state, every document profile, advisory totals, unsupported MDX paths, and the exact accepted-debt
 baseline under schema `clean-docs.audit.v1`. A maintainer can replace an ambiguous role guess with
 a checked `<!-- clean-docs:role reference -->` marker; invalid role names fail instead of falling
-back.
+back. Literal machine paths in recognized test fixtures remain advisories because they can be
+intentional inputs; the same path in product source or a lockfile remains an integrity finding.
 
 Use `init --no-model` once to add a repository-surface binding and `llms.txt`. It preserves existing
 documents, repository-native structure, evidence records, and compatibility aliases. A new README
 receives the packaged overview shape; an existing README keeps its authored opening unless it
 already opted into the register. Otherwise, the generated catalog lives at
-`.clean-docs/repository-surface.md`. Init stops instead of replacing an existing manifest,
-overwriting its reserved generated file, or inventing purpose for an ambiguous page.
+`.clean-docs/repository-surface.md`. The initial context projection contains that catalog and the
+root orientation page only; clean-docs does not promote architecture records, examples, or nested
+READMEs to canonical context from their filenames. Init stops instead of replacing an existing
+manifest, overwriting its reserved generated file, or inventing purpose for an ambiguous page.
 
 Use `check` for configured binding and projection drift. Use `check --changed --base REF --head REF`
 to classify affected bindings, accepted source claims, and newly detected public surface.
@@ -114,8 +117,9 @@ The [manifest reference](docs/REFERENCE.md) owns accepted fields and examples. T
 ## Evidence and execution
 
 Static adapters parse Python, TypeScript, JavaScript, OpenAPI, JSON Schema, package metadata, and
-configuration schemas without importing repository modules. A claim command or plugin runs only
-when the manifest declares its exact argument array.
+configuration schemas without importing repository modules. Immutable read-only snapshots preserve
+relative symlinks whose targets stay inside the snapshot and reject escaping links. A claim command
+or plugin runs only when the manifest declares its exact argument array.
 
 Declared processes receive a disposable repository copy, temporary directories, a minimal
 environment, a timeout, an I/O limit, symlink checks, and secret-output checks. These controls are

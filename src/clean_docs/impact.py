@@ -47,7 +47,8 @@ STRUCTURED_SUFFIXES = frozenset({".json", ".toml", ".yaml", ".yml"})
 PYTHON_TOOLING_MODULES = frozenset({"conftest.py", "noxfile.py", "setup.py"})
 SCRIPT_EXPORT = re.compile(
     r"^\s*export\s+(?:default\s+)?(?:async\s+)?(?:abstract\s+)?"
-    r"(?:function|class|const|interface|type|enum)\s+([A-Za-z_$][\w$]*)",
+    r"(?P<kind>function|class|const|interface|type|enum)\s+"
+    r"(?P<name>[A-Za-z_$][\w$]*)",
     re.M,
 )
 
@@ -227,6 +228,68 @@ def _declaration_line(text: str, start: int) -> str:
     return text[line_start:] if line_end == -1 else text[line_start:line_end]
 
 
+def _balanced_declaration(text: str, start: int) -> str:
+    line_start = text.rfind("\n", 0, start) + 1
+    depth = 0
+    quote: str | None = None
+    escaped = False
+    line_comment = False
+    block_comment = False
+    opening_seen = False
+    index = start
+    while index < len(text):
+        character = text[index]
+        following = text[index + 1] if index + 1 < len(text) else ""
+        if line_comment:
+            if character == "\n":
+                line_comment = False
+            index += 1
+            continue
+        if block_comment:
+            if character == "*" and following == "/":
+                block_comment = False
+                index += 2
+                continue
+            index += 1
+            continue
+        if quote is not None:
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == quote:
+                quote = None
+            index += 1
+            continue
+        if character == "/" and following == "/":
+            line_comment = True
+            index += 2
+            continue
+        if character == "/" and following == "*":
+            block_comment = True
+            index += 2
+            continue
+        if character in {"'", '"', "`"}:
+            quote = character
+            index += 1
+            continue
+        if character == "{":
+            opening_seen = True
+            depth += 1
+        elif character == "}" and opening_seen:
+            depth -= 1
+            if depth == 0:
+                return text[line_start : index + 1]
+        index += 1
+    return _declaration_line(text, start)
+
+
+def _script_interface_evidence(text: str, match: re.Match[str]) -> str:
+    if match.group("kind") in {"interface", "type", "enum"}:
+        return _balanced_declaration(text, match.start())
+    return _declaration_line(text, match.start())
+
+
 def _interface_fingerprints(
     root: Path,
     ref: str,
@@ -235,46 +298,48 @@ def _interface_fingerprints(
 ) -> tuple[dict[str, str], frozenset[str]]:
     fingerprints: dict[str, str] = {}
     failed: set[str] = set()
-    with RepositorySnapshot(root, ref).materialized_root() as snapshot:
-        project_root = snapshot / project
-        for path in sorted(paths):
-            candidate = project_root / path
-            if not candidate.exists():
-                continue
+    snapshot = RepositorySnapshot(root, ref)
+    for path in sorted(paths):
+        repository_path = (
+            path if project == Path(".") else (project / path).as_posix()
+        )
+        if _blob_id(root, ref, repository_path) is None:
+            continue
+        try:
+            text = snapshot.read_text(Path(repository_path))
+        except (OSError, UnicodeDecodeError):
+            failed.add(path)
+            continue
+        candidate = Path(path)
+        suffix = candidate.suffix.lower()
+        if suffix == ".py":
             try:
-                text = candidate.read_text(encoding="utf-8")
-            except (OSError, UnicodeDecodeError):
+                tree = ast.parse(text, filename=path)
+            except SyntaxError:
                 failed.add(path)
                 continue
-            suffix = candidate.suffix.lower()
-            if suffix == ".py":
-                try:
-                    tree = ast.parse(text, filename=path)
-                except SyntaxError:
-                    failed.add(path)
+            is_test = (
+                candidate.name.startswith("test_")
+                or "/tests/" in f"/{path}"
+            )
+            if is_test or candidate.name in PYTHON_TOOLING_MODULES:
+                continue
+            for node in tree.body:
+                if not isinstance(
+                    node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+                ) or node.name.startswith("_"):
                     continue
-                is_test = (
-                    candidate.name.startswith("test_")
-                    or "/tests/" in f"/{path}"
+                item_id = f"api-symbol:{path}:{node.name}"
+                fingerprints[item_id] = _digest(
+                    _python_interface_payload(node)
                 )
-                if is_test or candidate.name in PYTHON_TOOLING_MODULES:
-                    continue
-                for node in tree.body:
-                    if not isinstance(
-                        node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
-                    ) or node.name.startswith("_"):
-                        continue
-                    item_id = f"api-symbol:{path}:{node.name}"
-                    fingerprints[item_id] = _digest(
-                        _python_interface_payload(node)
-                    )
-            elif suffix in {".ts", ".tsx", ".js", ".jsx"}:
-                for match in SCRIPT_EXPORT.finditer(text):
-                    name = match.group(1)
-                    item_id = f"api-symbol:{path}:{name}"
-                    fingerprints[item_id] = _digest(
-                        _declaration_line(text, match.start())
-                    )
+        elif suffix in {".ts", ".tsx", ".js", ".jsx"}:
+            for match in SCRIPT_EXPORT.finditer(text):
+                name = match.group("name")
+                item_id = f"api-symbol:{path}:{name}"
+                fingerprints[item_id] = _digest(
+                    _script_interface_evidence(text, match)
+                )
     return fingerprints, frozenset(failed)
 
 

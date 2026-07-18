@@ -356,3 +356,56 @@ configuration, packages, runtimes, and schemas can create a public-surface gap. 
 semantic events from the same set, so prose movement cannot invent a contract change. Tests move a
 link inside a bound document and require both the stable gate and impact plan to stay clear.
 Reversible: a new public kind can join the shared set when an adapter defines its contract.
+
+## 34. Keep machine paths in test fixtures visible without giving them veto power (2026-07-18)
+
+Context: an untouched TypeScript monorepo used literal home paths to test `file://` handling and
+path normalization. Repository integrity enforcement would have blocked adoption until those
+valid tests were rewritten or baselined. Chose to keep `local-path-residue` records from recognized
+test paths as advisories in both assessment and adopted modes. The same rule still blocks on
+product source, documents, and lockfiles. This changes severity, not detection, so an operator can
+still inspect the exact path and line. A regression fixture puts a literal home path in a tracked
+TypeScript test and requires an adopted audit to report it only as an advisory. Reversible: a
+repository can exclude or rewrite the fixture, while future path roles can refine the classifier.
+
+## 35. Preserve safe internal symlinks only in read-only snapshots (2026-07-18)
+
+Context: a TypeScript monorepo shares package-manager configuration through tracked relative
+symlinks. The immutable snapshot reader rejected every symlink, so changed checks and impact plans
+could not inspect an otherwise supported repository. Chose to materialize a symlink only when its
+target is relative and normalizes inside the snapshot root. Absolute links, escaping links, and tar
+hardlinks still fail before extraction. Executable commands and plugins keep their stricter
+no-symlink boundary because they run third-party processes. Tests prove an internal configuration
+link reads the expected bytes and a parent-escaping link fails. Reversible: the static reader can
+copy internal targets instead if a supported platform cannot preserve symlinks.
+
+## 36. Fingerprint TypeScript interface bodies without hashing implementation bodies (2026-07-18)
+
+Context: a real SDK feature added an option to exported interfaces, but the impact planner hashed
+only each declaration line and reported no impact. Chose balanced static fingerprints for
+interfaces, object-shaped type aliases, and enums. The scanner ignores braces inside comments and
+quoted strings. Functions, constants, and classes keep their declaration-only fingerprint, so an
+implementation edit does not automatically become documentation work. The existing TypeScript
+acceptance case now adds an interface member and requires a public-contract event. Reversible: a
+parser-backed adapter can replace this bounded scanner while preserving the event schema.
+
+## 37. Read changed interfaces from immutable blobs instead of full archives (2026-07-18)
+
+Context: a four-file feature in a 3,360-file monorepo materialized the complete repository at both
+refs solely to fingerprint four interfaces. The diff was not the cost. Chose direct immutable blob
+reads for only the changed Python, TypeScript, and JavaScript paths. Inventory still scans each
+repository snapshot because it owns additions and removals across the catalog. This removed two
+redundant archives without changing the plan digest, but the warm end-to-end run remained about 21
+seconds because changed-check and graph evaluation still materialize separate head snapshots.
+Further snapshot sharing remains measured follow-up work. Reversible: a batch Git reader can replace
+the per-path calls without changing plan semantics.
+
+## 38. Bootstrap only the root orientation page into projected context (2026-07-18)
+
+Context: filename and depth ranking chose eight supposedly canonical pages in a large monorepo,
+including compliance and example READMEs while omitting most package documentation. That ordering
+was not evidence of repository purpose. Chose to bootstrap `llms.txt` with only the root README and
+the generated bound catalog. Existing documents remain untouched, and operators can add exact
+manifest includes after deciding which pages carry canonical context. The mature-monorepo test now
+proves architecture records and ADRs stay out until declared. Reversible: a repository can add any
+document through the existing projection contract without changing bootstrap code.

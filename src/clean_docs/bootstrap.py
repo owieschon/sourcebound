@@ -37,7 +37,6 @@ REFERENCE_REGION = "repository-surface"
 GENERATED_REFERENCE = ".clean-docs/repository-surface.md"
 PLAN_FACT_LIMIT = 100
 PLAN_DIFF_LIMIT = 4000
-CANONICAL_DOCUMENT_LIMIT = 8
 REFERENCE_SECTION = re.compile(
     r"^## Repository surface\s*\n.*?(?=^## |\Z)", re.MULTILINE | re.DOTALL
 )
@@ -238,31 +237,8 @@ def _archive_moves(root: Path) -> list[PlannedMove]:
 def _canonical_documents(
     root: Path, readme_path: str, excluded: set[str]
 ) -> tuple[str, ...]:
-    documents = {
-        path.relative_to(root).as_posix()
-        for path in list_documents(root)
-        if path.relative_to(root).as_posix() not in excluded
-    }
-    documents.add(readme_path)
-    named_priority = {
-        "ARCHITECTURE.MD": 1,
-        "DEPLOYMENT.MD": 2,
-        "ROADMAP.MD": 3,
-    }
-
-    def priority(path: str) -> tuple[int, int, str]:
-        candidate = Path(path)
-        if path == readme_path:
-            return (0, 0, path)
-        if candidate.name.upper() in named_priority:
-            return (named_priority[candidate.name.upper()], len(candidate.parts), path)
-        if candidate.name.lower() == "readme.md":
-            return (4, len(candidate.parts), path)
-        if candidate.parts[:2] == ("docs", "adr"):
-            return (5, len(candidate.parts), path)
-        return (6, len(candidate.parts), path)
-
-    return tuple(sorted(documents, key=priority)[:CANONICAL_DOCUMENT_LIMIT])
+    del root, excluded
+    return (readme_path,)
 
 
 def build_bootstrap_plan(

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import posixpath
 import subprocess
 import tarfile
 import tempfile
@@ -10,6 +11,21 @@ from pathlib import Path, PurePosixPath
 from collections.abc import Iterator
 
 from clean_docs.errors import ExtractionError
+
+
+def _member_is_safe(member: tarfile.TarInfo) -> bool:
+    path = PurePosixPath(member.name)
+    if path.is_absolute() or ".." in path.parts or member.islnk():
+        return False
+    if not member.issym():
+        return True
+    link = PurePosixPath(member.linkname)
+    if link.is_absolute():
+        return False
+    target = PurePosixPath(
+        posixpath.normpath((path.parent / link).as_posix())
+    )
+    return not target.is_absolute() and ".." not in target.parts
 
 
 @dataclass(frozen=True)
@@ -65,8 +81,7 @@ class RepositorySnapshot:
             )
             with tarfile.open(archive) as handle:
                 for member in handle.getmembers():
-                    path = PurePosixPath(member.name)
-                    if path.is_absolute() or ".." in path.parts or member.issym() or member.islnk():
+                    if not _member_is_safe(member):
                         raise ExtractionError(f"unsafe path in repository snapshot: {member.name}")
                 handle.extractall(destination)
             archive.unlink()
