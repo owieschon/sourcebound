@@ -17,6 +17,7 @@ from clean_docs.extractors import (
     extract_repository_overview,
     extract_structured,
 )
+from clean_docs.extractors.inventory import _extract_repository_overview_legacy
 from clean_docs.manifest import load_manifest
 from clean_docs.models import (
     Binding,
@@ -163,6 +164,17 @@ def evaluate(
                 ) from exc
         observed = documents[doc_key]
         expected = replace_region(observed, binding.region, rendered)
+        if observed != expected and binding.extractor == "repository-overview":
+            legacy_evidence = _extract_repository_overview_legacy(
+                snapshot, binding
+            )
+            legacy_rendered = render(legacy_evidence, binding)
+            legacy_expected = replace_region(
+                observed, binding.region, legacy_rendered
+            )
+            if observed == legacy_expected:
+                evidence = legacy_evidence
+                expected = observed
         documents[doc_key] = expected
         diff = "".join(difflib.unified_diff(
             observed.splitlines(keepends=True),

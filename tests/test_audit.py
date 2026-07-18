@@ -428,6 +428,31 @@ def test_manifest_accepts_repository_integrity_findings_as_gates(
     ]
 
 
+def test_manifest_keeps_test_fixture_machine_paths_advisory(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    (root / ".clean-docs.yml").write_text("version: 1\nbindings: []\n")
+    fixture = root / "src/__tests__/paths.test.ts"
+    fixture.parent.mkdir(parents=True)
+    fixture.write_text(
+        "const paths = ['/" + "Users/alice/project', 'src/index.ts']\n"
+    )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    report = audit(root)
+
+    assert report.repository_integrity_enforced
+    assert not any(
+        finding.rule == "local-path-residue" for finding in report.findings
+    )
+    assert any(
+        finding.rule == "local-path-residue"
+        and finding.path == "src/__tests__/paths.test.ts"
+        for finding in report.advisories
+    )
+
+
 def test_cli_separates_assessment_from_policy_compatibility_preview(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],

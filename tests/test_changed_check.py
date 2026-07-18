@@ -137,6 +137,31 @@ def test_changed_new_public_surface_is_a_separate_gap(
     assert "serve" in result["gaps"][0]["message"]
 
 
+def test_changed_link_line_move_is_not_a_public_surface_gap(
+    tmp_path: Path,
+) -> None:
+    root = _symbol_repository(tmp_path)
+    readme = root / "README.md"
+    readme.write_text(
+        readme.read_text() + "\nSee [the source](src/api.py).\n"
+    )
+    base = _commit(root, "base")
+    readme.write_text(
+        readme.read_text().replace(
+            "\nSee [the source]", "\nRead this first.\n\nSee [the source]"
+        )
+    )
+    head = _commit(root, "move link down")
+
+    report = check_changed(
+        root, root / ".clean-docs.yml", base=base, head=head
+    )
+
+    assert report.ok
+    assert report.required == ()
+    assert report.gaps == ()
+
+
 def test_changed_first_install_accepts_derived_repository_overview(
     tmp_path: Path,
 ) -> None:

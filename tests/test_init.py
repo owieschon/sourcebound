@@ -595,19 +595,16 @@ def test_mature_monorepo_plan_is_bounded_and_does_not_forge_purpose_contracts(
         None,
     )
     assert adr_operation is None
-    assert plan["canonical_documents"] == [
-        "README.md",
-        "ARCHITECTURE.md",
-        "docs/adr/0001-runtime.md",
-    ]
+    assert plan["canonical_documents"] == ["README.md"]
 
     assert main(["--root", str(root), "init", "--no-model"]) == 0
     capsys.readouterr()
     assert "<!-- clean-docs:purpose -->" not in adr.read_text()
     assert "include:" in (root / ".clean-docs.yml").read_text()
     llms = (root / "llms.txt").read_text()
-    assert "[ARCHITECTURE.md](ARCHITECTURE.md)" in llms
-    assert "[docs/adr/0001-runtime.md](docs/adr/0001-runtime.md)" in llms
+    assert "[README.md](README.md)" in llms
+    assert "[ARCHITECTURE.md](ARCHITECTURE.md)" not in llms
+    assert "[docs/adr/0001-runtime.md](docs/adr/0001-runtime.md)" not in llms
     readme = (root / "README.md").read_text()
     assert "| mcp-tool |" not in readme
     surface = (root / ".clean-docs/repository-surface.md").read_text()

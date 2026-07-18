@@ -332,3 +332,91 @@ walk. The parser still decides which symbols, commands, tools, and settings exis
 digests now remain identical across supported runtimes. A fixed digest assertion and a direct
 3.12-versus-3.14 replay cover the failure. Reversible: a future versioned semantic encoding can
 replace source segments after proving identical bytes on every supported runtime.
+
+## 32. Separate impact fingerprints from established inventory receipts (2026-07-18)
+
+Context: interface-level fingerprints let an impact plan ignore a function-body refactor and catch
+a public default change, but replacing the existing inventory digest invalidated repository
+overviews whose rendered rows had not changed. Chose a planner-owned semantic fingerprint for
+Python and TypeScript interfaces while preserving the published inventory bytes. Impact receipts
+also bind the clean-docs producer version. Repository-overview evaluation accepts both the legacy
+item-digest receipt and the current rendered-surface receipt until the catalog changes; a real
+surface change migrates the region to the current extractor. Tests prove four cases: changed
+bodies stay out, changed signatures enter, old receipts pass, and renamed symbols fail. Reversible:
+a future manifest migration can retire legacy receipt acceptance after adopted repositories have
+rewritten their regions.
+
+## 33. Let only public inventory kinds create changed-surface gaps (2026-07-18)
+
+Context: document links use their line number as an inventory locator. Moving an unchanged link
+therefore creates one removed record and one added record, and the changed check had labeled the
+added record a new public surface. Chose one shared set of public kinds for the changed gate and
+impact planner. Documents, links, and tests remain enumerated evidence, but only APIs, commands,
+configuration, packages, runtimes, and schemas can create a public-surface gap. The planner emits
+semantic events from the same set, so prose movement cannot invent a contract change. Tests move a
+link inside a bound document and require both the stable gate and impact plan to stay clear.
+Reversible: a new public kind can join the shared set when an adapter defines its contract.
+
+## 34. Keep machine paths in test fixtures visible without giving them veto power (2026-07-18)
+
+Context: an untouched TypeScript monorepo used literal home paths to test `file://` handling and
+path normalization. Repository integrity enforcement would have blocked adoption until those
+valid tests were rewritten or baselined. Chose to keep `local-path-residue` records from recognized
+test paths as advisories in both assessment and adopted modes. The same rule still blocks on
+product source, documents, and lockfiles. This changes severity, not detection, so an operator can
+still inspect the exact path and line. A regression fixture puts a literal home path in a tracked
+TypeScript test and requires an adopted audit to report it only as an advisory. Reversible: a
+repository can exclude or rewrite the fixture, while future path roles can refine the classifier.
+
+## 35. Preserve safe internal symlinks only in read-only snapshots (2026-07-18)
+
+Context: a TypeScript monorepo shares package-manager configuration through tracked relative
+symlinks. The immutable snapshot reader rejected every symlink, so changed checks and impact plans
+could not inspect an otherwise supported repository. Chose to materialize a symlink only when its
+target is relative and normalizes inside the snapshot root. Absolute links, escaping links, and tar
+hardlinks still fail before extraction. Executable commands and plugins keep their stricter
+no-symlink boundary because they run third-party processes. Tests prove an internal configuration
+link reads the expected bytes and a parent-escaping link fails. Reversible: the static reader can
+copy internal targets instead if a supported platform cannot preserve symlinks.
+
+## 36. Fingerprint TypeScript interface bodies without hashing implementation bodies (2026-07-18)
+
+Context: a real SDK feature added an option to exported interfaces, but the impact planner hashed
+only each declaration line and reported no impact. Chose balanced static fingerprints for
+interfaces, object-shaped type aliases, and enums. The scanner ignores braces inside comments and
+quoted strings. Functions, constants, and classes keep their declaration-only fingerprint, so an
+implementation edit does not automatically become documentation work. The existing TypeScript
+acceptance case now adds an interface member and requires a public-contract event. Reversible: a
+parser-backed adapter can replace this bounded scanner while preserving the event schema.
+
+## 37. Read changed interfaces from immutable blobs instead of full archives (2026-07-18)
+
+Context: a four-file feature in a 3,360-file monorepo materialized the complete repository at both
+refs solely to fingerprint four interfaces. The diff was not the cost. Chose direct immutable blob
+reads for only the changed Python, TypeScript, and JavaScript paths. Inventory still scans each
+repository snapshot because it owns additions and removals across the catalog. This removed two
+redundant archives without changing the plan digest, but the warm end-to-end run remained about 21
+seconds because changed-check and graph evaluation still materialize separate head snapshots.
+Further snapshot sharing remains measured follow-up work. Reversible: a batch Git reader can replace
+the per-path calls without changing plan semantics.
+
+## 38. Bootstrap only the root orientation page into projected context (2026-07-18)
+
+Context: filename and depth ranking chose eight supposedly canonical pages in a large monorepo,
+including compliance and example READMEs while omitting most package documentation. That ordering
+was not evidence of repository purpose. Chose to bootstrap `llms.txt` with only the root README and
+the generated bound catalog. Existing documents remain untouched, and operators can add exact
+manifest includes after deciding which pages carry canonical context. The mature-monorepo test now
+proves architecture records and ADRs stay out until declared. Reversible: a repository can add any
+document through the existing projection contract without changing bootstrap code.
+
+## 39. Canonicalize empty AST fields in impact fingerprints (2026-07-18)
+
+Context: the same committed impact plan produced different public-symbol digests under Python 3.12
+and 3.14. Python 3.14 omits empty AST fields by default, while earlier supported runtimes include
+them. Chose one canonical representation that always includes empty fields when the runtime exposes
+that switch and uses the equivalent earlier-runtime default otherwise. This preserves the semantic
+fingerprint while making one clean-docs version produce the same receipt across supported Python
+runtimes. The Version 1.2A registry pins that behavior. The release gate compares complete receipts
+from Python 3.12 and 3.14. Reversible: a parser-independent format can replace this representation
+after reproducing the same public-change boundaries.

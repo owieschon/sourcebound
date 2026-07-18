@@ -80,6 +80,20 @@ EXPECTED_IDS_BY_RELEASE = {
         "additive-learning-corpus",
         "fresh-reader-learning-path",
     },
+    "1.2A": {
+        "coverage-complete-no-impact",
+        "implementation-is-not-interface",
+        "typescript-interface-fingerprint",
+        "line-move-not-public-impact",
+        "unknown-cannot-become-no-impact",
+        "public-default-obligations",
+        "affected-contract-traversal",
+        "generated-output-non-recursion",
+        "merge-base-history",
+        "scope-tension",
+        "legacy-overview-compatibility",
+        "cross-runtime-receipt-portability",
+    },
 }
 
 

@@ -7,7 +7,13 @@ from pathlib import Path
 
 from clean_docs.cli import main
 from clean_docs.engine import evaluate, write_results
+from clean_docs.extractors.inventory import _extract_repository_overview_legacy
 from clean_docs.inventory import scan_inventory
+from clean_docs.manifest import load_manifest
+from clean_docs.models import RegionBinding
+from clean_docs.regions import replace_region
+from clean_docs.renderers import render
+from clean_docs.snapshot import RepositorySnapshot
 
 
 def _python_repo(tmp_path: Path) -> Path:
@@ -257,6 +263,7 @@ bindings:
 
     first = evaluate(root, manifest)[0]
     assert first.changed
+    assert first.provenance.extractor == "repository-overview@2"
     assert "| api-symbol | 200 |" in first.expected
     assert "and 197 more" in first.expected
     assert len(first.expected.splitlines()) < 15
@@ -270,6 +277,51 @@ bindings:
     assert before.split("<!-- clean-docs:inventory-sha256", 1)[0] == (
         second.expected.split("<!-- clean-docs:inventory-sha256", 1)[0]
     )
+
+
+def test_repository_overview_accepts_legacy_receipts_until_surface_changes(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "legacy-overview"
+    source = root / "src"
+    source.mkdir(parents=True)
+    (source / "api.py").write_text("def publish():\n    return True\n")
+    readme = root / "README.md"
+    readme.write_text(
+        "# Surface\n\n"
+        "<!-- clean-docs:begin repository-surface -->\n"
+        "stale\n"
+        "<!-- clean-docs:end repository-surface -->\n"
+    )
+    manifest = root / ".clean-docs.yml"
+    manifest.write_text("""\
+version: 1
+bindings:
+  - id: repository-surface
+    type: region
+    doc: README.md
+    region: repository-surface
+    extractor: repository-overview
+    source: {path: .}
+    renderer: markdown-fragment
+""")
+    binding = load_manifest(manifest).bindings[0]
+    assert isinstance(binding, RegionBinding)
+    evidence = _extract_repository_overview_legacy(
+        RepositorySnapshot(root), binding
+    )
+    readme.write_text(
+        replace_region(readme.read_text(), binding.region, render(evidence, binding))
+    )
+
+    accepted = evaluate(root, manifest)[0]
+    assert not accepted.changed
+    assert accepted.provenance.extractor == "repository-overview@1"
+
+    (source / "api.py").write_text("def distribute():\n    return True\n")
+    changed = evaluate(root, manifest)[0]
+    assert changed.changed
+    assert changed.provenance.extractor == "repository-overview@2"
 
 
 def test_repository_overview_ignores_unrendered_package_version_changes(
