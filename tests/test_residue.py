@@ -87,6 +87,25 @@ rules:
     ]
 
 
+def test_excludes_versioned_independent_reader_evidence_verbatim(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    (root / ".clean-docs-residue.yml").write_text("""\
+version: 1
+exclude:
+  - pattern: .clean-docs/reader-trials*/**
+    reason: Independent reader evidence preserves observed paths verbatim.
+rules: []
+""")
+    evidence = root / ".clean-docs/reader-trials-v1.1/reader/run-tutorial.txt"
+    evidence.parent.mkdir(parents=True)
+    evidence.write_text("workspace: /" + "Users/example/private/fixture\n")
+    _track(root)
+
+    assert scan_residue(root) == []
+
+
 def test_invalid_policy_is_a_stable_audit_and_doctor_failure(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
