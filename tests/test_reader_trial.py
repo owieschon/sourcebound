@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -117,6 +118,29 @@ def test_version_11_reader_trial_uses_two_families_and_learning_tasks(tmp_path: 
     assert summary["receipt_path"] == ".clean-docs/reader-trial-v1.1.json"
     assert summary["evidence_root"] == ".clean-docs/reader-trials-v1.1"
     assert summary["receipt_sha256"] == _sha256(receipt.read_bytes())
+
+
+def test_version_11_runnable_context_includes_tutorial_prerequisites() -> None:
+    rubric = yaml.safe_load(
+        (ROOT / ".clean-docs/reader-trial-rubric-v1.1.yml").read_text()
+    )
+    tutorial = Path("docs/learn/tutorial-catch-a-lying-doc.md")
+    content = (ROOT / tutorial).read_text()
+    prerequisites = content.split("## Before you begin", maxsplit=1)[1].split(
+        "\n## ", maxsplit=1
+    )[0]
+    linked_pages = {
+        (
+            (ROOT / tutorial.parent / match.split("#", maxsplit=1)[0])
+            .resolve()
+            .relative_to(ROOT)
+            .as_posix()
+        )
+        for match in re.findall(r"\[[^\]]+\]\(([^)]+\.md(?:#[^)]+)?)\)", prerequisites)
+    }
+
+    assert linked_pages
+    assert linked_pages <= set(rubric["context"])
 
 
 def test_reader_trial_rejects_tampered_or_incomplete_evidence(tmp_path: Path) -> None:

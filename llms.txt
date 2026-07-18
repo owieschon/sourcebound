@@ -11,7 +11,7 @@
 - [docs/CLI.md](docs/CLI.md): bindings: cli-reference; sha256: 1f382aa6661784e57414882ce601007076853ae9da7146704078bc009e4f2d0a
 - [docs/EVALUATION.md](docs/EVALUATION.md): bindings: evaluation-scorers; sha256: bc1e0d3543ec88db415151b51ef89483c21ee9e034b0e26a37fb9edfb4c3174d
 - [docs/EXTENSIONS.md](docs/EXTENSIONS.md): bindings: extension-guide, migration-guide; sha256: 81eb19b309a3d7a73b0fca7640b18add365dd556ea8572577e8fcce5e83084ae
-- [docs/INSTALL.md](docs/INSTALL.md): declared canonical context; sha256: 805d05d01dd85fd1d087e2f2e0aae4e02822ef10dd6bd16ea16bad9ece2a9dcf
+- [docs/INSTALL.md](docs/INSTALL.md): declared canonical context; sha256: f885606b3baa4f8795391dff0bb952201d5b6be4b2b83ea07d6a403b5b7165c9
 - [docs/REFERENCE.md](docs/REFERENCE.md): bindings: manifest-reference, supported-bindings; sha256: 48317b7b640cb0f9d055d1afd5e2a485e00160efd59f050004927c080808a85b
 - [docs/RELEASES.md](docs/RELEASES.md): bindings: release-guide; sha256: cc40c87393dd1784fcca7d1034ac8fd5925a7570011791a51df2853aa8be241b
 - [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md): bindings: security-model; sha256: e20ee8187953ac27033c733b94f9e63171ba1722805c7bc7c2a2a02d9ae52e9b

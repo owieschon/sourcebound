@@ -21,7 +21,10 @@ def test_reader_install_and_repair_guidance_matches_candidate_artifacts() -> Non
     support = (PROJECT / "docs/SUPPORT.md").read_text()
     readme = (PROJECT / "README.md").read_text()
 
-    assert "python -m pip install --no-index --find-links ./wheelhouse ./clean_docs-*.whl" in install
+    assert (
+        "python -m pip install --no-index --find-links ./wheelhouse "
+        "./wheelhouse/clean_docs-*.whl"
+    ) in install
     assert "The version must match the wheel filename" in install
     checksum_section = install.split("## Verify release artifacts", 1)[1]
     assert "python3 - <<'PY'" in checksum_section

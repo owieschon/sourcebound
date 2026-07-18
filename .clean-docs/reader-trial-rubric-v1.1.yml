@@ -1,6 +1,7 @@
 version: 1
 context:
   - README.md
+  - docs/INSTALL.md
   - docs/learn/index.md
   - docs/learn/tutorial-catch-a-lying-doc.md
   - docs/learn/postmortem-the-readme-that-lied.md
@@ -23,7 +24,7 @@ tasks:
     instruction: Starting from the learning index, choose the page that explains who owns facts, phrasing, and the gate result.
     passes_when: The reader chooses the deterministic-seam deep dive and assigns evidence selection and pass-or-fail authority to deterministic code while limiting a model to phrasing supplied evidence.
   - id: run-tutorial
-    instruction: Run the published tutorial against the candidate in a fresh repository and record each command exit and declared file change.
+    instruction: Follow the published offline-install prerequisite, run the published tutorial against the candidate in a fresh repository, and record each command exit and declared file change.
     passes_when: The baseline passes, deliberate source drift fails first with the named binding, drive changes the declared documentation region, project refreshes llms.txt, and final check and verify exit zero.
   - id: explain-authority-boundary
     instruction: Explain why a model cannot select facts, widen scope, or decide whether clean-docs passes, using only the published learning pages.

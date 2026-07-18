@@ -37,7 +37,7 @@ access:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install --no-index --find-links ./wheelhouse ./clean_docs-*.whl
+python -m pip install --no-index --find-links ./wheelhouse ./wheelhouse/clean_docs-*.whl
 clean-docs --version
 ```
 
