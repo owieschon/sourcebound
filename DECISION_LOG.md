@@ -433,3 +433,27 @@ On a 3,364-file public repository, the uncached path fell from 65.89 seconds to 
 same-run cached comparison fell from 16.66 seconds to 15.48 seconds. Reusing inventory evidence
 inside repository-overview bindings remains separate measured work. Reversible: callers can return
 to independent snapshot contexts without changing receipt semantics.
+
+## 41. Publish releases as create-or-verify transactions (2026-07-18)
+
+Context: the Version 1.2.0rc2 tag workflow built and attested valid artifacts, then failed because a
+manual publisher had already created the same-tag release. Chose one create-or-verify publisher.
+An absent release is created once. An existing release succeeds only after its tag, prerelease
+state, complete asset set, downloaded byte digests, provenance, and SBOM attestations match. A
+difference is a conflict, and the publisher leaves remote bytes untouched. The workflow writes its
+publication receipt after verification. Tests cover absent, identical, raced-identical, and
+conflicting states. Reversible: a different release host can implement the same state comparison
+without changing the artifact contract.
+
+## 42. Separate command-output assurance from prose and network assurance (2026-07-18)
+
+Context: legacy `type: claim` bindings checked allowlisted command JSON against a configured value
+but never read the prose under their document anchor. Outcome, diagnostic, and performance
+receipts also printed zero network requests without observing traffic. Chose the public name
+command pin while preserving the legacy manifest spelling. Binding and outcome receipts now state
+that command output was checked and anchored prose was not. Receipts at schema v2 say clean-docs
+neither blocks nor observes network traffic. Manifest version 2 removes the
+decorative `network` key; version 1 remains readable and migratable. Pull-request checks select
+static-only execution, report skipped commands and plugins, and fail when a change affects one of
+those skipped relationships. Reversible: trusted default-branch checks can still run declared
+processes, but no mode restores the unmeasured request count or the prose-assurance implication.

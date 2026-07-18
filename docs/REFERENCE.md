@@ -20,7 +20,7 @@ This table comes from the manifest validator:
 | binding | required | verifies |
 | --- | --- | --- |
 | region | id, type, doc, region, extractor, source, renderer | Generated content matches source evidence |
-| claim | id, type, doc, anchor, command, assertion | Observed command value matches the assertion |
+| claim | id, type, doc, anchor, command, assertion | Command output matches the assertion; anchored prose is not inspected |
 | symbol | id, type, doc, anchor, source | A source path or Python symbol still exists |
 <!-- clean-docs:end manifest-reference -->
 
@@ -50,6 +50,14 @@ Mark the generated destination:
 
 The source assignment may be a list of dictionaries or a dictionary whose values are records. Constructor calls are read as keyword records. clean-docs reads the syntax tree; the [security model](SECURITY_MODEL.md) owns the execution boundary.
 
+### Legacy command pins
+
+Manifest `type: claim` is the compatibility spelling for a command pin. It checks that an
+allowlisted JSON command returns the configured expected value and that the document anchor exists.
+It does not read the prose under that anchor. Use a generated scalar region when clean-docs should
+own the bytes, or an accepted [source claim check](#source-claim-checks) for the bounded prose shapes
+that the static detector supports.
+
 ## Supported binding surface
 
 This table comes from the public capability registry:
@@ -57,7 +65,7 @@ This table comes from the public capability registry:
 <!-- clean-docs:begin supported-bindings -->
 | binding | source | output | check |
 | --- | --- | --- | --- |
-| claim | Allowlisted JSON command | Assertion at a document anchor | Compare typed expected and observed values |
+| command pin (`type: claim`) | Allowlisted JSON command | Configured assertion plus an existing document anchor | Compare typed expected and observed values |
 | region | Static Python, structured data, text, or paths | Table, list, scalar, or fenced text | Re-render and compare |
 | symbol | Static path or Python symbol | Reference at a document anchor | Resolve the cited locator |
 <!-- clean-docs:end supported-bindings -->
@@ -100,3 +108,10 @@ underscore keys remain implementation details and do not enter that public set.
 changed. Updating unrelated code does not create documentation work. Discovery does not repair
 prose; update the documented value or the accepted relationship, then run `claims` and `check`
 again.
+
+## Manifest versions
+
+Version 2 removes the `network` key from allowed commands because clean-docs does not provide an
+operating-system network sandbox. Version 1 remains readable. If it contains `network: false`,
+clean-docs marks that field as deprecated; it neither blocks nor counts network traffic. Run
+`clean-docs migrate --write` to remove the field with a rollback backup.

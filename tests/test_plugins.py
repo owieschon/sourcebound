@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import subprocess
@@ -137,6 +138,25 @@ def test_incompatible_plugin_fails_before_extraction(tmp_path: Path) -> None:
         in command.stderr
     )
     assert not (root / "plugin-write-attempt.txt").exists()
+
+
+def test_static_only_check_skips_plugin_without_starting_it(tmp_path: Path) -> None:
+    root = _root(tmp_path)
+    marker = root / "plugin-started.txt"
+    (root / "fixture_plugin/__main__.py").write_text(
+        "from pathlib import Path\n"
+        "Path('plugin-started.txt').write_text('started')\n"
+        "raise SystemExit(9)\n"
+    )
+
+    checked = _run(root, "check", "--no-exec", "--format", "json")
+
+    payload = json.loads(checked.stdout)
+    assert checked.returncode == 0
+    assert payload["complete"] is False
+    assert payload["results"][0]["mechanism"] == "plugin"
+    assert payload["results"][0]["status"] == "skipped-untrusted-execution"
+    assert not marker.exists()
 
 
 def test_plugin_policy_blocks_plugin_rendered_output_before_write(tmp_path: Path) -> None:

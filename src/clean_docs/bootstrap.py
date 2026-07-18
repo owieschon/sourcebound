@@ -128,7 +128,7 @@ def _manifest_text(
             f"      - {json.dumps(path)}\n" for path in declared
         )
     return f"""\
-version: 1
+version: 2
 bindings:
   - id: repository-surface
     type: region

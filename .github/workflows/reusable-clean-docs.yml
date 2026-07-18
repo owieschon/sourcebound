@@ -49,18 +49,25 @@ jobs:
       - name: Evaluate documentation gate
         run: |
           set +e
+          execution_args=()
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            execution_args+=(--no-exec)
+          fi
           clean-docs audit --format json > clean-docs-audit.json
           audit_status=$?
-          clean-docs check --format json > clean-docs-check.json
+          clean-docs check "${execution_args[@]}" \
+            --format json > clean-docs-check.json
           check_status=$?
           base="${{ inputs.base-ref || github.event.pull_request.base.sha }}"
           head="${{ inputs.head-ref || github.event.pull_request.head.sha }}"
           changed_status=0
           if [ -n "$base" ] && [ -n "$head" ]; then
             clean-docs check --changed --base "$base" --head "$head" \
+              "${execution_args[@]}" \
               --format json > clean-docs-changed.json
             changed_status=$?
             clean-docs check --changed --base "$base" --head "$head" \
+              "${execution_args[@]}" \
               --format sarif > clean-docs-changed.sarif
           fi
           set -e
@@ -116,12 +123,12 @@ jobs:
 
           output = Path("clean-docs-run.json")
 
-          def result(path):
+          def result(path, field="ok"):
               candidate = Path(path)
               if not candidate.is_file():
                   return None
               try:
-                  return json.loads(candidate.read_text(encoding="utf-8")).get("ok")
+                  return json.loads(candidate.read_text(encoding="utf-8")).get(field)
               except (json.JSONDecodeError, OSError):
                   return None
 
@@ -139,6 +146,7 @@ jobs:
           results = {
               "audit": result("clean-docs-audit.json"),
               "bindings": result("clean-docs-check.json"),
+              "bindings_complete": result("clean-docs-check.json", "complete"),
               "changed": result("clean-docs-changed.json"),
           }
           changed_required = bool(
@@ -155,7 +163,7 @@ jobs:
               )
           )
           receipt = {
-              "schema": "clean-docs.action-run.v1",
+              "schema": "clean-docs.action-run.v2",
               "package": {
                   "ref": os.environ["CLEAN_DOCS_PACKAGE_REF"],
                   "version": package_version,

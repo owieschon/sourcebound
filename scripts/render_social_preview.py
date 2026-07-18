@@ -103,7 +103,7 @@ def render_svg(source: Path = SYSTEM_MAP) -> str:
     <text x="26" y="82" class="card-title">{token['Source bindings']}</text>
     <text x="26" y="116" class="card-body">Prose names its owner.</text>
     <rect x="26" y="140" width="154" height="26" rx="13" fill="#dff4ed"/>
-    <text x="43" y="159" class="outcome">region · claim · symbol</text>
+    <text x="43" y="159" class="outcome">region · command pin · symbol</text>
     <circle cx="0" cy="88" r="8" fill="#fff" stroke="{token['line']}" stroke-width="4"/>
     <circle cx="300" cy="88" r="8" fill="#fff" stroke="{token['line']}" stroke-width="4"/>
   </g>

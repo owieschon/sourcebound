@@ -10,6 +10,7 @@ from pathlib import Path
 
 from clean_docs.engine import evaluate
 from clean_docs.errors import ConfigurationError, ExtractionError
+from clean_docs.execution import ExecutionPolicy
 from clean_docs.claims import scan_source_claims
 from clean_docs.inventory import (
     PUBLIC_SURFACE_KINDS,
@@ -127,12 +128,14 @@ def _inventory(
     *,
     use_cache: bool,
     materialized_root: Path | None = None,
+    execution_policy: ExecutionPolicy = ExecutionPolicy.TRUSTED,
 ) -> tuple[tuple[InventoryItem, ...], bool]:
     key_payload = json.dumps(
         {
             "extractor": "repository-inventory@1",
             "parameters": {"project": project.as_posix()},
             "source": ref,
+            "execution_policy": execution_policy.value,
         },
         sort_keys=True,
         separators=(",", ":"),
@@ -162,7 +165,12 @@ def _inventory(
             raise ConfigurationError(f"project does not exist at {ref}: {project}")
         items = list(scan_inventory(project_root).items)
         manifest_path = project_root / ".clean-docs.yml"
-        plugins = load_manifest(manifest_path).plugins if manifest_path.is_file() else ()
+        plugins = (
+            load_manifest(manifest_path).plugins
+            if manifest_path.is_file()
+            and execution_policy is ExecutionPolicy.TRUSTED
+            else ()
+        )
     items = list(
         merge_plugin_inventory(
             tuple(items), discover_plugin_items(repository_snapshot, plugins)
@@ -187,6 +195,7 @@ def _check_changed_details(
     use_cache: bool = True,
     project: Path = Path("."),
     head_snapshot_root: Path | None = None,
+    execution_policy: ExecutionPolicy = ExecutionPolicy.TRUSTED,
 ) -> tuple[ChangedReport, tuple[InventoryItem, ...], tuple[InventoryItem, ...]]:
     root = root.resolve()
     if not base or not head:
@@ -215,7 +224,11 @@ def _check_changed_details(
         path.removeprefix(prefix) if prefix else path for path in changed_files
     )
     base_inventory, base_hit = _inventory(
-        root, base_sha, project, use_cache=use_cache
+        root,
+        base_sha,
+        project,
+        use_cache=use_cache,
+        execution_policy=execution_policy,
     )
     snapshot_context = (
         nullcontext(head_snapshot_root)
@@ -229,6 +242,7 @@ def _check_changed_details(
             project,
             use_cache=use_cache,
             materialized_root=snapshot,
+            execution_policy=execution_policy,
         )
         base_items = {item.id: item for item in base_inventory}
         head_items = {item.id: item for item in head_inventory}
@@ -245,11 +259,18 @@ def _check_changed_details(
                 continue
             dependencies[binding.id] = paths
             for result in evaluate(
-                head_project, head_manifest, binding_id=binding.id
+                head_project,
+                head_manifest,
+                binding_id=binding.id,
+                execution_policy=execution_policy,
             ):
                 if not result.changed:
                     continue
-                rule = "binding-drift"
+                rule = (
+                    "execution-skipped"
+                    if result.state == "skipped-untrusted-execution"
+                    else "binding-drift"
+                )
                 doc = prefix + result.doc
                 source = prefix + result.provenance.path
                 root_arg = (
@@ -261,8 +282,17 @@ def _check_changed_details(
                     doc,
                     source,
                     result.provenance.locator,
-                    f"binding {result.binding_id} changed behind {doc}",
-                    f"clean-docs{root_arg} drive --binding {result.binding_id}",
+                    (
+                        f"binding {result.binding_id} is unknown because "
+                        "static-only mode skipped repository-declared execution"
+                        if result.state == "skipped-untrusted-execution"
+                        else f"binding {result.binding_id} changed behind {doc}"
+                    ),
+                    (
+                        "run the binding in a separately configured trusted environment"
+                        if result.state == "skipped-untrusted-execution"
+                        else f"clean-docs{root_arg} drive --binding {result.binding_id}"
+                    ),
                 ))
         affected_claim_checks = []
         for claim_check in loaded.source_claim_checks:
@@ -367,6 +397,7 @@ def check_changed(
     head: str,
     use_cache: bool = True,
     project: Path = Path("."),
+    execution_policy: ExecutionPolicy = ExecutionPolicy.TRUSTED,
 ) -> ChangedReport:
     report, _, _ = _check_changed_details(
         root,
@@ -375,6 +406,7 @@ def check_changed(
         head=head,
         use_cache=use_cache,
         project=project,
+        execution_policy=execution_policy,
     )
     return report
 

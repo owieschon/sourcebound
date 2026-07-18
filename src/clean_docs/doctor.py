@@ -28,6 +28,7 @@ class DiagnosticBundle:
     bindings: int | None
     commands: int | None
     plugins: tuple[str, ...]
+    deprecations: tuple[str, ...]
 
     @property
     def ok(self) -> bool:
@@ -35,7 +36,7 @@ class DiagnosticBundle:
 
     def as_dict(self) -> dict[str, object]:
         return {
-            "schema": "clean-docs.diagnostic.v1",
+            "schema": "clean-docs.diagnostic.v2",
             "ok": self.ok,
             "version": __version__,
             "runtime": {
@@ -67,7 +68,12 @@ class DiagnosticBundle:
                 "source contents",
                 "command arguments",
             ],
-            "network_requests": 0,
+            "deprecations": list(self.deprecations),
+            "execution": {
+                "declared_processes_run": 0,
+                "network_isolation": "not-provided",
+                "network_observation": "not-instrumented",
+            },
         }
 
 
@@ -150,8 +156,10 @@ def build_diagnostic_bundle(root: Path, manifest_path: Path) -> DiagnosticBundle
         bindings = len(manifest.bindings)
         commands = len(manifest.commands)
         plugins = tuple(item.id for item in manifest.plugins)
+        deprecations = manifest.deprecations
     except ConfigurationError:
         bindings = None
         commands = None
         plugins = ()
-    return DiagnosticBundle(ref, checks, bindings, commands, plugins)
+        deprecations = ()
+    return DiagnosticBundle(ref, checks, bindings, commands, plugins, deprecations)

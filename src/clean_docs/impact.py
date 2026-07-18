@@ -14,6 +14,7 @@ import yaml
 from clean_docs import __version__
 from clean_docs.changed import ChangedReport, _check_changed_details, _git
 from clean_docs.errors import ConfigurationError
+from clean_docs.execution import ExecutionPolicy
 from clean_docs.inventory import PUBLIC_SURFACE_KINDS, InventoryItem
 from clean_docs.manifest import load_manifest
 from clean_docs.models import Manifest, SymbolBinding
@@ -646,6 +647,7 @@ def _prepare_impact_plan(
     use_cache: bool,
     project: Path,
     head_snapshot_root: Path,
+    execution_policy: ExecutionPolicy,
 ) -> _ImpactPreparation:
     changed, base_inventory, head_inventory = _check_changed_details(
         root,
@@ -655,6 +657,7 @@ def _prepare_impact_plan(
         use_cache=use_cache,
         project=project,
         head_snapshot_root=head_snapshot_root,
+        execution_policy=execution_policy,
     )
     prefix = "" if project == Path(".") else project.as_posix().rstrip("/") + "/"
     project_changed = tuple(
@@ -748,6 +751,7 @@ def build_impact_plan(
     head: str,
     use_cache: bool = True,
     project: Path = Path("."),
+    execution_policy: ExecutionPolicy = ExecutionPolicy.TRUSTED,
 ) -> ImpactPlan:
     root = root.resolve()
     if not base or not head:
@@ -781,6 +785,7 @@ def build_impact_plan(
             use_cache=use_cache,
             project=project,
             head_snapshot_root=snapshot,
+            execution_policy=execution_policy,
         )
         changed = preparation.changed
         prefix = preparation.prefix

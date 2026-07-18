@@ -8,7 +8,7 @@ This learning path is for maintainers deciding whether source-bound documentatio
 **[Catch a lying doc](tutorial-catch-a-lying-doc.md)** to see a source edit fail, repair the bound
 region, and return the repository to green.
 
-The tutorial ends with a [`clean-docs.outcome.v1` receipt](../SUPPORT.md#record-local-outcomes)
+The tutorial ends with a [`clean-docs.outcome.v2` receipt](../SUPPORT.md#record-local-outcomes)
 whose `"ok"` field is `true`.
 
 The useful question is not "who forgot the docs?" It is "which source should have made this claim
