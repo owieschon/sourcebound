@@ -22,7 +22,7 @@ The catalog binding catches additions, removals, and replacements across the det
 | cli-option | 56 | `--accept-hygiene-baseline`, `--base`, `--binding`, and 53 more |
 | package | 1 | `clean-docs` |
 | runtime-constraint | 1 | `Python >=3.10` |
-| test-suite | 52 | `scripts/test_release_lifecycle.py`, `tests/test_audit.py`, `tests/test_changed_check.py`, and 49 more |
+| test-suite | 53 | `scripts/test_release_lifecycle.py`, `tests/test_audit.py`, `tests/test_changed_check.py`, and 50 more |
 
-<!-- clean-docs:inventory-sha256 f6079e6e5b886e3cd3b21042e531df3d4a7df697139b5f37c194ff708572ad09 -->
+<!-- clean-docs:inventory-sha256 5062f9c9023f67876a593cfb2e9ddace997627d1d18de5011beedfa0343019fa -->
 <!-- clean-docs:end repository-surface -->

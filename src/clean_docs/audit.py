@@ -39,6 +39,17 @@ AUDIT_BASELINE_SCHEMA = "clean-docs.audit-baseline.v1"
 AUDIT_BASELINE_PATH = Path(".clean-docs/audit-baseline.json")
 
 
+def _is_test_fixture_path(value: str) -> bool:
+    path = Path(value)
+    parts = set(path.parts)
+    name = path.name
+    return bool(
+        parts & {"test", "tests", "__tests__", "fixtures", "__fixtures__"}
+        or ".test." in name
+        or ".spec." in name
+    )
+
+
 @dataclass(frozen=True)
 class AuditFinding:
     rule: str
@@ -728,13 +739,17 @@ def _scan_audit(root: Path, *, preview_policy: bool = False) -> AuditReport:
             residue_finding.detail,
         )
         residue_profile = profiles.get(residue_finding.doc)
+        fixture_machine_path = (
+            residue_finding.rule == "local-path-residue"
+            and _is_test_fixture_path(residue_finding.doc)
+        )
+        residue_blocks = not fixture_machine_path and (
+            repository_integrity_enforced
+            or residue_profile is not None and residue_profile.registered
+        )
         (
             findings
-            if (
-                repository_integrity_enforced
-                or residue_profile is not None
-                and residue_profile.registered
-            )
+            if residue_blocks
             else advisories
         ).append(candidate)
     findings.sort(key=lambda item: (item.path, item.line, item.rule))

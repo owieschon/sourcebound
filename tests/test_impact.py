@@ -384,7 +384,7 @@ def test_typescript_signature_change_is_public_interface_work(
     (root / "src").mkdir(parents=True)
     subprocess.run(["git", "init", "-q", "-b", "main", str(root)], check=True)
     (root / "src/api.ts").write_text(
-        "export function publish(dryRun = false) { return dryRun }\n"
+        "export interface PromptOptions {\n  version?: number\n}\n"
     )
     (root / "README.md").write_text(
         "# Fixture\n\n<!-- clean-docs:begin repository-surface -->\n"
@@ -407,7 +407,7 @@ bindings:
         """\
 version: 1
 ignore:
-  - id: api-symbol:src/api.ts:publish
+  - id: api-symbol:src/api.ts:PromptOptions
     reason: Public API reference is maintained outside this fixture.
 """
     )
@@ -415,9 +415,11 @@ ignore:
     base = _commit(root, "base")
     source = root / "src/api.ts"
     source.write_text(
-        source.read_text().replace("dryRun = false", "dryRun = true")
+        source.read_text().replace(
+            "  version?: number\n", "  version?: number\n  label?: string\n"
+        )
     )
-    head = _commit(root, "change TypeScript default")
+    head = _commit(root, "add TypeScript interface member")
 
     plan = build_impact_plan(
         root, root / ".clean-docs.yml", base=base, head=head
