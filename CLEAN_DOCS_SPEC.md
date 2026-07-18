@@ -56,18 +56,28 @@ remain advisories in either state. The JSON report exposes the enforcement state
 state, every document profile, advisory totals, unsupported MDX paths, and the exact accepted-debt
 baseline under schema `clean-docs.audit.v1`. A maintainer can replace an ambiguous role guess with
 a checked `<!-- clean-docs:role reference -->` marker; invalid role names fail instead of falling
-back.
+back. Literal machine paths in recognized test fixtures remain advisories because they can be
+intentional inputs; the same path in product source or a lockfile remains an integrity finding.
 
 Use `init --no-model` once to add a repository-surface binding and `llms.txt`. It preserves existing
 documents, repository-native structure, evidence records, and compatibility aliases. A new README
 receives the packaged overview shape; an existing README keeps its authored opening unless it
 already opted into the register. Otherwise, the generated catalog lives at
-`.clean-docs/repository-surface.md`. Init stops instead of replacing an existing manifest,
-overwriting its reserved generated file, or inventing purpose for an ambiguous page.
+`.clean-docs/repository-surface.md`. The initial context projection contains that catalog and the
+root orientation page only; clean-docs does not promote architecture records, examples, or nested
+READMEs to canonical context from their filenames. Init stops instead of replacing an existing
+manifest, overwriting its reserved generated file, or inventing purpose for an ambiguous page.
 
 Use `check` for configured binding and projection drift. Use `check --changed --base REF --head REF`
 to classify affected bindings, accepted source claims, and newly detected public surface.
 Unsupported or uncovered public surface fails instead of becoming a no-impact claim.
+
+Use `plan --base REF --head REF` to produce a read-only impact receipt before repair. The planner
+uses the merge base, classifies every changed artifact, and traverses only affected accepted
+bindings, projections, and evaluations. `impact: none` requires complete adapter coverage;
+unsupported public candidates remain `unknown`. The receipt binds its producer version, immutable
+Git objects, manifest, graph, and findings. Its zero exit code means the receipt was built, not that
+the branch is ready to merge.
 
 Use `claims` to inspect ranked static source-to-prose candidates. Candidate ranking is
 assessment-only. A `source_claim_checks` entry accepts one document anchor, subject, source path,
@@ -107,8 +117,9 @@ The [manifest reference](docs/REFERENCE.md) owns accepted fields and examples. T
 ## Evidence and execution
 
 Static adapters parse Python, TypeScript, JavaScript, OpenAPI, JSON Schema, package metadata, and
-configuration schemas without importing repository modules. A claim command or plugin runs only
-when the manifest declares its exact argument array.
+configuration schemas without importing repository modules. Immutable read-only snapshots preserve
+relative symlinks whose targets stay inside the snapshot and reject escaping links. A claim command
+or plugin runs only when the manifest declares its exact argument array.
 
 Declared processes receive a disposable repository copy, temporary directories, a minimal
 environment, a timeout, an I/O limit, symlink checks, and secret-output checks. These controls are
@@ -150,6 +161,11 @@ clean-docs does not:
 The 1.x line preserves manifest version `1`, plugin API version `1`, published machine schemas, and
 stable command meanings. Minor releases may add optional fields. An incompatible manifest exits
 `2` before extraction, and a removed stable surface requires a major release.
+
+Repository-overview receipts created before the current digest algorithm remain valid while their
+catalog surface is unchanged. A later surface change rewrites the region with the current
+versioned extractor. Impact plans name their producer because a plan conclusion is only
+reproducible with the same planner semantics.
 
 Use the [install guide](docs/INSTALL.md) for package and artifact lifecycle tasks. The
 [support guide](docs/SUPPORT.md) owns CI pinning, corpus adoption, receipts, and diagnostics.

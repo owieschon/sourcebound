@@ -19,6 +19,7 @@ from clean_docs.engine import drive, evaluate, write_results
 from clean_docs.evaluation import run_evaluation, write_evaluation_history
 from clean_docs.errors import CleanDocsError, ConfigurationError
 from clean_docs.explain import explain
+from clean_docs.impact import build_impact_plan, render_impact_plan
 from clean_docs.plugins import scan_extended_inventory
 from clean_docs.manifest import load_manifest
 from clean_docs.models import BindingResult
@@ -116,6 +117,14 @@ def _parser() -> argparse.ArgumentParser:
     drive_parser.add_argument("--binding", help="repair one binding id")
     drive_parser.add_argument("--ref", help="read bound sources from an immutable git ref")
     drive_parser.add_argument("--format", choices=("text", "json"), default="text")
+    plan = sub.add_parser("plan", help=_command_help("plan"))
+    plan.add_argument("--base", required=True, help="target branch or base git ref")
+    plan.add_argument("--head", required=True, help="change head git ref")
+    plan.add_argument(
+        "--project", type=Path, default=Path("."), help="monorepo project path"
+    )
+    plan.add_argument("--no-cache", action="store_true", help="bypass immutable-ref cache")
+    plan.add_argument("--format", choices=("text", "json"), default="text")
     check = sub.add_parser("check", help=_command_help("check"))
     check.add_argument("--binding", help="evaluate one binding id")
     check.add_argument("--ref", help="read bound sources from an immutable git ref")
@@ -667,6 +676,23 @@ def main(argv: list[str] | None = None) -> int:
             return 1 if any(
                 result.changed and result.binding_type != "region" for result in results
             ) else 0
+        if args.command == "plan":
+            plan_manifest = manifest
+            if args.project != Path(".") and args.manifest == Path(".clean-docs.yml"):
+                plan_manifest = root / args.project / args.manifest
+            impact_plan = build_impact_plan(
+                root,
+                plan_manifest,
+                base=args.base,
+                head=args.head,
+                use_cache=not args.no_cache,
+                project=args.project,
+            )
+            if args.format == "json":
+                print(json.dumps(impact_plan.as_dict(), indent=2))
+            else:
+                sys.stdout.write(render_impact_plan(impact_plan))
+            return 0
         if args.command == "check" and args.changed:
             if args.binding or args.ref:
                 raise ConfigurationError(
