@@ -92,6 +92,7 @@ EXPECTED_IDS_BY_RELEASE = {
         "merge-base-history",
         "scope-tension",
         "legacy-overview-compatibility",
+        "cross-runtime-receipt-portability",
     },
 }
 

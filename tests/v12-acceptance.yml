@@ -23,3 +23,5 @@ scenarios:
     test: tests/test_impact.py::test_internal_unsupported_script_does_not_expand_the_plan
   - id: legacy-overview-compatibility
     test: tests/test_inventory.py::test_repository_overview_accepts_legacy_receipts_until_surface_changes
+  - id: cross-runtime-receipt-portability
+    test: tests/test_impact.py::test_python_interface_fingerprints_request_stable_empty_ast_fields

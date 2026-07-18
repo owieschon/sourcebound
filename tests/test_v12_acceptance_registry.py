@@ -22,4 +22,5 @@ def test_version_12a_registry_names_every_scenario() -> None:
         "merge-base-history",
         "scope-tension",
         "legacy-overview-compatibility",
+        "cross-runtime-receipt-portability",
     ]

@@ -4,8 +4,10 @@ import ast
 import hashlib
 import json
 import re
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path
+from typing import cast
 
 import yaml
 
@@ -188,19 +190,29 @@ def _identifier(*parts: object) -> str:
     return _digest(list(parts))
 
 
+def _stable_ast_dump(node: ast.AST) -> str:
+    dump = cast(Callable[..., str], ast.dump)
+    try:
+        return dump(node, include_attributes=False, show_empty=True)
+    except TypeError:
+        # Python 3.11 and 3.12 include empty fields by default and do not
+        # expose the show_empty argument.
+        return dump(node, include_attributes=False)
+
+
 def _python_interface_payload(node: ast.AST) -> dict[str, object]:
     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
         return {
             "kind": type(node).__name__,
             "name": node.name,
-            "arguments": ast.dump(node.args, include_attributes=False),
+            "arguments": _stable_ast_dump(node.args),
             "returns": (
-                ast.dump(node.returns, include_attributes=False)
+                _stable_ast_dump(node.returns)
                 if node.returns is not None
                 else None
             ),
             "decorators": [
-                ast.dump(item, include_attributes=False)
+                _stable_ast_dump(item)
                 for item in node.decorator_list
             ],
         }
@@ -209,13 +221,13 @@ def _python_interface_payload(node: ast.AST) -> dict[str, object]:
             "kind": type(node).__name__,
             "name": node.name,
             "bases": [
-                ast.dump(item, include_attributes=False) for item in node.bases
+                _stable_ast_dump(item) for item in node.bases
             ],
             "keywords": [
-                ast.dump(item, include_attributes=False) for item in node.keywords
+                _stable_ast_dump(item) for item in node.keywords
             ],
             "decorators": [
-                ast.dump(item, include_attributes=False)
+                _stable_ast_dump(item)
                 for item in node.decorator_list
             ],
         }
