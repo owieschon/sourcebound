@@ -220,7 +220,13 @@ def test_drive_repairs_drift_and_returns_passing_state(tmp_path: Path) -> None:
 
 def test_drive_does_not_write_a_policy_failure(tmp_path: Path) -> None:
     root = _repo(tmp_path)
-    original = README.replace("Author-owned introduction.", "A powerful introduction.")
+    original = README.replace(
+        "# Fixture\n",
+        "# Fixture\n\n"
+        "<!-- clean-docs:policy register-v2 -->\n"
+        '<!-- clean-docs:allow preamble-contract reason="Fixture isolates the booster rule" -->\n'
+        '<!-- clean-docs:allow readme-routing reason="Fixture isolates the booster rule" -->\n',
+    ).replace("Author-owned introduction.", "A powerful introduction.")
     (root / "README.md").write_text(original)
     (root / "src/actions.py").write_text(SOURCE_THREE)
 

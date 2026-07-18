@@ -1,16 +1,25 @@
 # Catch a lying doc
 
+<!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
 This tutorial is for maintainers who want to see one source-bound fact fail and recover in a disposable repository. It turns an easy-to-miss command rename into a named check failure, a region-only repair, and a verified projection using an installed clean-docs release.
 <!-- clean-docs:end purpose -->
 
-A stale README keeps a straight face. This exercise gives it a tripwire.
+**[Install the stable release](../INSTALL.md#install-the-latest-stable-release)**, then
+build the disposable repository below.
 
-You will build Moonbase Status, a tiny operator guide whose public action table comes from a Python literal. No repository code is imported or executed. The full binding surface and installation variants remain in the [manifest reference](../../README.md#manifest-reference) and [support guide](../SUPPORT.md).
+Success appears in the [outcome receipt](../SUPPORT.md#record-local-outcomes) after the last
+command: its `ok` field reads `true`.
+
+The source will move first. The bound table cannot keep pretending it did not.
+
+You will build Moonbase Status, a tiny operator guide whose public action table comes from a
+Python literal. No repository code is imported or executed. The [manifest page](../REFERENCE.md)
+lists every binding, and the [install guide](../INSTALL.md) covers other install paths.
 
 ## Before you begin
 
-Install a stable clean-docs artifact in an isolated environment and confirm `clean-docs --version` works. The [local artifact procedure](../SUPPORT.md#install-upgrade-roll-back-and-uninstall) is the offline path used to test this tutorial. You also need Git and Python 3.10 or newer.
+Install a stable clean-docs artifact in an isolated environment and confirm `clean-docs --version` works. The [offline procedure](../INSTALL.md#install-without-package-index-access) is the path used to test this tutorial. You also need Git and Python 3.10 or newer.
 
 ## 1. Build the fixture
 

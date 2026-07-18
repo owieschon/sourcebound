@@ -127,6 +127,29 @@ def test_stepwise_projection_is_idempotent_and_its_commands_pass(tmp_path: Path)
     assert _run(root, "check").returncode == 0
 
 
+def test_large_stepwise_projection_does_not_repeat_the_bound_document_index(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    manifest = MANIFEST + "\n".join(
+        (
+            f"  - id: extra-{index}\n"
+            "    type: symbol\n"
+            f"    doc: docs/guide-{index}.md\n"
+            "    anchor: guide\n"
+            "    source: {path: src/actions.py, symbol: ACTIONS}\n"
+        )
+        for index in range(12)
+    )
+    (root / ".clean-docs.yml").write_text(manifest)
+
+    assert _run(root, "emit", "stepwise-skill", "--out", "dist/stepwise").returncode == 0
+    output = root / "dist/stepwise"
+    repair = (output / "references/2-repair.md").read_text()
+    assert "docs/guide-0.md" not in repair
+    assert _run(output, "audit").returncode == 0
+
+
 def test_command_role_is_strict_and_serializes_cli_block(tmp_path: Path) -> None:
     root = _repo(tmp_path)
     missing = _run(root, "emit", "stepwise-skill", "--role", "command")

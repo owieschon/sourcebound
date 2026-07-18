@@ -1,1 +1,1 @@
-Network isolation belongs to the execution environment (README.md#current-limits).
+The host owns network isolation (README.md#current-boundaries).

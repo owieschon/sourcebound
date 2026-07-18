@@ -1,8 +1,15 @@
 # Grounded release notes
 
+<!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
-Use this guide when release notes must describe the difference between two repository refs without trusting a narrative draft to choose the changes. It shows maintainers how to render the source-bound delta and reject prose that omits, alters, duplicates, or uncites a fact.
+Maintainers use this guide to build release notes from the difference between two repository refs.
+It keeps the factual delta independent of a narrative draft, so missing, altered, duplicated, or
+uncited changes fail before publication.
 <!-- clean-docs:end purpose -->
+
+**[Render the factual skeleton](#render-the-factual-skeleton)**.
+
+The JSON result is the proof: every delta carries its source, locator, adapter, and evidence digest.
 
 ## Render the factual skeleton
 
@@ -33,11 +40,5 @@ The factual Markdown and JSON remain unchanged when narrative validation fails. 
 
 Release extraction is static and snapshot-bound. First-party and configured discoverer plugins run once per ref in disposable copies. The active worktree, its installed dependencies, and narrative output cannot change the typed delta.
 
-Release-candidate builds rehearse the published reader tasks in CI. A stable release additionally requires one content-addressed trial from each profile in that release line's rubric:
-
-| Release line | Independent reader set | Evidence contract |
-| --- | --- | --- |
-| `1.0` | Anthropic Opus 4.8, Anthropic Sonnet 5, Codex GPT 5.5 High, and Codex GPT 5.6 Sol High | Product identification, installation, protection, repair, and limitation tasks |
-| `1.1` | Anthropic Opus 4.8 and Codex GPT 5.6 Sol High | Learning-path routing, tutorial execution, and deterministic-authority tasks |
-
-Every profile runs in a fresh session with only the rubric's published context, completes every task, and binds its evidence by SHA-256. Profiles cannot share conversation history or prior trial output. The receipt also names the exact candidate commit and wheel digest. `scripts/verify_reader_trial.py` selects the versioned rubric and evidence namespace; `scripts/build_release.py` reconstructs the candidate wheel and permits only the version and matching reader receipts to differ in the stable release. It refuses absent, duplicate, substituted, incomplete, stale, tampered, or untried evidence.
+This command describes another repository's release. Workflows publish clean-docs itself, and
+repository-hosted issues hold reader-trial records. Neither belongs in this feature guide.

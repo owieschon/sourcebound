@@ -44,6 +44,6 @@ tasks:
       response: .clean-docs/evaluation/responses/limitation.txt
     scorer:
       type: cited-limit
-      answer: Network isolation belongs to the execution environment
-      citation: README.md#current-limits
+      answer: The host owns network isolation
+      citation: README.md#current-boundaries
       forbidden: [clean-docs enforces network isolation]

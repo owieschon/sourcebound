@@ -1,0 +1,68 @@
+{
+  "schema": "clean-docs.audit-baseline.v1",
+  "findings": [
+    {
+      "fingerprint": "4dd7d7ac8bdcd39d909ef0ed30585a911e67a895ca48d2fe4abcaac92d93ac9b",
+      "rule": "nominalization-density",
+      "path": "DECISION_LOG.md",
+      "line": 17,
+      "detail": "replace clustered abstractions with actors and concrete verbs: evidence, evidence, curation"
+    },
+    {
+      "fingerprint": "2c6cc93983a70c9f9150dbd28bf69f4a16bedb21ae783ad49a6a477a1d5bb0b9",
+      "rule": "sentence-variance",
+      "path": "DECISION_LOG.md",
+      "line": 167,
+      "detail": "add one short sentence beat or combine claims that share evidence"
+    },
+    {
+      "fingerprint": "ad1bb3770be90a944503c8e66fca5410e9c565811413d4159c74ce3a859b5b52",
+      "rule": "nominalization-density",
+      "path": "DECISION_LOG.md",
+      "line": 196,
+      "detail": "replace clustered abstractions with actors and concrete verbs: projection, selection, projection"
+    },
+    {
+      "fingerprint": "ff651a211adc7ad2577b80d463ab5bc243f690e621846049b0d7dea101306aee",
+      "rule": "nominalization-density",
+      "path": "DECISION_LOG.md",
+      "line": 221,
+      "detail": "replace clustered abstractions with actors and concrete verbs: projection, deployment, evaluation"
+    },
+    {
+      "fingerprint": "cfa4e1a421020cb0c11891d1b5cdccfb46cf8c012b2db652971efad56e8fef3f",
+      "rule": "nominalization-density",
+      "path": "DECISION_LOG.md",
+      "line": 241,
+      "detail": "replace clustered abstractions with actors and concrete verbs: omission, contradiction, violation, citation"
+    },
+    {
+      "fingerprint": "4f1de2edefccc42a38d24a15c4cfafd5358f87cdb0cb01edf0d8ac13bdc4f7ad",
+      "rule": "nominalization-density",
+      "path": "DECISION_LOG.md",
+      "line": 258,
+      "detail": "replace clustered abstractions with actors and concrete verbs: extension, extension, evidence"
+    },
+    {
+      "fingerprint": "6399d07fdaac904f6094592270f56700c46a5ca5fd51db8640ace454fdf6f67d",
+      "rule": "sentence-variance",
+      "path": "DECISION_LOG.md",
+      "line": 258,
+      "detail": "add one short sentence beat or combine claims that share evidence"
+    },
+    {
+      "fingerprint": "51975c43382494ce3d8d82b104c4ce0def97e9592f332f96a30d1df8b998737b",
+      "rule": "nominalization-density",
+      "path": "DECISION_LOG.md",
+      "line": 308,
+      "detail": "replace clustered abstractions with actors and concrete verbs: presence, position, restatement, rejection, judgment"
+    },
+    {
+      "fingerprint": "b6bc408cd53a5b4bd73be2d82893c62ff449549449c1e960069ebcb574186aab",
+      "rule": "sentence-variance",
+      "path": "DECISION_LOG.md",
+      "line": 327,
+      "detail": "add one short sentence beat or combine claims that share evidence"
+    }
+  ]
+}

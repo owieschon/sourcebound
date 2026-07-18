@@ -1,8 +1,14 @@
 # Security model
 
+<!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
 Use this model before allowing clean-docs to run a repository command or plugin. It separates static data from declared execution, names the controls clean-docs enforces, and tells operators where the host must provide stronger isolation.
 <!-- clean-docs:end purpose -->
+
+**[Review the enforced process controls](#process-controls)**.
+
+The [adversarial checks](#adversarial-checks) are the proof; the host boundary names what those
+tests do not claim.
 
 ## Trust tiers
 
@@ -25,7 +31,9 @@ Core code validates response schemas, computes evidence IDs and digests, rejects
 
 The process controls are not an operating-system sandbox. A declared executable can open a network connection or address an absolute host path if the surrounding runner permits it. Run untrusted declared code in a network-blocked container or equivalent OS sandbox. Keep local manifests limited to commands and plugins you would run directly.
 
-Static commands remain useful when no declared process is trusted. `audit`, `inventory`, static `init`, static bindings, projections, recorded evaluation, and release extraction require no repository code execution unless the manifest explicitly adds a command or plugin.
+You can still use `audit`, `inventory`, static `init`, static bindings, projections, recorded task
+scoring, and release facts when no declared process is trusted. Those paths do not run repository
+code unless the manifest explicitly adds a command or plugin.
 
 ## Adversarial checks
 

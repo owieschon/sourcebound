@@ -95,7 +95,7 @@ def test_init_dry_run_is_read_only_then_default_init_writes_and_verifies(
     assert after_dry_run == before
     assert planned["schema"] == "clean-docs.content-plan.v1"
     assert planned["facts"]
-    assert {item["action"] for item in planned["operations"]} == {"write", "move"}
+    assert {item["action"] for item in planned["operations"]} == {"write"}
     assert all(item["digest"] for item in planned["facts"])
     generated_rows = {
         (item["kind"], item["name"], item["source"], item["locator"])
@@ -107,21 +107,21 @@ def test_init_dry_run_is_read_only_then_default_init_writes_and_verifies(
     applied = json.loads(capsys.readouterr().out)
     assert applied["digest"] == planned["digest"]
     readme = (root / "README.md").read_text()
-    assert readme.count("<!-- clean-docs:purpose -->") == 1
-    assert readme.count("<!-- clean-docs:end purpose -->") == 1
+    assert "<!-- clean-docs:purpose -->" not in readme
     assert "Author-owned introduction." in readme
-    assert "obsolete-command" not in readme
-    assert "| cli-command | 3 | `baseline`, `inspect`, `serve` |" in readme
-    assert "| package | 1 | `baseline-service` |" in readme
-    assert "| runtime-constraint | 1 | `Python >=3.11` |" in readme
-    assert "<!-- clean-docs:inventory-sha256 " in readme
+    assert "obsolete-command" in readme
     assert "Keep this author-owned procedure." in readme
+    surface = (root / ".clean-docs/repository-surface.md").read_text()
+    assert "| cli-command | 3 | `baseline`, `inspect`, `serve` |" in surface
+    assert "| package | 1 | `baseline-service` |" in surface
+    assert "| runtime-constraint | 1 | `Python >=3.11` |" in surface
+    assert "<!-- clean-docs:inventory-sha256 " in surface
     assert (root / ".clean-docs.yml").is_file()
     assert (root / "llms.txt").is_file()
     assert (root / "docs/GUIDE.md").is_file()
-    assert not (root / "docs/GUIDE_COPY.md").exists()
-    assert (root / "docs/archive/clean-docs-init/GUIDE_COPY.md").is_file()
-    assert (root / "docs/archive/clean-docs-init/HANDOFF.md").is_file()
+    assert (root / "docs/GUIDE_COPY.md").is_file()
+    assert (root / "docs/HANDOFF.md").is_file()
+    assert not (root / "docs/archive/clean-docs-init").exists()
     assert main(["--root", str(root), "check"]) == 0
     capsys.readouterr()
     assert main(["--root", str(root), "audit"]) == 0
@@ -162,11 +162,13 @@ def test_typescript_repository_bootstraps_without_python_metadata(
     capsys.readouterr()
 
     readme = (root / "README.md").read_text()
-    assert "| package | 1 | `typed-service` |" in readme
-    assert "| cli-command | 1 | `typed` |" in readme
-    assert "| api-symbol | 1 | `start` |" in readme
-    assert "| api-endpoint | 1 | `GET /health` |" in readme
-    assert "| runtime-constraint | 2 | `ES modules`, `node >=20` |" in readme
+    assert readme == "# Typed service\n\n[Guide](docs/guide.md)\n"
+    surface = (root / ".clean-docs/repository-surface.md").read_text()
+    assert "| package | 1 | `typed-service` |" in surface
+    assert "| cli-command | 1 | `typed` |" in surface
+    assert "| api-symbol | 1 | `start` |" in surface
+    assert "| api-endpoint | 1 | `GET /health` |" in surface
+    assert "| runtime-constraint | 2 | `ES modules`, `node >=20` |" in surface
     assert main(["--root", str(root), "check"]) == 0
 
 
@@ -273,7 +275,7 @@ def test_missing_language_adapter_blocks_all_init_writes(
 
     assert main([
         "--root", str(root), "init", "--no-model", "--dry-run", "--format", "json"
-    ]) == 0
+    ]) == 2
     plan = json.loads(capsys.readouterr().out)
     assert plan["ok"] is False
     assert plan["gaps"] == ["language adapter missing: Go"]
@@ -342,9 +344,7 @@ def test_hostile_model_context_is_filtered_and_cannot_change_gate_results(
         }],
     }))
     before = audit(root).findings
-    assert [(finding.path, finding.rule) for finding in before] == [
-        ("README.md", "purpose-contract"),
-    ]
+    assert before == ()
     context_before = (docs / "CONTEXT.md").read_text()
 
     plan = build_bootstrap_plan(root, provider)
@@ -353,6 +353,15 @@ def test_hostile_model_context_is_filtered_and_cannot_change_gate_results(
     serialized = json.dumps(plan.as_dict(), sort_keys=True)
     prompt = json.loads(provider.last_prompt)
     assert prompt["standard"]["voice"]["register"] == "helpful senior colleague"
+    assert prompt["standard"]["precedence"] == [
+        "truth and honesty",
+        "grounding",
+        "reader budget",
+        "register",
+        "warmth",
+    ]
+    assert "A stale README keeps a straight face." in prompt["standard"]["exemplars"]
+    assert "The binding gives it a tripwire." in prompt["standard"]["exemplars"]
     assert prompt["standard"]["purpose_contract"]["judgment"] == [
         "defines the project-specific subject and intended operator",
         "names the consequential failure or decision the page addresses",
@@ -372,15 +381,17 @@ def test_hostile_model_context_is_filtered_and_cannot_change_gate_results(
 
     assert audit(root).findings == ()
     readme = (root / "README.md").read_text()
-    assert "The repository provides `grounded-service` as a package." in readme
-    assert secret not in readme
-    assert hostile not in readme
+    assert readme == "# Grounded service\n"
+    surface = (root / ".clean-docs/repository-surface.md").read_text()
+    assert "The repository provides `grounded-service` as a package." in surface
+    assert secret not in surface
+    assert hostile not in surface
     context_after = (docs / "CONTEXT.md").read_text()
     assert context_after == context_before
     assert secret in context_after
 
 
-def test_secret_removed_by_repair_is_redacted_from_plan(
+def test_init_plan_does_not_copy_a_secret_from_a_preserved_readme(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     root = tmp_path / "secret-output"
@@ -399,14 +410,18 @@ def test_secret_removed_by_repair_is_redacted_from_plan(
     output = capsys.readouterr().out
     plan = json.loads(output)
     assert secret not in output
-    assert "[REDACTED]" in output
+    assert "[REDACTED]" not in output
+    assert all(
+        operation["path"] != "README.md"
+        for operation in plan["operations"]
+    )
     assert plan["gaps"] == []
 
     assert main(["--root", str(root), "init", "--no-model"]) == 0
 
     captured = capsys.readouterr()
     assert secret not in captured.out
-    assert secret not in (root / "README.md").read_text()
+    assert (root / "README.md").read_text() == original
     assert (root / ".clean-docs.yml").exists()
 
 
@@ -443,7 +458,7 @@ def test_failed_post_write_policy_check_restores_the_repository(
     assert after == before
 
 
-def test_mature_repository_requires_explicit_exact_hygiene_baseline(
+def test_mature_repository_initializes_without_imposing_a_hygiene_baseline(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     root = tmp_path / "mature-repo"
@@ -458,37 +473,19 @@ def test_mature_repository_requires_explicit_exact_hygiene_baseline(
     subprocess.run(["git", "init", "-q", str(root)], check=True)
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
 
-    assert main(["--root", str(root), "init", "--no-model"]) == 1
+    assert main(["--root", str(root), "init", "--no-model"]) == 0
     capsys.readouterr()
-    assert not (root / ".clean-docs.yml").exists()
+    assert (root / ".clean-docs.yml").exists()
     assert not (root / ".clean-docs/audit-baseline.json").exists()
-
-    assert main([
-        "--root",
-        str(root),
-        "init",
-        "--no-model",
-        "--accept-hygiene-baseline",
-        "--format",
-        "json",
-    ]) == 0
-    plan = json.loads(capsys.readouterr().out)
-    assert any(
-        operation["path"] == ".clean-docs/audit-baseline.json"
-        for operation in plan["operations"]
-    )
     report = audit(root)
     assert report.ok
     assert report.findings == ()
-    assert [item.rule for item in report.baselined_findings] == [
-        "doc-length",
-        "process-artifact",
-        "purpose-contract",
-    ]
+    assert report.baselined_findings == ()
     assert (root / "STATUS.md").is_file()
     assert not (root / "docs/archive/clean-docs-init/STATUS.md").exists()
 
     readme = root / "README.md"
+    assert "<!-- clean-docs:purpose -->" not in readme.read_text()
     readme.write_text(
         readme.read_text().replace(
             "# Mature service\n",
@@ -497,8 +494,8 @@ def test_mature_repository_requires_explicit_exact_hygiene_baseline(
         )
     )
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
-    assert main(["--root", str(root), "audit"]) == 1
-    assert "stale-baseline" in capsys.readouterr().out
+    assert main(["--root", str(root), "audit"]) == 0
+    assert "0 stale" in capsys.readouterr().out
 
 
 def test_init_rejects_a_missing_repository_root(
@@ -534,12 +531,16 @@ def test_init_preserves_the_repository_readme_filename(
         for operation in plan["operations"]
         if operation["action"] == "write"
     }
-    assert "readme.md" in write_paths
+    assert "readme.md" not in write_paths
+    assert ".clean-docs/repository-surface.md" in write_paths
     assert "README.md" not in write_paths
+    assert plan["canonical_documents"][0] == "readme.md"
 
     assert main(["--root", str(root), "init", "--no-model"]) == 0
     capsys.readouterr()
-    assert "doc: readme.md" in (root / ".clean-docs.yml").read_text()
+    assert "doc: .clean-docs/repository-surface.md" in (
+        root / ".clean-docs.yml"
+    ).read_text()
     assert "[readme.md](readme.md)" in (root / "llms.txt").read_text()
 
 
@@ -583,12 +584,12 @@ def test_mature_monorepo_plan_is_bounded_and_does_not_forge_purpose_contracts(
     raw_plan = capsys.readouterr().out
     plan = json.loads(raw_plan)
 
-    assert plan["ok"] is False
+    assert plan["ok"] is True
     assert plan["fact_count"] > len(plan["facts"])
     assert len(plan["facts"]) == 100
     assert plan["facts_omitted"] == plan["fact_count"] - 100
     assert len(raw_plan.encode()) < 100_000
-    assert "purpose contract needs authored judgment: docs/adr/0001-runtime.md" in plan["gaps"]
+    assert plan["gaps"] == []
     adr_operation = next(
         (item for item in plan["operations"] if item["path"] == "docs/adr/0001-runtime.md"),
         None,
@@ -600,9 +601,7 @@ def test_mature_monorepo_plan_is_bounded_and_does_not_forge_purpose_contracts(
         "docs/adr/0001-runtime.md",
     ]
 
-    assert main([
-        "--root", str(root), "init", "--no-model", "--accept-hygiene-baseline",
-    ]) == 0
+    assert main(["--root", str(root), "init", "--no-model"]) == 0
     capsys.readouterr()
     assert "<!-- clean-docs:purpose -->" not in adr.read_text()
     assert "include:" in (root / ".clean-docs.yml").read_text()
@@ -610,8 +609,10 @@ def test_mature_monorepo_plan_is_bounded_and_does_not_forge_purpose_contracts(
     assert "[ARCHITECTURE.md](ARCHITECTURE.md)" in llms
     assert "[docs/adr/0001-runtime.md](docs/adr/0001-runtime.md)" in llms
     readme = (root / "README.md").read_text()
-    assert "| mcp-tool | 2 | `get_account`, `resolve_account` |" in readme
-    assert "does not validate existing prose claims" in readme
+    assert "| mcp-tool |" not in readme
+    surface = (root / ".clean-docs/repository-surface.md").read_text()
+    assert "| mcp-tool | 2 | `get_account`, `resolve_account` |" in surface
+    assert "does not validate existing prose claims" in surface
 
     server.write_text(server.read_text().replace(
         "server.registerTool('get_account', {}, handler);",

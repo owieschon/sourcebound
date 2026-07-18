@@ -11,7 +11,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from clean_docs.audit import audit
-from clean_docs.bootstrap import apply_bootstrap_plan, build_bootstrap_plan
+from clean_docs.bootstrap import (
+    GENERATED_REFERENCE,
+    apply_bootstrap_plan,
+    build_bootstrap_plan,
+)
 from clean_docs.changed import CHANGED_CHECK_BUDGET_SECONDS, check_changed
 from clean_docs.engine import evaluate
 from clean_docs.inventory import scan_inventory
@@ -74,16 +78,35 @@ def _run_case(case: BootstrapDogfoodCase, parent: Path) -> dict[str, object]:
         any(item.adapter == case.evidence_adapter for item in inventory.items),
         f"{case.name}: {case.evidence_adapter} produced no evidence",
     )
+    readme_path = root / case.readme
+    readme_before = readme_path.read_bytes()
     plan = build_bootstrap_plan(root)
     require(not plan.gaps, f"{case.name}: bootstrap reported gaps")
     require(plan.model is None, f"{case.name}: bootstrap called a model")
     require(plan.facts, f"{case.name}: bootstrap produced no grounded facts")
+    require(
+        all(write.path != case.readme for write in plan.writes),
+        f"{case.name}: bootstrap planned a native README rewrite",
+    )
     apply_bootstrap_plan(root, plan)
 
     manifest = load_manifest(root / ".clean-docs.yml")
     binding = manifest.bindings[0]
     require(isinstance(binding, RegionBinding), f"{case.name}: baseline binding is not a region")
-    require(binding.doc.as_posix() == case.readme, f"{case.name}: README path changed")
+    require(
+        binding.doc.as_posix() == GENERATED_REFERENCE,
+        f"{case.name}: generated facts were not isolated from the native README",
+    )
+    require(
+        readme_path.read_bytes() == readme_before,
+        f"{case.name}: bootstrap changed the native README",
+    )
+    require(
+        manifest.projections is not None
+        and manifest.projections.llms_txt is not None
+        and Path(case.readme) in manifest.projections.llms_txt.include,
+        f"{case.name}: llms.txt dropped the native README",
+    )
     require(not any(result.changed for result in evaluate(root, manifest.path)), f"{case.name}: check drifted")
     require(not audit(root).findings, f"{case.name}: generated baseline failed audit")
 
@@ -135,6 +158,8 @@ def _run_case(case: BootstrapDogfoodCase, parent: Path) -> dict[str, object]:
         "commit": case.commit,
         "language": case.language,
         "readme": case.readme,
+        "readme_preserved": True,
+        "bound_document": binding.doc.as_posix(),
         "facts": len(plan.facts),
         "content_plan_sha256": plan.digest,
         "operations": len(plan.writes) + len(plan.moves),

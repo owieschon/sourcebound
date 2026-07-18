@@ -1,8 +1,16 @@
 # Extension API
 
+<!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
-Use this reference when first-party adapters cannot cover a repository surface and you need an external extractor, discoverer, renderer, or policy check. It gives plugin authors the versioned process protocol and isolation boundary required to add evidence without taking control of facts or coverage.
+Plugin authors come here when first-party adapters cannot represent a repository surface. The
+versioned process protocol adds extractors, discoverers, renderers, or policy findings without
+letting the plugin seize factual authority or coverage state.
 <!-- clean-docs:end purpose -->
+
+**[Declare the plugin process](#declare-a-plugin)**.
+
+An incompatible API exits `2` before execution; the final `clean-docs check` result proves that
+accepted plugin evidence still satisfies its binding.
 
 ## Declare a plugin
 
@@ -22,7 +30,10 @@ An incompatible API version exits `2` before clean-docs invokes the command. `{p
 
 ## Implement the process protocol
 
-clean-docs writes one JSON request to standard input. The request uses `clean-docs.plugin-request.v1` and carries `api_version`, `operation`, immutable snapshot ref, and operation payload. The command returns one JSON object using `clean-docs.plugin-response.v1`, API version `1`, and a `result` object.
+clean-docs writes one JSON request to standard input. The request uses
+`clean-docs.plugin-request.v1`. It carries `api_version`, `operation`, an immutable snapshot ref, and
+the task payload. The command returns one `clean-docs.plugin-response.v1` JSON object with API
+version `1` and a `result` object.
 
 | Interface | Input | Required result |
 | --- | --- | --- |
@@ -37,7 +48,9 @@ Core code computes evidence digests, validates repository-relative source paths,
 
 Each invocation runs in a disposable repository copy with a temporary home and temporary directory. Writes in that copy are discarded, symbolic links are rejected, output is capped at 1 MB, and the configured timeout stops hanging commands. clean-docs passes no credentials through the environment.
 
-The execution environment still owns network isolation and operating-system sandboxing. Run untrusted plugins inside a network-blocked container or CI runner; the local process contract does not claim to be an OS security boundary.
+The host still decides whether a plugin can reach the network or host filesystem. Run untrusted
+plugins inside a network-blocked container or CI runner; the local process contract does not claim
+to be an OS security boundary.
 
 ## Bind plugin evidence
 
@@ -58,7 +71,7 @@ Plugin extractors participate in `derive`, `drive`, and `check`. Discoverers par
 
 ## Migrate a prior manifest
 
-Preview a version `0` to version `1` migration before writing:
+Preview the update from a version `0` manifest to version `1` before writing:
 
 ```bash
 clean-docs migrate

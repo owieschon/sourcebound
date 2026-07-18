@@ -44,12 +44,48 @@ STOPWORDS = frozenset(
 WORD_RE = re.compile(r"[a-z][a-z0-9-]{2,}")
 FENCE_RE = re.compile(r"^```")
 HTML_COMMENT_RE = re.compile(r"^\s*<!--.*?-->\s*$")
+FALLBACK_SKIP_PARTS = frozenset({
+    ".git",
+    ".nox",
+    ".pytest_cache",
+    ".tox",
+    ".venv",
+    "__pycache__",
+    "build",
+    "dist",
+    "node_modules",
+})
 
 
-def _git_tracked_markdown(root: Path) -> list[Path] | None:
+def _is_document_candidate(relative: Path, *, fallback: bool) -> bool:
+    """Return whether a Markdown path can belong to the reader-facing corpus."""
+    parts = relative.parts
+    packaged_standard = any(
+        parts[index:index + 2] == ("clean_docs", "standards")
+        for index in range(len(parts) - 1)
+    )
+    return not (
+        parts[:2] == ("tests", "fixtures")
+        or packaged_standard
+        or ".fixture." in relative.name.lower()
+        or (fallback and bool(set(parts) & FALLBACK_SKIP_PARTS))
+    )
+
+
+def _git_visible_markdown(root: Path) -> list[Path] | None:
     try:
         proc = subprocess.run(
-            ["git", "-C", str(root), "ls-files", "*.md"],
+            [
+                "git",
+                "-C",
+                str(root),
+                "ls-files",
+                "--cached",
+                "--others",
+                "--exclude-standard",
+                "--",
+                "*.md",
+            ],
             capture_output=True,
             text=True,
             timeout=20,
@@ -59,39 +95,49 @@ def _git_tracked_markdown(root: Path) -> list[Path] | None:
         return None
     if proc.returncode != 0:
         return None
-    files = [
-        root / line
-        for line in proc.stdout.splitlines()
-        if line.strip() and (root / line).is_file()
-    ]
-    return files or None
+    candidates = sorted(
+        {
+            root / line
+            for line in proc.stdout.splitlines()
+            if line.strip() and (root / line).is_file()
+        },
+        key=lambda path: (path.is_symlink(), path.as_posix()),
+    )
+    canonical: dict[Path, Path] = {}
+    for path in candidates:
+        try:
+            identity = path.resolve(strict=True)
+        except OSError:
+            identity = path.absolute()
+        canonical.setdefault(identity, path)
+    return sorted(canonical.values())
+
+
+def _hidden_document(relative: Path) -> bool:
+    hidden = [part for part in relative.parts if part.startswith(".")]
+    return bool(hidden) and relative.parts[0] != ".agents"
 
 
 def list_documents(root: Path) -> list[Path]:
     """Return the reader-facing Markdown surface used by the Version 0 linter."""
     if root.is_file():
         return [root]
-    tracked = _git_tracked_markdown(root)
-    if tracked is not None:
+    visible = _git_visible_markdown(root)
+    if visible is not None:
         return [
             path
-            for path in tracked
+            for path in visible
             if "archive" not in path.relative_to(root).parts
-            and path.relative_to(root).parts[:2] != ("tests", "fixtures")
-            and ".fixture." not in path.name.lower()
-            and not any(
-                part.startswith(".") for part in path.relative_to(root).parts
-            )
+            and _is_document_candidate(path.relative_to(root), fallback=False)
+            and not _hidden_document(path.relative_to(root))
         ]
-    skipped = {
-        "node_modules", ".venv", ".git", ".pytest_cache", "archive", ".clean-docs"
-    }
     return sorted(
         path
         for path in root.rglob("*.md")
-        if not set(path.relative_to(root).parts) & skipped
-        and ".fixture." not in path.name.lower()
-        and not any(part.startswith(".") for part in path.relative_to(root).parts)
+        if _is_document_candidate(path.relative_to(root), fallback=True)
+        and "archive" not in path.relative_to(root).parts
+        and ".clean-docs" not in path.relative_to(root).parts
+        and not _hidden_document(path.relative_to(root))
     )
 
 
@@ -190,7 +236,11 @@ def _duplicate_findings(
     return findings
 
 
-def scan_corpus(root: Path, *, include_lengths: bool = True) -> list[PolicyFinding]:
+def scan_corpus(
+    root: Path,
+    *,
+    include_lengths: bool = True,
+) -> list[PolicyFinding]:
     """Run the tuned Version 0 corpus rules with stable finding identifiers."""
     root = root.resolve()
     base = root if root.is_dir() else root.parent

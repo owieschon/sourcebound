@@ -17,17 +17,22 @@ PROJECT = Path(__file__).parents[1]
 
 
 def test_reader_install_and_repair_guidance_matches_candidate_artifacts() -> None:
+    install = (PROJECT / "docs/INSTALL.md").read_text()
     support = (PROJECT / "docs/SUPPORT.md").read_text()
     readme = (PROJECT / "README.md").read_text()
 
-    assert "python -m pip install --no-index --find-links ./wheelhouse ./clean_docs-*.whl" in support
-    assert "The version output must match the wheel filename" in support
-    checksum_section = support.split("### Verify release artifacts", 1)[1]
+    assert (
+        "python -m pip install --no-index --find-links ./wheelhouse "
+        "./wheelhouse/clean_docs-*.whl"
+    ) in install
+    assert "The version must match the wheel filename" in install
+    checksum_section = install.split("## Verify release artifacts", 1)[1]
     assert "python3 - <<'PY'" in checksum_section
     assert "\npython - <<'PY'" not in checksum_section
-    assert "expected one wheel" in support
-    assert "does not refresh projections" in readme
-    assert "`drive` does not refresh projections" in readme
+    assert "expected one wheel" in install
+    assert "non-ignored untracked Markdown files enter the corpus" in support
+    assert "`drive` repairs bound regions" in readme
+    assert "Run `project` afterward when a projection includes the repaired document" in readme
 
 
 def _commit(root: Path, message: str) -> str:
@@ -123,6 +128,12 @@ def test_local_outcome_receipt_reports_baseline_and_changed_impact(
         "direct_coverage_complete": False,
         "drift_caught_before_merge": 0,
     }
+    assert baseline.as_dict()["assurance"] == {
+        "scope": "configured-contract",
+        "bound_claims_checked": True,
+        "cataloged_surfaces_check_prose": False,
+        "judgment_prose_certified": False,
+    }
     assert not changed.ok
     assert changed.as_dict()["outcomes"]["drift_caught_before_merge"] >= 1
     assert changed.as_dict()["network_requests"] == 0
@@ -131,9 +142,9 @@ def test_local_outcome_receipt_reports_baseline_and_changed_impact(
 def test_local_outcome_receipt_exposes_accepted_hygiene_debt(tmp_path: Path) -> None:
     root, manifest, _base, _head = _fixture(tmp_path)
     (root / "STATUS.md").write_text(
-        "# Existing status\n\n<!-- clean-docs:purpose -->\n"
-        "Use this page when checking the fixture's existing process debt. It preserves one accepted hygiene finding for the receipt.\n"
-        "<!-- clean-docs:end purpose -->\n"
+        "# Existing status\n\n"
+        "<!-- clean-docs:policy register-v2 -->\n"
+        "[Missing historical receipt](receipts/missing.md)\n"
     )
     subprocess.run(["git", "-C", str(root), "add", "STATUS.md"], check=True)
     write_audit_baseline(root)

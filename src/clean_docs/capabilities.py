@@ -2,21 +2,36 @@
 
 PRODUCT_OVERVIEW = (
     "A stale sentence does not fail loudly. It keeps a straight face after the code has moved on, "
-    "leaving reviewers no mechanical way to know which claim became false. Human review and "
-    "general-purpose agents can improve wording, but neither makes the relationship between a "
-    "claim and its source reproducible in CI.\n\n"
-    "clean-docs exists to make that relationship explicit. Source owns the facts; the packaged "
-    "standard owns their form. clean-docs audits tracked "
-    "Markdown, binds claims to source evidence, repairs declared regions, and fails CI when "
-    "either the facts or the documentation contract drift.\n\n"
-    "Static adapters cover Python, TypeScript, OpenAPI, JSON Schema, package metadata, and MCP "
-    "tools without importing repository code. Declared commands and versioned plugins run in "
-    "disposable copies with bounded I/O and minimal environments.\n\n"
-    "The same verified graph produces `llms.txt`, named context bundles, grounded release facts, "
-    "and task evaluations for people and agents. Local receipts make those checks inspectable "
-    "without telemetry.\n\n"
-    "`derive` previews changes unless you pass `--write`. `audit`, `check`, `verify`, and "
-    "`release` never change documentation."
+    "and reviewers have no mechanical way to identify the false claim. clean-docs gives each "
+    "protected fact a source, then checks that relationship again in CI.\n\n"
+    "Declared sources own the protected facts. A packaged policy enforces the deterministic form "
+    "floor; authored judgment still owns motivation, pedagogy, and voice. Static adapters read "
+    "common code and schema formats, while declared commands run under explicit process controls. "
+    "The engine can repair bound regions, reject drift, and publish context such as `llms.txt` "
+    "with local receipts."
+)
+
+ASSURANCE_BOUNDARIES = (
+    {
+        "surface": "Bound region, claim, or symbol",
+        "clean-docs proves": "Configured evidence and documentation still agree",
+        "clean-docs does not prove": "Unbound prose is accurate or complete",
+    },
+    {
+        "surface": "Repository catalog",
+        "clean-docs proves": "Detected additions, removals, and replacements stay visible",
+        "clean-docs does not prove": "Every cataloged item needs or has a reader-facing explanation",
+    },
+    {
+        "surface": "Packaged writing policy",
+        "clean-docs proves": "Implemented deterministic rules pass",
+        "clean-docs does not prove": "Motivation, pedagogy, personality, or usefulness pass judgment",
+    },
+    {
+        "surface": "Authored purpose and scope",
+        "clean-docs proves": "Declared markers and configured relationships remain intact",
+        "clean-docs does not prove": "The repository chose the right goals, audience, or priority",
+    },
 )
 
 SUPPORTED_BINDINGS = {
@@ -43,7 +58,7 @@ SUPPORTED_BINDINGS = {
 CLI_REFERENCE = (
     {
         "command": "audit",
-        "job": "Inventory and check repository documentation",
+        "job": "Assess documentation and enforce adopted scopes",
         "writes": "with --update-baseline",
         "example": "clean-docs audit --format json",
     },
@@ -53,10 +68,10 @@ CLI_REFERENCE = (
     {"command": "doctor", "job": "Check repository and integration readiness", "writes": "with --bundle", "example": "clean-docs doctor --bundle doctor.json"},
     {"command": "verify", "job": "Write a local deterministic outcome receipt", "writes": "with --out", "example": "clean-docs verify --out outcome.json"},
     {"command": "benchmark", "job": "Measure changed-check time and memory budgets", "writes": "with --out", "example": "clean-docs benchmark --base HEAD~1 --head HEAD"},
-    {"command": "derive", "job": "Preview generated region changes", "writes": "with --write", "example": "clean-docs derive --write"},
-    {"command": "drive", "job": "Repair bound regions and enforce policy", "writes": "yes", "example": "clean-docs drive"},
-    {"command": "check", "job": "Fail on binding drift or uncovered changed surface", "writes": "no", "example": "clean-docs check --base origin/main --head HEAD"},
-    {"command": "project", "job": "Regenerate configured documentation projections", "writes": "yes", "example": "clean-docs project --check"},
+    {"command": "derive", "job": "Preview or write generated region changes", "writes": "with --write", "example": "clean-docs derive --check"},
+    {"command": "drive", "job": "Repair bound regions after deterministic policy checks", "writes": "yes", "example": "clean-docs drive"},
+    {"command": "check", "job": "Fail on binding drift or uncovered changed surface", "writes": "no", "example": "clean-docs check --changed --base origin/main --head HEAD"},
+    {"command": "project", "job": "Regenerate configured documentation projections", "writes": "unless --check", "example": "clean-docs project --check"},
     {"command": "eval", "job": "Score human tasks and replayable agent round trips", "writes": "with --history or live recording", "example": "clean-docs eval --fixtures .clean-docs/eval.yml"},
     {"command": "release", "job": "Render typed release facts between immutable refs", "writes": "no", "example": "clean-docs release --from v0.9.0 --to HEAD"},
     {"command": "migrate", "job": "Upgrade a prior manifest with rollback backup", "writes": "with --write or --rollback", "example": "clean-docs migrate --write"},

@@ -1,8 +1,16 @@
 # Evaluate documentation tasks
 
+<!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
-Use this guide when repository docs must prove that a person or agent can finish a declared task from published pages alone. It shows you how to build replayable evaluations and record a content-addressed result tied to the declared task.
+A documentation task earns evidence only when the intended person or agent can finish it from the
+declared context. This guide lets maintainers build replayable evaluations and bind each result to
+the exact task, corpus, response, and scorer.
 <!-- clean-docs:end purpose -->
+
+**[Run the recorded tasks](#run-recorded-tasks)**.
+
+A passing run prints the attempted and passed counts for each audience. Those counts are the proof
+for that run; a history file binds them to the corpus, prompt, response, model, and scorer digests.
 
 A passing evaluation is a receipt for one task, not a halo around the whole corpus. It records who
 attempted what, which context they saw, how the result was scored, and whether it passed.
@@ -55,7 +63,7 @@ tasks:
     scorer:
       type: cited-limit
       answer: The canonical limitation text
-      citation: README.md#current-limits
+      citation: README.md#current-boundaries
       forbidden: [unsupported inference]
 ```
 

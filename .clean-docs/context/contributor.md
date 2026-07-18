@@ -1,195 +1,119 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `9693f0e9ebe7a750389fb7af9034253d8b0a37154c80b1ed2361e0893e1c99d4`
+- Corpus sha256: `dd2951c3929ba31c459b68618abd9e50ffdd3aea6bcc64232e442a3d91e117c1`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `6871c726b77813f5fb1c24617c36d6c9c2de78b8e237cb6022ea82b1a25d06e5`
+- Content sha256: `299638a6ca57aa9fed767d9634b15bd9aaa5ca3855ac8e6d4599051b0d563836`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
 
+<!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
-clean-docs is a source-bound documentation engine and CLI for maintainers whose code changes faster than its documentation. It identifies stale claims and provides a local, deterministic path from source change to repaired, verified docs. Models may select among allowlisted phrasing templates for source-derived facts; deterministic code renders the final text and owns validation and gate results.
+clean-docs is a source-bound documentation engine and CLI for maintainers who need code and prose to change together. It turns selected source facts into checked documentation, so stale claims fail in local workflows and CI.
 <!-- clean-docs:end purpose -->
-<!-- clean-docs:allow doc-length reason="The canonical overview keeps installation, first protection, manifest shape, and current boundaries in one reader path" -->
 
-[![CI](https://github.com/owieschon/clean-docs/actions/workflows/ci.yml/badge.svg)](https://github.com/owieschon/clean-docs/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/owieschon/clean-docs?display_name=tag&sort=semver)](https://github.com/owieschon/clean-docs/releases/latest)
-[![License: MIT](https://img.shields.io/badge/license-MIT-25225f.svg)](LICENSE)
+[![CI](https://github.com/owieschon/clean-docs/actions/workflows/ci.yml/badge.svg)](https://github.com/owieschon/clean-docs/actions/workflows/ci.yml) [![Release](https://img.shields.io/github/v/release/owieschon/clean-docs?display_name=tag&sort=semver)](https://github.com/owieschon/clean-docs/releases/latest) [![License: MIT](https://img.shields.io/badge/license-MIT-25225f.svg)](LICENSE)
 
-**[Start here](docs/learn/index.md)** for the product map, runnable drift tutorial, real-repository
-postmortem, and deterministic-boundary explanation.
+**[Install the stable release and catch your first stale claim](docs/learn/tutorial-catch-a-lying-doc.md)**.
+
+The final `clean-docs verify` command prints a [`clean-docs.outcome.v1` receipt](docs/SUPPORT.md#record-local-outcomes) with `"ok": true`.
+
+Audit starts from the document's job. On an untouched repository it is an assessment: broken links,
+machine-specific residue, and repository-neutral corpus signals remain bounded advisories. Run
+`clean-docs audit --preview-policy` to add compatible house-policy candidates without accepting
+them as gates. A manifest accepts repository integrity checks as gates; a policy marker accepts
+compatible writing rules for one document. Neither makes an incompatible rule applicable or
+authorizes clean-docs to flatten repository-native forms.
+
+| If you need to... | Start with | You will leave with... |
+| --- | --- | --- |
+| Try the repair loop | [Runnable tutorial](docs/learn/tutorial-catch-a-lying-doc.md) | A failed drift check and a repaired page |
+| Choose a command | [CLI reference](docs/CLI.md) | The command and its write boundary |
+| Configure a binding | [Manifest reference](docs/REFERENCE.md) | A source-bound fact with the right depth |
+| Understand trust boundaries | [Security model](docs/SECURITY_MODEL.md) | The process and host guarantees |
 
 ## Why clean-docs exists
 
 <!-- clean-docs:begin product-overview -->
-A stale sentence does not fail loudly. It keeps a straight face after the code has moved on, leaving reviewers no mechanical way to know which claim became false. Human review and general-purpose agents can improve wording, but neither makes the relationship between a claim and its source reproducible in CI.
+A stale sentence does not fail loudly. It keeps a straight face after the code has moved on, and reviewers have no mechanical way to identify the false claim. clean-docs gives each protected fact a source, then checks that relationship again in CI.
 
-clean-docs exists to make that relationship explicit. Source owns the facts; the packaged standard owns their form. clean-docs audits tracked Markdown, binds claims to source evidence, repairs declared regions, and fails CI when either the facts or the documentation contract drift.
-
-Static adapters cover Python, TypeScript, OpenAPI, JSON Schema, package metadata, and MCP tools without importing repository code. Declared commands and versioned plugins run in disposable copies with bounded I/O and minimal environments.
-
-The same verified graph produces `llms.txt`, named context bundles, grounded release facts, and task evaluations for people and agents. Local receipts make those checks inspectable without telemetry.
-
-`derive` previews changes unless you pass `--write`. `audit`, `check`, `verify`, and `release` never change documentation.
+Declared sources own the protected facts. A packaged policy enforces the deterministic form floor; authored judgment still owns motivation, pedagogy, and voice. Static adapters read common code and schema formats, while declared commands run under explicit process controls. The engine can repair bound regions, reject drift, and publish context such as `llms.txt` with local receipts.
 <!-- clean-docs:end product-overview -->
 
-## How the pieces fit
+Human review can improve a sentence. It cannot make the sentence fail when its defining source changes. The [deterministic seam](docs/learn/deep-dive-the-deterministic-seam.md) explains how clean-docs separates source evidence, optional phrasing, and gate authority.
 
-![clean-docs architecture: repository sources become typed evidence, source bindings, and verified documentation outcomes](docs/assets/clean-docs-system-map.svg)
+## Install in the repository you want to protect
 
-Repository sources such as code, schemas, commands, package metadata, and API metadata become typed
-evidence through static extraction or declared, bounded execution. Source bindings connect that
-evidence to documentation regions, claims, and symbols. The clean-docs engine combines those
-bindings with the packaged writing standard, then produces three outcomes: repaired documentation,
-a read-only CI gate that rejects stale changes, and verified context projections such as `llms.txt`,
-context bundles, and release facts. In the optional model path, a provider selects fact identifiers
-and allowlisted templates. Deterministic code renders the sentence, validates it, and decides whether
-the gate passes.
-
-## Install and audit
-
-Create an isolated environment, install the project, and audit the current repository:
+From that repository, download the latest stable wheel, install it in an isolated environment, and
+run the manifest-free audit:
 
 ```bash
-git clone https://github.com/owieschon/clean-docs.git && cd clean-docs
-python -m venv .venv
+release_dir="$(mktemp -d)"
+gh release download --repo owieschon/clean-docs \
+  --pattern 'clean_docs-*-py3-none-any.whl' --dir "$release_dir"
+python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install -e ".[dev]"
+python -m pip install "$release_dir"/clean_docs-*.whl
 clean-docs audit
 ```
 
-`audit` inventories tracked Markdown without `.clean-docs.yml`, enforces corpus rules, and scans tracked product files for repository residue.
-
-A successful audit prints the number of checked documents and exits `0`. Release wheels use a
-separate local-artifact procedure because they do not install from a development checkout.
-
-## Protect a repository
-
-Bootstrap the source bindings once, inspect the patch, and verify the protected baseline:
+After reviewing the assessment, inspect the files that `init` proposes before accepting its gate:
 
 ```bash
 clean-docs init --no-model
-git diff
+git diff -- .clean-docs.yml .clean-docs/repository-surface.md README.md llms.txt
 clean-docs check
 clean-docs verify
 ```
 
-The final command prints a `clean-docs.outcome.v1` receipt with `"ok": true`. Commit the manifest,
-generated documentation, and source change together only after that result appears.
+An established, unregistered README stays byte-for-byte authored. Init writes its detected catalog
+to `.clean-docs/repository-surface.md`; a new README or one that adopted the register may own that
+region directly.
 
-`init` adds a compact source-surface summary, `.clean-docs.yml`, and a checked `llms.txt` projection. It discovers nested package manifests, proposes at most eight canonical documents, and caps machine-readable plan details while retaining the full-plan digest and counts. Run `clean-docs inventory` for the complete detected catalog. The summary carries a hidden catalog digest, so `check` catches a source replacement even when its surface count stays the same.
+After a bound source changes, run `check`, then `drive`, then `project`, then `verify`. The [tutorial](docs/learn/tutorial-catch-a-lying-doc.md) shows the failure before the repair. The [install guide](docs/INSTALL.md) owns release wheels; the [support guide](docs/SUPPORT.md) covers mature-repository adoption.
 
-Catalog coverage detects additions, removals, and replacements. It does not validate individual prose
-claims or track every member of a discovered collection. Bind a claim to its specific source when a
-source edit must make that prose fail. After bound source drift, use this repair sequence:
+## How the pieces fit
 
-```bash
-clean-docs check       # exits 1 and names the stale binding
-clean-docs drive       # repairs recognized bound regions
-clean-docs project     # refreshes projections that include the repaired document
-clean-docs verify      # exits 0 only when the repository is current
-```
+![Architecture diagram showing repository evidence flowing through source bindings and the writing standard into repair, CI, and context outputs](docs/assets/clean-docs-system-map.svg)
 
-Commit the generated files with the source they describe. `drive` does not refresh projections, so a
-document included in `llms.txt` or another projection requires the separate `project` step.
+Repository sources become typed evidence. Bindings assign that evidence to document regions, claims, and symbols. The engine checks the implemented policy floor, then repairs declared regions, rejects drift, or publishes verified context. The [manifest page](docs/REFERENCE.md) lists each binding and projected output.
 
-If clean-docs cannot identify substantive authored purpose prose, `init` reports the affected page instead of marking metadata, a status line, or a feature fragment as a valid contract. If existing hygiene findings block adoption, follow the [mature-repository baseline procedure](docs/SUPPORT.md#adopt-an-existing-documentation-corpus). The explicit baseline protects existing debt by exact fingerprint and still fails on new or resolved findings.
+## Current boundaries
 
-## CLI reference
+- Catalog coverage detects source additions, removals, and replacements; it does not validate prose. Protect a specific claim with a binding.
+- `drive` repairs bound regions. Run `project` afterward when a projection includes the repaired document.
+- Declared processes use time, I/O, and environment controls. The host owns network isolation; see the [security model](docs/SECURITY_MODEL.md).
+- Authored purpose and the manifest decide what matters. clean-docs does not infer product goals or certify judgment prose.
+- `audit`, `check`, `verify`, and `release` do not change documentation.
+- Exit `1` means drift, exit `2` means invalid configuration, and exit `3` means extraction failed.
 
-Use the [CLI reference](docs/CLI.md) to look up each command and whether it writes. The [support guide](docs/SUPPORT.md) defines supported runtimes, upgrades, diagnostics, and local outcome receipts.
-
-## Manifest reference
-
-This table is derived from the binding types accepted by the manifest validator:
-
-<!-- clean-docs:begin manifest-reference -->
-| binding | required | verifies |
-| --- | --- | --- |
-| region | id, type, doc, region, extractor, source, renderer | Generated content matches source evidence |
-| claim | id, type, doc, anchor, command, assertion | Observed command value matches the assertion |
-| symbol | id, type, doc, anchor, source | A source path or Python symbol still exists |
-<!-- clean-docs:end manifest-reference -->
-
-Create `.clean-docs.yml` at the repository root and declare the source for each protected fact:
-
-```yaml
-version: 1
-bindings:
-  - id: actions
-    type: region
-    doc: README.md
-    region: actions
-    extractor: python-literal
-    source: {path: src/actions.py, symbol: ACTIONS}
-    renderer: markdown-table
-    columns: [name, tier]
-```
-
-Mark the generated destination in the document:
-
-```markdown
-<!-- clean-docs:begin actions -->
-<!-- clean-docs:end actions -->
-```
-
-The source assignment may be a list of dictionaries or a dictionary whose values are records. Constructor calls are read as keyword records. clean-docs parses the syntax tree and does not execute the module.
-
-Repositories do not configure a standard path. clean-docs bundles a versioned policy pack compiled from [`STANDARD.md`](STANDARD.md). CI fails if the authored standard changes without rebuilding that pack.
-
-## Verify public and self-hosted behavior
-
-Reproduce the pinned public-repository proof with:
-
-```bash
-PYTHONPATH=src python3 scripts/dogfood_public_repos.py
-PYTHONPATH=src python3 scripts/dogfood_bootstrap_repos.py
-```
-
-The binding proof checks source drift and recovery at two fixed commits; the bootstrap proof initializes pinned Python and TypeScript repositories, verifies each baseline, and requires empty reruns without executing target code.
-
-Self-hosting uses `python3 scripts/trusted_self_check.py`; the verifier pinned in `.clean-docs-trust.json` independently checks candidate code, and updating that pin is a release operation.
-
-## Supported binding surface
-
-This table is derived from `src/clean_docs/capabilities.py` by clean-docs itself:
-
-<!-- clean-docs:begin supported-bindings -->
-| binding | source | output | check |
-| --- | --- | --- | --- |
-| claim | Allowlisted JSON command | Assertion at a document anchor | Compare typed expected and observed values |
-| region | Static Python, structured data, text, or paths | Table, list, scalar, or fenced text | Re-render and compare |
-| symbol | Static path or Python symbol | Reference at a document anchor | Resolve the cited locator |
-<!-- clean-docs:end supported-bindings -->
-
-## Current limits
-
-- Claims consume JSON from an allowlisted command; symbols resolve static paths or Python names.
-- Declared commands and plugins run in disposable repository copies with minimal environments, active I/O limits, and timeouts. In an allowlisted `argv`, `{python}` selects the interpreter running clean-docs. Network isolation belongs to the execution environment; the [security model](docs/SECURITY_MODEL.md) defines the remaining OS boundary.
-- Coverage ignores must name a detected inventory ID and carry a specific reason; `explain` reports the evidence and repair for gaps.
-- Changed checks have published P95 time and peak-memory budgets for small, medium, and monorepo fixtures.
-- Destination markers must already exist and cannot nest.
-- Evaluation claim boundaries are defined in the [evaluation guide](docs/EVALUATION.md).
-- clean-docs reports malformed configuration as exit `2`, drift as exit `1`, and extraction failures as exit `3`.
-See the [recorded drift demonstration](https://owieschon.github.io/clean-docs/) and use the [evaluation guide](docs/EVALUATION.md) for task fixtures. The full product contract and version plan live in [`CLEAN_DOCS_SPEC.md`](CLEAN_DOCS_SPEC.md).
+Use the [learning path](docs/learn/index.md) for the product map and evidence-backed examples. The [current product contract](CLEAN_DOCS_SPEC.md) states the exact assurance boundary.
 <!-- clean-docs:canonical README.md end -->
 
 ## Canonical document: docs/EVALUATION.md
 
 - Source: [docs/EVALUATION.md](../../docs/EVALUATION.md)
-- Content sha256: `efbcce90691ec594da793977b33ba62add79dd47c0ac9452443e826d28e1bb2f`
+- Content sha256: `bc1e0d3543ec88db415151b51ef89483c21ee9e034b0e26a37fb9edfb4c3174d`
 
 <!-- clean-docs:canonical docs/EVALUATION.md begin -->
 # Evaluate documentation tasks
 
+<!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
-Use this guide when repository docs must prove that a person or agent can finish a declared task from published pages alone. It shows you how to build replayable evaluations and record a content-addressed result tied to the declared task.
+A documentation task earns evidence only when the intended person or agent can finish it from the
+declared context. This guide lets maintainers build replayable evaluations and bind each result to
+the exact task, corpus, response, and scorer.
 <!-- clean-docs:end purpose -->
+
+**[Run the recorded tasks](#run-recorded-tasks)**.
+
+A passing run prints the attempted and passed counts for each audience. Those counts are the proof
+for that run; a history file binds them to the corpus, prompt, response, model, and scorer digests.
 
 A passing evaluation is a receipt for one task, not a halo around the whole corpus. It records who
 attempted what, which context they saw, how the result was scored, and whether it passed.
@@ -242,7 +166,7 @@ tasks:
     scorer:
       type: cited-limit
       answer: The canonical limitation text
-      citation: README.md#current-limits
+      citation: README.md#current-boundaries
       forbidden: [unsupported inference]
 ```
 

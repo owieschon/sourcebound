@@ -1,8 +1,15 @@
 # Security policy
 
+<!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
-Use this policy when you find a clean-docs vulnerability or need to judge whether a report belongs in a private channel. It tells reporters what evidence to send, what must stay private, and what response to expect.
+Reporters use this policy to route a suspected clean-docs vulnerability without exposing the
+exploit or affected data. It names the evidence the maintainers need, the material that stays
+private, and the response window.
 <!-- clean-docs:end purpose -->
+
+**[Open a private security advisory](#report-a-vulnerability)**.
+
+The acknowledgement and scoped response are the proof that the report entered the private path.
 
 ## Report a vulnerability
 
@@ -21,6 +28,9 @@ You should receive an acknowledgement within seven days. A fix, mitigation, or s
 
 Static adapters parse source without importing repository modules. Manifest paths cannot be absolute or contain parent-directory segments. Generated content may change only the body between one declared marker pair.
 
-Declared commands and plugins run in disposable repository copies with minimal environments, timeouts, active combined-I/O limits, symlink rejection, and secret-output rejection. These controls contain repository-relative writes. The execution environment still owns operating-system and network isolation for untrusted declared code.
+Declared commands and plugins run in disposable repository copies. They receive a minimal set of
+environment variables, timeouts, and active combined-I/O limits; clean-docs rejects symlinks and
+secret-like output. These controls contain repository-relative writes. The host must still block
+network access and sandbox untrusted declared code.
 
 Read the [security model](docs/SECURITY_MODEL.md) for the trust tiers, enforced controls, and explicit non-goals.

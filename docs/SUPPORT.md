@@ -1,9 +1,19 @@
 # Support and lifecycle
 
+<!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
-Use this guide when adopting, upgrading, rolling back, diagnosing, or requesting help for clean-docs. It prevents unsupported assumptions from entering a production gate and gives operators the exact compatibility, evidence, and recovery procedures for a supported installation.
+Operators come here to adopt an existing corpus, pin the reusable gate, inspect a receipt, or build
+a diagnostic bundle. It routes package lifecycle work to one install guide, so each operational
+procedure has one canonical home.
 <!-- clean-docs:end purpose -->
-<!-- clean-docs:allow doc-length reason="One canonical lifecycle guide keeps adoption and recovery procedures together" -->
+
+**[Check the supported environment](#supported-environments)**.
+
+Run `clean-docs doctor` after installation; each reported check is the local readiness proof.
+
+Install, upgrade, rollback, uninstall, and release verification live in the
+[install guide](INSTALL.md).
+
 ## Supported environments
 
 | Surface | Supported contract |
@@ -16,7 +26,8 @@ Use this guide when adopting, upgrading, rolling back, diagnosing, or requesting
 | Manifest | Version `1` |
 | Plugin process API | Version `1` |
 
-TypeScript and JavaScript support is static. clean-docs does not require Node.js and does not execute project modules to discover their public surface.
+TypeScript and JavaScript adapters parse source without Node.js. The
+[security model](SECURITY_MODEL.md) owns the boundary between static input and declared processes.
 
 ## Run the reusable pull-request gate
 
@@ -33,7 +44,13 @@ The workflow rejects tags, branches, abbreviated commits, and non-hexadecimal in
 
 ## Adopt an existing documentation corpus
 
-`init` is strict by default. It rolls back every bootstrap write when the current corpus has a hygiene finding. It also stops before writing when a page has no substantive authored opening that can be marked as its purpose contract. Metadata, status labels, feature fragments, and generated title boilerplate do not satisfy that boundary. A mature repository can preserve strict future checks while recording its current debt:
+Before init, `audit` is assessment-only unless documents already carry policy markers. `init` is
+strict by default: its manifest accepts repository integrity checks as gates, and init rolls back
+every bootstrap write when that configured corpus has a blocking integrity or opted-in policy
+finding. Unmarked documents keep their native voice; role-compatible policy candidates and
+repository-neutral corpus questions do not become accepted debt. Use `audit --preview-policy` to
+inspect the compatible policy candidates as bounded advisories before adopting them. A mature
+repository can preserve strict future checks while recording existing blocking debt:
 
 ```bash
 clean-docs init --no-model --accept-hygiene-baseline
@@ -41,9 +58,25 @@ git diff -- .clean-docs/audit-baseline.json
 clean-docs audit
 ```
 
-The committed baseline records each exact rule, path, line, detail, and fingerprint, including unresolved purpose-contract findings. Adoption mode does not archive or move existing documents. Ambiguous names such as `DEPLOYMENT_PLAN.md` and `ARCHITECTURE_NOTES.md` remain active documentation; only unambiguous process artifacts and exact duplicates are archive candidates outside adoption mode. Files named `*.fixture.md` are explicit test inputs rather than reader documentation. Hidden configuration trees are outside the documentation corpus. `audit` fails when a new finding appears. It also fails with `stale-baseline` when a recorded finding is resolved, because the baseline must shrink to match current debt.
+The committed baseline records each exact blocking rule, path, line, detail, and fingerprint. Init
+does not archive or move existing documents from a filename or similarity heuristic. Ambiguous
+plans, package-owned evidence, compatibility aliases, prompt templates, and agent procedures keep
+their native form. Files named `*.fixture.md` are explicit test inputs rather than reader
+documentation. Git-tracked and non-ignored untracked Markdown files enter the corpus; `.agents`
+documentation is active, other hidden configuration trees stay out, and tracked MDX is disclosed
+as unsupported. `audit` fails when a new blocker appears. It also fails with `stale-baseline` when
+a recorded blocker is resolved, because the baseline must shrink to match current debt.
 
-The JSON content plan emits at most 100 representative facts and 4,000 bytes of diff per operation. `fact_count`, `facts_omitted`, `diff_truncated`, the full-plan digest, and the proposed `canonical_documents` preserve the review boundary without printing a repository-sized response. `llms.txt` indexes those declared canonical documents and distinguishes pages with bindings from declared context.
+For an established README that has not adopted the policy profile, init writes detected source
+facts to `.clean-docs/repository-surface.md` and leaves the README unchanged. The manifest binds
+that generated file, while `llms.txt` still indexes the README as canonical context. A new or
+registered README may own the generated region directly.
+
+The JSON content plan emits at most 100 representative facts and 4,000 bytes of diff per operation.
+Large repositories stay reviewable. `fact_count`, `facts_omitted`, `diff_truncated`, the full-plan
+digest, and the proposed `canonical_documents` preserve omitted detail without printing a
+repository-sized response. `llms.txt` indexes those declared canonical documents and distinguishes
+pages with bindings from declared context.
 
 After reviewing intentional documentation repairs, replace the baseline with the current exact findings:
 
@@ -59,64 +92,10 @@ Review and commit the baseline change with the documentation change. A malformed
 
 Manifest version `1`, plugin API version `1`, and published machine-readable schemas remain compatible throughout the 1.x line. A minor release may add optional fields. It cannot change the meaning of an existing field or silently change normalized evidence for a supported adapter.
 
-A deprecation appears in release notes and command output for at least one minor release before removal. Removing a stable CLI command, manifest field, evidence field, or plugin interface requires a major release. An incompatible manifest exits `2` with an exact migration action before extraction.
-
-## Install, upgrade, roll back, and uninstall
-
-Create an isolated environment in a directory containing exactly one clean-docs wheel. A release
-bundle also contains a `wheelhouse` directory with supported runtime dependencies, so this procedure
-does not contact a package index:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --no-index --find-links ./wheelhouse ./clean_docs-*.whl
-clean-docs --version
-```
-
-The version output must match the wheel filename. The clean-docs wheel declares PyYAML as a runtime
-dependency. A general release download does not bundle dependencies; create `wheelhouse`, place a
-compatible PyYAML wheel inside it, and use the same command. For an online installation, omit
-`--no-index --find-links ./wheelhouse` and let `pip` use the configured package index.
-
-Upgrade by installing the newer wheel and preview any requested schema migration before writing:
-
-```bash
-python -m pip install --upgrade ./clean_docs-*.whl
-clean-docs migrate
-clean-docs migrate --write
-```
-
-The migration writes `.clean-docs.yml.v0.bak`. Restore those exact prior bytes with `clean-docs migrate --rollback`. To roll back the executable, reinstall the prior wheel. Remove the package with `python -m pip uninstall clean-docs`; repository manifests and docs remain in place.
-
-### Verify release artifacts
-
-Verify the one downloaded wheel against its published checksum without requiring every release asset to be present:
-
-```bash
-python3 - <<'PY'
-from hashlib import sha256
-from pathlib import Path
-
-wheels = list(Path(".").glob("clean_docs-*.whl"))
-if len(wheels) != 1:
-    raise SystemExit(f"expected one wheel, found {len(wheels)}")
-expected = {
-    filename: digest
-    for digest, filename in (
-        line.split(maxsplit=1) for line in Path("SHA256SUMS").read_text().splitlines()
-    )
-}
-actual = sha256(wheels[0].read_bytes()).hexdigest()
-if expected.get(wheels[0].name) != actual:
-    raise SystemExit("wheel checksum mismatch")
-print(f"{wheels[0].name}: {actual}")
-PY
-gh attestation verify ./clean_docs-*.whl \
-  --repo owieschon/clean-docs
-```
-
-The checksum step is local. The attestation step needs GitHub access and can be completed outside a network-blocked execution environment. Each release publishes the wheel, its SPDX 2.3 software bill of materials, checksums, and GitHub artifact attestations. The release gate installs Version 0.5, upgrades to the candidate, rolls the executable back, upgrades again, and uninstalls it.
+Before removal, release notes and command output announce a deprecation for at least one minor
+release. Removing a stable CLI command, manifest field, evidence field, or plugin interface breaks
+compatibility. It requires a major release. An incompatible manifest exits `2` and names the
+required manifest change before it reads source evidence.
 
 ## Record local outcomes
 
@@ -126,7 +105,12 @@ The checksum step is local. The attestation step needs GitHub access and can be 
 clean-docs verify --base origin/main --head HEAD --out .clean-docs/outcome.json
 ```
 
-The receipt counts current bindings, caught drift, coverage gaps, active and baselined hygiene findings, and projection state. `bound` means a source-specific binding covers the detected locator. `cataloged` means a repository-wide inventory binding tracks the surface but no source-specific documentation claim covers it. `coverage_complete` permits either form; `direct_coverage_complete` requires source-specific bindings or reasoned ignores for the whole detected surface. The receipt records `network_requests: 0` and sends nothing.
+The receipt counts current bindings, caught drift, coverage gaps, active and baselined hygiene findings, and projection state. `bound` means a source-specific binding covers the detected locator. `cataloged` means a repository-wide inventory binding tracks the surface but no source-specific documentation claim covers it. `coverage_complete` permits either form; `direct_coverage_complete` requires source-specific bindings or reasoned ignores for the whole detected surface.
+
+Read the receipt's `assurance` object before interpreting a green result. Its
+`cataloged_surfaces_check_prose` and `judgment_prose_certified` fields remain `false`: a passing
+configured contract does not certify unbound claims or prose quality. The receipt records
+`network_requests: 0` and sends nothing.
 
 Measure the changed-check P95 and peak process memory on a repository with:
 
@@ -146,4 +130,6 @@ clean-docs doctor --format json --bundle .clean-docs/diagnostic.json
 
 The bundle contains runtime versions, repository ref, manifest counts, plugin IDs, and doctor results. It excludes environment variables, credentials, document and source contents, and command arguments. Review the file before attaching it to a private security advisory or public support issue.
 
-Return to the [project overview](../README.md) for the first repository setup, or read the [security model](SECURITY_MODEL.md) before declaring a command or plugin.
+Return to the [project overview](../README.md) for the first repository setup, use the
+[install guide](INSTALL.md) to move between versions, or read the
+[security model](SECURITY_MODEL.md) before declaring a command or plugin.

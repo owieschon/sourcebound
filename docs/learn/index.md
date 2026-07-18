@@ -1,13 +1,15 @@
 # Learn clean-docs
 
+<!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
 This learning path is for maintainers deciding whether source-bound documentation fits their repository. It replaces vague confidence in prose with a mental model, a runnable drift repair, and a clear authority boundary, so you can choose the shortest page for the question in front of you.
 <!-- clean-docs:end purpose -->
 
-Documentation drift is a source-derivation problem before it is a discipline problem. Review can
-catch a stale sentence, but it cannot make the relationship between that sentence and its defining
-source repeatable. clean-docs makes that relationship explicit and checks it again after the code
-moves.
+**[Catch a lying doc](tutorial-catch-a-lying-doc.md)** to see a source edit fail, repair the bound
+region, and return the repository to green.
+
+The tutorial ends with a [`clean-docs.outcome.v1` receipt](../SUPPORT.md#record-local-outcomes)
+whose `"ok"` field is `true`.
 
 The useful question is not "who forgot the docs?" It is "which source should have made this claim
 fail?" Follow the path that matches your current job:

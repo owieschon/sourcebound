@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from clean_docs.capabilities import CLI_REFERENCE
-from clean_docs.cli import _parser
+from clean_docs.cli import _parser, _validate_arguments
 from clean_docs.engine import evaluate
 from clean_docs.manifest import MANIFEST_REFERENCE, load_manifest
 
@@ -49,7 +49,7 @@ def test_cli_reference_examples_parse() -> None:
                 _parser().parse_args(argv)
             assert exc.value.code == 0
         else:
-            _parser().parse_args(argv)
+            _validate_arguments(_parser().parse_args(argv))
 
 
 @pytest.mark.parametrize(
@@ -57,8 +57,8 @@ def test_cli_reference_examples_parse() -> None:
     [
         (
             "capabilities.py",
-            "Inventory and check repository documentation",
-            "Scan repository documentation",
+            "Assess documentation and enforce adopted scopes",
+            "Assess repository documentation",
             "cli-reference",
         ),
         (
@@ -78,6 +78,7 @@ def test_self_check_detects_reference_source_drift(
     (root / "docs").mkdir()
     (root / "README.md").write_text((ROOT / "README.md").read_text())
     (root / "docs/CLI.md").write_text((ROOT / "docs/CLI.md").read_text())
+    (root / "docs/REFERENCE.md").write_text((ROOT / "docs/REFERENCE.md").read_text())
     for name in ("capabilities.py", "manifest.py"):
         (package / name).write_text((ROOT / "src/clean_docs" / name).read_text())
     (root / ".clean-docs.yml").write_text("""\
@@ -93,7 +94,7 @@ bindings:
     columns: [command, job, writes, example]
   - id: manifest-reference
     type: region
-    doc: README.md
+    doc: docs/REFERENCE.md
     region: manifest-reference
     extractor: python-literal
     source: {path: src/clean_docs/manifest.py, symbol: MANIFEST_REFERENCE}

@@ -19,7 +19,17 @@ ROOT_KEYS = {"version", "exclude", "rules"}
 RULE_KEYS = {"id", "token_sha256", "include", "reason"}
 EXCLUDE_KEYS = {"pattern", "reason"}
 TOKEN = re.compile(r"[A-Za-z][A-Za-z0-9_-]*")
-LOCAL_PATH = re.compile(r"/(?:Users|home)/[^/\s]+/")
+LOCAL_PATH = re.compile(
+    r"(?<![A-Za-z0-9_])/(?:Users|home)/(?P<owner>[^/\s]+)/"
+)
+LOCAL_PATH_PLACEHOLDERS = {
+    "example",
+    "me",
+    "user",
+    "username",
+    "you",
+    "your_username",
+}
 SHA256 = re.compile(r"[0-9a-f]{64}")
 GENERATED_PARTS = {"__pycache__", ".DS_Store"}
 GENERATED_SUFFIXES = {".pyc", ".pyo"}
@@ -140,6 +150,14 @@ def _matches(path: str, patterns: tuple[str, ...]) -> bool:
     return any(fnmatch.fnmatch(path, pattern) for pattern in patterns)
 
 
+def _machine_path_match(line: str) -> bool:
+    for match in LOCAL_PATH.finditer(line):
+        owner = match.group("owner").strip("<>{}$").lower()
+        if owner not in LOCAL_PATH_PLACEHOLDERS:
+            return True
+    return False
+
+
 def scan_residue(root: Path, config_path: Path | None = None) -> list[PolicyFinding]:
     """Scan the tracked product surface for configured tokens and machine residue."""
     root = root.resolve()
@@ -163,7 +181,7 @@ def scan_residue(root: Path, config_path: Path | None = None) -> list[PolicyFind
             continue
         text = content.decode("utf-8", errors="replace")
         for line_number, line in enumerate(text.splitlines(), start=1):
-            if LOCAL_PATH.search(line):
+            if _machine_path_match(line):
                 findings.append(PolicyFinding(
                     relative,
                     line_number,

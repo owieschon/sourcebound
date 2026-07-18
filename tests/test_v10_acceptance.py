@@ -125,17 +125,10 @@ def test_empty_repository_reaches_protected_baseline_without_manual_docs(
     subprocess.run(["git", "-C", str(mature), "add", "."], check=True)
 
     strict = _run(mature, "init", "--no-model")
-    adopted = _run(
-        mature,
-        "init",
-        "--no-model",
-        "--accept-hygiene-baseline",
-    )
 
-    assert strict.returncode == 1
-    assert adopted.returncode == 0, adopted.stderr
+    assert strict.returncode == 0, strict.stderr
     assert _run(mature, "audit").returncode == 0
-    assert (mature / ".clean-docs/audit-baseline.json").is_file()
+    assert not (mature / ".clean-docs/audit-baseline.json").exists()
 
 
 def test_full_change_lifecycle_repairs_docs_coverage_projection_and_release(
@@ -372,7 +365,7 @@ def test_independent_reader_release_requires_receipts_and_published_tasks_work(
         assert command in supplied_docs
     assert "not an operating-system sandbox" in security
     assert "Network access is denied unless" not in specification
-    assert "cannot revoke host network access" in specification
+    assert "not an operating-system sandbox" in specification
 
     published = tmp_path / "published-clean-docs"
     shutil.copytree(
@@ -382,6 +375,7 @@ def test_independent_reader_release_requires_receipts_and_published_tasks_work(
             ".git",
             ".venv",
             ".pytest_cache",
+            ".claude",
             "README_ACCESSIBILITY_TEST.md",
         ),
     )
