@@ -76,6 +76,7 @@ CLI_REFERENCE = (
     {"command": "benchmark", "job": "Measure changed-check time and memory budgets", "writes": "with --out", "example": "clean-docs benchmark --base HEAD~1 --head HEAD"},
     {"command": "derive", "job": "Preview or write generated region changes", "writes": "with --write", "example": "clean-docs derive --check"},
     {"command": "drive", "job": "Repair bound regions after deterministic policy checks", "writes": "yes", "example": "clean-docs drive"},
+    {"command": "plan", "job": "Build an immutable read-only documentation impact plan", "writes": "no", "example": "clean-docs plan --base origin/main --head HEAD --format json"},
     {"command": "check", "job": "Fail on binding drift or uncovered changed surface", "writes": "no", "example": "clean-docs check --changed --base origin/main --head HEAD"},
     {"command": "project", "job": "Regenerate configured documentation projections", "writes": "unless --check", "example": "clean-docs project --check"},
     {"command": "eval", "job": "Score human tasks and replayable agent round trips", "writes": "with --history or live recording", "example": "clean-docs eval --fixtures .clean-docs/eval.yml"},

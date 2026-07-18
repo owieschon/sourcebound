@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import subprocess
 from pathlib import Path
@@ -83,9 +82,20 @@ def test_python_inventory_is_static_typed_and_deterministic(tmp_path: Path) -> N
     )
     assert not any(item.name == "internal_build_task" for item in first.items)
     public_api = next(item for item in first.items if item.name == "public_api")
-    assert public_api.digest == hashlib.sha256(
-        b"def public_api():\n    return True"
-    ).hexdigest()
+    source = root / "src/service/cli.py"
+    source.write_text(source.read_text().replace("return True", "return False", 1))
+    implementation_only = next(
+        item for item in scan_inventory(root).items if item.name == "public_api"
+    )
+    assert implementation_only.digest == public_api.digest
+
+    source.write_text(
+        source.read_text().replace("def public_api():", "def public_api(timeout=5):")
+    )
+    signature_change = next(
+        item for item in scan_inventory(root).items if item.name == "public_api"
+    )
+    assert signature_change.digest != public_api.digest
 
 
 def test_typescript_package_inventory_needs_no_project_execution(tmp_path: Path) -> None:
@@ -117,6 +127,16 @@ def test_typescript_package_inventory_needs_no_project_execution(tmp_path: Path)
     assert any(item.kind == "api-symbol" and item.name == "start" for item in report.items)
     assert any(item.kind == "test-suite" for item in report.items)
     assert not any(item.name == "//note" for item in report.items)
+
+    start = next(item for item in report.items if item.name == "start")
+    (root / "src/index.ts").write_text(
+        "throw new Error('must not execute');\n"
+        "export function start(timeout = 5) { return timeout }\n"
+    )
+    changed = next(
+        item for item in scan_inventory(root).items if item.name == "start"
+    )
+    assert changed.digest != start.digest
 
 
 def test_node_monorepo_and_registered_mcp_tools_are_discovered_statically(
