@@ -409,3 +409,14 @@ the generated bound catalog. Existing documents remain untouched, and operators 
 manifest includes after deciding which pages carry canonical context. The mature-monorepo test now
 proves architecture records and ADRs stay out until declared. Reversible: a repository can add any
 document through the existing projection contract without changing bootstrap code.
+
+## 39. Canonicalize empty AST fields in impact fingerprints (2026-07-18)
+
+Context: the same committed impact plan produced different public-symbol digests under Python 3.12
+and 3.14. Python 3.14 omits empty AST fields by default, while earlier supported runtimes include
+them. Chose one canonical representation that always includes empty fields when the runtime exposes
+that switch and uses the equivalent earlier-runtime default otherwise. This preserves the semantic
+fingerprint while making one clean-docs version produce the same receipt across supported Python
+runtimes. The Version 1.2A registry pins that behavior. The release gate compares complete receipts
+from Python 3.12 and 3.14. Reversible: a parser-independent format can replace this representation
+after reproducing the same public-change boundaries.

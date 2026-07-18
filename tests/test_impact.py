@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+import clean_docs.impact as impact_module
 from clean_docs.cli import main
 from clean_docs.impact import build_impact_plan
 
@@ -106,6 +107,33 @@ tasks:
     assert main(["--root", str(root), "derive", "--write"]) == 0
     assert main(["--root", str(root), "project"]) == 0
     return root
+
+
+def test_python_interface_fingerprints_request_stable_empty_ast_fields(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original_dump = impact_module.ast.dump
+    requested: list[bool] = []
+
+    def versioned_dump(
+        node: impact_module.ast.AST,
+        *,
+        include_attributes: bool = False,
+        show_empty: bool = False,
+    ) -> str:
+        requested.append(show_empty)
+        return original_dump(node, include_attributes=include_attributes)
+
+    monkeypatch.setattr(impact_module.ast, "dump", versioned_dump)
+    node = impact_module.ast.parse(
+        "@decorator()\ndef public_api(value: int = 1) -> str:\n    return str(value)\n"
+    ).body[0]
+
+    payload = impact_module._python_interface_payload(node)
+
+    assert requested
+    assert all(requested)
+    assert payload["arguments"]
 
 
 def test_private_refactor_produces_coverage_complete_stable_no_impact(
