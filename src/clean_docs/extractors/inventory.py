@@ -12,6 +12,7 @@ from clean_docs.snapshot import RepositorySnapshot
 INCLUDED_KINDS = {
     "api-endpoint",
     "api-symbol",
+    "ci-job",
     "cli-command",
     "cli-option",
     "mcp-tool",
