@@ -12,6 +12,7 @@ from clean_docs.audit import AUDIT_BASELINE_PATH, audit, write_audit_baseline
 from clean_docs.bootstrap import apply_bootstrap_plan, build_bootstrap_plan
 from clean_docs.capabilities import CLI_REFERENCE
 from clean_docs.changed import check_changed, render_sarif
+from clean_docs.claims import claim_binding_results, scan_source_claims
 from clean_docs.doctor import build_diagnostic_bundle
 from clean_docs.emit import emit_llms_txt, emit_stepwise_skill
 from clean_docs.engine import drive, evaluate, write_results
@@ -33,6 +34,7 @@ from clean_docs.release import (
 )
 from clean_docs.regions import atomic_write
 from clean_docs.standard import compile_standard, pack_matches_standard, write_pack
+from clean_docs.snapshot import RepositorySnapshot
 
 
 def _command_help(command: str) -> str:
@@ -61,6 +63,8 @@ def _parser() -> argparse.ArgumentParser:
     )
     inventory_parser = sub.add_parser("inventory", help=_command_help("inventory"))
     inventory_parser.add_argument("--format", choices=("text", "json"), default="text")
+    claims_parser = sub.add_parser("claims", help=_command_help("claims"))
+    claims_parser.add_argument("--format", choices=("text", "json"), default="text")
     init_parser = sub.add_parser("init", help=_command_help("init"))
     model_mode = init_parser.add_mutually_exclusive_group()
     model_mode.add_argument(
@@ -334,6 +338,48 @@ def main(argv: list[str] | None = None) -> int:
                 f"{len(inventory_report.languages)} language(s)"
             )
         return 0
+    if args.command == "claims":
+        manifest = args.manifest if args.manifest.is_absolute() else root / args.manifest
+        try:
+            source_claim_checks = (
+                load_manifest(manifest).source_claim_checks
+                if manifest.is_file()
+                else ()
+            )
+            claim_report = scan_source_claims(root, source_claim_checks)
+        except CleanDocsError as exc:
+            print(f"clean-docs: {exc}", file=sys.stderr)
+            return exc.exit_code
+        if args.format == "json":
+            print(json.dumps(claim_report.as_dict(), indent=2))
+        else:
+            for missing in claim_report.missing:
+                print(
+                    f"[required:missing] {missing.id} {missing.doc}#{missing.anchor}: "
+                    f"{missing.detail}"
+                )
+            for claim_result in claim_report.results:
+                print(
+                    f"[{'required' if claim_result.status == 'drift' else 'current'}:"
+                    f"{claim_result.kind}] {claim_result.id} "
+                    f"{claim_result.doc}:{claim_result.line} "
+                    f"<- {claim_result.source}#{claim_result.locator}: "
+                    f"{claim_result.detail}"
+                )
+            for claim_candidate in claim_report.candidates:
+                print(
+                    f"[advisory:{claim_candidate.status}:{claim_candidate.kind}] "
+                    f"{claim_candidate.id} "
+                    f"{claim_candidate.doc}:{claim_candidate.line} "
+                    f"<- {claim_candidate.source}#{claim_candidate.locator}: "
+                    f"{claim_candidate.detail}"
+                )
+            print(
+                f"claims: {len(claim_report.results)} enforced relationship(s), "
+                f"{sum(count for _status, count in claim_report.candidate_totals)} "
+                f"ranked candidate(s); {claim_report.authority}"
+            )
+        return 0 if claim_report.ok else 1
     if args.command == "release":
         try:
             release_report = build_release_report(root, args.from_ref, args.to_ref)
@@ -666,6 +712,19 @@ def main(argv: list[str] | None = None) -> int:
             loaded = load_manifest(manifest)
             if loaded.projections is not None:
                 results.extend(evaluate_projections(root, loaded))
+            if loaded.source_claim_checks:
+                results.extend(
+                    claim_binding_results(
+                        scan_source_claims(
+                            root,
+                            loaded.source_claim_checks,
+                            discover=False,
+                        ),
+                        # Required checks read only accepted document/source pairs.
+                        # Candidate discovery remains an explicit `claims` operation.
+                        ref=RepositorySnapshot(root).label,
+                    )
+                )
         output = _json(results) if args.format == "json" else _text(results)
         sys.stdout.write(output)
         drift = any(result.changed for result in results)

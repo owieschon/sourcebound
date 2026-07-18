@@ -21,11 +21,19 @@ from clean_docs.models import (
     ProjectionConfig,
     RegionBinding,
     Source,
+    SourceClaimCheck,
     SymbolBinding,
     StaticDemoProjection,
 )
 
-ROOT_KEYS = {"version", "bindings", "execution", "plugins", "projections"}
+ROOT_KEYS = {
+    "version",
+    "bindings",
+    "execution",
+    "plugins",
+    "projections",
+    "source_claim_checks",
+}
 BINDING_KEYS = {
     "id", "type", "doc", "region", "anchor", "extractor", "source", "renderer",
     "columns", "language", "command", "assertion",
@@ -46,6 +54,16 @@ LLMS_TXT_KEYS = {"output", "title", "summary", "include"}
 BUNDLE_KEYS = {"id", "output", "include"}
 DEMO_KEYS = {"output", "evidence"}
 PLUGIN_KEYS = {"id", "api_version", "interfaces", "argv", "timeout_seconds"}
+SOURCE_CLAIM_CHECK_KEYS = {
+    "id",
+    "kind",
+    "doc",
+    "anchor",
+    "subject",
+    "source",
+    "locator",
+}
+SOURCE_CLAIM_KINDS = {"count", "identifier-set"}
 MANIFEST_REFERENCE = (
     {
         "binding": "region",
@@ -268,6 +286,62 @@ def load_manifest(path: Path) -> Manifest:
                 raise ConfigurationError(f"execution.allowed_commands.{command_id}.network must be false")
             commands.append(CommandSpec(command_id, tuple(argv), timeout, network))
 
+    source_claim_checks: list[SourceClaimCheck] = []
+    raw_source_claim_checks = root.get("source_claim_checks", [])
+    if not isinstance(raw_source_claim_checks, list):
+        raise ConfigurationError("source_claim_checks must be a list")
+    source_claim_ids: set[str] = set()
+    for index, raw_check in enumerate(raw_source_claim_checks):
+        where = f"source_claim_checks[{index}]"
+        check = _mapping(raw_check, where)
+        _reject_unknown(check, SOURCE_CLAIM_CHECK_KEYS, where)
+        check_id = check.get("id")
+        if not isinstance(check_id, str) or not check_id.strip():
+            raise ConfigurationError(f"{where}.id must be a non-empty string")
+        if check_id in source_claim_ids:
+            raise ConfigurationError(f"duplicate source claim check id: {check_id}")
+        source_claim_ids.add(check_id)
+        kind = check.get("kind")
+        if kind not in SOURCE_CLAIM_KINDS:
+            raise ConfigurationError(
+                f"{where}.kind must be one of: {', '.join(sorted(SOURCE_CLAIM_KINDS))}"
+            )
+        anchor = check.get("anchor")
+        if not isinstance(anchor, str) or not anchor.strip():
+            raise ConfigurationError(f"{where}.anchor must be a non-empty string")
+        subject = check.get("subject")
+        if (
+            not isinstance(subject, str)
+            or not subject.strip()
+            or "\n" in subject
+            or "\r" in subject
+        ):
+            raise ConfigurationError(f"{where}.subject must be one non-empty line")
+        locator = check.get("locator")
+        if (
+            not isinstance(locator, str)
+            or not locator.strip()
+            or "\n" in locator
+            or "\r" in locator
+        ):
+            raise ConfigurationError(f"{where}.locator must be one non-empty line")
+        required_suffix = "#count" if kind == "count" else "#keys"
+        if not locator.endswith(required_suffix):
+            raise ConfigurationError(
+                f"{where}.locator must end with {required_suffix} for {kind}"
+            )
+        source_claim_checks.append(
+            SourceClaimCheck(
+                id=check_id,
+                kind=kind,
+                doc=_relative_path(check.get("doc"), f"{where}.doc"),
+                anchor=anchor.strip(),
+                subject=subject.strip(),
+                source=_relative_path(check.get("source"), f"{where}.source"),
+                locator=locator.strip(),
+            )
+        )
+
     bindings: list[Binding] = []
     ids: set[str] = set()
     for index, item in enumerate(raw_bindings):
@@ -480,4 +554,5 @@ def load_manifest(path: Path) -> Manifest:
         commands=tuple(commands),
         plugins=tuple(plugins),
         projections=projections,
+        source_claim_checks=tuple(source_claim_checks),
     )

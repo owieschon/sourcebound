@@ -143,6 +143,14 @@ bindings:
     doc: docs/learn/deep-dive-the-deterministic-seam.md
     anchor: gate-authority
     source: {path: src/clean_docs/outcomes.py, symbol: build_outcome_receipt}
+source_claim_checks:
+  - id: binding-type-count
+    kind: count
+    doc: docs/REFERENCE.md
+    anchor: binding-types
+    subject: types
+    source: src/clean_docs/manifest.py
+    locator: MANIFEST_REFERENCE#count
 projections:
   llms_txt:
     output: llms.txt

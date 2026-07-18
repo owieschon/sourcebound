@@ -18,6 +18,7 @@ The table is generated from the command registry used by the parser:
 | --- | --- | --- | --- |
 | audit | Assess documentation and enforce adopted scopes | with --update-baseline | clean-docs audit --format json |
 | inventory | List detected repository surfaces and coverage | no | clean-docs inventory --format json |
+| claims | Rank and verify static count and column claims | no | clean-docs claims --format json |
 | init | Write a source-bound documentation baseline | yes | clean-docs init --no-model |
 | explain | Explain a finding or coverage state | no | clean-docs explain purpose-contract --format json |
 | doctor | Check repository and integration readiness | with --bundle | clean-docs doctor --bundle doctor.json |

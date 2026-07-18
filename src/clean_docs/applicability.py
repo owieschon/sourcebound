@@ -113,7 +113,7 @@ _TEMPLATE_PARTS = frozenset({"prompts", "prompt", "templates", "template"})
 _EVIDENCE_NAME = re.compile(
     r"(?:^|[-_])(?:review|report|journal|findings|receipt|retro|postmortem|"
     r"evaluation|eval-results?|status|progress|handoff|dispatch|workorder|blocked|"
-    r"changelog|history)(?:[-_.]|$)",
+    r"changelog|changes?|news|release-notes?|history)(?:[-_.]|$)",
     re.IGNORECASE,
 )
 _PLAN_NAME = re.compile(r"(?:^|[-_])plan(?:[-_.]|$)", re.IGNORECASE)

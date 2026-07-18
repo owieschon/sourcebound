@@ -19,8 +19,10 @@ to repository evidence, checks those relationships without a model, repairs decl
 projects the same canonical pages for people and agents.
 
 The repository manifest decides which facts receive direct protection. Static inventory makes
-uncovered changes visible, but clean-docs does not infer product strategy, decide which concepts
-deserve explanation, or certify unbound prose.
+uncovered changes visible. Source-claim discovery can rank numeric counts and column-table identifiers,
+but a repository must accept the exact document and source relationship before a deterministic
+mismatch can gate. clean-docs does not infer product strategy, decide which concepts deserve
+explanation, or certify unresolved prose.
 
 ## Assurance boundaries
 
@@ -31,6 +33,7 @@ The table below is part of the shipped capability registry:
 | --- | --- | --- |
 | Bound region, claim, or symbol | Configured evidence and documentation still agree | Unbound prose is accurate or complete |
 | Repository catalog | Detected additions, removals, and replacements stay visible | Every cataloged item needs or has a reader-facing explanation |
+| Accepted static source claim | The documented count or identifier set matches its accepted source locator | A ranked candidate names the right semantic relationship |
 | Packaged writing policy | Implemented deterministic rules pass | Motivation, pedagogy, personality, or usefulness pass judgment |
 | Authored purpose and scope | Declared markers and configured relationships remain intact | The repository chose the right goals, audience, or priority |
 <!-- clean-docs:end assurance-boundaries -->
@@ -63,8 +66,14 @@ already opted into the register. Otherwise, the generated catalog lives at
 overwriting its reserved generated file, or inventing purpose for an ambiguous page.
 
 Use `check` for configured binding and projection drift. Use `check --changed --base REF --head REF`
-to classify affected bindings and newly detected public surface. Unsupported or uncovered public
-surface fails instead of becoming a no-impact claim.
+to classify affected bindings, accepted source claims, and newly detected public surface.
+Unsupported or uncovered public surface fails instead of becoming a no-impact claim.
+
+Use `claims` to inspect ranked static source-to-prose candidates. Candidate ranking is
+assessment-only. A `source_claim_checks` entry accepts one document anchor, subject, source path,
+and locator as a gate without copying the expected value into configuration. Accepted checks fail
+closed when either side disappears. Changed checks evaluate them only when the document, source,
+or manifest changed.
 
 Use `drive` to repair region bindings after deterministic policy checks. It does not rewrite
 unbound prose. Run `project` afterward when a projection includes a repaired page, then run
@@ -82,6 +91,11 @@ Current binding types are:
 - `region`: extract typed evidence, render one marked block, and compare exact document bytes.
 - `claim`: run one allowlisted JSON command and compare a typed value at an existing heading.
 - `symbol`: prove that one cited path or Python symbol still exists.
+
+The optional `source_claim_checks` list is separate from bindings because discovery and proof have
+different authority. It supports `count` locators ending in `#count` and `identifier-set` locators
+ending in `#keys`. A ranked relationship remains advisory; a committed relationship becomes part
+of the configured contract.
 
 Current projections are `llms.txt`, exact-byte context bundles, and the static recorded demo.
 Plugins may add extractors, discoverers, renderers, and policy findings through process API version
@@ -124,7 +138,7 @@ clean-docs does not:
 
 - infer or authorize product goals, audience priorities, non-goals, or safety policy;
 - decide that every detected symbol deserves reader documentation;
-- rewrite unrelated prose after a source change;
+- treat a ranked source-claim candidate as proof or rewrite unrelated prose after a source change;
 - use model judgment as a required gate;
 - provide operating-system or network isolation;
 - maintain a hosted service, account system, or runtime dashboard;

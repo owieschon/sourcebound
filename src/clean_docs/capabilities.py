@@ -7,8 +7,8 @@ PRODUCT_OVERVIEW = (
     "Declared sources own the protected facts. A packaged policy enforces the deterministic form "
     "floor; authored judgment still owns motivation, pedagogy, and voice. Static adapters read "
     "common code and schema formats, while declared commands run under explicit process controls. "
-    "The engine can repair bound regions, reject drift, and publish context such as `llms.txt` "
-    "with local receipts."
+    "The engine can repair bound regions, rank static count and column candidates, enforce accepted "
+    "claim relationships, and publish context such as `llms.txt` with local receipts."
 )
 
 ASSURANCE_BOUNDARIES = (
@@ -21,6 +21,11 @@ ASSURANCE_BOUNDARIES = (
         "surface": "Repository catalog",
         "clean-docs proves": "Detected additions, removals, and replacements stay visible",
         "clean-docs does not prove": "Every cataloged item needs or has a reader-facing explanation",
+    },
+    {
+        "surface": "Accepted static source claim",
+        "clean-docs proves": "The documented count or identifier set matches its accepted source locator",
+        "clean-docs does not prove": "A ranked candidate names the right semantic relationship",
     },
     {
         "surface": "Packaged writing policy",
@@ -63,6 +68,7 @@ CLI_REFERENCE = (
         "example": "clean-docs audit --format json",
     },
     {"command": "inventory", "job": "List detected repository surfaces and coverage", "writes": "no", "example": "clean-docs inventory --format json"},
+    {"command": "claims", "job": "Rank and verify static count and column claims", "writes": "no", "example": "clean-docs claims --format json"},
     {"command": "init", "job": "Write a source-bound documentation baseline", "writes": "yes", "example": "clean-docs init --no-model"},
     {"command": "explain", "job": "Explain a finding or coverage state", "writes": "no", "example": "clean-docs explain purpose-contract --format json"},
     {"command": "doctor", "job": "Check repository and integration readiness", "writes": "with --bundle", "example": "clean-docs doctor --bundle doctor.json"},

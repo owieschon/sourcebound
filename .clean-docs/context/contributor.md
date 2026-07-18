@@ -1,13 +1,13 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `dd2951c3929ba31c459b68618abd9e50ffdd3aea6bcc64232e442a3d91e117c1`
+- Corpus sha256: `959863ca7ece72d335288c314afca34fd4872000e1984c62be81b58f29eba8a7`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `299638a6ca57aa9fed767d9634b15bd9aaa5ca3855ac8e6d4599051b0d563836`
+- Content sha256: `00fd8950fd197d11ccaa8fecb11098a3db49c44aec45aeaf131ee8ab648277de`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
@@ -35,6 +35,7 @@ authorizes clean-docs to flatten repository-native forms.
 | Try the repair loop | [Runnable tutorial](docs/learn/tutorial-catch-a-lying-doc.md) | A failed drift check and a repaired page |
 | Choose a command | [CLI reference](docs/CLI.md) | The command and its write boundary |
 | Configure a binding | [Manifest reference](docs/REFERENCE.md) | A source-bound fact with the right depth |
+| Investigate an unbound count or column claim | [Source claim checks](docs/REFERENCE.md#source-claim-checks) | A ranked candidate or accepted deterministic relationship |
 | Understand trust boundaries | [Security model](docs/SECURITY_MODEL.md) | The process and host guarantees |
 
 ## Why clean-docs exists
@@ -42,7 +43,7 @@ authorizes clean-docs to flatten repository-native forms.
 <!-- clean-docs:begin product-overview -->
 A stale sentence does not fail loudly. It keeps a straight face after the code has moved on, and reviewers have no mechanical way to identify the false claim. clean-docs gives each protected fact a source, then checks that relationship again in CI.
 
-Declared sources own the protected facts. A packaged policy enforces the deterministic form floor; authored judgment still owns motivation, pedagogy, and voice. Static adapters read common code and schema formats, while declared commands run under explicit process controls. The engine can repair bound regions, reject drift, and publish context such as `llms.txt` with local receipts.
+Declared sources own the protected facts. A packaged policy enforces the deterministic form floor; authored judgment still owns motivation, pedagogy, and voice. Static adapters read common code and schema formats, while declared commands run under explicit process controls. The engine can repair bound regions, rank static count and column candidates, enforce accepted claim relationships, and publish context such as `llms.txt` with local receipts.
 <!-- clean-docs:end product-overview -->
 
 Human review can improve a sentence. It cannot make the sentence fail when its defining source changes. The [deterministic seam](docs/learn/deep-dive-the-deterministic-seam.md) explains how clean-docs separates source evidence, optional phrasing, and gate authority.
@@ -85,7 +86,8 @@ Repository sources become typed evidence. Bindings assign that evidence to docum
 
 ## Current boundaries
 
-- Catalog coverage detects source additions, removals, and replacements; it does not validate prose. Protect a specific claim with a binding.
+- Catalog coverage detects source additions, removals, and replacements; it does not validate prose.
+- Source-claim discovery ranks static count and identifier-set candidates. A candidate remains advisory until the repository accepts its exact document and source relationship.
 - `drive` repairs bound regions. Run `project` afterward when a projection includes the repaired document.
 - Declared processes use time, I/O, and environment controls. The host owns network isolation; see the [security model](docs/SECURITY_MODEL.md).
 - Authored purpose and the manifest decide what matters. clean-docs does not infer product goals or certify judgment prose.
