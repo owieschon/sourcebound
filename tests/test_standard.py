@@ -284,6 +284,23 @@ def test_preamble_contract_requires_point_action_and_proof_in_first_fifteen_line
     )
     assert check_document("README.md", complete, load_default_pack()) == []
 
+    prose_proof = (
+        missing
+        + "\n**[Run the first task](docs/start.md)**\n\n"
+        + "Exit zero is the proof that the configured check passed.\n"
+    )
+    assert check_document("README.md", prose_proof, load_default_pack()) == []
+
+    generic_result = (
+        missing
+        + "\n**[Run the first task](docs/start.md)**\n\n"
+        + "The result contains the current queue fields.\n"
+    )
+    assert [
+        finding.rule
+        for finding in check_document("README.md", generic_result, load_default_pack())
+    ] == ["preamble-contract"]
+
 
 @pytest.mark.parametrize(
     ("sentence", "rule"),
@@ -341,6 +358,35 @@ def test_truth_yield_preserves_an_honest_qualifier_collision() -> None:
         '<!-- clean-docs:yield rule="qualifier-density" to="truth-honesty" '
         'reason="Three independent safety boundaries must remain attached" -->\n'
         "The model may phrase only supplied facts unless the provider fails, except in replay.\n"
+    )
+
+    assert check_document("README.md", content, load_default_pack()) == []
+
+
+def test_multiline_yield_comment_does_not_become_prose() -> None:
+    content = (
+        f"# Queue\n\n{REGISTER_PROFILE}\n<!-- clean-docs:purpose -->\n"
+        "Queue is a task runner for maintainers who need source-bound operating facts.\n"
+        "<!-- clean-docs:end purpose -->\n\n"
+        "**[Run the first task](docs/start.md)**\n\n"
+        "[Verification result](docs/result.md)\n\n"
+        '<!-- clean-docs:yield rule="nominalization-density" to="truth-honesty"\n'
+        '     reason="The policy definition must retain all three exact terms" -->\n'
+        "Coordination, implementation, and validation are the named policy terms.\n"
+    )
+
+    assert check_document("README.md", content, load_default_pack()) == []
+
+
+def test_register_rules_ignore_link_targets_and_inline_code() -> None:
+    content = (
+        f"# Queue\n\n{REGISTER_PROFILE}\n<!-- clean-docs:purpose -->\n"
+        "Queue is a task runner for maintainers who need source-bound operating facts.\n"
+        "<!-- clean-docs:end purpose -->\n\n"
+        "**[Run the first task](docs/start.md)**\n\n"
+        "[Verification result](docs/result.md)\n\n"
+        "Read the [newest choice](#implementation-validation-migration) before running "
+        "`coordination-implementation-validation`.\n"
     )
 
     assert check_document("README.md", content, load_default_pack()) == []

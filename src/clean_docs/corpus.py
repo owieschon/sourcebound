@@ -72,10 +72,20 @@ def _is_document_candidate(relative: Path, *, fallback: bool) -> bool:
     )
 
 
-def _git_tracked_markdown(root: Path) -> list[Path] | None:
+def _git_visible_markdown(root: Path) -> list[Path] | None:
     try:
         proc = subprocess.run(
-            ["git", "-C", str(root), "ls-files", "*.md"],
+            [
+                "git",
+                "-C",
+                str(root),
+                "ls-files",
+                "--cached",
+                "--others",
+                "--exclude-standard",
+                "--",
+                "*.md",
+            ],
             capture_output=True,
             text=True,
             timeout=20,
@@ -85,23 +95,22 @@ def _git_tracked_markdown(root: Path) -> list[Path] | None:
         return None
     if proc.returncode != 0:
         return None
-    files = [
+    return sorted({
         root / line
         for line in proc.stdout.splitlines()
         if line.strip() and (root / line).is_file()
-    ]
-    return files or None
+    })
 
 
 def list_documents(root: Path) -> list[Path]:
     """Return the reader-facing Markdown surface used by the Version 0 linter."""
     if root.is_file():
         return [root]
-    tracked = _git_tracked_markdown(root)
-    if tracked is not None:
+    visible = _git_visible_markdown(root)
+    if visible is not None:
         return [
             path
-            for path in tracked
+            for path in visible
             if "archive" not in path.relative_to(root).parts
             and _is_document_candidate(path.relative_to(root), fallback=False)
             and not any(

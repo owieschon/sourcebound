@@ -45,3 +45,19 @@ def test_cli_exit_codes_distinguish_drift_configuration_and_extraction(
     manifest.write_text(valid.replace("facts.txt", "missing.txt"))
     assert main(["--root", str(root), "check"]) == 3
     assert "cannot read source" in capsys.readouterr().err
+
+
+def test_changed_check_flags_fail_closed_when_changed_mode_is_missing(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    root = _fixture(tmp_path)
+
+    assert main([
+        "--root", str(root), "check", "--base", "HEAD~1", "--head", "HEAD",
+    ]) == 2
+    assert "require check --changed" in capsys.readouterr().err
+
+    assert main([
+        "--root", str(root), "check", "--changed", "--base", "HEAD~1",
+    ]) == 2
+    assert "requires both --base and --head" in capsys.readouterr().err

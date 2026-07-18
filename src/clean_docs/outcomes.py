@@ -61,6 +61,12 @@ class OutcomeReceipt:
             "version": __version__,
             "ref": self.ref,
             "ok": self.ok,
+            "assurance": {
+                "scope": "configured-contract",
+                "bound_claims_checked": True,
+                "cataloged_surfaces_check_prose": False,
+                "judgment_prose_certified": False,
+            },
             "outcomes": {
                 "protected_baseline_current": (
                     self.ok and self.changed is None and self.standard_gaps == 0

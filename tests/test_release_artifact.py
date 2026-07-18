@@ -30,8 +30,8 @@ def test_published_wheel_checksum_command_accepts_matching_artifact(tmp_path: Pa
     digest = hashlib.sha256(wheel.read_bytes()).hexdigest()
     (tmp_path / "SHA256SUMS").write_text(f"{digest}  {wheel.name}\n")
 
-    support = (ROOT / "docs/SUPPORT.md").read_text()
-    section = support.split("### Verify release artifacts", maxsplit=1)[1]
+    install = (ROOT / "docs/INSTALL.md").read_text()
+    section = install.split("## Verify release artifacts", maxsplit=1)[1]
     match = re.search(r"```bash\npython3 - <<'PY'\n(.*?)\nPY\n", section, re.DOTALL)
     assert match is not None
 

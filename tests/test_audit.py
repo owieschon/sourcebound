@@ -60,6 +60,30 @@ def test_audit_needs_no_manifest_and_reports_corpus_failures(tmp_path: Path) -> 
     assert len(report.findings) == 2
 
 
+def test_audit_includes_untracked_markdown_but_honors_gitignore(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    (root / ".gitignore").write_text("ignored.md\n")
+    (root / "README.md").write_text("# Project\n\nCurrent repository guide.\n")
+    _track(root)
+    untracked = ensure_purpose_contract(
+        "# New guide\n\nMaintainers read this guide before changing the Acorn queue.\n",
+        fallback=True,
+    )
+    (root / "NEW.md").write_text(untracked + "\n[Missing](missing.md)\n")
+    (root / "ignored.md").write_text("# Ignored\n\n[Missing](also-missing.md)\n")
+
+    report = audit(root)
+
+    assert "NEW.md" in report.documents
+    assert "ignored.md" not in report.documents
+    assert any(
+        finding.path == "NEW.md" and finding.rule == "broken-local-link"
+        for finding in report.findings
+    )
+
+
 def test_archive_and_reasoned_length_allowance_are_explicit(tmp_path: Path) -> None:
     root = _repo(tmp_path)
     archive = root / "docs/archive"
@@ -215,6 +239,62 @@ def test_audit_ignores_purpose_markers_when_comparing_prose(tmp_path: Path) -> N
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
 
     assert not any(finding.rule == "near-dup" for finding in audit(root).findings)
+
+
+def test_audit_rejects_a_repeated_stock_purpose_shell_across_the_corpus(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    pages = {
+        "README.md": (
+            "Use this guide when operators need the Acorn queue map. "
+            "It keeps each route tied to the current worker contract."
+        ),
+        "GUIDE.md": (
+            "Use this guide when maintainers repair the Birch cache. "
+            "It names the invalidation boundary and the recovery check."
+        ),
+        "REFERENCE.md": (
+            "Use this reference when contributors inspect Cedar settings. "
+            "It lists the accepted keys and their defining schema."
+        ),
+    }
+    for path, purpose in pages.items():
+        (root / path).write_text(
+            f"# {Path(path).stem.title()}\n\n"
+            "<!-- clean-docs:policy register-v2 -->\n"
+            "<!-- clean-docs:purpose -->\n"
+            f"{purpose}\n"
+            "<!-- clean-docs:end purpose -->\n"
+        )
+    _track(root)
+
+    findings = [
+        finding for finding in audit(root).findings
+        if finding.rule == "purpose-template"
+    ]
+
+    assert {finding.path for finding in findings} == set(pages)
+
+
+def test_audit_allows_two_literal_pages_to_share_a_purpose_opening(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    for path, subject in (("CLI.md", "commands"), ("REFERENCE.md", "manifest fields")):
+        (root / path).write_text(
+            f"# {Path(path).stem.title()}\n\n"
+            "<!-- clean-docs:policy register-v2 -->\n"
+            "<!-- clean-docs:purpose -->\n"
+            f"Use this reference when looking up {subject}. "
+            "The page keeps exact values in one literal lookup surface.\n"
+            "<!-- clean-docs:end purpose -->\n"
+        )
+    _track(root)
+
+    assert not any(
+        finding.rule == "purpose-template" for finding in audit(root).findings
+    )
 
 
 def test_generated_context_bundles_are_not_canonical_corpus_pages(tmp_path: Path) -> None:

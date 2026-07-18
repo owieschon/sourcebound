@@ -1,46 +1,38 @@
 from pathlib import Path
 
+from clean_docs.engine import evaluate
+
 
 PROJECT = Path(__file__).parents[1]
 
 
-def _v11_section() -> str:
+def test_current_product_contract_excludes_historical_and_future_state() -> None:
     specification = (PROJECT / "CLEAN_DOCS_SPEC.md").read_text()
-    section = specification.split("### Version 1.1: Governed learning layer", 1)[1]
-    return section.split("## 14. Test architecture", 1)[0]
+
+    assert "# Current clean-docs product contract" in specification
+    assert "An outcome with `\"ok\": true` means the configured contract passed" in specification
+    assert "`drive --changed`" not in specification
+    assert "### Version 0.3" not in specification
+    assert "complete example" not in specification.lower()
+    assert "infer or authorize product goals" in specification
 
 
-def test_v11_learning_layer_is_bounded_and_starts_after_stable_v10() -> None:
-    section = _v11_section()
+def test_current_assurance_table_is_bound_to_the_capability_registry() -> None:
+    specification = (PROJECT / "CLEAN_DOCS_SPEC.md").read_text()
+    results = {
+        result.binding_id: result
+        for result in evaluate(PROJECT, PROJECT / ".clean-docs.yml")
+    }
 
-    assert "Version 1.0 stable release is published" in section
-    assert "non-blocking pilot observation window" in section
-    assert "does not delay this version" in section
-    assert "Do not add a fourth lesson" in section
-    assert "no separate learning site or" in section
+    assert "assurance-boundaries" in results
+    assert not results["assurance-boundaries"].changed
+    assert "Cataloged surfaces check prose" not in specification
+    assert "Every cataloged item needs or has a reader-facing explanation" in specification
 
 
-def test_v11_plan_names_each_learning_surface_and_its_proof() -> None:
-    section = _v11_section()
-    normalized = " ".join(section.split())
+def test_historical_build_plan_is_archived_and_labels_its_authority() -> None:
+    archived = (PROJECT / "docs/archive/v1/BUILD_PLAN.md").read_text()
 
-    for path in (
-        "docs/learn/index.md",
-        "docs/learn/tutorial-catch-a-lying-doc.md",
-        "docs/learn/postmortem-the-readme-that-lied.md",
-        "docs/learn/deep-dive-the-deterministic-seam.md",
-    ):
-        assert path in normalized
-
-    for scenario in (
-        "public repository legibility",
-        "tutorial from a clean room",
-        "postmortem facts cannot drift",
-        "deterministic-seam boundary",
-        "additive learning corpus",
-        "fresh-reader learning path",
-    ):
-        assert f"**{scenario}**" in normalized
-
-    assert "Link to existing reference facts instead of copying" in normalized
-    assert "Receipts bind the corpus digest and task outputs" in normalized
+    assert archived.startswith("# Archived clean-docs build plan through Version 1.1")
+    assert "not a current product contract" in " ".join(archived.split())
+    assert "### Version 1.1: Governed learning layer" in archived

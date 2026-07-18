@@ -67,7 +67,7 @@ def test_readme_architecture_follows_the_first_action_and_has_text_equivalent() 
     readme = (ROOT / "README.md").read_text()
     graphic = (ROOT / "docs/assets/clean-docs-system-map.svg").read_text()
 
-    install = readme.index("## Install and prove the loop")
+    install = readme.index("## Install in the repository you want to protect")
     architecture = readme.index("## How the pieces fit")
     architecture_section = readme[architecture:readme.index("## Current boundaries")]
     assert install < architecture
@@ -77,8 +77,8 @@ def test_readme_architecture_follows_the_first_action_and_has_text_equivalent() 
         "typed evidence",
         "Bindings",
         "document regions",
-        "packaged standard",
-        "repairs documentation",
+        "implemented policy floor",
+        "repairs declared regions",
         "rejects drift",
         "publishes verified context",
     ):

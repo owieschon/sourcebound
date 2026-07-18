@@ -90,8 +90,7 @@ def _step_audit() -> str:
     )
 
 
-def _step_repair(bound_docs: list[str]) -> str:
-    listed = ", ".join(f"`{doc}`" for doc in bound_docs) or "the bound documents"
+def _step_repair() -> str:
     return (
         "---\nnext_step: 3-verify.md\n---\n\n"
         "# Step 2: repair bound regions\n\n"
@@ -104,7 +103,8 @@ def _step_repair(bound_docs: list[str]) -> str:
         "## Action\n\n"
         "Derive the declared regions from source and enforce the packaged standard:\n\n"
         "```bash\nclean-docs drive\n```\n\n"
-        f"This writes only declared regions in {listed}. It preserves prose outside the markers "
+        "This writes only the regions declared in the manifest. It preserves prose outside the "
+        "markers "
         "and refuses a write when policy fails.\n\n"
         "## Decision\n\n"
         "Exit `0`: proceed. A policy finding requires an author to repair the flagged prose and "
@@ -160,7 +160,7 @@ def emit_stepwise_skill(
         ),
         out_dir / "description.md": _description(bound_docs),
         out_dir / "references/1-audit.md": _step_audit(),
-        out_dir / "references/2-repair.md": _step_repair(bound_docs),
+        out_dir / "references/2-repair.md": _step_repair(),
         out_dir / "references/3-verify.md": _step_verify(),
     }
     for path, text in files.items():

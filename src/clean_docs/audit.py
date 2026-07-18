@@ -3,11 +3,10 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from clean_docs.corpus import _is_document_candidate, scan_corpus
+from clean_docs.corpus import _git_visible_markdown, _is_document_candidate, scan_corpus
 from clean_docs.errors import ConfigurationError
 from clean_docs.policy import REGISTER_PROFILE, check_document
 from clean_docs.regions import atomic_write
@@ -21,6 +20,14 @@ PROCESS_NAME = re.compile(
 )
 LINK = re.compile(r"\[[^\]]+\]\(([^)\s]+)(?:\s+[^)]*)?\)")
 HEADING = re.compile(r"^#{2,}\s+(.+?)\s*$")
+PURPOSE_BLOCK = re.compile(
+    r"<!-- clean-docs:purpose -->\s*(.*?)\s*<!-- clean-docs:end purpose -->",
+    re.DOTALL,
+)
+STOCK_PURPOSE_OPENING = re.compile(
+    r"^Use this (?:guide|model|page|path|policy|reference|specification) when\b",
+    re.IGNORECASE,
+)
 ALLOW = re.compile(
     r'<!--\s*clean-docs:allow\s+([a-z][a-z-]+)\s+reason="([^"]+)"\s*-->'
 )
@@ -126,20 +133,15 @@ def _load_audit_baseline(path: Path) -> tuple[AuditFinding, ...]:
 
 
 def _tracked_markdown(root: Path) -> list[Path]:
-    proc = subprocess.run(
-        ["git", "-C", str(root), "ls-files", "*.md"],
-        text=True,
-        capture_output=True,
-        timeout=30,
-        check=False,
-    )
-    if proc.returncode == 0:
+    visible = _git_visible_markdown(root)
+    if visible is not None:
         return [
             relative
-            for line in proc.stdout.splitlines()
-            if line
-            and (root / (relative := Path(line))).is_file()
-            and _is_document_candidate(relative, fallback=False)
+            for path in visible
+            if _is_document_candidate(
+                relative := path.relative_to(root),
+                fallback=False,
+            )
         ]
     return sorted(
         relative
@@ -344,6 +346,36 @@ def _assurance_findings(documents: dict[str, str]) -> list[AuditFinding]:
     return findings
 
 
+def _purpose_template_findings(documents: dict[str, str]) -> list[AuditFinding]:
+    matches: list[str] = []
+    for doc, text in documents.items():
+        if REGISTER_PROFILE not in text:
+            continue
+        block = PURPOSE_BLOCK.search(text)
+        if block and STOCK_PURPOSE_OPENING.search(" ".join(block.group(1).split())):
+            matches.append(doc)
+    if len(matches) < 3:
+        return []
+    return [
+        AuditFinding(
+            "purpose-template",
+            doc,
+            next(
+                (
+                    line_number + 1
+                    for line_number, line in enumerate(
+                        documents[doc].splitlines(), start=1
+                    )
+                    if line.strip() == "<!-- clean-docs:purpose -->"
+                ),
+                1,
+            ),
+            "replace the repeated 'Use this ... when' shell with a reader situation specific to this page",
+        )
+        for doc in matches
+    ]
+
+
 def _scan_audit(root: Path) -> AuditReport:
     root = root.resolve()
     pack = load_default_pack()
@@ -432,6 +464,7 @@ def _scan_audit(root: Path) -> AuditReport:
                         f"target does not exist: {target}",
                     ))
     findings.extend(_assurance_findings(active_texts))
+    findings.extend(_purpose_template_findings(active_texts))
     corpus_rule_names = {
         "surface": "process-artifact",
         "audience": "audience",

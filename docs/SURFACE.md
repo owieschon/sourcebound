@@ -2,8 +2,15 @@
 
 <!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
-Use this reference when deciding whether clean-docs directly documents a detected source locator or only tracks it through the repository catalog. It prevents catalog coverage from being mistaken for a source-specific reader claim and gives maintainers the current detected surface behind the coverage receipt.
+This generated catalog shows which detected source locators have direct bindings and which remain
+catalog-only. Maintainers can inspect the surface behind a coverage receipt without mistaking
+change visibility for a validated reader-facing claim.
 <!-- clean-docs:end purpose -->
+
+**[Inspect the generated surface](#detected-repository-surface)**.
+
+Run `clean-docs inventory --format json` to reproduce the item-level coverage state behind this
+summary.
 
 The catalog binding catches additions, removals, and replacements across the detected surface. It does not assert that every symbol or option needs a reader-facing explanation. `clean-docs verify` reports source-specific bindings as `bound` and the remaining catalog entries as `cataloged`.
 
