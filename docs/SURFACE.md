@@ -18,11 +18,12 @@ The catalog binding catches additions, removals, and replacements across the det
 | surface | discovered | examples |
 | --- | ---: | --- |
 | api-symbol | 204 | `AcceptanceCase`, `Assertion`, `AuditFinding`, and 201 more |
+| ci-job | 15 | `acceptance-v0-1`, `acceptance-v0-2`, `acceptance-v0-3`, and 12 more |
 | cli-command | 21 | `audit`, `benchmark`, `check`, and 18 more |
 | cli-option | 56 | `--accept-hygiene-baseline`, `--base`, `--binding`, and 53 more |
 | package | 1 | `clean-docs` |
 | runtime-constraint | 1 | `Python >=3.10` |
 | test-suite | 52 | `scripts/test_release_lifecycle.py`, `tests/test_audit.py`, `tests/test_changed_check.py`, and 49 more |
 
-<!-- clean-docs:inventory-sha256 3f59ba0ff5781fa44564e631bc128e865e1b221970db81d975a7b657247b2964 -->
+<!-- clean-docs:inventory-sha256 140781404d487a32cb49ef2555b2e1ed2db59648f632e8923c2ec9713af7207e -->
 <!-- clean-docs:end repository-surface -->

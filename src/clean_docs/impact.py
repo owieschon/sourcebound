@@ -11,7 +11,7 @@ import yaml
 from clean_docs.changed import check_changed, git_output, inventory_at_ref
 from clean_docs.errors import ConfigurationError
 from clean_docs.manifest import load_manifest
-from clean_docs.models import Manifest
+from clean_docs.models import Manifest, SymbolBinding
 from clean_docs.projections import evaluate_projections
 from clean_docs.snapshot import RepositorySnapshot
 
@@ -22,6 +22,7 @@ PUBLIC_KINDS = frozenset(
         "api-symbol",
         "cli-command",
         "cli-option",
+        "ci-job",
         "config-key",
         "mcp-tool",
         "package",
@@ -221,6 +222,7 @@ def _event_kind(kind: str, change: str) -> str:
         "api-symbol": "public-symbol",
         "cli-command": "command",
         "cli-option": "option",
+        "ci-job": "ci-job",
         "config-key": "configuration",
         "doc-link": "documentation-link",
         "document": "document",
@@ -450,6 +452,29 @@ def build_impact_plan(
     )
     base_items = {item.id: item for item in base_inventory}
     head_items = {item.id: item for item in head_inventory}
+    inventory_changes = []
+    for item_id in sorted(set(base_items) | set(head_items)):
+        before_item = base_items.get(item_id)
+        after_item = head_items.get(item_id)
+        if (
+            before_item is not None
+            and after_item is not None
+            and before_item.digest == after_item.digest
+            and before_item.coverage == after_item.coverage
+        ):
+            continue
+        inventory_changes.append((item_id, before_item, after_item))
+    public_locator_changes = {
+        (item.source, item.locator)
+        for _item_id, before_item, after_item in inventory_changes
+        for item in (after_item or before_item,)
+        if item is not None and item.kind in PUBLIC_KINDS
+    }
+    required_document_paths = {
+        _project_path(prefix, item.doc)
+        for item in changed.required
+        if item.doc
+    }
 
     artifact_roots: dict[str, set[str]] = {
         path: set() for path in project_changed
@@ -472,6 +497,7 @@ def build_impact_plan(
         binding_docs = {
             binding.id: binding.doc.as_posix() for binding in manifest.bindings
         }
+        bindings_by_id = {binding.id: binding for binding in manifest.bindings}
         claim_docs = {
             f"source-claim:{claim.id}": claim.doc.as_posix()
             for claim in manifest.source_claim_checks
@@ -487,11 +513,26 @@ def build_impact_plan(
                 artifact_roots.setdefault(path, set()).add(root_id)
                 edges.add(ImpactEdge(f"artifact:{path}", root_id, "affects"))
             if doc is not None:
-                affected_docs.add(doc)
                 edges.add(ImpactEdge(root_id, f"document:{doc}", "serves"))
+                binding = bindings_by_id.get(dependency)
+                public_symbol_changed = (
+                    isinstance(binding, SymbolBinding)
+                    and (
+                        binding.source.path.as_posix(),
+                        binding.source.symbol or binding.source.path.as_posix(),
+                    )
+                    in public_locator_changes
+                )
+                if (
+                    doc in required_document_paths
+                    or doc in project_changed
+                    or public_symbol_changed
+                ):
+                    affected_docs.add(doc)
 
         projection_inputs = _projection_inputs(manifest)
         projection_outputs = set(projection_inputs)
+        affected_docs.difference_update(projection_outputs)
         manifest_changed = manifest_relative.as_posix() in project_changed
         affected_projections: set[str] = set()
         for output, inputs in projection_inputs.items():
@@ -568,16 +609,7 @@ def build_impact_plan(
     event_adapters: dict[str, set[str]] = {
         path: set() for path in project_changed
     }
-    for item_id in sorted(set(base_items) | set(head_items)):
-        before = base_items.get(item_id)
-        after = head_items.get(item_id)
-        if (
-            before is not None
-            and after is not None
-            and before.digest == after.digest
-            and before.coverage == after.coverage
-        ):
-            continue
+    for item_id, before, after in inventory_changes:
         inventory_item = after or before
         assert inventory_item is not None
         if inventory_item.source not in events_by_path:
@@ -802,11 +834,6 @@ def build_impact_plan(
             )
         )
 
-    required_document_paths = {
-        _project_path(prefix, item.doc)
-        for item in changed.required
-        if item.doc
-    }
     for output in sorted(affected_projections):
         root_id = f"projection:{output}"
         pending_document_repair = bool(
