@@ -47,7 +47,7 @@ Result: pass, with one finding justified rather than removed.
 Fixes applied during the walk: removed all three uses of the prohibited compound phrase (the
 one meaning "does the essential work") and named the actor instead -- a language tag now "sets
 the reader's action", and the single page constraint is "governing". Normalized 24 em dashes to
-the ASCII double-hyphen convention Owen's own scripts use. Added the honest-seam subsection in
+the ASCII double-hyphen convention enforced by the repository scripts. Added the honest-seam subsection in
 section 6 (the three judgment-only checks the linter cannot mechanize).
 
 ## Phase 2: ultra-csm triage
