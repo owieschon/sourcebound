@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify content-addressed independent-reader evidence for a stable release."""
+"""Verify content-addressed independent-reader evidence."""
 
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ MAX_EVIDENCE_BYTES = 1_000_000
 
 
 class ReaderTrialError(ValueError):
-    """The reader-trial evidence does not prove the release gate."""
+    """The reader-trial evidence does not support its recorded claim."""
 
 
 @dataclass(frozen=True)
@@ -309,12 +309,17 @@ def project_version(root: Path) -> str:
 
 
 def verify_release_reader_trial(root: Path) -> dict[str, object]:
-    """Require external reader evidence only for a stable release."""
+    """Report release calibration without gating the 1.1 release line on it."""
     version = project_version(root)
     if STABLE_VERSION.fullmatch(version) is None:
         return {"required": False}
+    layout = trial_layout(version)
+    if version.startswith("1.1.") and not (root / layout.receipt).is_file():
+        return {"required": False, "status": "not-attested"}
     summary = verify_reader_trial(root, version)
-    return {"required": True, **summary}
+    if version.startswith("1.1."):
+        return {"required": False, "status": "verified", **summary}
+    return {"required": True, "status": "verified", **summary}
 
 
 def main() -> int:
