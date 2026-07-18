@@ -12,9 +12,9 @@ from typing import cast
 import yaml
 
 from clean_docs import __version__
-from clean_docs.changed import _git, _inventory, check_changed
+from clean_docs.changed import ChangedReport, _check_changed_details, _git
 from clean_docs.errors import ConfigurationError
-from clean_docs.inventory import PUBLIC_SURFACE_KINDS
+from clean_docs.inventory import PUBLIC_SURFACE_KINDS, InventoryItem
 from clean_docs.manifest import load_manifest
 from clean_docs.models import Manifest, SymbolBinding
 from clean_docs.projections import evaluate_projections
@@ -177,6 +177,21 @@ class ImpactPlan:
         payload = self._payload()
         payload["digest"] = self.digest
         return payload
+
+
+@dataclass
+class _ImpactPreparation:
+    changed: ChangedReport
+    prefix: str
+    project_changed: tuple[str, ...]
+    inventory_changes: list[
+        tuple[str, InventoryItem | None, InventoryItem | None]
+    ]
+    public_locator_changes: set[tuple[str, str]]
+    required_document_paths: set[str]
+    artifact_roots: dict[str, set[str]]
+    edges: set[ImpactEdge]
+    affected_docs: set[str]
 
 
 def _digest(value: object) -> str:
@@ -622,55 +637,28 @@ def _finding(
     )
 
 
-def build_impact_plan(
+def _prepare_impact_plan(
     root: Path,
     manifest_path: Path,
     *,
-    base: str,
-    head: str,
-    use_cache: bool = True,
-    project: Path = Path("."),
-) -> ImpactPlan:
-    root = root.resolve()
-    if not base or not head:
-        raise ConfigurationError("impact planning requires --base and --head")
-    if project.is_absolute() or ".." in project.parts:
-        raise ConfigurationError("impact-plan project must stay inside the repository")
-    project = (
-        Path(project.as_posix().strip("/"))
-        if project.as_posix() != "."
-        else Path(".")
-    )
-    project_root = (root / project).resolve()
-    try:
-        manifest_relative = manifest_path.resolve().relative_to(project_root)
-    except ValueError as exc:
-        raise ConfigurationError(
-            "impact-plan manifest must be inside the selected project"
-        ) from exc
-
-    requested_base = RepositorySnapshot(root, base).label
-    head_sha = RepositorySnapshot(root, head).label
-    merge_base = _git(root, "merge-base", requested_base, head_sha).strip()
-    if not merge_base:
-        raise ConfigurationError("impact planning could not resolve a merge base")
-    changed = check_changed(
+    merge_base: str,
+    head_sha: str,
+    use_cache: bool,
+    project: Path,
+    head_snapshot_root: Path,
+) -> _ImpactPreparation:
+    changed, base_inventory, head_inventory = _check_changed_details(
         root,
         manifest_path,
         base=merge_base,
         head=head_sha,
         use_cache=use_cache,
         project=project,
+        head_snapshot_root=head_snapshot_root,
     )
     prefix = "" if project == Path(".") else project.as_posix().rstrip("/") + "/"
     project_changed = tuple(
         _project_path(prefix, path) for path in changed.changed_files
-    )
-    base_inventory, _ = _inventory(
-        root, changed.base, project, use_cache=use_cache
-    )
-    head_inventory, _ = _inventory(
-        root, changed.head, project, use_cache=use_cache
     )
     base_items = {item.id: item for item in base_inventory}
     head_items = {item.id: item for item in head_inventory}
@@ -728,7 +716,6 @@ def build_impact_plan(
         for item in changed.required
         if item.doc
     }
-
     artifact_roots: dict[str, set[str]] = {
         path: set() for path in project_changed
     }
@@ -740,8 +727,70 @@ def build_impact_plan(
     }
     for path in affected_docs:
         artifact_roots[path].add(f"document:{path}")
+    return _ImpactPreparation(
+        changed,
+        prefix,
+        project_changed,
+        inventory_changes,
+        public_locator_changes,
+        required_document_paths,
+        artifact_roots,
+        edges,
+        affected_docs,
+    )
 
-    with RepositorySnapshot(root, changed.head).materialized_root() as snapshot:
+
+def build_impact_plan(
+    root: Path,
+    manifest_path: Path,
+    *,
+    base: str,
+    head: str,
+    use_cache: bool = True,
+    project: Path = Path("."),
+) -> ImpactPlan:
+    root = root.resolve()
+    if not base or not head:
+        raise ConfigurationError("impact planning requires --base and --head")
+    if project.is_absolute() or ".." in project.parts:
+        raise ConfigurationError("impact-plan project must stay inside the repository")
+    project = (
+        Path(project.as_posix().strip("/"))
+        if project.as_posix() != "."
+        else Path(".")
+    )
+    project_root = (root / project).resolve()
+    try:
+        manifest_relative = manifest_path.resolve().relative_to(project_root)
+    except ValueError as exc:
+        raise ConfigurationError(
+            "impact-plan manifest must be inside the selected project"
+        ) from exc
+
+    requested_base = RepositorySnapshot(root, base).label
+    head_sha = RepositorySnapshot(root, head).label
+    merge_base = _git(root, "merge-base", requested_base, head_sha).strip()
+    if not merge_base:
+        raise ConfigurationError("impact planning could not resolve a merge base")
+    with RepositorySnapshot(root, head_sha).materialized_root() as snapshot:
+        preparation = _prepare_impact_plan(
+            root,
+            manifest_path,
+            merge_base=merge_base,
+            head_sha=head_sha,
+            use_cache=use_cache,
+            project=project,
+            head_snapshot_root=snapshot,
+        )
+        changed = preparation.changed
+        prefix = preparation.prefix
+        project_changed = preparation.project_changed
+        inventory_changes = preparation.inventory_changes
+        public_locator_changes = preparation.public_locator_changes
+        required_document_paths = preparation.required_document_paths
+        artifact_roots = preparation.artifact_roots
+        edges = preparation.edges
+        affected_docs = preparation.affected_docs
         head_project = snapshot / project
         head_manifest_path = head_project / manifest_relative
         manifest = load_manifest(head_manifest_path)

@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import subprocess
+from contextlib import nullcontext
 from dataclasses import asdict, dataclass
 from fnmatch import fnmatch
 from pathlib import Path
@@ -120,7 +121,12 @@ def _cache_root(root: Path) -> Path:
 
 
 def _inventory(
-    root: Path, ref: str, project: Path, *, use_cache: bool
+    root: Path,
+    ref: str,
+    project: Path,
+    *,
+    use_cache: bool,
+    materialized_root: Path | None = None,
 ) -> tuple[tuple[InventoryItem, ...], bool]:
     key_payload = json.dumps(
         {
@@ -145,7 +151,12 @@ def _inventory(
         except (OSError, json.JSONDecodeError, TypeError):
             pass
     repository_snapshot = RepositorySnapshot(root, ref)
-    with repository_snapshot.materialized_root() as snapshot:
+    snapshot_context = (
+        nullcontext(materialized_root)
+        if materialized_root is not None
+        else repository_snapshot.materialized_root()
+    )
+    with snapshot_context as snapshot:
         project_root = snapshot / project
         if not project_root.is_dir():
             raise ConfigurationError(f"project does not exist at {ref}: {project}")
@@ -167,7 +178,7 @@ def _inventory(
     return tuple(items), False
 
 
-def check_changed(
+def _check_changed_details(
     root: Path,
     manifest_path: Path,
     *,
@@ -175,7 +186,8 @@ def check_changed(
     head: str,
     use_cache: bool = True,
     project: Path = Path("."),
-) -> ChangedReport:
+    head_snapshot_root: Path | None = None,
+) -> tuple[ChangedReport, tuple[InventoryItem, ...], tuple[InventoryItem, ...]]:
     root = root.resolve()
     if not base or not head:
         raise ConfigurationError("check --changed requires --base and --head")
@@ -205,15 +217,23 @@ def check_changed(
     base_inventory, base_hit = _inventory(
         root, base_sha, project, use_cache=use_cache
     )
-    head_inventory, head_hit = _inventory(
-        root, head_sha, project, use_cache=use_cache
+    snapshot_context = (
+        nullcontext(head_snapshot_root)
+        if head_snapshot_root is not None
+        else RepositorySnapshot(root, head_sha).materialized_root()
     )
-    base_items = {item.id: item for item in base_inventory}
-    head_items = {item.id: item for item in head_inventory}
-
-    required: list[ChangedFinding] = []
-    dependencies: dict[str, tuple[str, ...]] = {}
-    with RepositorySnapshot(root, head_sha).materialized_root() as snapshot:
+    with snapshot_context as snapshot:
+        head_inventory, head_hit = _inventory(
+            root,
+            head_sha,
+            project,
+            use_cache=use_cache,
+            materialized_root=snapshot,
+        )
+        base_items = {item.id: item for item in base_inventory}
+        head_items = {item.id: item for item in head_inventory}
+        required: list[ChangedFinding] = []
+        dependencies: dict[str, tuple[str, ...]] = {}
         head_project = snapshot / project
         head_manifest = head_project / manifest_relative
         loaded = load_manifest(head_manifest)
@@ -324,7 +344,7 @@ def check_changed(
             ignored.append(finding)
         elif inventory_item.coverage not in {"bound", "cataloged"}:
             gaps.append(finding)
-    return ChangedReport(
+    report = ChangedReport(
         base_sha,
         head_sha,
         project.as_posix(),
@@ -336,6 +356,27 @@ def check_changed(
         int(base_hit) + int(head_hit),
         int(not base_hit) + int(not head_hit),
     )
+    return report, base_inventory, head_inventory
+
+
+def check_changed(
+    root: Path,
+    manifest_path: Path,
+    *,
+    base: str,
+    head: str,
+    use_cache: bool = True,
+    project: Path = Path("."),
+) -> ChangedReport:
+    report, _, _ = _check_changed_details(
+        root,
+        manifest_path,
+        base=base,
+        head=head,
+        use_cache=use_cache,
+        project=project,
+    )
+    return report
 
 
 def render_sarif(report: ChangedReport) -> str:

@@ -420,3 +420,16 @@ fingerprint while making one clean-docs version produce the same receipt across 
 runtimes. The Version 1.2A registry pins that behavior. The release gate compares complete receipts
 from Python 3.12 and 3.14. Reversible: a parser-independent format can replace this representation
 after reproducing the same public-change boundaries.
+
+## 40. Share one immutable head snapshot across impact-plan stages (2026-07-18)
+
+Context: the planner ran changed checks, loaded the manifest, checked projected files, and built its
+graph against the same committed head, but read that commit into a temporary tree twice. Chose one
+validated, read-only head snapshot and returned its base and head inventories with the internal
+changed report. The public changed-check contract stays unchanged. A test counts one snapshot for
+each ref. Before the release version changed, complete plan receipts remained byte-identical to
+Version 1.2.0rc1.
+On a 3,364-file public repository, the uncached path fell from 65.89 seconds to 45.36 seconds; a
+same-run cached comparison fell from 16.66 seconds to 15.48 seconds. Reusing inventory evidence
+inside repository-overview bindings remains separate measured work. Reversible: callers can return
+to independent snapshot contexts without changing receipt semantics.
