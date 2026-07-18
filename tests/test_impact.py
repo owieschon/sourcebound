@@ -149,6 +149,10 @@ def test_private_refactor_produces_coverage_complete_stable_no_impact(
     ) == 0
     payload = json.loads(capsys.readouterr().out)
     assert payload["schema"] == "clean-docs.impact-plan.v1"
+    assert payload["producer"] == {
+        "name": "clean-docs",
+        "version": "1.2.0rc1",
+    }
     assert payload["digest"] == first.digest
     assert payload["no_impact"] is True
 
@@ -343,6 +347,60 @@ def test_public_default_change_reaches_reference_and_migration_obligations(
     finding = next(item for item in plan.required if item.rule == "public-contract-change")
     assert finding.obligations == ("review-migration", "review-reference")
     assert "binding:public-api" in finding.graph_roots
+
+
+def test_typescript_signature_change_is_public_interface_work(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "typescript-repository"
+    (root / "src").mkdir(parents=True)
+    subprocess.run(["git", "init", "-q", "-b", "main", str(root)], check=True)
+    (root / "src/api.ts").write_text(
+        "export function publish(dryRun = false) { return dryRun }\n"
+    )
+    (root / "README.md").write_text(
+        "# Fixture\n\n<!-- clean-docs:begin repository-surface -->\n"
+        "<!-- clean-docs:end repository-surface -->\n"
+    )
+    (root / ".clean-docs.yml").write_text(
+        """\
+version: 1
+bindings:
+  - id: repository-surface
+    type: region
+    doc: README.md
+    region: repository-surface
+    extractor: repository-overview
+    source: {path: .}
+    renderer: markdown-fragment
+"""
+    )
+    (root / ".clean-docs-ignore.yml").write_text(
+        """\
+version: 1
+ignore:
+  - id: api-symbol:src/api.ts:publish
+    reason: Public API reference is maintained outside this fixture.
+"""
+    )
+    assert main(["--root", str(root), "derive", "--write"]) == 0
+    base = _commit(root, "base")
+    source = root / "src/api.ts"
+    source.write_text(
+        source.read_text().replace("dryRun = false", "dryRun = true")
+    )
+    head = _commit(root, "change TypeScript default")
+
+    plan = build_impact_plan(
+        root, root / ".clean-docs.yml", base=base, head=head
+    )
+
+    assert plan.impact == "none"
+    event = next(item for item in plan.events if item.kind == "public-symbol-changed")
+    assert event.coverage == "ignored"
+    assert {item.rule for item in plan.unrelated} == {
+        "ignored-public-contract"
+    }
 
 
 def test_binding_change_traverses_projection_and_evaluation(

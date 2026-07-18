@@ -69,6 +69,13 @@ Use `check` for configured binding and projection drift. Use `check --changed --
 to classify affected bindings, accepted source claims, and newly detected public surface.
 Unsupported or uncovered public surface fails instead of becoming a no-impact claim.
 
+Use `plan --base REF --head REF` to produce a read-only impact receipt before repair. The planner
+uses the merge base, classifies every changed artifact, and traverses only affected accepted
+bindings, projections, and evaluations. `impact: none` requires complete adapter coverage;
+unsupported public candidates remain `unknown`. The receipt binds its producer version, immutable
+Git objects, manifest, graph, and findings. Its zero exit code means the receipt was built, not that
+the branch is ready to merge.
+
 Use `claims` to inspect ranked static source-to-prose candidates. Candidate ranking is
 assessment-only. A `source_claim_checks` entry accepts one document anchor, subject, source path,
 and locator as a gate without copying the expected value into configuration. Accepted checks fail
@@ -150,6 +157,11 @@ clean-docs does not:
 The 1.x line preserves manifest version `1`, plugin API version `1`, published machine schemas, and
 stable command meanings. Minor releases may add optional fields. An incompatible manifest exits
 `2` before extraction, and a removed stable surface requires a major release.
+
+Repository-overview receipts created before the current digest algorithm remain valid while their
+catalog surface is unchanged. A later surface change rewrites the region with the current
+versioned extractor. Impact plans name their producer because a plan conclusion is only
+reproducible with the same planner semantics.
 
 Use the [install guide](docs/INSTALL.md) for package and artifact lifecycle tasks. The
 [support guide](docs/SUPPORT.md) owns CI pinning, corpus adoption, receipts, and diagnostics.

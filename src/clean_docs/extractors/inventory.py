@@ -88,8 +88,11 @@ def _inline(value: str) -> str:
     )
 
 
-def extract_repository_overview(
-    snapshot: RepositorySnapshot, binding: RegionBinding
+def _extract_repository_overview(
+    snapshot: RepositorySnapshot,
+    *,
+    include_item_digests: bool,
+    extractor: str,
 ) -> EvidenceValue:
     with snapshot.materialized_root() as root:
         inventory_rows = _inventory_rows(root)
@@ -106,17 +109,21 @@ def extract_repository_overview(
         if len(by_kind[kind]) > 3:
             examples += f", and {len(by_kind[kind]) - 3} more"
         lines.append(f"| {_inline(kind)} | {len(by_kind[kind])} | {examples} |")
-    rendered_rows = [
-        {
-            "kind": item["kind"],
-            "name": item["name"],
-            "source": item["source"],
-            "locator": item["locator"],
-            "adapter": item["adapter"],
-        }
-        for item in inventory_rows
-    ]
-    normalized = json.dumps(rendered_rows, sort_keys=True, separators=(",", ":"))
+    receipt_rows = (
+        inventory_rows
+        if include_item_digests
+        else [
+            {
+                "kind": item["kind"],
+                "name": item["name"],
+                "source": item["source"],
+                "locator": item["locator"],
+                "adapter": item["adapter"],
+            }
+            for item in inventory_rows
+        ]
+    )
+    normalized = json.dumps(receipt_rows, sort_keys=True, separators=(",", ":"))
     digest = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
     lines.extend(("", f"<!-- clean-docs:inventory-sha256 {digest} -->"))
     return EvidenceValue(
@@ -126,7 +133,27 @@ def extract_repository_overview(
             ref=snapshot.label,
             path=".",
             locator="public-surface-overview",
-            extractor="repository-overview@1",
+            extractor=extractor,
             digest=digest,
         ),
+    )
+
+
+def extract_repository_overview(
+    snapshot: RepositorySnapshot, binding: RegionBinding
+) -> EvidenceValue:
+    return _extract_repository_overview(
+        snapshot,
+        include_item_digests=False,
+        extractor="repository-overview@2",
+    )
+
+
+def _extract_repository_overview_legacy(
+    snapshot: RepositorySnapshot, binding: RegionBinding
+) -> EvidenceValue:
+    return _extract_repository_overview(
+        snapshot,
+        include_item_digests=True,
+        extractor="repository-overview@1",
     )

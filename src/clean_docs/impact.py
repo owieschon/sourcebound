@@ -3,11 +3,13 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
-from dataclasses import asdict, dataclass
+import re
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 
 import yaml
 
+from clean_docs import __version__
 from clean_docs.changed import _git, _inventory, check_changed
 from clean_docs.errors import ConfigurationError
 from clean_docs.manifest import load_manifest
@@ -55,6 +57,12 @@ SOURCE_SUFFIXES = frozenset(
 )
 MEDIA_SUFFIXES = frozenset({".gif", ".ico", ".jpeg", ".jpg", ".png", ".svg", ".webp"})
 STRUCTURED_SUFFIXES = frozenset({".json", ".toml", ".yaml", ".yml"})
+PYTHON_TOOLING_MODULES = frozenset({"conftest.py", "noxfile.py", "setup.py"})
+SCRIPT_EXPORT = re.compile(
+    r"^\s*export\s+(?:default\s+)?(?:async\s+)?(?:abstract\s+)?"
+    r"(?:function|class|const|interface|type|enum)\s+([A-Za-z_$][\w$]*)",
+    re.M,
+)
 
 
 @dataclass(frozen=True)
@@ -103,6 +111,7 @@ class ImpactFinding:
 
 @dataclass(frozen=True)
 class ImpactPlan:
+    producer_version: str
     requested_base: str
     merge_base: str
     head: str
@@ -148,6 +157,7 @@ class ImpactPlan:
         )
         return {
             "schema": "clean-docs.impact-plan.v1",
+            "producer": {"name": "clean-docs", "version": self.producer_version},
             "read_only": True,
             "requested_base": self.requested_base,
             "merge_base": self.merge_base,
@@ -188,6 +198,97 @@ def _digest(value: object) -> str:
 
 def _identifier(*parts: object) -> str:
     return _digest(list(parts))
+
+
+def _python_interface_payload(node: ast.AST) -> dict[str, object]:
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        return {
+            "kind": type(node).__name__,
+            "name": node.name,
+            "arguments": ast.dump(node.args, include_attributes=False),
+            "returns": (
+                ast.dump(node.returns, include_attributes=False)
+                if node.returns is not None
+                else None
+            ),
+            "decorators": [
+                ast.dump(item, include_attributes=False)
+                for item in node.decorator_list
+            ],
+        }
+    if isinstance(node, ast.ClassDef):
+        return {
+            "kind": type(node).__name__,
+            "name": node.name,
+            "bases": [
+                ast.dump(item, include_attributes=False) for item in node.bases
+            ],
+            "keywords": [
+                ast.dump(item, include_attributes=False) for item in node.keywords
+            ],
+            "decorators": [
+                ast.dump(item, include_attributes=False)
+                for item in node.decorator_list
+            ],
+        }
+    raise TypeError(f"unsupported public declaration: {type(node).__name__}")
+
+
+def _declaration_line(text: str, start: int) -> str:
+    line_start = text.rfind("\n", 0, start) + 1
+    line_end = text.find("\n", start)
+    return text[line_start:] if line_end == -1 else text[line_start:line_end]
+
+
+def _interface_fingerprints(
+    root: Path,
+    ref: str,
+    project: Path,
+    paths: tuple[str, ...],
+) -> tuple[dict[str, str], frozenset[str]]:
+    fingerprints: dict[str, str] = {}
+    failed: set[str] = set()
+    with RepositorySnapshot(root, ref).materialized_root() as snapshot:
+        project_root = snapshot / project
+        for path in sorted(paths):
+            candidate = project_root / path
+            if not candidate.exists():
+                continue
+            try:
+                text = candidate.read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError):
+                failed.add(path)
+                continue
+            suffix = candidate.suffix.lower()
+            if suffix == ".py":
+                try:
+                    tree = ast.parse(text, filename=path)
+                except SyntaxError:
+                    failed.add(path)
+                    continue
+                is_test = (
+                    candidate.name.startswith("test_")
+                    or "/tests/" in f"/{path}"
+                )
+                if is_test or candidate.name in PYTHON_TOOLING_MODULES:
+                    continue
+                for node in tree.body:
+                    if not isinstance(
+                        node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+                    ) or node.name.startswith("_"):
+                        continue
+                    item_id = f"api-symbol:{path}:{node.name}"
+                    fingerprints[item_id] = _digest(
+                        _python_interface_payload(node)
+                    )
+            elif suffix in {".ts", ".tsx", ".js", ".jsx"}:
+                for match in SCRIPT_EXPORT.finditer(text):
+                    name = match.group(1)
+                    item_id = f"api-symbol:{path}:{name}"
+                    fingerprints[item_id] = _digest(
+                        _declaration_line(text, match.start())
+                    )
+    return fingerprints, frozenset(failed)
 
 
 def _repo_path(prefix: str, path: str) -> str:
@@ -509,10 +610,41 @@ def build_impact_plan(
     )
     base_items = {item.id: item for item in base_inventory}
     head_items = {item.id: item for item in head_inventory}
+    interface_paths = tuple(
+        path
+        for path in project_changed
+        if Path(path).suffix.lower() in {".py", ".ts", ".tsx", ".js", ".jsx"}
+    )
+    base_interfaces, base_interface_failures = _interface_fingerprints(
+        root, changed.base, project, interface_paths
+    )
+    head_interfaces, head_interface_failures = _interface_fingerprints(
+        root, changed.head, project, interface_paths
+    )
     inventory_changes = []
     for item_id in sorted(set(base_items) | set(head_items)):
         before_item = base_items.get(item_id)
         after_item = head_items.get(item_id)
+        inventory_item = after_item or before_item
+        assert inventory_item is not None
+        if (
+            inventory_item.kind == "api-symbol"
+            and inventory_item.source in interface_paths
+        ):
+            if inventory_item.source in (
+                base_interface_failures | head_interface_failures
+            ):
+                continue
+            before_interface = base_interfaces.get(item_id)
+            after_interface = head_interfaces.get(item_id)
+            if before_interface == after_interface:
+                continue
+            if before_item is not None and before_interface is not None:
+                before_item = replace(before_item, digest=before_interface)
+            if after_item is not None and after_interface is not None:
+                after_item = replace(after_item, digest=after_interface)
+            inventory_changes.append((item_id, before_item, after_item))
+            continue
         if (
             before_item is not None
             and after_item is not None
@@ -907,7 +1039,7 @@ def build_impact_plan(
             _finding(
                 classification,
                 "public-contract-change",
-                f"{event.kind} reaches a {event.coverage} surface",
+                f"{event.kind} reaches {event.coverage} coverage",
                 paths=(event.path,),
                 roots=event.graph_roots,
                 obligations=obligations,
@@ -1054,6 +1186,7 @@ def build_impact_plan(
         }
     )
     return ImpactPlan(
+        producer_version=__version__,
         requested_base=requested_base,
         merge_base=changed.base,
         head=changed.head,

@@ -136,49 +136,6 @@ def _python_evidence(text: str, node: ast.AST) -> str:
     return "\n".join(parts)
 
 
-def _python_interface_evidence(node: ast.AST) -> str:
-    """Hash a public declaration without treating its implementation as its contract."""
-    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-        payload = {
-            "kind": type(node).__name__,
-            "name": node.name,
-            "arguments": ast.dump(node.args, include_attributes=False),
-            "returns": (
-                ast.dump(node.returns, include_attributes=False)
-                if node.returns is not None
-                else None
-            ),
-            "decorators": [
-                ast.dump(item, include_attributes=False)
-                for item in node.decorator_list
-            ],
-        }
-    elif isinstance(node, ast.ClassDef):
-        payload = {
-            "kind": type(node).__name__,
-            "name": node.name,
-            "bases": [
-                ast.dump(item, include_attributes=False) for item in node.bases
-            ],
-            "keywords": [
-                ast.dump(item, include_attributes=False) for item in node.keywords
-            ],
-            "decorators": [
-                ast.dump(item, include_attributes=False)
-                for item in node.decorator_list
-            ],
-        }
-    else:
-        raise TypeError(f"unsupported public declaration: {type(node).__name__}")
-    return json.dumps(payload, sort_keys=True, separators=(",", ":"))
-
-
-def _declaration_line(text: str, start: int) -> str:
-    line_start = text.rfind("\n", 0, start) + 1
-    line_end = text.find("\n", start)
-    return text[line_start:] if line_end == -1 else text[line_start:line_end]
-
-
 def _python_items(path: str, text: str) -> list[dict[str, str]]:
     try:
         tree = ast.parse(text, filename=path)
@@ -189,16 +146,7 @@ def _python_items(path: str, text: str) -> list[dict[str, str]]:
     if not is_test and Path(path).name not in PYTHON_TOOLING_MODULES:
         for node in tree.body:
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) and not node.name.startswith("_"):
-                items.append(
-                    _item(
-                        "api-symbol",
-                        node.name,
-                        path,
-                        node.name,
-                        "python-ast",
-                        _python_interface_evidence(node),
-                    )
-                )
+                items.append(_item("api-symbol", node.name, path, node.name, "python-ast", _python_evidence(text, node)))
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 decorators = [ast.unparse(item).lower() for item in node.decorator_list]
                 if any("tool" in item for item in decorators):
@@ -450,18 +398,8 @@ def scan_inventory(root: Path) -> InventoryReport:
                 if file_path.suffix.lower() in {".ts", ".tsx"}
                 else "javascript-static"
             )
-            for match in TS_EXPORT.finditer(text):
-                name = match.group(1)
-                raw_items.append(
-                    _item(
-                        "api-symbol",
-                        name,
-                        relative,
-                        name,
-                        adapter,
-                        _declaration_line(text, match.start()),
-                    )
-                )
+            for name in TS_EXPORT.findall(text):
+                raw_items.append(_item("api-symbol", name, relative, name, adapter, name))
             for name in TS_CLI_COMMAND.findall(text):
                 raw_items.append(
                     _item("cli-command", name, relative, name, "typescript-cli-framework", name)

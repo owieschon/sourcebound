@@ -83,12 +83,14 @@ EXPECTED_IDS_BY_RELEASE = {
     "1.2A": {
         "coverage-complete-no-impact",
         "implementation-is-not-interface",
+        "typescript-interface-fingerprint",
         "unknown-cannot-become-no-impact",
         "public-default-obligations",
         "affected-contract-traversal",
         "generated-output-non-recursion",
         "merge-base-history",
         "scope-tension",
+        "legacy-overview-compatibility",
     },
 }
 

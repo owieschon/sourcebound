@@ -50,8 +50,9 @@ projections, and evaluations, and writes nothing to the worktree:
 clean-docs plan --base origin/main --head HEAD --format json
 ```
 
-The JSON records every changed path with its base and head blob, adapter decision, coverage state,
-and graph roots. Its digest binds those inputs to the resulting findings.
+The JSON records the clean-docs producer version and every changed path with its base and head blob,
+adapter decision, coverage state, and graph roots. Its digest binds that producer and those inputs
+to the resulting findings.
 
 | `impact` | Meaning |
 | --- | --- |

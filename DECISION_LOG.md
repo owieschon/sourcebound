@@ -332,3 +332,16 @@ walk. The parser still decides which symbols, commands, tools, and settings exis
 digests now remain identical across supported runtimes. A fixed digest assertion and a direct
 3.12-versus-3.14 replay cover the failure. Reversible: a future versioned semantic encoding can
 replace source segments after proving identical bytes on every supported runtime.
+
+## 32. Separate impact fingerprints from established inventory receipts (2026-07-18)
+
+Context: interface-level fingerprints let an impact plan ignore a function-body refactor and catch
+a public default change, but replacing the existing inventory digest invalidated repository
+overviews whose rendered rows had not changed. Chose a planner-owned semantic fingerprint for
+Python and TypeScript interfaces while preserving the published inventory bytes. Impact receipts
+also bind the clean-docs producer version. Repository-overview evaluation accepts both the legacy
+item-digest receipt and the current rendered-surface receipt until the catalog changes; a real
+surface change migrates the region to the current extractor. Tests prove four cases: changed
+bodies stay out, changed signatures enter, old receipts pass, and renamed symbols fail. Reversible:
+a future manifest migration can retire legacy receipt acceptance after adopted repositories have
+rewritten their regions.

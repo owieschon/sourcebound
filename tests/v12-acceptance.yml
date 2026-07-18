@@ -5,6 +5,8 @@ scenarios:
     test: tests/test_impact.py::test_private_refactor_produces_coverage_complete_stable_no_impact
   - id: implementation-is-not-interface
     test: tests/test_impact.py::test_public_implementation_refactor_does_not_become_interface_work
+  - id: typescript-interface-fingerprint
+    test: tests/test_impact.py::test_typescript_signature_change_is_public_interface_work
   - id: unknown-cannot-become-no-impact
     test: tests/test_impact.py::test_unsupported_public_candidate_is_unknown_not_no_impact
   - id: public-default-obligations
@@ -17,3 +19,5 @@ scenarios:
     test: tests/test_impact.py::test_plan_uses_merge_base_for_diverged_and_stacked_history
   - id: scope-tension
     test: tests/test_impact.py::test_internal_unsupported_script_does_not_expand_the_plan
+  - id: legacy-overview-compatibility
+    test: tests/test_inventory.py::test_repository_overview_accepts_legacy_receipts_until_surface_changes
