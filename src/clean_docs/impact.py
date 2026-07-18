@@ -300,6 +300,8 @@ def _adapter_for(
         return "manifest"
     if path == ".clean-docs/eval.yml":
         return "evaluation"
+    if candidate.parts[:2] == (".github", "workflows"):
+        return "github-actions-static"
     if event_adapters:
         return "+".join(event_adapters)
     if candidate.name.startswith("test_") or candidate.name.endswith(
@@ -368,6 +370,61 @@ def _adapter_failed(root: Path, ref: str, path: str, adapter: str) -> bool:
     except (SyntaxError, UnicodeDecodeError):
         return True
     return False
+
+
+def _workflow_jobs(
+    root: Path, ref: str, path: str, *, exists: bool
+) -> dict[str, str]:
+    if not exists:
+        return {}
+    try:
+        raw = yaml.safe_load(RepositorySnapshot(root, ref).read_text(Path(path)))
+    except yaml.YAMLError as exc:
+        raise ConfigurationError(f"invalid workflow {path} at {ref}") from exc
+    if not isinstance(raw, dict) or not isinstance(raw.get("jobs"), dict):
+        raise ConfigurationError(f"workflow {path} at {ref} needs a jobs mapping")
+    return {
+        str(identifier): _digest(job)
+        for identifier, job in sorted(raw["jobs"].items())
+    }
+
+
+def _workflow_events(
+    root: Path,
+    *,
+    base: str,
+    head: str,
+    repository_path: str,
+    base_exists: bool,
+    head_exists: bool,
+    graph_roots: tuple[str, ...],
+) -> tuple[ImpactEvent, ...]:
+    base_jobs = _workflow_jobs(root, base, repository_path, exists=base_exists)
+    head_jobs = _workflow_jobs(root, head, repository_path, exists=head_exists)
+    events = []
+    for identifier in sorted(set(base_jobs) | set(head_jobs)):
+        before = base_jobs.get(identifier)
+        after = head_jobs.get(identifier)
+        if before == after:
+            continue
+        change = (
+            "added" if before is None else "removed" if after is None else "changed"
+        )
+        item_id = f"ci-job:{repository_path}:jobs.{identifier}"
+        events.append(
+            ImpactEvent(
+                id=_identifier(item_id, change, before, after),
+                kind=f"ci-job-{change}",
+                path=repository_path,
+                item_id=item_id,
+                locator=f"jobs.{identifier}",
+                before_digest=before,
+                after_digest=after,
+                coverage="adapter",
+                graph_roots=graph_roots,
+            )
+        )
+    return tuple(events)
 
 
 def _finding(
@@ -635,6 +692,28 @@ def build_impact_plan(
         )
         events_by_path[inventory_item.source].append(event)
         event_adapters[inventory_item.source].add(inventory_item.adapter)
+    failed_adapters: set[str] = set()
+    for path in project_changed:
+        if Path(path).parts[:2] != (".github", "workflows"):
+            continue
+        repository_path = _repo_path(prefix, path)
+        base_blob = _blob_id(root, changed.base, repository_path)
+        head_blob = _blob_id(root, changed.head, repository_path)
+        try:
+            workflow_events = _workflow_events(
+                root,
+                base=changed.base,
+                head=changed.head,
+                repository_path=repository_path,
+                base_exists=base_blob is not None,
+                head_exists=head_blob is not None,
+                graph_roots=tuple(sorted(artifact_roots[path])),
+            )
+        except ConfigurationError:
+            failed_adapters.add(path)
+            workflow_events = ()
+        events_by_path[path].extend(workflow_events)
+        event_adapters[path].add("github-actions-static")
 
     manifest_repo_path = _repo_path(prefix, manifest_relative.as_posix())
     artifacts: list[ImpactArtifact] = []
@@ -650,7 +729,7 @@ def build_impact_plan(
             manifest_path=manifest_relative.as_posix(),
         )
         adapter_ref = changed.head if head_blob is not None else changed.base
-        adapter_failed = _adapter_failed(
+        adapter_failed = path in failed_adapters or _adapter_failed(
             root, adapter_ref, repository_path, adapter
         )
         if adapter_failed:
@@ -668,7 +747,8 @@ def build_impact_plan(
             coverage = "generated"
             decision = "projection output is not a change-impact root"
         elif may_expose and (
-            adapter in {"unsupported", "python-ast:failed"}
+            adapter == "unsupported"
+            or adapter.endswith(":failed")
             or "standard-gap" in event_coverages
             or not has_public_event
         ):
@@ -827,7 +907,7 @@ def build_impact_plan(
             _finding(
                 classification,
                 "public-contract-change",
-                f"{event.kind} reaches an accepted {event.coverage} surface",
+                f"{event.kind} reaches a {event.coverage} surface",
                 paths=(event.path,),
                 roots=event.graph_roots,
                 obligations=obligations,

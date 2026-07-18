@@ -256,6 +256,74 @@ def test_unsupported_runtime_control_is_unknown(
     }
 
 
+def test_workflow_job_change_is_supported_advisory_impact(
+    tmp_path: Path,
+) -> None:
+    root = _symbol_repository(tmp_path)
+    (root / "docs").mkdir()
+    (root / "docs/SURFACE.md").write_text(
+        "# Surface\n\n<!-- clean-docs:begin repository-surface -->\n"
+        "<!-- clean-docs:end repository-surface -->\n"
+    )
+    with (root / ".clean-docs.yml").open("a") as manifest:
+        manifest.write(
+            """\
+  - id: repository-surface
+    type: region
+    doc: docs/SURFACE.md
+    region: repository-surface
+    extractor: repository-overview
+    source: {path: .}
+    renderer: markdown-fragment
+"""
+        )
+    workflow = root / ".github/workflows/ci.yml"
+    workflow.parent.mkdir(parents=True)
+    workflow.write_text(
+        "name: CI\non: [push]\njobs:\n"
+        "  test:\n    runs-on: ubuntu-latest\n    steps:\n"
+        "      - run: python -m pytest\n"
+    )
+    assert main(["--root", str(root), "derive", "--write"]) == 0
+    base = _commit(root, "base")
+    workflow.write_text(workflow.read_text().replace("pytest", "pytest -q"))
+    head = _commit(root, "change test job")
+
+    plan = build_impact_plan(
+        root, root / ".clean-docs.yml", base=base, head=head
+    )
+
+    assert plan.impact == "recommended"
+    assert plan.coverage_complete
+    assert plan.required == ()
+    assert plan.artifacts[0].adapter == "github-actions-static"
+    assert {event.kind for event in plan.events} == {"ci-job-changed"}
+    assert {item.rule for item in plan.recommended} == {
+        "public-contract-change"
+    }
+
+
+def test_malformed_workflow_cannot_become_no_impact(
+    tmp_path: Path,
+) -> None:
+    root = _symbol_repository(tmp_path)
+    base = _commit(root, "base")
+    workflow = root / ".github/workflows/ci.yml"
+    workflow.parent.mkdir(parents=True)
+    workflow.write_text("jobs: [not-a-mapping]\n")
+    head = _commit(root, "add malformed workflow")
+
+    plan = build_impact_plan(
+        root, root / ".clean-docs.yml", base=base, head=head
+    )
+
+    assert plan.impact == "unknown"
+    assert plan.artifacts[0].adapter == "github-actions-static:failed"
+    assert {item.rule for item in plan.unknown} == {
+        "unsupported-public-candidate"
+    }
+
+
 def test_public_default_change_reaches_reference_and_migration_obligations(
     tmp_path: Path,
 ) -> None:

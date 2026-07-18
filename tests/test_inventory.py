@@ -181,28 +181,6 @@ def test_node_monorepo_and_registered_mcp_tools_are_discovered_statically(
     } == {"resolve_account", "get_account"}
 
 
-def test_github_actions_jobs_are_static_contracts(tmp_path: Path) -> None:
-    root = tmp_path / "workflow-repository"
-    workflow = root / ".github/workflows/ci.yml"
-    workflow.parent.mkdir(parents=True)
-    workflow.write_text(
-        "name: CI\non: [push]\njobs:\n"
-        "  test:\n    runs-on: ubuntu-latest\n    steps:\n"
-        "      - run: python -m pytest\n"
-    )
-
-    first = scan_inventory(root)
-    job = next(item for item in first.items if item.kind == "ci-job")
-    assert job.name == "test"
-    assert job.adapter == "github-actions-static"
-
-    workflow.write_text(workflow.read_text().replace("pytest", "pytest -q"))
-    changed = next(
-        item for item in scan_inventory(root).items if item.kind == "ci-job"
-    )
-    assert changed.digest != job.digest
-
-
 def test_typescript_declaration_exports_are_discovered_statically(tmp_path: Path) -> None:
     root = tmp_path / "typescript-declarations"
     root.mkdir()

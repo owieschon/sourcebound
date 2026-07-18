@@ -274,18 +274,6 @@ def _structured_items(path: str, data: Any) -> list[dict[str, str]]:
     if not isinstance(data, dict):
         return []
     items: list[dict[str, str]] = []
-    if path.startswith(".github/workflows/") and isinstance(data.get("jobs"), dict):
-        for identifier, job in sorted(data["jobs"].items()):
-            items.append(
-                _item(
-                    "ci-job",
-                    str(identifier),
-                    path,
-                    f"jobs.{identifier}",
-                    "github-actions-static",
-                    json.dumps(job, sort_keys=True),
-                )
-            )
     if path == "pyproject.toml" and isinstance(data.get("project"), dict):
         project = data["project"]
         name = str(project.get("name", "Python package"))
