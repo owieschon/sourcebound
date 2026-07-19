@@ -1,13 +1,13 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `fdfabe7591293ab2e9c677864006e3d7b0a41be51db8ff13ff0f8264d2258d7a`
+- Corpus sha256: `a8761533ad05c6e9ddd229ddcb0e39f740f279fb7d2925f8a30c8af266607990`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `bfb909516e8e4b06c4e25c18efd3591850201764add8f9362f1afeb8ef1adff7`
+- Content sha256: `d0f30db31eb9d2af0b600d6add2a697089fa6c37070275b2961e018295880c14`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
@@ -40,7 +40,7 @@ Before adoption, `audit` reports bounded repository-neutral advisories. A manife
 <!-- clean-docs:begin product-overview -->
 A stale sentence does not fail loudly. It keeps a straight face after the code has moved on, and reviewers have no mechanical way to identify the false claim. clean-docs gives each protected fact a source, then checks that relationship again in CI.
 
-Declared sources own the protected facts. A packaged policy enforces the deterministic form floor; authored judgment still owns motivation, pedagogy, and voice. Static adapters read common code and schema formats, while declared commands run under explicit process controls. The engine can repair bound regions, rank static count and column candidates, enforce accepted source-claim relationships, and publish context such as `llms.txt` with local receipts.
+Declared sources own the protected facts. A packaged policy enforces the deterministic form floor; authored judgment still owns motivation, pedagogy, and voice. Static adapters read common code and schema formats, while declared commands run under explicit process controls. The engine can repair bound regions, rank static count and column candidates, enforce accepted source-claim relationships, and project canonical text and visual records into purpose-built human and agent surfaces with local receipts.
 <!-- clean-docs:end product-overview -->
 
 Human review can improve a sentence. It cannot make the sentence fail when its defining source changes. The [deterministic seam](docs/learn/deep-dive-the-deterministic-seam.md) explains how clean-docs separates source evidence, optional phrasing, and gate authority.

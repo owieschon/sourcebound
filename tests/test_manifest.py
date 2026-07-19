@@ -88,7 +88,7 @@ projections:
 @pytest.mark.parametrize(
     ("projection", "message"),
     [
-        ("bundles: []", "configure llms_txt, a bundle, or a demo"),
+        ("bundles: []", "configure llms_txt, a bundle, a demo, or visuals"),
         (
             "bundles:\n    - id: contributor\n      output: context.md\n"
             "      include: [docs/UNBOUND.md]",
@@ -120,6 +120,39 @@ projections:
     projections = load_manifest(path).projections
     assert projections is not None and projections.demo is not None
     assert projections.demo.output == Path("docs/demo/index.html")
+
+
+def test_loads_structured_visual_projection(tmp_path: Path) -> None:
+    path = tmp_path / ".clean-docs.yml"
+    path.write_text(VALID + """\
+projections:
+  visuals:
+    - id: queue-flow
+      source: docs/visuals/queue-flow.yml
+      human_output: docs/generated/queue-flow.mdx
+      agent_output: .clean-docs/visuals/queue-flow.md
+""")
+
+    projections = load_manifest(path).projections
+
+    assert projections is not None
+    assert projections.visuals[0].id == "queue-flow"
+    assert projections.visuals[0].source == Path("docs/visuals/queue-flow.yml")
+
+
+def test_visual_projection_cannot_replace_a_bound_document(tmp_path: Path) -> None:
+    path = tmp_path / ".clean-docs.yml"
+    path.write_text(VALID + """\
+projections:
+  visuals:
+    - id: queue-flow
+      source: docs/visuals/queue-flow.yml
+      human_output: README.md
+      agent_output: .clean-docs/visuals/queue-flow.md
+""")
+
+    with pytest.raises(ConfigurationError, match="cannot replace a bound document"):
+        load_manifest(path)
 
 
 @pytest.mark.parametrize(
