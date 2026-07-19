@@ -1,4 +1,4 @@
-# clean-docs
+# sourcebound
 
 <!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
