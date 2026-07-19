@@ -15,6 +15,11 @@ from clean_docs.emit import render_llms_txt
 from clean_docs.errors import ConfigurationError
 from clean_docs.models import BindingResult, ContextBundleProjection, Manifest, Provenance
 from clean_docs.regions import atomic_write
+from clean_docs.visuals import (
+    load_visual_record,
+    render_agent_visual,
+    render_human_visual,
+)
 
 
 LINK = re.compile(r"\[[^\]]+\]\(([^)\s]+)(?:\s+[^)]*)?\)")
@@ -151,7 +156,7 @@ def _verify_links(root: Path, files: dict[Path, str]) -> None:
                 target_content = files[target]
             else:
                 path = root / target
-                if path.is_dir() and not fragment:
+                if path.exists() and not fragment:
                     continue
                 try:
                     target_content = path.read_text(encoding="utf-8")
@@ -194,6 +199,12 @@ def render_projections(root: Path, manifest: Manifest) -> ProjectionSet:
         evidence = load_demo_evidence(root / demo.evidence)
         files[demo.output] = render_static_demo(evidence, demo.output)
         digests[demo.output] = evidence.digest
+    for visual in manifest.projections.visuals:
+        record = load_visual_record(root / visual.source, visual.id)
+        files[visual.human_output] = render_human_visual(root, visual, record)
+        files[visual.agent_output] = render_agent_visual(root, visual, record)
+        digests[visual.human_output] = record.digest
+        digests[visual.agent_output] = record.digest
     combined = {Path(path): content.decode("utf-8") for path, content in documents.items()}
     combined.update(files)
     _verify_links(root, combined)

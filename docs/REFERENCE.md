@@ -181,6 +181,57 @@ operating-system network sandbox. Version 1 remains readable. If it contains `ne
 clean-docs marks that field as deprecated; it neither blocks nor counts network traffic. Run
 `clean-docs migrate --write` to remove the field with a rollback backup.
 
+## Structured visual projections
+
+A visual record owns the meaning shared by an annotated human image and its agent-readable text
+equivalent. Use one when a screenshot or diagram needs numbered callouts, a dark variant, or a
+complete nonvisual explanation. The record is data; generated outputs are projections and must not
+be edited independently.
+
+The `clean-docs.visual.v1` record requires intrinsic dimensions so percentage coordinates remain
+stable as the image scales. `src` and `src_dark` are HTTPS URLs or repository-relative paths.
+Alternative text and captions are single lines. The agent output keeps the full explanation and
+every numbered callout:
+
+```yaml
+schema: clean-docs.visual.v1
+id: queue-flow
+kind: screenshot
+src: docs/assets/queue-light.png
+src_dark: docs/assets/queue-dark.png
+width: 1200
+height: 800
+alt: Queue dashboard with the worker status panel open
+caption: The worker panel shows which queue owns the stalled job.
+description: |
+  The dashboard lists three queues. The selected queue opens a worker panel
+  whose status and retry action apply only to that queue.
+annotations:
+  - id: retry-action
+    x: 81
+    y: 74.25
+    title: Retry action
+    description: Retries the selected failed job after confirmation.
+```
+
+Declare both destinations under `projections.visuals`. The human output is portable Markdown or
+MDX built from native elements, with numbered overlay links and an adjacent annotation key. The
+agent output is Markdown containing the record identity, source digest, complete text equivalent,
+and labeled coordinates:
+
+```yaml
+projections:
+  visuals:
+    - id: queue-flow
+      source: docs/visuals/queue-flow.yml
+      human_output: docs/generated/queue-flow.mdx
+      agent_output: .clean-docs/visuals/queue-flow.md
+```
+
+Run `clean-docs project` to write both outputs. Run `clean-docs project --check` in CI so a changed
+asset record cannot leave either audience on an older projection. Local image paths must exist;
+record IDs, annotation IDs, output paths, coordinates, dimensions, and unknown fields fail closed.
+
 ## Context request
 
 `clean-docs.context-request.v1` compiles a provider-neutral evidence packet from the current commit.
