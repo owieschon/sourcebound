@@ -124,6 +124,8 @@ When placement matters, name the file. Use realistic names and values that expos
 task. Use tabs for language or platform variants, visual diffs for a progressive edit, focus or
 collapse markers for the lines that matter, and a copy action for install commands. A reader must be
 able to tell whether a block is runnable, configuration, output, or a prompt before copying it.
+Every fenced block declares a language. Use `text` for literal output or prompts rather than leaving
+the label empty.
 
 The escalation ladder inside a single block is a signature move. It goes abstract form, then a
 real named instance, then the complication:
@@ -173,11 +175,17 @@ screen reader, in search, and in a text-only context window. If the image merely
 an ordered list, delete it. Alt text identifies the image and its purpose; it does not carry the
 only complete explanation.
 
+Every Mermaid diagram has an adjacent text equivalent after the block. Start it with `Diagram:` so
+renderers, screen readers, search, and agent projections can identify the canonical description.
+
 ### Screenshots and video: teach recognition and interaction
 Use a screenshot when the reader must find, distinguish, or verify something visual. Crop unrelated
 UI, use a consistent viewport, annotate the target, remove personal or sensitive data, write useful
 alt text, and provide light and dark variants when appearance changes. A caption states what to
 notice rather than repeating the image.
+
+Every image has useful alternative text unless it is decorative. Mark a decorative Markdown image
+with `<!-- clean-docs:decorative-image -->`; native HTML uses `alt="" role="presentation"`.
 
 Video is optional. Use it only when motion is necessary to understand a multi-step interaction or
 temporal UI behavior and the team can maintain it. Prefer a controllable video to an animated image.
@@ -633,6 +641,7 @@ Run this against any doc before shipping. Each line is a fail/pass check.
 - [ ] A rule collision resolves by truth, grounding, budget, register, then warmth; any unavoidable
       loss has an explicit yield naming the winning rule.
 - [ ] Every code block has a prose lead-in ending in `:` and (where useful) a follow-up.
+- [ ] Every fenced code block declares its language; literal output and prompts use `text`.
 - [ ] No table encodes precedence or an ordering rule; those are prose or numbered lists.
 - [ ] Every comparison table's columns are the reader's actual questions; ordered logic stays
       in prose or numbered steps.
@@ -647,6 +656,8 @@ Run this against any doc before shipping. Each line is a fail/pass check.
       complete text path. Architecture has one structured source, records only applicable
       dimensions, and remains usable without rendered pixels; a diagram appears only when topology
       or temporal interaction adds information.
+- [ ] Every Mermaid diagram has an adjacent text equivalent beginning with `Diagram:`.
+- [ ] Every image has useful alternative text or an explicit decorative-image marker.
 - [ ] The page names its one governing constraint early.
 - [ ] No booster adjectives (`seamless`, `powerful`, `simply`, `comprehensive`, `leverage`, `utilize`). <!-- slop-ok: banned-word registry for the checklist -->
 - [ ] Every clause adds information; claims needing separate evidence are split; the system is named

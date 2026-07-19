@@ -47,6 +47,9 @@ class MdxNode:
     url: str | None = None
     depth: int | None = None
     text: str | None = None
+    language: str | None = None
+    meta: str | None = None
+    alt: str | None = None
 
 
 @dataclass(frozen=True)
@@ -125,6 +128,9 @@ def _node(raw: Any) -> MdxNode:
     name = raw.get("name")
     url = raw.get("url")
     text = raw.get("text")
+    language = raw.get("language")
+    meta = raw.get("meta")
+    alt = raw.get("alt")
     depth = raw.get("depth")
     if name is not None and not isinstance(name, str):
         raise MdxParserError("MDX parser returned an invalid node name")
@@ -132,6 +138,12 @@ def _node(raw: Any) -> MdxNode:
         raise MdxParserError("MDX parser returned an invalid node URL")
     if text is not None and not isinstance(text, str):
         raise MdxParserError("MDX parser returned invalid heading text")
+    if language is not None and not isinstance(language, str):
+        raise MdxParserError("MDX parser returned invalid code language")
+    if meta is not None and not isinstance(meta, str):
+        raise MdxParserError("MDX parser returned invalid code metadata")
+    if alt is not None and not isinstance(alt, str):
+        raise MdxParserError("MDX parser returned invalid image alternative text")
     if depth is not None:
         depth = _integer(depth, "heading depth", minimum=1)
     return MdxNode(
@@ -146,6 +158,9 @@ def _node(raw: Any) -> MdxNode:
         url=url,
         depth=depth,
         text=text,
+        language=language,
+        meta=meta,
+        alt=alt,
     )
 
 
