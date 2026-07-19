@@ -6,7 +6,7 @@
     "source_urls": [
       "https://github.com/owieschon/clean-docs"
     ],
-    "source_sha256": "de61b0af7482e9945e9a69455db34641c0b659b99816c800643683a1ac8a54e4"
+    "source_sha256": "232133e64bcbdb3475fd731e45cc1172f4c0d6e2f2255087965cfb72845995ec"
   },
   "authority": {
     "state": "assessment",
@@ -16,15 +16,27 @@
   },
   "candidates": [
     {
-      "id": "bd9642d87d1c56dca2773c4fc43941bba1cf92ad6cd134901e7b7751d7f85865",
+      "id": "ca83f78ce1b7abb58d89347001c22760fff2b71ffc302b9712a4a8c9d1a60166",
       "observation_id": "accepted-writing-debt",
       "summary": "Nine registered writing findings remain accepted in the documentation baseline.",
       "evidence": [
         {
           "kind": "receipt",
-          "source": ".clean-docs/audit-baseline.json",
+          "source": ".clean-docs/reviews/receipts/audit-baseline.json",
           "locator": "findings",
           "detail": "The baseline records six nominalization-density and three sentence-variance findings in DECISION_LOG.md.",
+          "receipt": {
+            "sha256": "d1b04696451637c6a6448bd18dd84cd18a2af9d46d5a88e06e9e364eb2b368c1",
+            "producer_version": "clean-docs 1.1.0rc5",
+            "repository_commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "command": [
+              "clean-docs",
+              "audit",
+              "--format",
+              "json"
+            ],
+            "state": "grounded"
+          },
           "grounding": {
             "state": "unverified",
             "detail": "receipt evidence requires immutable bytes and execution context"
@@ -504,15 +516,27 @@
       "change_authority": false
     },
     {
-      "id": "1557a31489e1e0ccf5ec60c062885aacaef9a41682b58fba218938e1c538b667",
+      "id": "452f19d2effd5066ddc190ad3075a7116d02d99ede02ee83c5845429172a1cee",
       "observation_id": "direct-coverage-gap",
       "summary": "Repository-wide catalog coverage is complete while direct source coverage remains incomplete.",
       "evidence": [
         {
           "kind": "receipt",
-          "source": "clean-docs verify",
+          "source": ".clean-docs/reviews/receipts/direct-coverage.json",
           "locator": "coverage",
           "detail": "A verify run at the pinned repository state reports 642 surfaces: 9 directly bound and 633 cataloged.",
+          "receipt": {
+            "sha256": "708548b5941ee2061f32b24ac50e3fca3cacba844cc01d8be3b19913bf4512ce",
+            "producer_version": "clean-docs 1.1.0rc5",
+            "repository_commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "command": [
+              "clean-docs",
+              "verify",
+              "--format",
+              "json"
+            ],
+            "state": "grounded"
+          },
           "grounding": {
             "state": "unverified",
             "detail": "receipt evidence requires immutable bytes and execution context"
@@ -1257,7 +1281,7 @@
       "change_authority": false
     },
     {
-      "id": "9a4011c2ddebb8884e8b1de489e222e024ffffb0a017db1e9700d61195c5620f",
+      "id": "7ed336b8251014658e4ffb5e43157fc569efb3904f4e231a0b036107682ae5f4",
       "observation_id": "release-reader-attestation",
       "summary": "The current release is not attested by a fresh independent reader trial.",
       "evidence": [
@@ -1274,9 +1298,19 @@
         },
         {
           "kind": "receipt",
-          "source": "verify_release_reader_trial",
+          "source": ".clean-docs/reviews/receipts/reader-trial.json",
           "locator": "current repository",
           "detail": "The current result is required false and status not-attested.",
+          "receipt": {
+            "sha256": "da02c4080a393c75c9fad8901a48be20852fb34bcf8f3645f9fe49c8b841a8d0",
+            "producer_version": "clean-docs 1.1.0rc5",
+            "repository_commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "command": [
+              "python",
+              "scripts/verify_release_reader_trial.py"
+            ],
+            "state": "grounded"
+          },
           "grounding": {
             "state": "unverified",
             "detail": "receipt evidence requires immutable bytes and execution context"
@@ -1708,5 +1742,5 @@
       "change_authority": false
     }
   ],
-  "digest": "405174fabe26d2b58094fca6da19a3d7928a80487e47132e2bb931f47f850f5f"
+  "digest": "b3ba39fdd5f695a98ceb004821372bbbcf5607d5eadd63d9221cb767f104970c"
 }

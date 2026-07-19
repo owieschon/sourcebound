@@ -2,7 +2,7 @@
   "schema": "clean-docs.improvement-candidate-lifecycle.v1",
   "candidate_set": {
     "review_id": "repository-review",
-    "digest": "405174fabe26d2b58094fca6da19a3d7928a80487e47132e2bb931f47f850f5f"
+    "digest": "b3ba39fdd5f695a98ceb004821372bbbcf5607d5eadd63d9221cb767f104970c"
   },
   "authority": {
     "state": "assessment",
@@ -13,7 +13,7 @@
   "candidates": [
     {
       "observation_id": "accepted-writing-debt",
-      "candidate_id": "bd9642d87d1c56dca2773c4fc43941bba1cf92ad6cd134901e7b7751d7f85865",
+      "candidate_id": "ca83f78ce1b7abb58d89347001c22760fff2b71ffc302b9712a4a8c9d1a60166",
       "state": "proposed",
       "history": []
     },
@@ -79,7 +79,7 @@
     },
     {
       "observation_id": "direct-coverage-gap",
-      "candidate_id": "1557a31489e1e0ccf5ec60c062885aacaef9a41682b58fba218938e1c538b667",
+      "candidate_id": "452f19d2effd5066ddc190ad3075a7116d02d99ede02ee83c5845429172a1cee",
       "state": "proposed",
       "history": []
     },
@@ -175,7 +175,7 @@
     },
     {
       "observation_id": "release-reader-attestation",
-      "candidate_id": "9a4011c2ddebb8884e8b1de489e222e024ffffb0a017db1e9700d61195c5620f",
+      "candidate_id": "7ed336b8251014658e4ffb5e43157fc569efb3904f4e231a0b036107682ae5f4",
       "state": "proposed",
       "history": []
     },
@@ -234,5 +234,5 @@
       "history": []
     }
   ],
-  "digest": "8e52c0cdf1ade08bb08eb7bf9ea10f86bcd1c87aef74f1c3396b5fd7dacec711"
+  "digest": "47e91489da59f76cb2bdd0d5dc50bcbdec1aa0a96c0f6e024a9b8f1359bffbb9"
 }

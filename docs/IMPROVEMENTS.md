@@ -28,8 +28,12 @@ one or more observations. The schema requires:
 - a documentation change with a test setup, action, and passing condition; and
 - a product change with its own test setup, action, and passing condition.
 
-Keep summaries to one sentence and use real source URLs as authoring conventions. The current
-schema accepts any nonempty source string and does not enforce sentence count.
+Keep summaries to one sentence and use real source URLs as authoring conventions. Repository and
+external evidence locators remain assessment inputs. A `receipt` evidence item names a tracked
+receipt file plus its SHA-256 bytes, producer version, reviewed commit, and exact command array.
+When the receipt file is available, compilation verifies its bytes; a missing file remains
+`unknown`, while altered bytes or a different reviewed commit fail. The compiler does not treat an
+unknown receipt as grounded evidence or gate authority.
 
 The compiler accepts `command`, `fixture`, `integration`, `reader-task`, `release`, and
 `static-analysis` tests. The [security model](SECURITY_MODEL.md) owns process execution. These

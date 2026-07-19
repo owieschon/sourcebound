@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import hashlib
 from pathlib import Path
 
 import pytest
@@ -77,6 +78,23 @@ def _repository(root: Path) -> str:
         capture_output=True,
         check=True,
     ).stdout.strip()
+def _receipt_payload(root: Path) -> dict[str, object]:
+    payload = _payload()
+    receipt = root / "receipt.json"
+    receipt.write_text('{"count":9}\n')
+    payload["observations"][0]["evidence"] = [{
+        "kind": "receipt",
+        "source": "receipt.json",
+        "locator": "count",
+        "detail": "The recorded count is reproducible from immutable receipt bytes.",
+        "receipt": {
+            "sha256": hashlib.sha256(receipt.read_bytes()).hexdigest(),
+            "producer_version": "clean-docs 1.2.0",
+            "repository_commit": "a" * 40,
+            "command": ["clean-docs", "audit", "--format", "json"],
+        },
+    }]
+    return payload
 
 
 def test_compiles_stable_dual_track_candidates_without_authority() -> None:
@@ -193,6 +211,52 @@ def test_repository_evidence_rejects_abbreviated_or_unavailable_commits(tmp_path
 
     no_repository = load_review_candidates(source, root=tmp_path / "not-a-repository")
     assert no_repository.candidates[0].evidence[0]["grounding"]["state"] == "unknown"
+def test_receipt_evidence_binds_bytes_command_and_repository_commit(tmp_path: Path) -> None:
+    payload = _receipt_payload(tmp_path)
+
+    candidates = compile_improvement_candidates(payload, root=tmp_path)
+
+    receipt = candidates.candidates[0].evidence[0]["receipt"]
+    assert receipt["state"] == "grounded"
+    assert receipt["command"] == ["clean-docs", "audit", "--format", "json"]
+
+
+@pytest.mark.parametrize(
+    ("mutation", "message"),
+    [
+        (
+            lambda payload, root: (root / "receipt.json").write_text('{"count":10}\n'),
+            "does not match receipt bytes",
+        ),
+        (
+            lambda payload, root: payload["observations"][0]["evidence"][0]["receipt"].update(
+                {"repository_commit": "b" * 40}
+            ),
+            "must match the review commit",
+        ),
+        (
+            lambda payload, root: payload["observations"][0]["evidence"][0].pop("receipt"),
+            "must contain exactly",
+        ),
+    ],
+)
+def test_receipt_evidence_rejects_mutated_or_incomplete_context(
+    tmp_path: Path, mutation, message: str
+) -> None:
+    payload = _receipt_payload(tmp_path)
+    mutation(payload, tmp_path)
+
+    with pytest.raises(ConfigurationError, match=message):
+        compile_improvement_candidates(payload, root=tmp_path)
+
+
+def test_missing_receipt_bytes_remain_unknown(tmp_path: Path) -> None:
+    payload = _receipt_payload(tmp_path)
+    (tmp_path / "receipt.json").unlink()
+
+    candidates = compile_improvement_candidates(payload, root=tmp_path)
+
+    assert candidates.candidates[0].evidence[0]["receipt"]["state"] == "unknown"
 
 
 def test_cli_writes_and_checks_candidate_set(tmp_path: Path, capsys) -> None:

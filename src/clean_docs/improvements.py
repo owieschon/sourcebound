@@ -42,6 +42,7 @@ LIFECYCLE_EVIDENCE_BY_STATE = {
     "declined": {"decision", "issue"},
 }
 SHA1 = re.compile(r"^[0-9a-f]{40}$")
+SHA256 = re.compile(r"^[0-9a-f]{64}$")
 IDENTIFIER = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
@@ -222,26 +223,93 @@ def _track(value: Any, target: str, where: str) -> CandidateTrack:
     )
 
 
-def _evidence(value: Any, where: str) -> tuple[dict[str, str], ...]:
+def _receipt_evidence(
+    value: Any,
+    *,
+    where: str,
+    source: str,
+    repository_commit: str,
+    root: Path | None,
+) -> dict[str, object]:
+    raw = _mapping(value, where)
+    _exact_keys(
+        raw,
+        {"sha256", "producer_version", "repository_commit", "command"},
+        where,
+    )
+    digest = _string(raw["sha256"], f"{where}.sha256")
+    if not SHA256.fullmatch(digest):
+        raise ConfigurationError(f"{where}.sha256 must be a lowercase SHA-256")
+    receipt_commit = _string(raw["repository_commit"], f"{where}.repository_commit")
+    if receipt_commit != repository_commit:
+        raise ConfigurationError(f"{where}.repository_commit must match the review commit")
+    command = raw["command"]
+    if not isinstance(command, list) or not command or not all(
+        isinstance(item, str) and item for item in command
+    ):
+        raise ConfigurationError(f"{where}.command must be a non-empty string list")
+    receipt: dict[str, object] = {
+        "sha256": digest,
+        "producer_version": _string(raw["producer_version"], f"{where}.producer_version"),
+        "repository_commit": receipt_commit,
+        "command": list(command),
+        "state": "unknown",
+    }
+    if root is None:
+        return receipt
+    receipt_path = root / source
+    try:
+        receipt_path.resolve().relative_to(root.resolve())
+        observed = receipt_path.read_bytes()
+    except (OSError, ValueError):
+        return receipt
+    if hashlib.sha256(observed).hexdigest() != digest:
+        raise ConfigurationError(f"{where}.sha256 does not match receipt bytes")
+    receipt["state"] = "grounded"
+    return receipt
+
+
+def _evidence(
+    value: Any,
+    where: str,
+    *,
+    repository_commit: str,
+    root: Path | None,
+) -> tuple[dict[str, object], ...]:
     if not isinstance(value, list) or not value:
         raise ConfigurationError(f"{where} must be a non-empty list")
     normalized = []
     for index, item in enumerate(value):
         item_where = f"{where}[{index}]"
         raw = _mapping(item, item_where)
-        _exact_keys(raw, {"kind", "source", "locator", "detail"}, item_where)
+        _exact_keys(
+            raw,
+            ({"kind", "source", "locator", "detail", "receipt"}
+             if raw.get("kind") == "receipt"
+             else {"kind", "source", "locator", "detail"}),
+            item_where,
+        )
         kind = _string(raw["kind"], f"{item_where}.kind")
         if kind not in EVIDENCE_KINDS:
             raise ConfigurationError(
                 f"{item_where}.kind must be one of: "
                 f"{', '.join(sorted(EVIDENCE_KINDS))}"
             )
-        normalized.append({
+        evidence: dict[str, object] = {
             "kind": kind,
             "source": _string(raw["source"], f"{item_where}.source"),
             "locator": _string(raw["locator"], f"{item_where}.locator"),
             "detail": _string(raw["detail"], f"{item_where}.detail"),
-        })
+        }
+        if kind == "receipt":
+            evidence["receipt"] = _receipt_evidence(
+                raw["receipt"],
+                where=f"{item_where}.receipt",
+                source=str(evidence["source"]),
+                repository_commit=repository_commit,
+                root=root,
+            )
+        normalized.append(evidence)
     return tuple(normalized)
 
 
@@ -249,6 +317,7 @@ def compile_improvement_candidates(
     payload: dict[str, Any],
     *,
     source_sha256: str | None = None,
+    root: Path | None = None,
 ) -> ImprovementCandidateSet:
     """Validate one review and compile its observations into stable candidates."""
     _exact_keys(
@@ -303,7 +372,12 @@ def compile_improvement_candidates(
             )
         seen.add(observation_id)
         summary = _string(raw["summary"], f"{where}.summary")
-        evidence = _evidence(raw["evidence"], f"{where}.evidence")
+        evidence = _evidence(
+            raw["evidence"],
+            f"{where}.evidence",
+            repository_commit=repository_commit,
+            root=root,
+        )
         tracks = (
             _track(raw["documentation"], "documentation", f"{where}.documentation"),
             _track(raw["product"], "product", f"{where}.product"),
@@ -474,7 +548,6 @@ def ground_review_candidates(
         digest=_digest(unsigned),
     )
 
-
 def load_review_candidates(
     path: Path,
     *,
@@ -491,6 +564,7 @@ def load_review_candidates(
     candidates = compile_improvement_candidates(
         payload,
         source_sha256=hashlib.sha256(source).hexdigest(),
+        root=root,
     )
     return ground_review_candidates(root, candidates) if root is not None else candidates
 
