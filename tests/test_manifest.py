@@ -253,6 +253,14 @@ projections:
       output: docs/generated.md
       include: [README.md]
 """,
+        """\
+projections:
+  visuals:
+    - id: generated-visual
+      source: docs/visuals/generated-visual.yml
+      human_output: docs/generated.md
+      agent_output: .clean-docs/visuals/generated-visual.md
+""",
     ],
 )
 def test_rejects_generated_projection_as_review_target(

@@ -799,6 +799,8 @@ def load_manifest(path: Path) -> Manifest:
         projection_outputs.update(bundle.output for bundle in projections.bundles)
         if projections.demo is not None:
             projection_outputs.add(projections.demo.output)
+        for visual in projections.visuals:
+            projection_outputs.update((visual.human_output, visual.agent_output))
     for contract in review_contracts:
         for target in contract.targets:
             if target.path in projection_outputs:
