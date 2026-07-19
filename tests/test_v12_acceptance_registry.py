@@ -27,4 +27,5 @@ def test_version_12a_registry_names_every_scenario() -> None:
         "required-context-overflow",
         "provider-failure-receipt",
         "provider-write-conflict",
+        "effective-mapping-key-semantics",
     ]
