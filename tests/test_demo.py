@@ -30,15 +30,15 @@ def test_task_page_template_requires_all_reader_slots() -> None:
         title="Run the check",
         intended_reader="Repository maintainers.",
         value="Catch documentation drift before merge.",
-        prerequisites=("Install clean-docs.",),
-        procedure=("Run clean-docs check.", "Repair the named binding."),
+        prerequisites=("Install Sourcebound.",),
+        procedure=("Run sourcebound check.", "Repair the named binding."),
         limits=("Only declared bindings are checked.",),
         next_step="Add the command to CI.",
     )
     rendered = render_task_markdown(page)
     validate_task_markdown(rendered)
     assert rendered.index("## Intended reader") < rendered.index("## Procedure")
-    assert "1. Run clean-docs check." in rendered
+    assert "1. Run sourcebound check." in rendered
 
     with pytest.raises(ConfigurationError, match="missing section: Limits"):
         validate_task_markdown(rendered.replace("## Limits", "## Constraints"))
@@ -53,8 +53,8 @@ def test_static_demo_is_byte_stable_accessible_and_runtime_free(tmp_path: Path) 
 
     assert first == second
     validate_static_html(first)
-    assert "clean-docs check" in first
-    assert "clean-docs drive" in first
+    assert "sourcebound check" in first
+    assert "sourcebound drive" in first
     assert "exit 1" in first
     assert "Make stale prose fail loudly." in first
     assert "../../README.md#command" in first
@@ -81,12 +81,11 @@ def test_readme_architecture_is_text_native_and_preserves_command_boundaries() -
         "accepted source-claim checks are separate",
         "unbound prose stays visibly unknown",
         "immutable impact plan",
-        "four job-specific exits",
-        "Repair bounded prose",
-        "Reject stale changes",
-        "Publish agent context",
-        "Record local state",
-        "`check` and `verdict` are read-only",
+            "four exits",
+            "`drive` repairs bounded prose",
+            "`check` and `verdict` reject stale changes",
+            "`project` publishes `llms.txt` and context bundles",
+            "`verify` records local state",
         "`verdict` and `verify` produce independent receipts",
         "Neither certifies unbound or judgment prose",
     ):
@@ -119,13 +118,13 @@ def test_project_tracks_demo_evidence_and_repairs_stale_html(tmp_path: Path) -> 
     (root / "source.txt").write_text("Bound command\n")
     (root / "README.md").write_text(
         "# Fixture\n\n## Command\n\n"
-        "<!-- clean-docs:begin command -->\nBound command\n"
-        "<!-- clean-docs:end command -->\n"
+        "<!-- sourcebound:begin command -->\nBound command\n"
+        "<!-- sourcebound:end command -->\n"
     )
-    evidence_path = root / ".clean-docs/demo/evidence.json"
+    evidence_path = root / ".sourcebound/demo/evidence.json"
     evidence_path.parent.mkdir(parents=True)
     evidence_path.write_bytes(_evidence(tmp_path).read_bytes())
-    (root / ".clean-docs.yml").write_text("""\
+    (root / ".sourcebound.yml").write_text("""\
 version: 1
 bindings:
   - id: command
@@ -138,9 +137,9 @@ bindings:
 projections:
   demo:
     output: docs/demo/index.html
-    evidence: .clean-docs/demo/evidence.json
+    evidence: .sourcebound/demo/evidence.json
 """)
-    manifest = load_manifest(root / ".clean-docs.yml")
+    manifest = load_manifest(root / ".sourcebound.yml")
 
     written = write_projections(root, manifest)
     first = (root / "docs/demo/index.html").read_bytes()

@@ -710,5 +710,5 @@
       "version": "2.0.4"
     }
   ],
-  "schema": "clean-docs.mdx-dependencies.v1"
+  "schema": "sourcebound.mdx-dependencies.v1"
 }

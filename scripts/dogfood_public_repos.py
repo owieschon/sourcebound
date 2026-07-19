@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prove clean-docs against pinned snapshots of public repositories."""
+"""Prove Sourcebound against pinned snapshots of public repositories."""
 
 from __future__ import annotations
 
@@ -49,13 +49,13 @@ bindings:
         document="""\
 # CSM action registry
 
-<!-- clean-docs:purpose -->
+<!-- sourcebound:purpose -->
 Use this registry when checking which customer-success actions the repository exposes and what each action permits. It gives maintainers a source-bound table that changes when the implementation changes.
-<!-- clean-docs:end purpose -->
+<!-- sourcebound:end purpose -->
 
-<!-- clean-docs:begin csm-actions -->
+<!-- sourcebound:begin csm-actions -->
 Not generated yet.
-<!-- clean-docs:end csm-actions -->
+<!-- sourcebound:end csm-actions -->
 """,
         source=Path("src/ultra_csm/governance/csm_actions.py"),
         before='autonomy_tier=1,\n        required_permission="csm.recommend"',
@@ -80,9 +80,9 @@ bindings:
         document="""\
 # Comparison policy registry
 
-<!-- clean-docs:purpose -->
+<!-- sourcebound:purpose -->
 Use this registry when checking where comparison policy identifiers are defined. It gives maintainers one source symbol whose removal must fail the documentation gate.
-<!-- clean-docs:end purpose -->
+<!-- sourcebound:end purpose -->
 
 ## Policy registry
 
@@ -119,7 +119,7 @@ def _run_case(case: DogfoodCase, parent: Path) -> dict[str, object]:
     resolved = run_git("rev-parse", "HEAD", cwd=root)
     require(resolved == case.commit, f"{case.name}: expected {case.commit}, got {resolved}")
 
-    manifest = root / ".clean-docs.yml"
+    manifest = root / ".sourcebound.yml"
     document = root / "docs/CLEAN_DOCS_DOGFOOD.md"
     manifest.write_text(case.manifest, encoding="utf-8")
     document.write_text(case.document, encoding="utf-8")
@@ -178,7 +178,7 @@ def main() -> int:
     parser.add_argument("--repository", choices=[case.name for case in CASES], action="append")
     args = parser.parse_args()
     selected = set(args.repository or [case.name for case in CASES])
-    with tempfile.TemporaryDirectory(prefix="clean-docs-dogfood-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="sourcebound-dogfood-") as temporary:
         parent = Path(temporary)
         reports = [_run_case(case, parent) for case in CASES if case.name in selected]
     print(json.dumps({"ok": True, "repositories": reports}, indent=2))

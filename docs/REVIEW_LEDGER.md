@@ -1,11 +1,11 @@
 # Keep review candidates append-only
 
-<!-- clean-docs:policy register-v2 -->
-<!-- clean-docs:purpose -->
+<!-- sourcebound:policy register-v2 -->
+<!-- sourcebound:purpose -->
 Use this reference when a compiled review needs a durable denominator across candidate updates. It
 checks that each observed problem keeps one recorded disposition without treating that record as a
 gate or authorization to change the repository.
-<!-- clean-docs:end purpose -->
+<!-- sourcebound:end purpose -->
 
 **[Compile candidates first](IMPROVEMENTS.md#compile-candidates)**.
 
@@ -14,10 +14,10 @@ gate or authorization to change the repository.
 Pass the ledger when you compile, then use `--check` in CI:
 
 ```bash
-clean-docs review candidates \
-  --input .clean-docs/reviews/repository-review.json \
-  --ledger .clean-docs/reviews/repository-events.json \
-  --out .clean-docs/improvement-candidates.json \
+sourcebound review candidates \
+  --input .sourcebound/reviews/repository-review.json \
+  --ledger .sourcebound/reviews/repository-events.json \
+  --out .sourcebound/improvement-candidates.json \
   --check \
   --format text
 ```

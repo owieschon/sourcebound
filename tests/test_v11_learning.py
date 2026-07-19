@@ -19,21 +19,24 @@ LEARN = ROOT / "docs/learn"
 
 def test_public_first_screen_defines_the_product_and_routes_to_learning() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    purpose = readme.index("<!-- clean-docs:purpose -->")
+    purpose = readme.index("<!-- sourcebound:purpose -->")
     badges = readme.index("[![CI]")
-    start = readme.index("**[Install the stable release and catch your first stale claim]")
-    detail = readme.index("## Why clean-docs exists")
+    start = readme.index("**[Install Sourcebound and catch your first stale claim]")
+    detail = readme.index("## Why Sourcebound exists")
 
     assert purpose < badges < start < detail
-    assert "source-bound documentation engine and CLI" in readme[purpose:badges]
+    assert (
+        "Sourcebound is a documentation engine and CLI for maintainers who need code "
+        "and prose to change together." in readme[purpose:badges]
+    )
     assert "actions/workflows/ci.yml/badge.svg" in readme
     assert "img.shields.io/github/v/release" in readme
     assert "img.shields.io/badge/license-MIT" in readme
 
 
 def test_social_preview_is_current_legible_and_at_repository_aspect_ratio() -> None:
-    svg = (ROOT / "docs/assets/clean-docs-social.svg").read_text(encoding="utf-8")
-    png = (ROOT / "docs/assets/clean-docs-social.png").read_bytes()
+    svg = (ROOT / "docs/assets/sourcebound-social.svg").read_text(encoding="utf-8")
+    png = (ROOT / "docs/assets/sourcebound-social.png").read_bytes()
 
     assert svg == render_svg()
     assert png[:8] == b"\x89PNG\r\n\x1a\n"
@@ -65,8 +68,8 @@ def test_learning_surface_contains_only_the_index_and_three_lessons() -> None:
     for path in LEARN.iterdir():
         text = path.read_text(encoding="utf-8")
         lines = text.splitlines()
-        assert lines[2] == "<!-- clean-docs:policy register-v2 -->"
-        assert lines[3] == "<!-- clean-docs:purpose -->"
+        assert lines[2] == "<!-- sourcebound:policy register-v2 -->"
+        assert lines[3] == "<!-- sourcebound:purpose -->"
 
 
 def test_learning_index_routes_each_reader_job_without_copying_reference() -> None:
@@ -87,7 +90,7 @@ def test_learning_index_routes_each_reader_job_without_copying_reference() -> No
 
 def test_postmortem_record_is_derived_from_the_archived_case() -> None:
     committed = json.loads(
-        (ROOT / ".clean-docs/learning/ultra-csm-hygiene.json").read_text(encoding="utf-8")
+        (ROOT / ".sourcebound/learning/ultra-csm-hygiene.json").read_text(encoding="utf-8")
     )
     assert committed == build_record()
     assert committed["measurements"][0] == {
@@ -101,12 +104,12 @@ def test_postmortem_record_is_derived_from_the_archived_case() -> None:
 def test_postmortem_evidence_drift_repairs_only_bound_regions(tmp_path: Path) -> None:
     root = tmp_path / "postmortem"
     (root / "docs/learn").mkdir(parents=True)
-    (root / ".clean-docs/learning").mkdir(parents=True)
+    (root / ".sourcebound/learning").mkdir(parents=True)
     document = LEARN / "postmortem-the-readme-that-lied.md"
-    evidence = ROOT / ".clean-docs/learning/ultra-csm-hygiene.json"
+    evidence = ROOT / ".sourcebound/learning/ultra-csm-hygiene.json"
     shutil.copyfile(document, root / "docs/learn/postmortem-the-readme-that-lied.md")
-    shutil.copyfile(evidence, root / ".clean-docs/learning/ultra-csm-hygiene.json")
-    (root / ".clean-docs.yml").write_text(
+    shutil.copyfile(evidence, root / ".sourcebound/learning/ultra-csm-hygiene.json")
+    (root / ".sourcebound.yml").write_text(
         """\
 version: 1
 bindings:
@@ -115,7 +118,7 @@ bindings:
     doc: docs/learn/postmortem-the-readme-that-lied.md
     region: postmortem-measurements
     extractor: json
-    source: {path: .clean-docs/learning/ultra-csm-hygiene.json, pointer: /measurements}
+    source: {path: .sourcebound/learning/ultra-csm-hygiene.json, pointer: /measurements}
     renderer: markdown-table
     columns: [measure, before, after]
   - id: examples
@@ -123,36 +126,36 @@ bindings:
     doc: docs/learn/postmortem-the-readme-that-lied.md
     region: postmortem-examples
     extractor: json
-    source: {path: .clean-docs/learning/ultra-csm-hygiene.json, pointer: /examples}
+    source: {path: .sourcebound/learning/ultra-csm-hygiene.json, pointer: /examples}
     renderer: markdown-table
     columns: [case, before, after]
 """,
         encoding="utf-8",
     )
-    data_path = root / ".clean-docs/learning/ultra-csm-hygiene.json"
+    data_path = root / ".sourcebound/learning/ultra-csm-hygiene.json"
     data = json.loads(data_path.read_text(encoding="utf-8"))
     data["measurements"][0]["before"] = "281"
     data_path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     before = (root / "docs/learn/postmortem-the-readme-that-lied.md").read_text(
         encoding="utf-8"
     )
-    unbound_before = before.split("<!-- clean-docs:end postmortem-measurements -->", 1)[1]
+    unbound_before = before.split("<!-- sourcebound:end postmortem-measurements -->", 1)[1]
 
-    results = evaluate(root, root / ".clean-docs.yml")
+    results = evaluate(root, root / ".sourcebound.yml")
     assert [result.binding_id for result in results if result.changed] == ["measurements"]
-    _results, findings = drive(root, root / ".clean-docs.yml")
+    _results, findings = drive(root, root / ".sourcebound.yml")
     assert not findings
 
     after = (root / "docs/learn/postmortem-the-readme-that-lied.md").read_text(
         encoding="utf-8"
     )
     assert "| Total findings | 281 |" in after
-    assert after.split("<!-- clean-docs:end postmortem-measurements -->", 1)[1] == unbound_before
-    assert not any(result.changed for result in evaluate(root, root / ".clean-docs.yml"))
+    assert after.split("<!-- sourcebound:end postmortem-measurements -->", 1)[1] == unbound_before
+    assert not any(result.changed for result in evaluate(root, root / ".sourcebound.yml"))
 
 
 def test_published_tutorial_runs_the_observed_drift_loop(tmp_path: Path) -> None:
-    wrapper = tmp_path / "clean-docs"
+    wrapper = tmp_path / "sourcebound"
     wrapper.write_text(
         "#!/bin/sh\n"
         f"export PYTHONPATH={ROOT / 'src'}\n"
@@ -163,7 +166,7 @@ def test_published_tutorial_runs_the_observed_drift_loop(tmp_path: Path) -> None
     first = record(wrapper)
     second = record(wrapper)
     committed = json.loads(
-        (ROOT / ".clean-docs/learning/tutorial-evidence.json").read_text(encoding="utf-8")
+        (ROOT / ".sourcebound/learning/tutorial-evidence.json").read_text(encoding="utf-8")
     )
 
     assert first == second == committed
@@ -176,7 +179,7 @@ def test_deep_dive_claims_resolve_to_deterministic_implementation_sources() -> N
         "deterministic-seam-phrasing",
         "deterministic-seam-gate",
     }
-    results = [result for result in evaluate(ROOT, ROOT / ".clean-docs.yml") if result.binding_id in ids]
+    results = [result for result in evaluate(ROOT, ROOT / ".sourcebound.yml") if result.binding_id in ids]
 
     assert {result.binding_id for result in results} == ids
     assert not any(result.changed for result in results)

@@ -30,7 +30,7 @@ def _repo(tmp_path: Path) -> Path:
     (root / "scripts/count.py").write_text(
         'import json\nprint(json.dumps({"collected": 340}))\n'
     )
-    (root / ".clean-docs.yml").write_text(f"""\
+    (root / ".sourcebound.yml").write_text(f"""\
 version: 1
 execution:
   commands: deny

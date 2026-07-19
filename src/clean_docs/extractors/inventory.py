@@ -134,7 +134,7 @@ def _extract_repository_overview(
     )
     normalized = json.dumps(receipt_rows, sort_keys=True, separators=(",", ":"))
     digest = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
-    lines.extend(("", f"<!-- clean-docs:inventory-sha256 {digest} -->"))
+    lines.extend(("", f"<!-- sourcebound:inventory-sha256 {digest} -->"))
     return EvidenceValue(
         kind="markdown",
         value="\n".join(lines),

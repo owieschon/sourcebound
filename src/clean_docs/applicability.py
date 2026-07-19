@@ -126,13 +126,13 @@ ROLE_DESCRIPTIONS: dict[DocumentRole, str] = {
     "template": "runtime prompt or generated-content input",
 }
 ROLE_OVERRIDE = re.compile(
-    r"(?:<!--|\{/\*)\s*clean-docs:role\s+([a-z][a-z-]+)\s*(?:-->|\*/\})"
+    r"(?:<!--|\{/\*)\s*sourcebound:role\s+([a-z][a-z-]+)\s*(?:-->|\*/\})"
 )
 ROLE_MARKER = re.compile(
-    r"(?:<!--|\{/\*)\s*clean-docs:role\b.*?(?:-->|\*/\})"
+    r"(?:<!--|\{/\*)\s*sourcebound:role\b.*?(?:-->|\*/\})"
 )
 REGISTER_MARKER = re.compile(
-    r"(?:<!--|\{/\*)\s*clean-docs:policy\s+register-v2\s*(?:-->|\*/\})"
+    r"(?:<!--|\{/\*)\s*sourcebound:policy\s+register-v2\s*(?:-->|\*/\})"
 )
 
 _TEMPLATE_PARTS = frozenset({"prompts", "prompt", "templates", "template"})
@@ -180,9 +180,9 @@ def role_override_error(text: str) -> str | None:
     if not markers:
         return None
     if len(markers) != 1 or len(overrides) != 1:
-        return "add exactly one complete clean-docs role marker"
+        return "add exactly one complete sourcebound role marker"
     if overrides[0] not in ROLE_RULES:
-        return f"unsupported clean-docs role: {overrides[0]}"
+        return f"unsupported sourcebound role: {overrides[0]}"
     return None
 
 
@@ -221,7 +221,7 @@ def classify_document(relative: Path, text: str) -> DocumentProfile:
             return DocumentProfile(
                 normalized,
                 role,
-                "explicit clean-docs role marker",
+                "explicit sourcebound role marker",
                 registered,
             )
 

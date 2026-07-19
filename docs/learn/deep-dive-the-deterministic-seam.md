@@ -1,9 +1,9 @@
 # Deep dive: the deterministic seam
 
-<!-- clean-docs:policy register-v2 -->
-<!-- clean-docs:purpose -->
+<!-- sourcebound:policy register-v2 -->
+<!-- sourcebound:purpose -->
 This explanation is for maintainers deciding where a model may enter a documentation pipeline without weakening its gate. It shows who selects facts, phrases prose, writes files, and decides pass or fail, so you can inspect each boundary in the architecture and code.
-<!-- clean-docs:end purpose -->
+<!-- sourcebound:end purpose -->
 
 **[Run the drift tutorial](tutorial-catch-a-lying-doc.md)** to see the boundary fail and recover.
 
@@ -42,6 +42,14 @@ The deterministic renderer turns the selected fact and template into prose. That
 source. If the provider fails, the operation stops before a repository write. The
 [security model](../SECURITY_MODEL.md) defines the surrounding process and host boundaries without
 duplicating them here.
+
+## Why the gate is not a skill
+
+The gate must return the same fail-closed result from the same repository evidence. A skill can
+help an agent read a verdict or prepare a bounded repair, but its generated answer cannot decide
+whether a source-bound check passed. `skills/sourcebound-verify/SKILL.md` exposes the read-only
+verdict procedure; `skill/SKILL.md` exposes the repair and proposal procedure. Use
+`sourcebound emit stepwise-skill` when a repository needs a manifest-derived command package.
 
 ## Gate authority
 

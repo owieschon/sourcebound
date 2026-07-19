@@ -163,8 +163,8 @@ class ImpactPlan:
             }
         )
         return {
-            "schema": "clean-docs.impact-plan.v2",
-            "producer": {"name": "clean-docs", "version": self.producer_version},
+            "schema": "sourcebound.impact-plan.v2",
+            "producer": {"name": "sourcebound", "version": self.producer_version},
             "read_only": True,
             "requested_base": self.requested_base,
             "merge_base": self.merge_base,
@@ -509,7 +509,7 @@ def _projection_inputs(manifest: Manifest) -> dict[str, tuple[str, ...]]:
 
 
 def _evaluation_contexts(root: Path) -> dict[str, tuple[str, ...]]:
-    path = root / ".clean-docs/eval.yml"
+    path = root / ".sourcebound/eval.yml"
     if not path.is_file():
         return {}
     try:
@@ -549,7 +549,7 @@ def _adapter_for(
         return "projection"
     if path == manifest_path:
         return "manifest"
-    if path == ".clean-docs/eval.yml":
+    if path == ".sourcebound/eval.yml":
         return "evaluation"
     if candidate.parts[:2] == (".github", "workflows"):
         return "github-actions-static"
@@ -1062,7 +1062,7 @@ def build_impact_plan(
             )
         }
         evaluation_contexts = _evaluation_contexts(head_project)
-        evaluation_file_changed = ".clean-docs/eval.yml" in project_changed
+        evaluation_file_changed = ".sourcebound/eval.yml" in project_changed
         affected_evaluations: dict[str, tuple[str, ...]] = {}
         graph_documents = affected_docs | affected_projections
         for identifier, contexts in evaluation_contexts.items():
@@ -1089,7 +1089,7 @@ def build_impact_plan(
                         ):
                             root_set.add(f"evaluation:{identifier}")
         if evaluation_file_changed:
-            artifact_roots[".clean-docs/eval.yml"].update(
+            artifact_roots[".sourcebound/eval.yml"].update(
                 f"evaluation:{identifier}" for identifier in affected_evaluations
             )
 
@@ -1402,7 +1402,7 @@ def build_impact_plan(
                 "evaluation-replay",
                 f"evaluation {identifier} consumes affected documentation",
                 paths=tuple(_repo_path(prefix, path) for path in contexts)
-                or (_repo_path(prefix, ".clean-docs/eval.yml"),),
+                or (_repo_path(prefix, ".sourcebound/eval.yml"),),
                 roots=(f"evaluation:{identifier}",),
                 obligations=("replay-evaluation",),
             )

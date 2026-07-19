@@ -1,0 +1,13 @@
+version: 1
+execution:
+  commands: deny
+bindings:
+  - id: upstream-version
+    type: region
+    doc: README.md
+    region: upstream-version
+    extractor: python-literal
+    source:
+      path: httpx_version.py
+      symbol: __version__
+    renderer: scalar

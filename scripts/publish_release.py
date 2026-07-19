@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Protocol
 
 
-PUBLICATION_SCHEMA = "clean-docs.release-publication.v1"
+PUBLICATION_SCHEMA = "sourcebound.release-publication.v1"
 PROVENANCE_PREDICATE = "https://slsa.dev/provenance/v1"
 SBOM_PREDICATE = "https://spdx.dev/Document/v2.3"
 
@@ -234,7 +234,7 @@ def publish_release(
             publication = "verified-race"
 
     _verify_state(state, tag=tag, prerelease=prerelease, assets=assets)
-    with tempfile.TemporaryDirectory(prefix="clean-docs-publication-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="sourcebound-publication-") as temporary:
         downloaded_root = Path(temporary)
         for expected in assets:
             downloaded = client.download(tag, expected.name, downloaded_root)

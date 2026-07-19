@@ -13,8 +13,8 @@ from clean_docs.errors import ConfigurationError, PolicyError
 from clean_docs.improvements import ImprovementCandidateSet
 
 
-REVIEW_EVENT_LEDGER_SCHEMA = "clean-docs.review-event-ledger.v2"
-_LEGACY_REVIEW_EVENT_LEDGER_SCHEMA = "clean-docs.review-event-ledger.v1"
+REVIEW_EVENT_LEDGER_SCHEMA = "sourcebound.review-event-ledger.v2"
+_LEGACY_REVIEW_EVENT_LEDGER_SCHEMA = "sourcebound.review-event-ledger.v1"
 _SHA256 = re.compile(r"[0-9a-f]{64}")
 _IDENTIFIER = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 

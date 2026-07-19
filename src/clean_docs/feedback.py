@@ -18,8 +18,8 @@ from clean_docs.errors import ConfigurationError
 from clean_docs.regions import atomic_write
 from clean_docs.verdict import validate_verdict_payload
 
-CONFIG_PATH = Path(".clean-docs/feedback.json")
-STATE_DIR = Path(".clean-docs/feedback")
+CONFIG_PATH = Path(".sourcebound/feedback.json")
+STATE_DIR = Path(".sourcebound/feedback")
 OUTBOX_DIR = STATE_DIR / "outbox"
 DEAD_LETTER_DIR = STATE_DIR / "dead-letter"
 ATTEMPTS_DIR = STATE_DIR / "attempts"
@@ -27,10 +27,10 @@ SIGNALS_DIR = STATE_DIR / "signals"
 CASES_DIR = STATE_DIR / "cases"
 RECEIPTS_DIR = STATE_DIR / "receipts"
 
-CONFIG_SCHEMA = "clean-docs.feedback-config.v1"
-ENVELOPE_SCHEMA = "clean-docs.feedback.v1"
-SIGNAL_SCHEMA = "clean-docs.behavior-signal.v1"
-CASE_SCHEMA = "clean-docs.improvement-case.v1"
+CONFIG_SCHEMA = "sourcebound.feedback-config.v1"
+ENVELOPE_SCHEMA = "sourcebound.feedback.v1"
+SIGNAL_SCHEMA = "sourcebound.behavior-signal.v1"
+CASE_SCHEMA = "sourcebound.improvement-case.v1"
 
 DEFAULT_RETENTION_DAYS = 30
 DEFAULT_MAX_RECORDS = 1_000
@@ -60,6 +60,7 @@ _ENVELOPE_KEYS = {
     "execution_policy",
     "adapter",
     "repository_size_class",
+    "outcome",
 }
 _SIGNAL_KEYS = {
     "schema",
@@ -98,13 +99,13 @@ _SEGMENT_KEYS = {
 }
 _SOURCE_RECEIPT_KEYS = {"schema", "sha256"}
 _TRANSITION_RECEIPT_SCHEMAS = {
-    "reproduced": "clean-docs.reproduction.v1",
-    "root-cause-classified": "clean-docs.root-cause.v1",
-    "evaluation-proposed": "clean-docs.evaluation-proposal.v1",
-    "regression-added": "clean-docs.regression-receipt.v1",
-    "shadow-measured": "clean-docs.shadow-evaluation.v1",
-    "candidate-change": "clean-docs.candidate-change.v1",
-    "ordinary-verified-pr": "clean-docs.pr-verdict.v1",
+    "reproduced": "sourcebound.reproduction.v1",
+    "root-cause-classified": "sourcebound.root-cause.v1",
+    "evaluation-proposed": "sourcebound.evaluation-proposal.v1",
+    "regression-added": "sourcebound.regression-receipt.v1",
+    "shadow-measured": "sourcebound.shadow-evaluation.v1",
+    "candidate-change": "sourcebound.candidate-change.v1",
+    "ordinary-verified-pr": "sourcebound.pr-verdict.v1",
 }
 _SHADOW_KEYS = {
     "schema",
@@ -392,7 +393,7 @@ def enable_feedback(
     )
     if sink == "local":
         resolved_target = _relative_path(
-            target or ".clean-docs/feedback/delivered",
+            target or ".sourcebound/feedback/delivered",
             "feedback sink target",
         )
         sink_config = {
@@ -494,7 +495,7 @@ def _repository_classes(root: Path) -> tuple[str, str]:
     file_count = 0
     markdown = False
     mdx = False
-    excluded = {".git", ".clean-docs", ".venv", "node_modules"}
+    excluded = {".git", ".sourcebound", ".venv", "node_modules"}
     try:
         for directory, directories, files in os.walk(root):
             directories[:] = [name for name in directories if name not in excluded]
@@ -533,6 +534,7 @@ def build_feedback_envelope(
     command: str,
     exit_code: int,
     execution_policy: str,
+    outcome: str | None = None,
 ) -> dict[str, object]:
     adapter, repository_size_class = _repository_classes(root)
     run_id = _sha256(uuid.uuid4().bytes)
@@ -546,7 +548,7 @@ def build_feedback_envelope(
     }
     outcome_id = _sha256(_canonical_json(outcome_material).encode())
     event_id = _sha256(f"{config.installation_id}:{run_id}".encode())
-    return {
+    envelope: dict[str, object] = {
         "schema": ENVELOPE_SCHEMA,
         "event_id": event_id,
         "run_id": run_id,
@@ -561,6 +563,9 @@ def build_feedback_envelope(
         "adapter": adapter,
         "repository_size_class": repository_size_class,
     }
+    if outcome is not None:
+        envelope["outcome"] = outcome
+    return envelope
 
 
 def _outbox_records(root: Path) -> list[Path]:
@@ -602,6 +607,7 @@ def enqueue_feedback(
     command: str,
     exit_code: int,
     execution_policy: str,
+    outcome: str | None = None,
 ) -> Path | None:
     config = load_feedback_config(root)
     if config is None or not config.enabled:
@@ -613,6 +619,7 @@ def enqueue_feedback(
         command=command,
         exit_code=exit_code,
         execution_policy=execution_policy,
+        outcome=outcome,
     )
     event_id = str(envelope["event_id"])
     path = _confined_path(
@@ -653,7 +660,10 @@ def _validate_envelope_bytes(payload: bytes) -> Mapping[str, Any]:
     except json.JSONDecodeError as exc:
         raise ConfigurationError("feedback envelope is invalid JSON") from exc
     envelope = _require_mapping(raw, "feedback envelope")
-    _require_exact_keys(envelope, _ENVELOPE_KEYS, "feedback envelope")
+    allowed_keys = _ENVELOPE_KEYS - {"outcome"}
+    if "outcome" in envelope:
+        allowed_keys = _ENVELOPE_KEYS
+    _require_exact_keys(envelope, allowed_keys, "feedback envelope")
     if envelope.get("schema") != ENVELOPE_SCHEMA:
         raise ConfigurationError(f"feedback envelope schema must be {ENVELOPE_SCHEMA}")
     event_id = _require_digest(envelope.get("event_id"), "feedback envelope event_id")
@@ -683,6 +693,10 @@ def _validate_envelope_bytes(payload: bytes) -> Mapping[str, Any]:
         raise ConfigurationError("feedback envelope exit_code must be an integer")
     if envelope.get("result_class") != _result_class(exit_code):
         raise ConfigurationError("feedback envelope result_class does not match exit_code")
+    if "outcome" in envelope and envelope["outcome"] not in {
+        "accept", "parser-reject", "provider-failed",
+    }:
+        raise ConfigurationError("feedback envelope outcome is invalid")
     if envelope.get("execution_policy") not in {"trusted", "static-only"}:
         raise ConfigurationError("feedback envelope execution_policy is invalid")
     if envelope.get("adapter") not in {"none", "markdown", "mdx", "mixed", "unknown"}:
@@ -1199,10 +1213,10 @@ def _validate_transition_receipt(
 
 def _validate_shadow_receipt(receipt: Mapping[str, Any]) -> None:
     _require_exact_keys(receipt, _SHADOW_KEYS, "shadow evaluation receipt")
-    if receipt.get("schema") != "clean-docs.shadow-evaluation.v1":
+    if receipt.get("schema") != "sourcebound.shadow-evaluation.v1":
         raise ConfigurationError(
             "shadow evaluation receipt schema must be "
-            "clean-docs.shadow-evaluation.v1"
+            "sourcebound.shadow-evaluation.v1"
         )
     _require_string(receipt.get("cohort_version"), "shadow evaluation cohort_version")
     direction = _require_string(

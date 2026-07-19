@@ -91,7 +91,7 @@ def _run_case(case: BootstrapDogfoodCase, parent: Path) -> dict[str, object]:
     )
     apply_bootstrap_plan(root, plan)
 
-    manifest = load_manifest(root / ".clean-docs.yml")
+    manifest = load_manifest(root / ".sourcebound.yml")
     binding = manifest.bindings[0]
     require(isinstance(binding, RegionBinding), f"{case.name}: baseline binding is not a region")
     require(
@@ -121,7 +121,7 @@ def _run_case(case: BootstrapDogfoodCase, parent: Path) -> dict[str, object]:
     run_git("add", "-A", cwd=root)
     run_git(
         "-c", "user.name=Fixture", "-c", "user.email=fixture@example.test",
-        "commit", "-qm", "clean-docs baseline", cwd=root,
+        "commit", "-qm", "sourcebound baseline", cwd=root,
     )
     base = run_git("rev-parse", "HEAD", cwd=root)
     mutation_path = root / case.mutation_path
@@ -192,7 +192,7 @@ def _run_case(case: BootstrapDogfoodCase, parent: Path) -> dict[str, object]:
 
 
 def main() -> int:
-    with tempfile.TemporaryDirectory(prefix="clean-docs-bootstrap-dogfood-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="sourcebound-bootstrap-dogfood-") as temporary:
         parent = Path(temporary)
         reports = [_run_case(case, parent) for case in CASES]
     print(json.dumps({"ok": True, "repositories": reports}, indent=2))

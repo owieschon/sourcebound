@@ -111,7 +111,7 @@ def explain(root: Path, identifier: str) -> Explanation:
         repair = "Remove the reasoned ignore when this surface becomes reader-facing."
     else:
         summary = "The detected surface has evidence but no binding or reasoned ignore."
-        repair = "Add a source binding or a specific record in .clean-docs-ignore.yml."
+        repair = "Add a source binding or a specific record in .sourcebound-ignore.yml."
     return Explanation(
         item.id,
         "inventory-surface",

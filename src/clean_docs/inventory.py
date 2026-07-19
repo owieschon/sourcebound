@@ -21,7 +21,7 @@ else:
 
 
 SKIP_PARTS = {".git", ".venv", "build", "dist", "node_modules", "__pycache__"}
-SKIP_PATHS = {".clean-docs.yml", ".clean-docs-residue.yml", "llms.txt"}
+SKIP_PATHS = {".sourcebound.yml", ".sourcebound-residue.yml", "llms.txt"}
 LANGUAGES = {
     ".py": "Python",
     ".ts": "TypeScript",
@@ -78,7 +78,7 @@ class InventoryReport:
 
     def as_dict(self) -> dict[str, object]:
         return {
-            "schema": "clean-docs.inventory.v1",
+            "schema": "sourcebound.inventory.v1",
             "languages": list(self.languages),
             "items": [asdict(item) for item in self.items],
             "counts": {
@@ -334,7 +334,7 @@ def _structured_items(path: str, data: Any) -> list[dict[str, str]]:
 
 
 def _coverage_ignores(root: Path, identifiers: set[str]) -> dict[str, str]:
-    ignore_path = root / ".clean-docs-ignore.yml"
+    ignore_path = root / ".sourcebound-ignore.yml"
     if not ignore_path.exists():
         return {}
     try:
@@ -366,7 +366,7 @@ def _coverage_ignores(root: Path, identifiers: set[str]) -> dict[str, str]:
 def _coverage(root: Path, identifiers: set[str]) -> tuple[set[tuple[str, str]], bool, dict[str, str]]:
     direct_locators: set[tuple[str, str]] = set()
     cataloged = False
-    manifest = root / ".clean-docs.yml"
+    manifest = root / ".sourcebound.yml"
     if manifest.exists():
         try:
             data = yaml.safe_load(manifest.read_text(encoding="utf-8"))

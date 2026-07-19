@@ -54,7 +54,7 @@ def _symbol_repository(tmp_path: Path) -> Path:
     (root / "README.md").write_text(
         "# Fixture\n\n## API\n\n`public_api` is the supported entry point.\n"
     )
-    (root / ".clean-docs.yml").write_text(
+    (root / ".sourcebound.yml").write_text(
         """\
 version: 1
 bindings:
@@ -71,16 +71,16 @@ bindings:
 def _projection_repository(tmp_path: Path) -> Path:
     root = tmp_path / "projection-repository"
     (root / "src").mkdir(parents=True)
-    (root / ".clean-docs").mkdir()
+    (root / ".sourcebound").mkdir()
     subprocess.run(["git", "init", "-q", "-b", "main", str(root)], check=True)
     (root / "src/actions.py").write_text(
         'ACTIONS = [{"name": "report", "job": "Report status"}]\n'
     )
     (root / "README.md").write_text(
-        "# Fixture\n\n<!-- clean-docs:begin actions -->\n"
-        "<!-- clean-docs:end actions -->\n"
+        "# Fixture\n\n<!-- sourcebound:begin actions -->\n"
+        "<!-- sourcebound:end actions -->\n"
     )
-    (root / ".clean-docs.yml").write_text(
+    (root / ".sourcebound.yml").write_text(
         """\
 version: 1
 bindings:
@@ -98,7 +98,7 @@ projections:
     include: [README.md]
 """
     )
-    (root / ".clean-docs/eval.yml").write_text(
+    (root / ".sourcebound/eval.yml").write_text(
         """\
 version: 1
 tasks:
@@ -144,7 +144,7 @@ def _review_contract_repository(
         "## Fetching pages\n\n"
         "Fetch the next page from the returned offset.\n"
     )
-    (project_root / ".clean-docs.yml").write_text(
+    (project_root / ".sourcebound.yml").write_text(
         """\
 version: 1
 bindings:
@@ -228,7 +228,7 @@ def test_impact_plan_materializes_each_immutable_revision_once(
 
     plan = build_impact_plan(
         root,
-        root / ".clean-docs.yml",
+        root / ".sourcebound.yml",
         base=base,
         head=head,
         use_cache=False,
@@ -248,10 +248,10 @@ def test_private_refactor_produces_coverage_complete_stable_no_impact(
     head = _commit(root, "refactor private helper")
 
     first = build_impact_plan(
-        root, root / ".clean-docs.yml", base=base, head=head
+        root, root / ".sourcebound.yml", base=base, head=head
     )
     second = build_impact_plan(
-        root, root / ".clean-docs.yml", base=base, head=head
+        root, root / ".sourcebound.yml", base=base, head=head
     )
 
     assert first.as_dict() == second.as_dict()
@@ -278,9 +278,9 @@ def test_private_refactor_produces_coverage_complete_stable_no_impact(
         ]
     ) == 0
     payload = json.loads(capsys.readouterr().out)
-    assert payload["schema"] == "clean-docs.impact-plan.v2"
+    assert payload["schema"] == "sourcebound.impact-plan.v2"
     assert payload["producer"] == {
-        "name": "clean-docs",
+        "name": "sourcebound",
         "version": "1.2.0",
     }
     assert payload["digest"] == first.digest
@@ -303,7 +303,7 @@ def test_review_contract_recommends_review_for_selected_source_change(
 
     plan = build_impact_plan(
         root,
-        project_root / ".clean-docs.yml",
+        project_root / ".sourcebound.yml",
         base=base,
         head=head,
     )
@@ -372,7 +372,7 @@ def test_review_contract_records_relevant_target_cochange_without_claiming_truth
 
     plan = build_impact_plan(
         root,
-        project_root / ".clean-docs.yml",
+        project_root / ".sourcebound.yml",
         base=base,
         head=head,
     )
@@ -409,7 +409,7 @@ def test_review_contract_ignores_unselected_source_changes(
 
     plan = build_impact_plan(
         root,
-        project_root / ".clean-docs.yml",
+        project_root / ".sourcebound.yml",
         base=base,
         head=head,
     )
@@ -443,7 +443,7 @@ def test_unknown_review_contract_is_advisory_only(tmp_path: Path) -> None:
 
     plan = build_impact_plan(
         root,
-        project_root / ".clean-docs.yml",
+        project_root / ".sourcebound.yml",
         base=base,
         head=head,
     )
@@ -480,7 +480,7 @@ def test_review_contract_keeps_result_paths_project_relative(
 
     plan = build_impact_plan(
         root,
-        project_root / ".clean-docs.yml",
+        project_root / ".sourcebound.yml",
         base=base,
         head=head,
         project=project,
@@ -519,7 +519,7 @@ def test_public_implementation_refactor_does_not_become_interface_work(
     head = _commit(root, "refactor public implementation")
 
     plan = build_impact_plan(
-        root, root / ".clean-docs.yml", base=base, head=head
+        root, root / ".sourcebound.yml", base=base, head=head
     )
 
     assert plan.impact == "none"
@@ -539,7 +539,7 @@ def test_unparseable_supported_source_is_unknown(
     head = _commit(root, "break source syntax")
 
     plan = build_impact_plan(
-        root, root / ".clean-docs.yml", base=base, head=head
+        root, root / ".sourcebound.yml", base=base, head=head
     )
 
     assert plan.impact == "unknown"
@@ -561,7 +561,7 @@ def test_unsupported_public_candidate_is_unknown_not_no_impact(
     head = _commit(root, "add unsupported public service")
 
     plan = build_impact_plan(
-        root, root / ".clean-docs.yml", base=base, head=head
+        root, root / ".sourcebound.yml", base=base, head=head
     )
 
     assert plan.impact == "unknown"
@@ -583,7 +583,7 @@ def test_internal_unsupported_script_does_not_expand_the_plan(
     head = _commit(root, "add internal formatter")
 
     plan = build_impact_plan(
-        root, root / ".clean-docs.yml", base=base, head=head
+        root, root / ".sourcebound.yml", base=base, head=head
     )
 
     assert plan.impact == "none"
@@ -605,7 +605,7 @@ def test_valid_mdx_change_is_classified_as_a_direct_document_change(
     head = _commit(root, "change unsupported MDX")
 
     plan = build_impact_plan(
-        root, root / ".clean-docs.yml", base=base, head=head
+        root, root / ".sourcebound.yml", base=base, head=head
     )
     payload = plan.as_dict()
 
@@ -630,7 +630,7 @@ def test_malformed_mdx_change_is_unknown_and_disclosed(tmp_path: Path) -> None:
     head = _commit(root, "break MDX")
 
     plan = build_impact_plan(
-        root, root / ".clean-docs.yml", base=base, head=head
+        root, root / ".sourcebound.yml", base=base, head=head
     )
 
     assert plan.impact == "unknown"
@@ -660,7 +660,7 @@ def test_document_line_moves_do_not_invent_semantic_events(
     head = _commit(root, "move link down")
 
     plan = build_impact_plan(
-        root, root / ".clean-docs.yml", base=base, head=head
+        root, root / ".sourcebound.yml", base=base, head=head
     )
 
     assert plan.impact == "none"
@@ -680,7 +680,7 @@ def test_unsupported_runtime_control_is_unknown(
     head = _commit(root, "change runtime container")
 
     plan = build_impact_plan(
-        root, root / ".clean-docs.yml", base=base, head=head
+        root, root / ".sourcebound.yml", base=base, head=head
     )
 
     assert plan.impact == "unknown"
@@ -696,10 +696,10 @@ def test_workflow_job_change_is_supported_advisory_impact(
     root = _symbol_repository(tmp_path)
     (root / "docs").mkdir()
     (root / "docs/SURFACE.md").write_text(
-        "# Surface\n\n<!-- clean-docs:begin repository-surface -->\n"
-        "<!-- clean-docs:end repository-surface -->\n"
+        "# Surface\n\n<!-- sourcebound:begin repository-surface -->\n"
+        "<!-- sourcebound:end repository-surface -->\n"
     )
-    with (root / ".clean-docs.yml").open("a") as manifest:
+    with (root / ".sourcebound.yml").open("a") as manifest:
         manifest.write(
             """\
   - id: repository-surface
@@ -724,7 +724,7 @@ def test_workflow_job_change_is_supported_advisory_impact(
     head = _commit(root, "change test job")
 
     plan = build_impact_plan(
-        root, root / ".clean-docs.yml", base=base, head=head
+        root, root / ".sourcebound.yml", base=base, head=head
     )
 
     assert plan.impact == "recommended"
@@ -777,10 +777,10 @@ def test_impact_reuses_changed_inventory_for_repository_overview(
     root = _symbol_repository(tmp_path)
     (root / "docs").mkdir()
     (root / "docs/SURFACE.md").write_text(
-        "# Surface\n\n<!-- clean-docs:begin repository-surface -->\n"
-        "<!-- clean-docs:end repository-surface -->\n"
+        "# Surface\n\n<!-- sourcebound:begin repository-surface -->\n"
+        "<!-- sourcebound:end repository-surface -->\n"
     )
-    with (root / ".clean-docs.yml").open("a") as manifest:
+    with (root / ".sourcebound.yml").open("a") as manifest:
         manifest.write(
             """\
   - id: repository-surface
@@ -805,7 +805,7 @@ def test_impact_reuses_changed_inventory_for_repository_overview(
 
     plan = build_impact_plan(
         root,
-        root / ".clean-docs.yml",
+        root / ".sourcebound.yml",
         base=base,
         head=head,
         use_cache=False,
@@ -825,7 +825,7 @@ def test_malformed_workflow_cannot_become_no_impact(
     head = _commit(root, "add malformed workflow")
 
     plan = build_impact_plan(
-        root, root / ".clean-docs.yml", base=base, head=head
+        root, root / ".sourcebound.yml", base=base, head=head
     )
 
     assert plan.impact == "unknown"
@@ -845,7 +845,7 @@ def test_public_default_change_reaches_reference_and_migration_obligations(
     head = _commit(root, "change public default")
 
     plan = build_impact_plan(
-        root, root / ".clean-docs.yml", base=base, head=head
+        root, root / ".sourcebound.yml", base=base, head=head
     )
 
     assert plan.impact == "required"
@@ -866,10 +866,10 @@ def test_typescript_signature_change_is_public_interface_work(
         "export interface PromptOptions {\n  version?: number\n}\n"
     )
     (root / "README.md").write_text(
-        "# Fixture\n\n<!-- clean-docs:begin repository-surface -->\n"
-        "<!-- clean-docs:end repository-surface -->\n"
+        "# Fixture\n\n<!-- sourcebound:begin repository-surface -->\n"
+        "<!-- sourcebound:end repository-surface -->\n"
     )
-    (root / ".clean-docs.yml").write_text(
+    (root / ".sourcebound.yml").write_text(
         """\
 version: 1
 bindings:
@@ -882,7 +882,7 @@ bindings:
     renderer: markdown-fragment
 """
     )
-    (root / ".clean-docs-ignore.yml").write_text(
+    (root / ".sourcebound-ignore.yml").write_text(
         """\
 version: 1
 ignore:
@@ -901,7 +901,7 @@ ignore:
     head = _commit(root, "add TypeScript interface member")
 
     plan = build_impact_plan(
-        root, root / ".clean-docs.yml", base=base, head=head
+        root, root / ".sourcebound.yml", base=base, head=head
     )
 
     assert plan.impact == "none"
@@ -922,7 +922,7 @@ def test_binding_change_traverses_projection_and_evaluation(
     head = _commit(root, "rename action")
 
     plan = build_impact_plan(
-        root, root / ".clean-docs.yml", base=base, head=head
+        root, root / ".sourcebound.yml", base=base, head=head
     )
 
     assert plan.impact == "required"
@@ -949,7 +949,7 @@ def test_generated_projection_change_does_not_trigger_itself(
     head = _commit(root, "touch generated projection")
 
     plan = build_impact_plan(
-        root, root / ".clean-docs.yml", base=base, head=head
+        root, root / ".sourcebound.yml", base=base, head=head
     )
 
     assert plan.impact == "none"
@@ -969,7 +969,7 @@ def test_visual_record_change_triggers_both_audience_projections(
     record = root / "docs/visuals/queue-flow.yml"
     record.write_text(
         """\
-schema: clean-docs.visual.v1
+schema: sourcebound.visual.v1
 id: queue-flow
 kind: diagram
 src: docs/assets/queue.png
@@ -981,7 +981,7 @@ description: Queue A validates each item, then sends accepted work to queue B.
 annotations: []
 """
     )
-    manifest = root / ".clean-docs.yml"
+    manifest = root / ".sourcebound.yml"
     manifest.write_text(
         manifest.read_text()
         + """\
@@ -989,7 +989,7 @@ annotations: []
     - id: queue-flow
       source: docs/visuals/queue-flow.yml
       human_output: docs/generated/queue-flow.mdx
-      agent_output: .clean-docs/visuals/queue-flow.md
+      agent_output: .sourcebound/visuals/queue-flow.md
 """
     )
     assert main(["--root", str(root), "project"]) == 0
@@ -1002,7 +1002,7 @@ annotations: []
     head = _commit(root, "clarify visual")
 
     plan = build_impact_plan(
-        root, root / ".clean-docs.yml", base=base, head=head
+        root, root / ".sourcebound.yml", base=base, head=head
     )
 
     assert {item.rule for item in plan.required} >= {"projection-refresh"}
@@ -1012,7 +1012,7 @@ annotations: []
         if edge.kind == "projects-to"
         and edge.source == "artifact:docs/visuals/queue-flow.yml"
     } == {
-        "projection:.clean-docs/visuals/queue-flow.md",
+        "projection:.sourcebound/visuals/queue-flow.md",
         "projection:docs/generated/queue-flow.mdx",
     }
 
@@ -1031,7 +1031,7 @@ def test_plan_uses_merge_base_for_diverged_and_stacked_history(
     main_head = _commit(root, "advance main")
 
     plan = build_impact_plan(
-        root, root / ".clean-docs.yml", base=main_head, head=feature
+        root, root / ".sourcebound.yml", base=main_head, head=feature
     )
 
     assert plan.requested_base == main_head

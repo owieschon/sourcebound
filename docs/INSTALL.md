@@ -1,11 +1,11 @@
-# Install and manage clean-docs
+# Install and manage Sourcebound
 
-<!-- clean-docs:policy register-v2 -->
-<!-- clean-docs:purpose -->
-Operators come here to install a released clean-docs wheel, keep dependencies offline when needed,
+<!-- sourcebound:policy register-v2 -->
+<!-- sourcebound:purpose -->
+Operators come here to install a released Sourcebound wheel, keep dependencies offline when needed,
 or move between versions without changing repository documentation. Each path ends with a local
 version or artifact check, so the executable is known before it becomes a gate.
-<!-- clean-docs:end purpose -->
+<!-- sourcebound:end purpose -->
 
 **[Install the latest stable release](#install-the-latest-stable-release)**.
 
@@ -18,27 +18,27 @@ PyYAML from your configured package index:
 
 ```bash
 release_dir="$(mktemp -d)"
-gh release download --repo owieschon/clean-docs \
-  --pattern 'clean_docs-*-py3-none-any.whl' --dir "$release_dir"
+gh release download --repo owieschon/sourcebound \
+  --pattern 'sourcebound-*-py3-none-any.whl' --dir "$release_dir"
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install "$release_dir"/clean_docs-*.whl
-clean-docs --version
+python -m pip install "$release_dir"/sourcebound-*.whl
+sourcebound --version
 ```
 
-The version must match the wheel filename. A GitHub release contains the clean-docs wheel, its SPDX
+The version must match the wheel filename. A GitHub release contains the Sourcebound wheel, its SPDX
 file, checksums, and attestations. It does not contain dependency wheels.
 
 ## Install without package-index access
 
-Place the clean-docs wheel and a compatible PyYAML wheel in a local `wheelhouse`, then prohibit index
+Place the Sourcebound wheel and a compatible PyYAML wheel in a local `wheelhouse`, then prohibit index
 access:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install --no-index --find-links ./wheelhouse ./wheelhouse/clean_docs-*.whl
-clean-docs --version
+python -m pip install --no-index --find-links ./wheelhouse ./wheelhouse/sourcebound-*.whl
+sourcebound --version
 ```
 
 The install fails when the wheelhouse cannot satisfy a declared dependency. It does not fall back to
@@ -51,30 +51,30 @@ Node.js 20 or newer for the bundled structural parser:
 
 ```bash
 node --version
-clean-docs doctor
+sourcebound doctor
 ```
 
 `doctor` reports `mdx-parser` as ready when the runtime and bundled parser are present. Without
 that runtime, Markdown remains available while every MDX document stays explicitly unsupported.
-clean-docs never downloads Node.js or parser packages during an audit.
+Sourcebound never downloads Node.js or parser packages during an audit.
 
 ## Upgrade, roll back, or remove the executable
 
 Install the newer wheel, then preview any requested manifest change before writing:
 
 ```bash
-python -m pip install --upgrade ./clean_docs-*.whl
-clean-docs migrate
-clean-docs migrate --write
+python -m pip install --upgrade ./sourcebound-*.whl
+sourcebound migrate
+sourcebound migrate --write
 ```
 
-`migrate --write` stores the prior manifest bytes in `.clean-docs.yml.v0.bak`. Restore them with
-`clean-docs migrate --rollback`. Reinstall the prior wheel to roll back the executable.
+`migrate --write` stores the prior manifest bytes in `.sourcebound.yml.v0.bak`. Restore them with
+`sourcebound migrate --rollback`. Reinstall the prior wheel to roll back the executable.
 
 Remove the package with:
 
 ```bash
-python -m pip uninstall clean-docs
+python -m pip uninstall sourcebound
 ```
 
 Uninstalling leaves repository manifests and documentation in place.
@@ -85,8 +85,8 @@ Download the wheel and its checksum file into one directory:
 
 ```bash
 artifact_dir="$(mktemp -d)"
-gh release download --repo owieschon/clean-docs \
-  --pattern 'clean_docs-*-py3-none-any.whl' \
+gh release download --repo owieschon/sourcebound \
+  --pattern 'sourcebound-*-py3-none-any.whl' \
   --pattern SHA256SUMS \
   --dir "$artifact_dir"
 cd "$artifact_dir"
@@ -101,7 +101,7 @@ python3 - <<'PY'
 from hashlib import sha256
 from pathlib import Path
 
-wheels = list(Path(".").glob("clean_docs-*.whl"))
+wheels = list(Path(".").glob("sourcebound-*.whl"))
 if len(wheels) != 1:
     raise SystemExit(f"expected one wheel, found {len(wheels)}")
 expected = {
@@ -122,8 +122,8 @@ PY
 Ask GitHub to match the wheel to its build provenance:
 
 ```bash
-gh attestation verify ./clean_docs-*.whl \
-  --repo owieschon/clean-docs
+gh attestation verify ./sourcebound-*.whl \
+  --repo owieschon/sourcebound
 ```
 
 The checksum step is local. The attestation command needs GitHub access, so run it outside a

@@ -13,8 +13,8 @@ from typing import Any
 from clean_docs.errors import ConfigurationError
 
 
-REQUEST_SCHEMA = "clean-docs.context-request.v1"
-BUNDLE_SCHEMA = "clean-docs.context-bundle.v1"
+REQUEST_SCHEMA = "sourcebound.context-request.v1"
+BUNDLE_SCHEMA = "sourcebound.context-bundle.v1"
 KINDS = {
     "example",
     "fact",

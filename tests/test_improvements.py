@@ -40,7 +40,7 @@ def _test(kind: str = "fixture") -> dict[str, str]:
 
 def _payload() -> dict[str, object]:
     return {
-        "schema": "clean-docs.review-observations.v1",
+        "schema": "sourcebound.review-observations.v1",
         "review_id": "published-docs-review",
         "repository_commit": "a" * 40,
         "source_urls": ["https://example.com/documentation-standard"],
@@ -97,12 +97,12 @@ def _lifecycle_candidates(tmp_path: Path):
 
 
 def _lifecycle_receipt(root: Path, commit: str, name: str = "receipt.json") -> str:
-    receipt = root / ".clean-docs" / name
+    receipt = root / ".sourcebound" / name
     receipt.parent.mkdir(parents=True, exist_ok=True)
     receipt.write_text(json.dumps({
-        "schema": "clean-docs.lifecycle-test-receipt.v1",
+        "schema": "sourcebound.lifecycle-test-receipt.v1",
         "repository_commit": commit,
-        "producer_version": "clean-docs 1.2.0",
+        "producer_version": "sourcebound 1.2.0",
         "command": ["python", "-m", "pytest", "tests/test_navigation.py"],
         "ok": True,
     }) + "\n")
@@ -110,13 +110,13 @@ def _lifecycle_receipt(root: Path, commit: str, name: str = "receipt.json") -> s
 
 
 def _provider_config(root: Path, kind: str) -> str:
-    config = root / ".clean-docs" / "lifecycle-evidence-providers.json"
+    config = root / ".sourcebound" / "lifecycle-evidence-providers.json"
     config.parent.mkdir(parents=True, exist_ok=True)
     config.write_text(json.dumps({
-        "schema": "clean-docs.lifecycle-evidence-providers.v1",
-        "providers": {kind: {"kind": "local-file", "root": f".clean-docs/{kind}s"}},
+        "schema": "sourcebound.lifecycle-evidence-providers.v1",
+        "providers": {kind: {"kind": "local-file", "root": f".sourcebound/{kind}s"}},
     }) + "\n")
-    evidence = root / ".clean-docs" / f"{kind}s" / f"{kind}-42.json"
+    evidence = root / ".sourcebound" / f"{kind}s" / f"{kind}-42.json"
     evidence.parent.mkdir(parents=True, exist_ok=True)
     evidence.write_text('{"status":"resolved"}\n')
     return evidence.relative_to(evidence.parent).as_posix()
@@ -131,9 +131,9 @@ def _receipt_payload(root: Path) -> dict[str, object]:
         "detail": "The recorded count is reproducible from immutable receipt bytes.",
         "receipt": {
             "sha256": hashlib.sha256(receipt.read_bytes()).hexdigest(),
-            "producer_version": "clean-docs 1.2.0",
+            "producer_version": "sourcebound 1.2.0",
             "repository_commit": "a" * 40,
-            "command": ["clean-docs", "audit", "--format", "json"],
+            "command": ["sourcebound", "audit", "--format", "json"],
         },
     }]
     return payload
@@ -324,7 +324,7 @@ def test_review_event_ledger_requires_the_base_history_as_an_exact_prefix(
 def test_review_event_ledger_allows_one_explicit_legacy_migration_only(
     tmp_path: Path,
 ) -> None:
-    legacy_schema = "clean-docs.review-event-ledger.v1"
+    legacy_schema = "sourcebound.review-event-ledger.v1"
     payload = _payload()
     payload["observations"].append(deepcopy(payload["observations"][0]))
     payload["observations"][1]["id"] = "second-task-page"
@@ -489,7 +489,7 @@ def test_receipt_evidence_binds_bytes_command_and_repository_commit(tmp_path: Pa
 
     receipt = candidates.candidates[0].evidence[0]["receipt"]
     assert receipt["state"] == "grounded"
-    assert receipt["command"] == ["clean-docs", "audit", "--format", "json"]
+    assert receipt["command"] == ["sourcebound", "audit", "--format", "json"]
 
 
 @pytest.mark.parametrize(
@@ -582,13 +582,13 @@ def test_cli_writes_and_checks_candidate_set(tmp_path: Path, capsys) -> None:
         "--input",
         "review.json",
         "--out",
-        ".clean-docs/candidates.json",
+        ".sourcebound/candidates.json",
         "--format",
         "text",
     ]) == 0
-    output = tmp_path / ".clean-docs/candidates.json"
+    output = tmp_path / ".sourcebound/candidates.json"
     assert output.is_file()
-    assert "[written] .clean-docs/candidates.json: 1 candidate(s)" in capsys.readouterr().out
+    assert "[written] .sourcebound/candidates.json: 1 candidate(s)" in capsys.readouterr().out
 
     assert main([
         "--root",
@@ -598,12 +598,12 @@ def test_cli_writes_and_checks_candidate_set(tmp_path: Path, capsys) -> None:
         "--input",
         "review.json",
         "--out",
-        ".clean-docs/candidates.json",
+        ".sourcebound/candidates.json",
         "--check",
         "--format",
         "text",
     ]) == 0
-    assert "[current] .clean-docs/candidates.json" in capsys.readouterr().out
+    assert "[current] .sourcebound/candidates.json" in capsys.readouterr().out
 
     output.write_text("{}\n")
     assert main([
@@ -614,12 +614,12 @@ def test_cli_writes_and_checks_candidate_set(tmp_path: Path, capsys) -> None:
         "--input",
         "review.json",
         "--out",
-        ".clean-docs/candidates.json",
+        ".sourcebound/candidates.json",
         "--check",
         "--format",
         "text",
     ]) == 1
-    assert "[drift] .clean-docs/candidates.json" in capsys.readouterr().out
+    assert "[drift] .sourcebound/candidates.json" in capsys.readouterr().out
 
 
 def test_cli_requires_explicit_internal_output_for_check(tmp_path: Path, capsys) -> None:
@@ -763,13 +763,13 @@ def test_cli_initializes_transitions_and_checks_lifecycle(tmp_path: Path, capsys
     source = repository / "review.json"
     source.write_text(json.dumps(payload))
     receipt = _lifecycle_receipt(repository, commit)
-    state = ".clean-docs/lifecycle.json"
+    state = ".sourcebound/lifecycle.json"
 
     assert main([
         "--root", str(repository), "review", "lifecycle", "init",
         "--input", "review.json", "--out", state, "--format", "text",
     ]) == 0
-    assert "[written] .clean-docs/lifecycle.json: 1 candidate(s)" in capsys.readouterr().out
+    assert "[written] .sourcebound/lifecycle.json: 1 candidate(s)" in capsys.readouterr().out
 
     assert main([
         "--root", str(repository), "review", "lifecycle", "init",
@@ -790,7 +790,7 @@ def test_cli_initializes_transitions_and_checks_lifecycle(tmp_path: Path, capsys
         "--root", str(repository), "review", "lifecycle", "check",
         "--input", "review.json", "--state", state, "--format", "text",
     ]) == 0
-    assert "[current] .clean-docs/lifecycle.json" in capsys.readouterr().out
+    assert "[current] .sourcebound/lifecycle.json" in capsys.readouterr().out
 
 
 def test_lifecycle_unknown_receipt_is_recorded_but_never_current(tmp_path: Path) -> None:
@@ -804,7 +804,7 @@ def test_lifecycle_unknown_receipt_is_recorded_but_never_current(tmp_path: Path)
         to_state="reproduced",
         evidence=LifecycleEvidence(
             kind="test-receipt",
-            reference=".clean-docs/missing-receipt.json",
+            reference=".sourcebound/missing-receipt.json",
             detail="The missing receipt must remain visible.",
         ),
     )
@@ -937,14 +937,14 @@ def test_lifecycle_provider_rejects_traversal_and_receipt_schema_failures(
     assert windows_traversal.candidates[0].history[0].resolution is not None
     assert windows_traversal.candidates[0].history[0].resolution.reason == "provider-reference-invalid"
 
-    malformed = root / ".clean-docs" / "malformed.json"
+    malformed = root / ".sourcebound" / "malformed.json"
     malformed.write_text("[]\n")
     invalid_receipt = transition_candidate_lifecycle(
         initialize_candidate_lifecycle(candidates),
         root=root,
         observation_id="unreachable-task-page",
         to_state="reproduced",
-        evidence=LifecycleEvidence("test-receipt", ".clean-docs/malformed.json", "The receipt is malformed."),
+        evidence=LifecycleEvidence("test-receipt", ".sourcebound/malformed.json", "The receipt is malformed."),
     )
     assert invalid_receipt.candidates[0].history[0].resolution is not None
     assert invalid_receipt.candidates[0].history[0].resolution.reason == "receipt-schema-invalid"
@@ -975,14 +975,14 @@ def test_cli_lifecycle_unknown_transition_exits_nonzero(tmp_path: Path, capsys) 
     (repository / "review.json").write_text(json.dumps(payload))
     assert main([
         "--root", str(repository), "review", "lifecycle", "init",
-        "--input", "review.json", "--out", ".clean-docs/lifecycle.json",
+        "--input", "review.json", "--out", ".sourcebound/lifecycle.json",
     ]) == 0
     capsys.readouterr()
     assert main([
         "--root", str(repository), "review", "lifecycle", "transition",
-        "--input", "review.json", "--state", ".clean-docs/lifecycle.json",
+        "--input", "review.json", "--state", ".sourcebound/lifecycle.json",
         "--observation", "unreachable-task-page", "--to", "reproduced",
-        "--evidence-kind", "test-receipt", "--reference", ".clean-docs/missing.json",
+        "--evidence-kind", "test-receipt", "--reference", ".sourcebound/missing.json",
         "--detail", "The receipt is unavailable.", "--format", "text",
     ]) == 1
     assert "[unknown] unreachable-task-page: reproduced" in capsys.readouterr().out
@@ -1003,7 +1003,7 @@ def test_legacy_lifecycle_remains_readable_but_history_is_unknown(tmp_path: Path
         "to": "reproduced",
         "evidence": {
             "kind": "test-receipt",
-            "reference": ".clean-docs/receipt.json",
+            "reference": ".sourcebound/receipt.json",
             "detail": "Legacy records did not store a resolution.",
         },
     }]

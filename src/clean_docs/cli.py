@@ -9,7 +9,7 @@ from pathlib import Path
 from clean_docs import __version__
 from clean_docs.applicability import ROLE_DESCRIPTIONS
 from clean_docs.audit import AUDIT_BASELINE_PATH, audit, write_audit_baseline
-from clean_docs.bootstrap import apply_bootstrap_plan, build_bootstrap_plan
+from clean_docs.bootstrap import BootstrapPlan, apply_bootstrap_plan, build_bootstrap_plan
 from clean_docs.capabilities import CLI_REFERENCE
 from clean_docs.changed import check_changed, render_sarif
 from clean_docs.claims import claim_binding_results, scan_source_claims
@@ -55,7 +55,14 @@ from clean_docs.models import BindingResult
 from clean_docs.migration import apply_migration, build_migration_plan, rollback_migration
 from clean_docs.outcomes import build_outcome_receipt
 from clean_docs.performance import benchmark_changed_check
-from clean_docs.phrasing import RecordedProvider
+from clean_docs.phrasing import (
+    CommandPhrasingProvider,
+    PhrasingProvider,
+    RecordedProvider,
+    load_command_phrasing_provider,
+    prepare_command_proposer_transcript_path,
+    write_command_proposer_transcript,
+)
 from clean_docs.projections import evaluate_projections, write_projections
 from clean_docs.release import (
     build_release_report,
@@ -84,11 +91,11 @@ def _command_help(command: str) -> str:
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="clean-docs")
+    parser = argparse.ArgumentParser(prog="sourcebound")
     parser.add_argument("--version", action="version", version=__version__)
     parser.add_argument("--root", type=Path, default=Path.cwd(), help="repository root")
     parser.add_argument(
-        "--manifest", type=Path, default=Path(".clean-docs.yml"), help="manifest path"
+        "--manifest", type=Path, default=Path(".sourcebound.yml"), help="manifest path"
     )
     sub = parser.add_subparsers(dest="command", required=True)
     audit_parser = sub.add_parser("audit", help=_command_help("audit"))
@@ -237,6 +244,16 @@ def _parser() -> argparse.ArgumentParser:
         type=Path,
         help="replay a grounded JSON provider response",
     )
+    model_mode.add_argument(
+        "--model-config",
+        type=Path,
+        help="YAML command-provider configuration for bounded init drafting",
+    )
+    init_parser.add_argument(
+        "--model-transcript",
+        type=Path,
+        help="repository-relative transcript path for an explicit command-provider run",
+    )
     init_parser.add_argument(
         "--dry-run", action="store_true", help="print the content plan without writing"
     )
@@ -328,7 +345,7 @@ def _parser() -> argparse.ArgumentParser:
     project.add_argument("--format", choices=("text", "json"), default="text")
     evaluate_tasks = sub.add_parser("eval", help=_command_help("eval"))
     evaluate_tasks.add_argument(
-        "--fixtures", type=Path, default=Path(".clean-docs/eval.yml")
+        "--fixtures", type=Path, default=Path(".sourcebound/eval.yml")
     )
     evaluate_tasks.add_argument("--mode", choices=("replay", "live"), default="replay")
     evaluate_tasks.add_argument("--record-dir", type=Path)
@@ -541,7 +558,7 @@ def _main(argv: list[str] | None = None) -> int:
     try:
         _validate_arguments(args)
     except CleanDocsError as exc:
-        print(f"clean-docs: {exc}", file=sys.stderr)
+        print(f"sourcebound: {exc}", file=sys.stderr)
         return exc.exit_code
     root = args.root.resolve()
     if args.command == "residue":
@@ -556,7 +573,7 @@ def _main(argv: list[str] | None = None) -> int:
                 return 0
             active = bool(load_local_residue_rules(local))
         except CleanDocsError as exc:
-            print(f"clean-docs: {exc}", file=sys.stderr)
+            print(f"sourcebound: {exc}", file=sys.stderr)
             return exc.exit_code
         print(f"residue: private matching {'active' if active else 'inactive'}")
         return 0
@@ -600,7 +617,7 @@ def _main(argv: list[str] | None = None) -> int:
                     current = observed == rendered
                     if args.format == "json":
                         print(json.dumps({
-                            "schema": "clean-docs.improvement-candidate-check.v1",
+                            "schema": "sourcebound.improvement-candidate-check.v1",
                             "ok": current,
                             "output": relative_output.as_posix(),
                             "candidate_digest": candidates.digest,
@@ -651,7 +668,7 @@ def _main(argv: list[str] | None = None) -> int:
                 unknown = check_candidate_lifecycle(lifecycle, root=root)
                 if args.format == "json":
                     print(json.dumps({
-                        "schema": "clean-docs.improvement-candidate-lifecycle-check.v1",
+                        "schema": "sourcebound.improvement-candidate-lifecycle-check.v1",
                         "ok": not unknown,
                         "status": "current" if not unknown else "unknown",
                         "state": relative_state.as_posix(),
@@ -684,7 +701,7 @@ def _main(argv: list[str] | None = None) -> int:
                 print(f"[{status}] {args.observation}: {args.to} in {relative_state.as_posix()}")
             return 0 if not unknown else 1
         except CleanDocsError as exc:
-            print(f"clean-docs: {exc}", file=sys.stderr)
+            print(f"sourcebound: {exc}", file=sys.stderr)
             return exc.exit_code
     if args.command == "feedback":
         try:
@@ -702,7 +719,7 @@ def _main(argv: list[str] | None = None) -> int:
                 status_config = load_feedback_config(root)
                 pending = preview_feedback(root)
                 print(json.dumps({
-                    "schema": "clean-docs.feedback-status.v1",
+                    "schema": "sourcebound.feedback-status.v1",
                     "configured": status_config is not None,
                     "enabled": (
                         status_config.enabled if status_config is not None else False
@@ -722,7 +739,7 @@ def _main(argv: list[str] | None = None) -> int:
             if args.feedback_command == "flush":
                 flush_result = flush_feedback(root)
                 print(json.dumps({
-                    "schema": "clean-docs.feedback-flush.v1",
+                    "schema": "sourcebound.feedback-flush.v1",
                     **flush_result,
                 }, indent=2))
                 return 0 if flush_result["failed"] == 0 else 1
@@ -778,7 +795,7 @@ def _main(argv: list[str] | None = None) -> int:
             print("feedback: local state purged")
             return 0
         except CleanDocsError as exc:
-            print(f"clean-docs: {exc}", file=sys.stderr)
+            print(f"sourcebound: {exc}", file=sys.stderr)
             return exc.exit_code
     if args.command == "audit":
         try:
@@ -786,11 +803,11 @@ def _main(argv: list[str] | None = None) -> int:
                 write_audit_baseline(root)
             report = audit(root, preview_policy=args.preview_policy)
         except CleanDocsError as exc:
-            print(f"clean-docs: {exc}", file=sys.stderr)
+            print(f"sourcebound: {exc}", file=sys.stderr)
             return exc.exit_code
         if args.format == "json":
             print(json.dumps({
-                "schema": "clean-docs.audit.v1",
+                "schema": "sourcebound.audit.v1",
                 "ok": report.ok,
                 "documents": list(report.documents),
                 "ignored_documents": list(report.ignored_documents),
@@ -880,7 +897,7 @@ def _main(argv: list[str] | None = None) -> int:
                 else scan_extended_inventory(root)
             )
         except CleanDocsError as exc:
-            print(f"clean-docs: {exc}", file=sys.stderr)
+            print(f"sourcebound: {exc}", file=sys.stderr)
             return exc.exit_code
         if args.format == "json":
             payload = inventory_report.as_dict()
@@ -911,7 +928,7 @@ def _main(argv: list[str] | None = None) -> int:
             )
             claim_report = scan_source_claims(root, source_claim_checks)
         except CleanDocsError as exc:
-            print(f"clean-docs: {exc}", file=sys.stderr)
+            print(f"sourcebound: {exc}", file=sys.stderr)
             return exc.exit_code
         if args.format == "json":
             print(json.dumps(claim_report.as_dict(), indent=2))
@@ -969,7 +986,7 @@ def _main(argv: list[str] | None = None) -> int:
                 expected_fact_file_sha256=args.fact_sha256,
             )
         except CleanDocsError as exc:
-            print(f"clean-docs: {exc}", file=sys.stderr)
+            print(f"sourcebound: {exc}", file=sys.stderr)
             return exc.exit_code
         if args.format == "json":
             print(json.dumps(receipt, indent=2))
@@ -997,7 +1014,7 @@ def _main(argv: list[str] | None = None) -> int:
         try:
             context_bundle = compile_context(root, request)
         except CleanDocsError as exc:
-            print(f"clean-docs: {exc}", file=sys.stderr)
+            print(f"sourcebound: {exc}", file=sys.stderr)
             return exc.exit_code
         if args.format == "json":
             print(json.dumps(context_bundle.as_dict(), indent=2))
@@ -1035,7 +1052,7 @@ def _main(argv: list[str] | None = None) -> int:
                     ) from exc
                 narrative = validate_release_narrative(release_report, response)
         except CleanDocsError as exc:
-            print(f"clean-docs: {exc}", file=sys.stderr)
+            print(f"sourcebound: {exc}", file=sys.stderr)
             return exc.exit_code
         if args.format == "json":
             payload = release_report.as_dict()
@@ -1058,7 +1075,7 @@ def _main(argv: list[str] | None = None) -> int:
             else:
                 backup = None
         except CleanDocsError as exc:
-            print(f"clean-docs: {exc}", file=sys.stderr)
+            print(f"sourcebound: {exc}", file=sys.stderr)
             return exc.exit_code
         if args.format == "json":
             payload = migration.as_dict()
@@ -1074,7 +1091,7 @@ def _main(argv: list[str] | None = None) -> int:
         try:
             explanation = explain(root, args.identifier)
         except CleanDocsError as exc:
-            print(f"clean-docs: {exc}", file=sys.stderr)
+            print(f"sourcebound: {exc}", file=sys.stderr)
             return exc.exit_code
         if args.format == "json":
             print(json.dumps(explanation.as_dict(), indent=2))
@@ -1090,8 +1107,10 @@ def _main(argv: list[str] | None = None) -> int:
             print(f"repair: {explanation.repair}")
         return 0
     if args.command == "init":
+        provider: PhrasingProvider | None = None
+        plan: BootstrapPlan | None = None
+        transcript_path = None
         try:
-            provider = None
             if args.recorded_model_response:
                 response_path = args.recorded_model_response
                 if not response_path.is_absolute():
@@ -1102,15 +1121,68 @@ def _main(argv: list[str] | None = None) -> int:
                     raise ConfigurationError(
                         f"cannot read recorded model response {response_path}"
                     ) from exc
+            if args.model_config:
+                config_path = args.model_config
+                if not config_path.is_absolute():
+                    config_path = root / config_path
+                provider = load_command_phrasing_provider(config_path, root)
+                candidate_transcript = (
+                    args.model_transcript
+                    if args.model_transcript is not None
+                    else Path(".sourcebound/init-proposer-transcript.json")
+                )
+                prepare_command_proposer_transcript_path(root, candidate_transcript)
+                transcript_path = candidate_transcript
+            if args.model_transcript and not isinstance(provider, CommandPhrasingProvider):
+                raise ConfigurationError(
+                    "--model-transcript requires --model-config"
+                )
             plan = build_bootstrap_plan(
                 root,
                 provider,
                 accept_hygiene_baseline=args.accept_hygiene_baseline,
             )
+            if transcript_path is not None and isinstance(provider, CommandPhrasingProvider):
+                write_command_proposer_transcript(
+                    root,
+                    transcript_path,
+                    provider,
+                    state="accepted",
+                    outcome="accept",
+                    detail="deterministic parser accepted the bounded draft selections",
+                    record=plan.model,
+                )
             if not args.dry_run:
                 apply_bootstrap_plan(root, plan)
         except CleanDocsError as exc:
-            print(f"clean-docs: {exc}", file=sys.stderr)
+            if transcript_path is not None and isinstance(provider, CommandPhrasingProvider):
+                try:
+                    write_command_proposer_transcript(
+                        root,
+                        transcript_path,
+                        provider,
+                        state=(
+                            "provider-failed"
+                            if provider.last_response is None
+                            else "rejected"
+                            if plan is None
+                            else "bootstrap-failed"
+                        ),
+                        outcome=(
+                            "provider-failed"
+                            if provider.last_response is None
+                            else "parser-reject"
+                        ),
+                        detail=(
+                            provider.last_error
+                            if provider.last_response is None and provider.last_error is not None
+                            else str(exc)
+                        ),
+                    )
+                except CleanDocsError as transcript_error:
+                    print(f"sourcebound: {transcript_error}", file=sys.stderr)
+                    return transcript_error.exit_code
+            print(f"sourcebound: {exc}", file=sys.stderr)
             return exc.exit_code
         if args.format == "json":
             print(json.dumps(plan.as_dict(), indent=2))
@@ -1177,7 +1249,7 @@ def _main(argv: list[str] | None = None) -> int:
                 payload = performance_report.as_dict()
                 ok = performance_report.ok
         except CleanDocsError as exc:
-            print(f"clean-docs: {exc}", file=sys.stderr)
+            print(f"sourcebound: {exc}", file=sys.stderr)
             return exc.exit_code
         rendered = json.dumps(payload, indent=2) + "\n"
         if args.out is not None:
@@ -1196,10 +1268,10 @@ def _main(argv: list[str] | None = None) -> int:
             if pack_matches_standard(source, output):
                 print(f"[current] {output}")
                 return 0
-            print(f"clean-docs: policy pack is stale: {output}", file=sys.stderr)
+            print(f"sourcebound: policy pack is stale: {output}", file=sys.stderr)
             return 1
         except CleanDocsError as exc:
-            print(f"clean-docs: {exc}", file=sys.stderr)
+            print(f"sourcebound: {exc}", file=sys.stderr)
             return exc.exit_code
     manifest = args.manifest
     if not manifest.is_absolute():
@@ -1313,7 +1385,7 @@ def _main(argv: list[str] | None = None) -> int:
             ) else 0
         if args.command == "plan":
             plan_manifest = manifest
-            if args.project != Path(".") and args.manifest == Path(".clean-docs.yml"):
+            if args.project != Path(".") and args.manifest == Path(".sourcebound.yml"):
                 plan_manifest = root / args.project / args.manifest
             impact_plan = build_impact_plan(
                 root,
@@ -1367,7 +1439,7 @@ def _main(argv: list[str] | None = None) -> int:
                         )
                     )
                 else:
-                    print(f"clean-docs: {exc}", file=sys.stderr)
+                    print(f"sourcebound: {exc}", file=sys.stderr)
                 return exc.exit_code
             if args.format == "sarif":
                 sys.stdout.write(render_verdict_sarif(pr_verdict))
@@ -1380,7 +1452,7 @@ def _main(argv: list[str] | None = None) -> int:
                     "check --changed cannot be combined with --binding or --ref"
                 )
             changed_manifest = manifest
-            if args.project != Path(".") and args.manifest == Path(".clean-docs.yml"):
+            if args.project != Path(".") and args.manifest == Path(".sourcebound.yml"):
                 changed_manifest = root / args.project / args.manifest
             changed_report = check_changed(
                 root,
@@ -1455,7 +1527,7 @@ def _main(argv: list[str] | None = None) -> int:
             return 1 if drift else 0
         return 0
     except CleanDocsError as exc:
-        print(f"clean-docs: {exc}", file=sys.stderr)
+        print(f"sourcebound: {exc}", file=sys.stderr)
         return exc.exit_code
 
 
@@ -1465,6 +1537,20 @@ def main(argv: list[str] | None = None) -> int:
     try:
         args = _parser().parse_args(effective_argv)
         if args.command != "feedback":
+            proposer_outcome = None
+            if args.command == "init" and args.model_config is not None:
+                transcript = (
+                    args.model_transcript
+                    if args.model_transcript is not None
+                    else Path(".sourcebound/init-proposer-transcript.json")
+                )
+                transcript_path = transcript if transcript.is_absolute() else args.root / transcript
+                try:
+                    proposer_outcome = json.loads(
+                        transcript_path.read_text(encoding="utf-8")
+                    ).get("outcome")
+                except (OSError, json.JSONDecodeError):
+                    proposer_outcome = None
             enqueue_feedback(
                 args.root.resolve(),
                 command=args.command,
@@ -1474,6 +1560,7 @@ def main(argv: list[str] | None = None) -> int:
                     if getattr(args, "no_exec", False)
                     else ExecutionPolicy.TRUSTED.value
                 ),
+                outcome=proposer_outcome,
             )
     except (CleanDocsError, OSError, ValueError):
         # Feedback is an opt-in observation plane. It cannot alter gate behavior.

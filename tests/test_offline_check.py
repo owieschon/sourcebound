@@ -22,9 +22,9 @@ def test_static_check_makes_no_network_request(
     root.mkdir()
     (root / "facts.txt").write_text("current\n")
     (root / "README.md").write_text(
-        "# Fixture\n\n<!-- clean-docs:begin fact -->\ncurrent\n<!-- clean-docs:end fact -->\n"
+        "# Fixture\n\n<!-- sourcebound:begin fact -->\ncurrent\n<!-- sourcebound:end fact -->\n"
     )
-    (root / ".clean-docs.yml").write_text("""\
+    (root / ".sourcebound.yml").write_text("""\
 version: 1
 bindings:
   - id: fact

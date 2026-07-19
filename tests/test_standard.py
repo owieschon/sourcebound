@@ -35,7 +35,7 @@ def test_bundled_pack_matches_canonical_standard() -> None:
 
 def test_default_pack_is_available_as_package_data() -> None:
     pack = load_default_pack()
-    assert pack["profile"] == "clean-docs-default"
+    assert pack["profile"] == "sourcebound-default"
     assert pack["policy"]["require_grounded_facts"] is True
     assert pack["policy"]["require_definition_first"] is True
     assert pack["policy"]["require_purpose_contract"] is True
@@ -77,11 +77,11 @@ def test_policy_uses_compiled_booster_registry() -> None:
         "README.md",
         "# Product\n\n"
         f"{REGISTER_PROFILE}\n"
-        '<!-- clean-docs:allow preamble-contract reason="Fixture isolates booster policy" -->\n'
-        "<!-- clean-docs:purpose -->\n"
+        '<!-- sourcebound:allow preamble-contract reason="Fixture isolates booster policy" -->\n'
+        "<!-- sourcebound:purpose -->\n"
         "Use this page when product behavior changes without an obvious reference. "
         "It gives maintainers one checked path to the current behavior.\n"
-        "<!-- clean-docs:end purpose -->\n\n"
+        "<!-- sourcebound:end purpose -->\n\n"
         "A powerful tool.\n",
         pack,
     )
@@ -95,10 +95,10 @@ def test_policy_rejects_stock_purpose_language() -> None:
     content = (
         "# Queue\n\n"
         f"{REGISTER_PROFILE}\n"
-        '<!-- clean-docs:allow preamble-contract reason="Fixture isolates purpose policy" -->\n'
-        "<!-- clean-docs:purpose -->\n"
+        '<!-- sourcebound:allow preamble-contract reason="Fixture isolates purpose policy" -->\n'
+        "<!-- sourcebound:purpose -->\n"
         "Read this page before changing or relying on Queue so you can preserve its contract.\n"
-        "<!-- clean-docs:end purpose -->\n"
+        "<!-- sourcebound:end purpose -->\n"
     )
     findings = check_document("README.md", content, load_default_pack())
     assert [(finding.rule, finding.line) for finding in findings] == [
@@ -117,7 +117,7 @@ def test_rejects_modified_policy_pack(tmp_path: Path) -> None:
 
 
 def test_first_screen_capability_summary_is_self_derived() -> None:
-    manifest = load_manifest(ROOT / ".clean-docs.yml")
+    manifest = load_manifest(ROOT / ".sourcebound.yml")
 
     assert {binding.id for binding in manifest.bindings} >= {
         "product-overview",
@@ -131,8 +131,10 @@ def test_readme_and_standard_define_themselves_before_describing_value() -> None
 
     readme_opening = readme.split(PURPOSE_BEGIN, 1)[1].split(PURPOSE_END, 1)[0].strip()
     standard_opening = standard.split(PURPOSE_BEGIN, 1)[1].split(PURPOSE_END, 1)[0].strip()
-    assert readme_opening.startswith(
-        "clean-docs is a source-bound documentation engine and CLI"
+    assert readme_opening == (
+        "Sourcebound is a documentation engine and CLI for maintainers who need code "
+        "and prose to change together. It binds selected claims to their defining "
+        "sources, so drifted documentation fails locally and in CI instead of reaching readers."
     )
     assert standard_opening.startswith(
         "STANDARD.md is the canonical writing and documentation policy"
@@ -144,11 +146,10 @@ def test_product_overview_does_not_duplicate_release_version() -> None:
 
 
 def test_product_overview_explains_why_source_binding_is_needed() -> None:
-    assert PRODUCT_OVERVIEW.startswith("A stale sentence does not fail loudly.")
-    assert "keeps a straight face after the code has moved on" in PRODUCT_OVERVIEW
-    assert "no mechanical way to identify the false claim" in PRODUCT_OVERVIEW
-    assert "gives each protected fact a source" in PRODUCT_OVERVIEW
-    assert "checks that relationship again in CI" in PRODUCT_OVERVIEW
+    assert PRODUCT_OVERVIEW.startswith("Documentation often stays plausible")
+    assert "prose alone cannot fail when the source moved" in PRODUCT_OVERVIEW
+    assert "checks or repairs declared regions" in PRODUCT_OVERVIEW
+    assert "authored judgment still owns motivation" in PRODUCT_OVERVIEW
 
 
 def test_reader_facing_concept_pages_apply_bounded_personality() -> None:
@@ -185,14 +186,14 @@ def test_mixed_audience_architecture_keeps_structured_text_canonical() -> None:
             "add exactly one complete marked BLUF purpose contract",
         ),
         (
-            "# Project\n\nBody first.\n\n<!-- clean-docs:purpose -->\n"
+            "# Project\n\nBody first.\n\n<!-- sourcebound:purpose -->\n"
             "Use this page when the project changes. It gives maintainers a checked path.\n"
-            "<!-- clean-docs:end purpose -->\n",
+            "<!-- sourcebound:end purpose -->\n",
             "move the purpose contract before all body content",
         ),
         (
-            "# Project guide\n\n<!-- clean-docs:purpose -->\n"
-            "This is the project guide.\n<!-- clean-docs:end purpose -->\n",
+            "# Project guide\n\n<!-- sourcebound:purpose -->\n"
+            "This is the project guide.\n<!-- sourcebound:end purpose -->\n",
             "replace the title restatement",
         ),
     ],
@@ -203,7 +204,7 @@ def test_purpose_contract_enforces_presence_position_and_non_restatement(
 ) -> None:
     content = content.replace(
         "\n",
-        '\n<!-- clean-docs:allow preamble-contract '
+        '\n<!-- sourcebound:allow preamble-contract '
         'reason="Fixture isolates purpose policy" -->\n',
         1,
     )
@@ -219,12 +220,12 @@ def test_purpose_contract_ignores_headings_and_markers_inside_code_fences() -> N
     content = (
         "# Project\n\n"
         f"{REGISTER_PROFILE}\n"
-        '<!-- clean-docs:allow preamble-contract reason="Fixture isolates fence parsing" -->\n'
-        "<!-- clean-docs:purpose -->\n"
+        '<!-- sourcebound:allow preamble-contract reason="Fixture isolates fence parsing" -->\n'
+        "<!-- sourcebound:purpose -->\n"
         "Use this page when source claims can drift. It gives maintainers a checked repair path.\n"
-        "<!-- clean-docs:end purpose -->\n\n"
-        "```markdown\n# Example\n<!-- clean-docs:purpose -->\n"
-        "<!-- clean-docs:end purpose -->\n```\n"
+        "<!-- sourcebound:end purpose -->\n\n"
+        "```markdown\n# Example\n<!-- sourcebound:purpose -->\n"
+        "<!-- sourcebound:end purpose -->\n```\n"
     )
 
     assert check_document("README.md", content, load_default_pack()) == []
@@ -234,10 +235,10 @@ def test_prohibited_boosters_do_not_treat_headings_as_prose() -> None:
     content = (
         "# Project\n\n"
         f"{REGISTER_PROFILE}\n"
-        '<!-- clean-docs:allow preamble-contract reason="Fixture isolates heading policy" -->\n'
-        "<!-- clean-docs:purpose -->\n"
+        '<!-- sourcebound:allow preamble-contract reason="Fixture isolates heading policy" -->\n'
+        "<!-- sourcebound:purpose -->\n"
         "Use this page when source claims can drift. It gives maintainers a checked repair path.\n"
-        "<!-- clean-docs:end purpose -->\n\n## Work simply\n"
+        "<!-- sourcebound:end purpose -->\n\n## Work simply\n"
     )
 
     assert check_document("README.md", content, load_default_pack()) == []
@@ -283,9 +284,9 @@ def test_fragment_policy_does_not_require_a_document_contract() -> None:
 
 def test_preamble_contract_requires_point_action_and_proof_in_first_fifteen_lines() -> None:
     missing = (
-        f"# Queue\n\n{REGISTER_PROFILE}\n<!-- clean-docs:purpose -->\n"
+        f"# Queue\n\n{REGISTER_PROFILE}\n<!-- sourcebound:purpose -->\n"
         "Queue is a task runner for maintainers who need source-bound operating facts.\n"
-        "<!-- clean-docs:end purpose -->\n"
+        "<!-- sourcebound:end purpose -->\n"
     )
     assert [
         finding.rule for finding in check_document("README.md", missing, load_default_pack())
@@ -344,9 +345,9 @@ def test_preamble_contract_requires_point_action_and_proof_in_first_fifteen_line
 )
 def test_register_rules_fire_on_known_bad_shapes(sentence: str, rule: str) -> None:
     content = (
-        f"# Queue\n\n{REGISTER_PROFILE}\n<!-- clean-docs:purpose -->\n"
+        f"# Queue\n\n{REGISTER_PROFILE}\n<!-- sourcebound:purpose -->\n"
         "Queue is a task runner for maintainers who need source-bound operating facts.\n"
-        "<!-- clean-docs:end purpose -->\n\n"
+        "<!-- sourcebound:end purpose -->\n\n"
         "**[Run the first task](docs/start.md)**\n\n"
         "[Verification result](docs/result.md)\n\n"
         f"{sentence}\n"
@@ -359,9 +360,9 @@ def test_register_rules_fire_on_known_bad_shapes(sentence: str, rule: str) -> No
 
 def test_register_rules_accept_concrete_varied_prose() -> None:
     content = (
-        f"# Queue\n\n{REGISTER_PROFILE}\n<!-- clean-docs:purpose -->\n"
+        f"# Queue\n\n{REGISTER_PROFILE}\n<!-- sourcebound:purpose -->\n"
         "Queue is a task runner for maintainers who need source-bound operating facts.\n"
-        "<!-- clean-docs:end purpose -->\n\n"
+        "<!-- sourcebound:end purpose -->\n\n"
         "**[Run the first task](docs/start.md)**\n\n"
         "[Verification result](docs/result.md)\n\n"
         "The source owns the command. Bind it once. The gate names the stale row after the "
@@ -373,12 +374,12 @@ def test_register_rules_accept_concrete_varied_prose() -> None:
 
 def test_truth_yield_preserves_an_honest_qualifier_collision() -> None:
     content = (
-        f"# Queue\n\n{REGISTER_PROFILE}\n<!-- clean-docs:purpose -->\n"
+        f"# Queue\n\n{REGISTER_PROFILE}\n<!-- sourcebound:purpose -->\n"
         "Queue is a task runner for maintainers who need source-bound operating facts.\n"
-        "<!-- clean-docs:end purpose -->\n\n"
+        "<!-- sourcebound:end purpose -->\n\n"
         "**[Run the first task](docs/start.md)**\n\n"
         "[Verification result](docs/result.md)\n\n"
-        '<!-- clean-docs:yield rule="qualifier-density" to="truth-honesty" '
+        '<!-- sourcebound:yield rule="qualifier-density" to="truth-honesty" '
         'reason="Three independent safety boundaries must remain attached" -->\n'
         "The model may phrase only supplied facts unless the provider fails, except in replay.\n"
     )
@@ -388,12 +389,12 @@ def test_truth_yield_preserves_an_honest_qualifier_collision() -> None:
 
 def test_multiline_yield_comment_does_not_become_prose() -> None:
     content = (
-        f"# Queue\n\n{REGISTER_PROFILE}\n<!-- clean-docs:purpose -->\n"
+        f"# Queue\n\n{REGISTER_PROFILE}\n<!-- sourcebound:purpose -->\n"
         "Queue is a task runner for maintainers who need source-bound operating facts.\n"
-        "<!-- clean-docs:end purpose -->\n\n"
+        "<!-- sourcebound:end purpose -->\n\n"
         "**[Run the first task](docs/start.md)**\n\n"
         "[Verification result](docs/result.md)\n\n"
-        '<!-- clean-docs:yield rule="nominalization-density" to="truth-honesty"\n'
+        '<!-- sourcebound:yield rule="nominalization-density" to="truth-honesty"\n'
         '     reason="The policy definition must retain all three exact terms" -->\n'
         "Coordination, implementation, and validation are the named policy terms.\n"
     )
@@ -403,9 +404,9 @@ def test_multiline_yield_comment_does_not_become_prose() -> None:
 
 def test_register_rules_ignore_link_targets_and_inline_code() -> None:
     content = (
-        f"# Queue\n\n{REGISTER_PROFILE}\n<!-- clean-docs:purpose -->\n"
+        f"# Queue\n\n{REGISTER_PROFILE}\n<!-- sourcebound:purpose -->\n"
         "Queue is a task runner for maintainers who need source-bound operating facts.\n"
-        "<!-- clean-docs:end purpose -->\n\n"
+        "<!-- sourcebound:end purpose -->\n\n"
         "**[Run the first task](docs/start.md)**\n\n"
         "[Verification result](docs/result.md)\n\n"
         "Read the [newest choice](#implementation-validation-migration) before running "
@@ -417,12 +418,12 @@ def test_register_rules_ignore_link_targets_and_inline_code() -> None:
 
 def test_truth_yield_does_not_disable_the_rule_for_later_prose() -> None:
     content = (
-        f"# Queue\n\n{REGISTER_PROFILE}\n<!-- clean-docs:purpose -->\n"
+        f"# Queue\n\n{REGISTER_PROFILE}\n<!-- sourcebound:purpose -->\n"
         "Queue is a task runner for maintainers who need source-bound operating facts.\n"
-        "<!-- clean-docs:end purpose -->\n\n"
+        "<!-- sourcebound:end purpose -->\n\n"
         "**[Run the first task](docs/start.md)**\n\n"
         "[Verification result](docs/result.md)\n\n"
-        '<!-- clean-docs:yield rule="qualifier-density" to="truth-honesty" '
+        '<!-- sourcebound:yield rule="qualifier-density" to="truth-honesty" '
         'reason="Three independent safety boundaries must remain attached" -->\n'
         "The model may phrase only supplied facts unless the provider fails, except in replay.\n\n"
         "The runner may write only one file unless the plan expands, except in migration.\n"
@@ -440,9 +441,9 @@ def test_truth_yield_does_not_disable_the_rule_for_later_prose() -> None:
 
 def test_sentence_variance_tension_keeps_required_presence_but_changes_rhythm() -> None:
     content = (
-        f"# Queue\n\n{REGISTER_PROFILE}\n<!-- clean-docs:purpose -->\n"
+        f"# Queue\n\n{REGISTER_PROFILE}\n<!-- sourcebound:purpose -->\n"
         "Queue is a task runner for maintainers who need source-bound operating facts.\n"
-        "<!-- clean-docs:end purpose -->\n\n"
+        "<!-- sourcebound:end purpose -->\n\n"
         "**[Run the first task](docs/start.md)**\n\n"
         "[Verification result](docs/result.md)\n\n"
         "The source records each public command before the renderer builds the page for repository maintainers today. "

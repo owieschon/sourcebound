@@ -1,0 +1,232 @@
+version: 1
+execution:
+  commands: deny
+  allowed_commands:
+    quickstart-audit:
+      argv: ["{python}", -m, clean_docs, --root, ., audit]
+      timeout_seconds: 30
+bindings:
+  - id: repository-surface
+    type: region
+    doc: docs/SURFACE.md
+    region: repository-surface
+    extractor: repository-overview
+    source: {path: .}
+    renderer: markdown-fragment
+  - id: product-overview
+    type: region
+    doc: README.md
+    region: product-overview
+    extractor: python-literal
+    source:
+      path: src/clean_docs/capabilities.py
+      symbol: PRODUCT_OVERVIEW
+    renderer: markdown-fragment
+  - id: assurance-boundaries
+    type: region
+    doc: SOURCEBOUND_SPEC.md
+    region: assurance-boundaries
+    extractor: python-literal
+    source:
+      path: src/clean_docs/capabilities.py
+      symbol: ASSURANCE_BOUNDARIES
+    renderer: markdown-table
+    columns: [surface, sourcebound proves, sourcebound does not prove]
+  - id: supported-bindings
+    type: region
+    doc: docs/REFERENCE.md
+    region: supported-bindings
+    extractor: python-literal
+    source:
+      path: src/clean_docs/capabilities.py
+      symbol: SUPPORTED_BINDINGS
+    renderer: markdown-table
+    columns: [binding, source, output, check]
+  - id: cli-reference
+    type: region
+    doc: docs/CLI.md
+    region: cli-reference
+    extractor: python-literal
+    source:
+      path: src/clean_docs/capabilities.py
+      symbol: CLI_REFERENCE
+    renderer: markdown-table
+    columns: [command, job, writes, example]
+  - id: manifest-reference
+    type: region
+    doc: docs/REFERENCE.md
+    region: manifest-reference
+    extractor: python-literal
+    source:
+      path: src/clean_docs/manifest.py
+      symbol: MANIFEST_REFERENCE
+    renderer: markdown-table
+    columns: [binding, required, verifies]
+  - id: evaluation-scorers
+    type: region
+    doc: docs/EVALUATION.md
+    region: evaluation-scorers
+    extractor: python-literal
+    source:
+      path: src/clean_docs/capabilities.py
+      symbol: EVALUATION_SCORERS
+    renderer: markdown-table
+    columns: [scorer, input, passes when]
+  - id: improvement-candidate-guide
+    type: symbol
+    doc: docs/IMPROVEMENTS.md
+    anchor: review-observations
+    source:
+      path: src/clean_docs/improvements.py
+      symbol: compile_improvement_candidates
+  - id: binding-sensitivity-reference
+    type: symbol
+    doc: docs/REFERENCE.md
+    anchor: binding-sensitivity-inputs
+    source:
+      path: src/clean_docs/sensitivity.py
+      symbol: evaluate_binding_sensitivity
+  - id: verdict-reference
+    type: symbol
+    doc: docs/CLI.md
+    anchor: pull-request-verdicts
+    source:
+      path: src/clean_docs/verdict.py
+      symbol: build_pr_verdict
+  - id: release-guide
+    type: symbol
+    doc: docs/RELEASES.md
+    anchor: grounded-release-notes
+    source: {path: src/clean_docs/release.py, symbol: build_release_report}
+  - id: extension-guide
+    type: symbol
+    doc: docs/EXTENSIONS.md
+    anchor: extension-api
+    source: {path: src/clean_docs/plugins.py, symbol: _run_plugin}
+  - id: migration-guide
+    type: symbol
+    doc: docs/EXTENSIONS.md
+    anchor: migrate-a-prior-manifest
+    source: {path: src/clean_docs/migration.py, symbol: build_migration_plan}
+  - id: support-guide
+    type: symbol
+    doc: docs/SUPPORT.md
+    anchor: record-local-outcomes
+    source: {path: src/clean_docs/outcomes.py, symbol: build_outcome_receipt}
+  - id: security-model
+    type: symbol
+    doc: docs/SECURITY_MODEL.md
+    anchor: process-controls
+    source: {path: src/clean_docs/isolation.py, symbol: run_isolated_process}
+  - id: tutorial-outcomes
+    type: region
+    doc: docs/learn/tutorial-catch-a-lying-doc.md
+    region: tutorial-outcomes
+    extractor: json
+    source:
+      path: .sourcebound/learning/tutorial-evidence.json
+      pointer: /steps
+    renderer: markdown-table
+    columns: [moment, command, exit, meaning]
+  - id: postmortem-measurements
+    type: region
+    doc: docs/learn/postmortem-the-readme-that-lied.md
+    region: postmortem-measurements
+    extractor: json
+    source:
+      path: .sourcebound/learning/ultra-csm-hygiene.json
+      pointer: /measurements
+    renderer: markdown-table
+    columns: [measure, before, after]
+  - id: postmortem-examples
+    type: region
+    doc: docs/learn/postmortem-the-readme-that-lied.md
+    region: postmortem-examples
+    extractor: json
+    source:
+      path: .sourcebound/learning/ultra-csm-hygiene.json
+      pointer: /examples
+    renderer: markdown-table
+    columns: [case, before, after]
+  - id: deterministic-seam-evidence
+    type: symbol
+    doc: docs/learn/deep-dive-the-deterministic-seam.md
+    anchor: evidence-authority
+    source: {path: src/clean_docs/engine.py, symbol: evaluate}
+  - id: deterministic-seam-phrasing
+    type: symbol
+    doc: docs/learn/deep-dive-the-deterministic-seam.md
+    anchor: phrasing-boundary
+    source: {path: src/clean_docs/phrasing.py, symbol: build_model_record}
+  - id: deterministic-seam-gate
+    type: symbol
+    doc: docs/learn/deep-dive-the-deterministic-seam.md
+    anchor: gate-authority
+    source: {path: src/clean_docs/outcomes.py, symbol: build_outcome_receipt}
+source_claim_checks:
+  - id: binding-type-count
+    kind: count
+    doc: docs/REFERENCE.md
+    anchor: binding-types
+    subject: types
+    source: src/clean_docs/manifest.py
+    locator: MANIFEST_REFERENCE#count
+review_contracts:
+  - id: immutable-snapshot-boundary
+    mode: observe
+    sources:
+      - id: snapshot-materialization
+        path: src/clean_docs/snapshot.py
+        extractor: python-symbol
+        locator: RepositorySnapshot.materialized_root
+      - id: snapshot-symlink-closure
+        path: src/clean_docs/snapshot.py
+        extractor: python-symbol
+        locator: RepositorySnapshot._include_symlink_targets
+    targets:
+      - id: snapshot-product-contract
+        path: SOURCEBOUND_SPEC.md
+        extractor: markdown-section
+        locator: "#evidence-and-execution"
+projections:
+  llms_txt:
+    output: llms.txt
+    title: Sourcebound documentation
+    summary: Canonical product documentation with source-bound facts and content digests.
+    include:
+      - README.md
+      - SOURCEBOUND_SPEC.md
+      - STANDARD.md
+      - SECURITY.md
+      - docs/CLI.md
+      - docs/EVALUATION.md
+      - docs/BEHAVIOR_SIGNALS.md
+      - docs/FEEDBACK.md
+      - docs/EXTENSIONS.md
+      - docs/INSTALL.md
+      - docs/IMPROVEMENTS.md
+      - docs/LIFECYCLE_EVIDENCE.md
+      - docs/REVIEW_LEDGER.md
+      - docs/RELEASES.md
+      - docs/REFERENCE.md
+      - docs/SECURITY_MODEL.md
+      - docs/SUPPORT.md
+      - docs/SURFACE.md
+      - docs/learn/index.md
+      - docs/learn/tutorial-catch-a-lying-doc.md
+      - docs/learn/postmortem-the-readme-that-lied.md
+      - docs/learn/deep-dive-the-deterministic-seam.md
+      - skill/SKILL.md
+      - skills/sourcebound-verify/SKILL.md
+  bundles:
+    - id: contributor
+      output: .sourcebound/context/contributor.md
+      include: [README.md, docs/EVALUATION.md]
+  demo:
+    output: docs/demo/index.html
+    evidence: .sourcebound/demo/evidence.json
+  visuals:
+    - id: source-bound-flow
+      source: docs/visuals/source-bound-flow.yml
+      human_output: docs/generated/source-bound-flow.md
+      agent_output: .sourcebound/visuals/source-bound-flow.md

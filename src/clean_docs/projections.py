@@ -26,8 +26,8 @@ LINK = re.compile(r"\[[^\]]+\]\(([^)\s]+)(?:\s+[^)]*)?\)")
 HTML_LINK = re.compile(r'href="([^"]+)"')
 HEADING = re.compile(r"^#{1,6}\s+(.+?)\s*$")
 CANONICAL_BLOCK = re.compile(
-    r"<!-- clean-docs:canonical .+? begin -->.*?"
-    r"<!-- clean-docs:canonical .+? end -->",
+    r"<!-- sourcebound:canonical .+? begin -->.*?"
+    r"<!-- sourcebound:canonical .+? end -->",
     re.DOTALL,
 )
 
@@ -99,9 +99,9 @@ def _render_bundle(
             f"- Source: [{key}]({link})",
             f"- Content sha256: `{digest}`",
             "",
-            f"<!-- clean-docs:canonical {key} begin -->",
+            f"<!-- sourcebound:canonical {key} begin -->",
             content.rstrip(),
-            f"<!-- clean-docs:canonical {key} end -->",
+            f"<!-- sourcebound:canonical {key} end -->",
         ])
     return "\n".join(lines) + "\n"
 

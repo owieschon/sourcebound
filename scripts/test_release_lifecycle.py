@@ -49,14 +49,14 @@ def verify_lifecycle(candidate: Path) -> None:
     candidate_version = _wheel_version(candidate)
     prior_ref = "v0.5.0^{}"
     prior_epoch = _run("git", "show", "-s", "--format=%ct", prior_ref)
-    with tempfile.TemporaryDirectory(prefix="clean-docs-lifecycle-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="sourcebound-lifecycle-") as temporary:
         workspace = Path(temporary)
         prior = _build_once(prior_ref, prior_epoch, workspace, "prior")
         environment = dict(os.environ)
         environment["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
         venv = workspace / "venv"
         _command(sys.executable, "-m", "venv", "--system-site-packages", str(venv))
-        executable = venv / "bin" / "clean-docs"
+        executable = venv / "bin" / "sourcebound"
         pip = venv / "bin" / "pip"
 
         _command(str(pip), "install", str(prior), env=environment)
@@ -108,9 +108,9 @@ def verify_lifecycle(candidate: Path) -> None:
             )
 
         _command(str(pip), "install", "--upgrade", str(candidate), env=environment)
-        _command(str(pip), "uninstall", "--yes", "clean-docs", env=environment)
+        _command(str(pip), "uninstall", "--yes", "sourcebound", env=environment)
         if executable.exists():
-            raise RuntimeError("uninstall left the clean-docs executable installed")
+            raise RuntimeError("uninstall left the sourcebound executable installed")
 
 
 def main() -> int:

@@ -472,7 +472,7 @@ def load_manifest(path: Path) -> Manifest:
         if api_version != PLUGIN_API_VERSION:
             raise ConfigurationError(
                 f"plugin {plugin_id} API version {api_version} is incompatible; "
-                f"clean-docs supports {PLUGIN_API_VERSION}"
+                f"sourcebound supports {PLUGIN_API_VERSION}"
             )
         interfaces = plugin_data.get("interfaces")
         if (

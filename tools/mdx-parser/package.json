@@ -1,5 +1,5 @@
 {
-  "name": "clean-docs-mdx-parser-build",
+  "name": "sourcebound-mdx-parser-build",
   "private": true,
   "type": "module",
   "engines": {

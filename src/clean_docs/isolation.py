@@ -34,6 +34,9 @@ def _isolated_copy(source: Path, destination: Path) -> None:
         ignore=shutil.ignore_patterns(*COPY_IGNORES),
     )
     for path in destination.rglob("*"):
+        # Known limit by design: reject every symlink rather than preserving one
+        # that could resolve outside this disposable snapshot. Repositories that
+        # require symlinks must use --no-exec or static paths instead.
         if path.is_symlink():
             raise ExtractionError(
                 "process snapshot contains a symbolic link: "
@@ -54,6 +57,15 @@ def _safe_output(label: str, stdout: bytes, stderr: bytes) -> IsolatedProcessRes
     return IsolatedProcessResult(0, rendered_stdout, rendered_stderr)
 
 
+def _sandbox_environment(home: Path, temp: Path) -> dict[str, str]:
+    return {
+        "HOME": str(home),
+        "TMPDIR": str(temp),
+        "PATH": os.environ.get("PATH", ""),
+        "NO_COLOR": "1",
+    }
+
+
 def run_isolated_process(
     snapshot: RepositorySnapshot,
     argv: tuple[str, ...],
@@ -68,7 +80,7 @@ def run_isolated_process(
             f"{label} input exceeds {MAX_PROCESS_IO_BYTES} bytes"
         )
     with snapshot.materialized_root() as source, tempfile.TemporaryDirectory(
-        prefix="clean-docs-process-"
+        prefix="sourcebound-process-"
     ) as temporary:
         sandbox = Path(temporary)
         worktree = sandbox / "repository"
@@ -77,12 +89,7 @@ def run_isolated_process(
         temp = sandbox / "tmp"
         home.mkdir()
         temp.mkdir()
-        environment = {
-            "HOME": str(home),
-            "TMPDIR": str(temp),
-            "PATH": os.environ.get("PATH", ""),
-            "NO_COLOR": "1",
-        }
+        environment = _sandbox_environment(home, temp)
         try:
             process = subprocess.Popen(
                 argv,

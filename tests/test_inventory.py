@@ -230,10 +230,10 @@ def test_inventory_cli_reports_coverage_and_repository_binding_repairs_docs(
     assert report["counts"]["standard-gap"] == len(report["items"])
 
     (root / "README.md").write_text(
-        "# Fixture\n\n<!-- clean-docs:begin repository-surface -->\nstale\n"
-        "<!-- clean-docs:end repository-surface -->\n"
+        "# Fixture\n\n<!-- sourcebound:begin repository-surface -->\nstale\n"
+        "<!-- sourcebound:end repository-surface -->\n"
     )
-    manifest = root / ".clean-docs.yml"
+    manifest = root / ".sourcebound.yml"
     manifest.write_text("""\
 version: 1
 bindings:
@@ -254,7 +254,7 @@ bindings:
     assert all(item.coverage == "cataloged" for item in scan_inventory(root).items)
 
     ignored_id = scan_inventory(root).items[0].id
-    (root / ".clean-docs-ignore.yml").write_text(
+    (root / ".sourcebound-ignore.yml").write_text(
         f"version: 1\nignore:\n  - id: {json.dumps(ignored_id)}\n"
         "    reason: This surface is internal to the fixture.\n"
     )
@@ -275,10 +275,10 @@ def test_repository_overview_stays_compact_and_tracks_the_full_catalog(
     readme = root / "README.md"
     readme.write_text(
         "# Large repository\n\n"
-        "<!-- clean-docs:begin repository-surface -->\nstale\n"
-        "<!-- clean-docs:end repository-surface -->\n"
+        "<!-- sourcebound:begin repository-surface -->\nstale\n"
+        "<!-- sourcebound:end repository-surface -->\n"
     )
-    manifest = root / ".clean-docs.yml"
+    manifest = root / ".sourcebound.yml"
     manifest.write_text("""\
 version: 1
 bindings:
@@ -304,8 +304,8 @@ bindings:
     second = evaluate(root, manifest)[0]
 
     assert second.changed
-    assert before.split("<!-- clean-docs:inventory-sha256", 1)[0] == (
-        second.expected.split("<!-- clean-docs:inventory-sha256", 1)[0]
+    assert before.split("<!-- sourcebound:inventory-sha256", 1)[0] == (
+        second.expected.split("<!-- sourcebound:inventory-sha256", 1)[0]
     )
 
 
@@ -319,11 +319,11 @@ def test_repository_overview_accepts_legacy_receipts_until_surface_changes(
     readme = root / "README.md"
     readme.write_text(
         "# Surface\n\n"
-        "<!-- clean-docs:begin repository-surface -->\n"
+        "<!-- sourcebound:begin repository-surface -->\n"
         "stale\n"
-        "<!-- clean-docs:end repository-surface -->\n"
+        "<!-- sourcebound:end repository-surface -->\n"
     )
-    manifest = root / ".clean-docs.yml"
+    manifest = root / ".sourcebound.yml"
     manifest.write_text("""\
 version: 1
 bindings:
@@ -365,11 +365,11 @@ def test_repository_overview_ignores_unrendered_package_version_changes(
     readme = root / "README.md"
     readme.write_text(
         "# Surface\n\n"
-        "<!-- clean-docs:begin repository-surface -->\n"
+        "<!-- sourcebound:begin repository-surface -->\n"
         "stale\n"
-        "<!-- clean-docs:end repository-surface -->\n"
+        "<!-- sourcebound:end repository-surface -->\n"
     )
-    manifest = root / ".clean-docs.yml"
+    manifest = root / ".sourcebound.yml"
     manifest.write_text("""\
 version: 1
 bindings:

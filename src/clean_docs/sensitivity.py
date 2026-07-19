@@ -16,9 +16,9 @@ from clean_docs.errors import ConfigurationError
 from clean_docs.models import SourceClaimCheck
 
 
-PROPOSAL_SCHEMA = "clean-docs.binding-proposal.v1"
-FACT_SCHEMA = "clean-docs.mutation-target.v1"
-RECEIPT_SCHEMA = "clean-docs.binding-sensitivity.v1"
+PROPOSAL_SCHEMA = "sourcebound.binding-proposal.v1"
+FACT_SCHEMA = "sourcebound.mutation-target.v1"
+RECEIPT_SCHEMA = "sourcebound.binding-sensitivity.v1"
 GENERATOR = "python-identifier-set-key@1"
 MAX_INPUT_BYTES = 1_048_576
 ID = re.compile(r"^[a-z][a-z0-9-]*$")
@@ -508,7 +508,7 @@ def evaluate_binding_sensitivity(
         }
 
     check = _relationship_check(relationship)
-    with tempfile.TemporaryDirectory(prefix="clean-docs-sensitivity-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="sourcebound-sensitivity-") as temporary:
         disposable = Path(temporary)
         disposable_source = disposable / source_path
         disposable_doc = disposable / doc_path

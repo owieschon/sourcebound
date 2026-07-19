@@ -24,6 +24,7 @@ EXEMPT_PATH_PARTS = (
 SECRET_RULES = (
     ("secret-aws-key", re.compile(r"\bAKIA[0-9A-Z]{16}\b"), "all"),
     ("secret-github-token", re.compile(r"\b(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})"), "all"),
+    # Fail closed: a long sk- kebab slug can be redacted rather than missed.
     ("secret-openai-key", re.compile(r"\bsk-[A-Za-z0-9_-]{20,}\b"), "all"),
     ("secret-pem-private", re.compile(r"-----BEGIN [A-Z ]{0,20}PRIVATE KEY-----"), "all"),
     ("secret-jwt", re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b"), "all"),

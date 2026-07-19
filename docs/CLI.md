@@ -1,73 +1,73 @@
 # CLI reference
 
-<!-- clean-docs:policy register-v2 -->
-<!-- clean-docs:purpose -->
+<!-- sourcebound:policy register-v2 -->
+<!-- sourcebound:purpose -->
 Choose a command here after you know the repository task. The index names each write boundary, so
 you can select the read or repair path without letting a preview change documentation.
-<!-- clean-docs:end purpose -->
-<!-- clean-docs:allow audience reason="This reference names agent-facing commands and receipt fields as product surfaces" -->
+<!-- sourcebound:end purpose -->
+<!-- sourcebound:allow audience reason="This reference names agent-facing commands and receipt fields as product surfaces" -->
 
 **[Choose from the generated command index](#cli-reference)**.
 
-`clean-docs <command> --help` is the proof for exact flags; every example below must pass the same
+`sourcebound <command> --help` is the proof for exact flags; every example below must pass the same
 argument validator as the executable.
 
 The table is generated from the command registry used by the parser:
 
-<!-- clean-docs:begin cli-reference -->
+<!-- sourcebound:begin cli-reference -->
 | command | job | writes | example |
 | --- | --- | --- | --- |
-| audit | Assess documentation and enforce adopted scopes | with --update-baseline | clean-docs audit --format json |
-| residue | Manage private cross-project residue matching | with init-local | clean-docs residue status |
-| residue status | Report whether private residue matching is active | no | clean-docs residue status |
-| residue init-local | Create a permission-restricted private residue template | yes | clean-docs residue init-local |
-| inventory | List detected repository surfaces and coverage | no | clean-docs inventory --format json |
-| claims | Rank and verify static count and column claims | no | clean-docs claims --format json |
-| binding | Inspect one proposed source relationship | no | clean-docs binding --help |
-| binding sensitivity | Test whether one static check depends on a frozen source fact | no | clean-docs binding sensitivity --help |
-| context | Compile provider-neutral evidence packets | no | clean-docs context --help |
-| context compile | Compile a bounded source-addressed context bundle | no | clean-docs context compile --request context-request.json |
-| review | Turn review observations into testable improvement candidates | with --out | clean-docs review --help |
-| review candidates | Compile documentation and product test candidates from one review | with --out | clean-docs review candidates --input review-observations.json |
-| review lifecycle | Track assessment-only candidate status with typed evidence | with init or transition | clean-docs review lifecycle --help |
-| review lifecycle init | Initialize a lifecycle record for one candidate set | yes | clean-docs review lifecycle init --input review.json --out lifecycle.json |
-| review lifecycle transition | Apply one evidence-backed candidate transition | yes | clean-docs review lifecycle transition --help |
-| review lifecycle check | Check a lifecycle record against its candidate set | no | clean-docs review lifecycle check --input review.json --state lifecycle.json |
-| init | Write a source-bound documentation baseline | yes | clean-docs init --no-model |
-| explain | Explain a finding or coverage state | no | clean-docs explain purpose-contract --format json |
-| doctor | Check repository and integration readiness | with --bundle | clean-docs doctor --bundle doctor.json |
-| verify | Write a local deterministic outcome receipt | with --out | clean-docs verify --out outcome.json |
-| benchmark | Measure changed-check time and memory budgets | with --out | clean-docs benchmark --base HEAD~1 --head HEAD |
-| derive | Preview or write generated region changes | with --write | clean-docs derive --check |
-| drive | Repair bound regions after deterministic policy checks | yes | clean-docs drive |
-| plan | Build an immutable read-only documentation impact plan | no | clean-docs plan --base origin/main --head HEAD --format json |
-| verdict | Compose one coverage-stating static PR verdict | no | clean-docs verdict --base origin/main --head HEAD --format json |
-| check | Fail on binding drift or uncovered changed surface | no | clean-docs check --changed --base origin/main --head HEAD |
-| project | Regenerate configured documentation projections | unless --check | clean-docs project --check |
-| eval | Score human tasks and replayable agent round trips | with --history or live recording | clean-docs eval --fixtures .clean-docs/eval.yml |
-| release | Render typed release facts between immutable refs | no | clean-docs release --from v0.9.0 --to HEAD |
-| migrate | Upgrade a prior manifest with rollback backup | with --write or --rollback | clean-docs migrate --write |
-| feedback | Manage opt-in operational feedback | yes | clean-docs feedback status |
-| feedback enable | Consent to a named feedback sink | yes | clean-docs feedback enable --sink local |
-| feedback status | Show feedback consent and pending counts | no | clean-docs feedback status |
-| feedback preview | Print exact pending envelope bytes | no | clean-docs feedback preview |
-| feedback flush | Deliver pending feedback envelopes | yes | clean-docs feedback flush |
-| feedback disable | Remove feedback delivery authority | yes | clean-docs feedback disable |
-| feedback rotate | Replace the feedback installation identifier | yes | clean-docs feedback rotate |
-| feedback purge | Delete local feedback state | yes | clean-docs feedback purge |
-| feedback signal | Validate or ingest aggregate behavior signals | varies | clean-docs feedback signal validate --input signal.json |
-| feedback signal prepare | Add a canonical content-derived signal ID | no | clean-docs feedback signal prepare --input signal-body.json |
-| feedback signal validate | Validate one aggregate behavior signal | no | clean-docs feedback signal validate --input signal.json |
-| feedback signal ingest | Create an observed improvement case | yes | clean-docs feedback signal ingest --input signal.json |
-| feedback case | Advance a verified improvement case | yes | clean-docs feedback case transition --case ID --to reproduced --receipt receipt.json |
-| feedback case transition | Apply one adjacent evidence-backed state transition | yes | clean-docs feedback case transition --case ID --to reproduced --receipt receipt.json |
-| emit | Project the manifest into another format | yes | clean-docs emit --help |
-| emit stepwise-skill | Write a manifest-derived stepwise skill package | yes | clean-docs emit stepwise-skill --out skill |
-| emit llms-txt | Write an index of source-bound documents | yes | clean-docs emit llms-txt --out llms.txt |
-| standard | Build or verify the bundled policy pack | varies | clean-docs standard --help |
-| standard build | Compile the canonical standard | yes | clean-docs standard build |
-| standard check | Fail when the policy pack is stale | no | clean-docs standard check |
-<!-- clean-docs:end cli-reference -->
+| audit | Assess documentation and enforce adopted scopes | with --update-baseline | sourcebound audit --format json |
+| residue | Manage private cross-project residue matching | with init-local | sourcebound residue status |
+| residue status | Report whether private residue matching is active | no | sourcebound residue status |
+| residue init-local | Create a permission-restricted private residue template | yes | sourcebound residue init-local |
+| inventory | List detected repository surfaces and coverage | no | sourcebound inventory --format json |
+| claims | Rank and verify static count and column claims | no | sourcebound claims --format json |
+| binding | Inspect one proposed source relationship | no | sourcebound binding --help |
+| binding sensitivity | Test whether one static check depends on a frozen source fact | no | sourcebound binding sensitivity --help |
+| context | Compile provider-neutral evidence packets | no | sourcebound context --help |
+| context compile | Compile a bounded source-addressed context bundle | no | sourcebound context compile --request context-request.json |
+| review | Turn review observations into testable improvement candidates | with --out | sourcebound review --help |
+| review candidates | Compile documentation and product test candidates from one review | with --out | sourcebound review candidates --input review-observations.json |
+| review lifecycle | Track assessment-only candidate status with typed evidence | with init or transition | sourcebound review lifecycle --help |
+| review lifecycle init | Initialize a lifecycle record for one candidate set | yes | sourcebound review lifecycle init --input review.json --out lifecycle.json |
+| review lifecycle transition | Apply one evidence-backed candidate transition | yes | sourcebound review lifecycle transition --help |
+| review lifecycle check | Check a lifecycle record against its candidate set | no | sourcebound review lifecycle check --input review.json --state lifecycle.json |
+| init | Write a source-bound documentation baseline | yes | sourcebound init --no-model |
+| explain | Explain a finding or coverage state | no | sourcebound explain purpose-contract --format json |
+| doctor | Check repository and integration readiness | with --bundle | sourcebound doctor --bundle doctor.json |
+| verify | Write a local deterministic outcome receipt | with --out | sourcebound verify --out outcome.json |
+| benchmark | Measure changed-check time and memory budgets | with --out | sourcebound benchmark --base HEAD~1 --head HEAD |
+| derive | Preview or write generated region changes | with --write | sourcebound derive --check |
+| drive | Repair bound regions after deterministic policy checks | yes | sourcebound drive |
+| plan | Build an immutable read-only documentation impact plan | no | sourcebound plan --base origin/main --head HEAD --format json |
+| verdict | Compose one coverage-stating static PR verdict | no | sourcebound verdict --base origin/main --head HEAD --format json |
+| check | Fail on binding drift or uncovered changed surface | no | sourcebound check --changed --base origin/main --head HEAD |
+| project | Regenerate configured documentation projections | unless --check | sourcebound project --check |
+| eval | Score human tasks and replayable agent round trips | with --history or live recording | sourcebound eval --fixtures .sourcebound/eval.yml |
+| release | Render typed release facts between immutable refs | no | sourcebound release --from v0.9.0 --to HEAD |
+| migrate | Upgrade a prior manifest with rollback backup | with --write or --rollback | sourcebound migrate --write |
+| feedback | Manage opt-in operational feedback | yes | sourcebound feedback status |
+| feedback enable | Consent to a named feedback sink | yes | sourcebound feedback enable --sink local |
+| feedback status | Show feedback consent and pending counts | no | sourcebound feedback status |
+| feedback preview | Print exact pending envelope bytes | no | sourcebound feedback preview |
+| feedback flush | Deliver pending feedback envelopes | yes | sourcebound feedback flush |
+| feedback disable | Remove feedback delivery authority | yes | sourcebound feedback disable |
+| feedback rotate | Replace the feedback installation identifier | yes | sourcebound feedback rotate |
+| feedback purge | Delete local feedback state | yes | sourcebound feedback purge |
+| feedback signal | Validate or ingest aggregate behavior signals | varies | sourcebound feedback signal validate --input signal.json |
+| feedback signal prepare | Add a canonical content-derived signal ID | no | sourcebound feedback signal prepare --input signal-body.json |
+| feedback signal validate | Validate one aggregate behavior signal | no | sourcebound feedback signal validate --input signal.json |
+| feedback signal ingest | Create an observed improvement case | yes | sourcebound feedback signal ingest --input signal.json |
+| feedback case | Advance a verified improvement case | yes | sourcebound feedback case transition --case ID --to reproduced --receipt receipt.json |
+| feedback case transition | Apply one adjacent evidence-backed state transition | yes | sourcebound feedback case transition --case ID --to reproduced --receipt receipt.json |
+| emit | Project the manifest into another format | yes | sourcebound emit --help |
+| emit stepwise-skill | Write a manifest-derived stepwise skill package | yes | sourcebound emit stepwise-skill --out skill |
+| emit llms-txt | Write an index of source-bound documents | yes | sourcebound emit llms-txt --out llms.txt |
+| standard | Build or verify the bundled policy pack | varies | sourcebound standard --help |
+| standard build | Compile the canonical standard | yes | sourcebound standard build |
+| standard check | Fail when the policy pack is stale | no | sourcebound standard check |
+<!-- sourcebound:end cli-reference -->
 
 ## Impact plans
 
@@ -76,12 +76,12 @@ The command compares the merge base with the requested head, traverses accepted 
 projections, and evaluations, and writes nothing to the worktree:
 
 ```bash
-clean-docs plan --base origin/main --head HEAD --format json
+sourcebound plan --base origin/main --head HEAD --format json
 ```
 
-The JSON records the clean-docs producer version and every changed path with its base and head blob,
+The JSON records the sourcebound producer version and every changed path with its base and head blob,
 adapter decision, coverage state, and graph roots. Its digest binds that producer and those inputs
-to the resulting findings. `clean-docs.impact-plan.v2` also lists
+to the resulting findings. `sourcebound.impact-plan.v2` also lists
 `unsupported_documents`. Structurally valid MDX uses the `mdx-static` adapter and counts as a direct
 document change. Malformed MDX or a missing Node.js 20 runtime uses `mdx-static:failed`, enters the
 unsupported list, and makes coverage unknown.
@@ -125,17 +125,17 @@ Use `verdict` when a pull-request runner or agent needs one decision instead of 
 binding, projection, and changed-surface outputs independently:
 
 ```bash
-clean-docs verdict \
+sourcebound verdict \
   --base origin/main \
   --head HEAD \
-  --format json > clean-docs-verdict.json
+  --format json > sourcebound-verdict.json
 ```
 
 The caller worktree must be clean, and `--head` must resolve to the checked-out commit. The command
 uses static first-party adapters only. It does not run repository commands or plugins, write cache
 entries, or change the worktree.
 
-`clean-docs.pr-verdict.v1` is the canonical agent integration receipt. It includes:
+`sourcebound.pr-verdict.v1` is the canonical agent integration receipt. It includes:
 
 - producer version, requested base, merge base, and head commit;
 - manifest and impact-plan digests;
@@ -171,10 +171,10 @@ findings still emits a complete JSON receipt; SARIF remains an annotation projec
 receipt.
 
 Repeat `--mutation-receipt PATH` to summarize a
-`clean-docs.binding-sensitivity.v1` receipt. clean-docs checks its commit and mutation-plan digest
+`sourcebound.binding-sensitivity.v1` receipt. sourcebound checks its commit and mutation-plan digest
 before including its byte digest and state. The receipt cannot change the verdict and must keep
 `semantic_relationship_authorized` false. A `sensitive` result only shows that the check went stale
-after the frozen fact changed. It does not let clean-docs accept the relationship.
+after the frozen fact changed. It does not let sourcebound accept the relationship.
 
 ## Static-only pull-request checks
 
@@ -189,4 +189,4 @@ state is unknown. `verdict` is unconditionally static-only; the reusable pull-re
 that one receipt as its result and exposes no execution switch. Run trusted command and plugin
 checks in a separately configured default-branch or scheduled job.
 
-Run `clean-docs <command> --help` for command-specific flags. Return to the [project overview](../README.md) for installation and the supported binding surface.
+Run `sourcebound <command> --help` for command-specific flags. Return to the [project overview](../README.md) for installation and the supported binding surface.

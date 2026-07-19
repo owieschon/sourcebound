@@ -1,11 +1,11 @@
 # Evaluate documentation tasks
 
-<!-- clean-docs:policy register-v2 -->
-<!-- clean-docs:purpose -->
+<!-- sourcebound:policy register-v2 -->
+<!-- sourcebound:purpose -->
 A documentation task earns evidence only when the intended person or agent can finish it from the
 declared context. This guide lets maintainers build replayable evaluations and bind each result to
 the exact task, corpus, response, and scorer.
-<!-- clean-docs:end purpose -->
+<!-- sourcebound:end purpose -->
 
 **[Run the recorded tasks](#run-recorded-tasks)**.
 
@@ -19,17 +19,17 @@ drift, and stating a documented limit instead of guessing past it.
 
 ## Prerequisites
 
-- A valid `.clean-docs.yml`.
+- A valid `.sourcebound.yml`.
 - Context files that contain every fact required by the task.
 - Recorded response files for agent replay tasks.
 - Manifest-allowlisted commands for human command tasks.
 
 ## Run recorded tasks
 
-Store a version 1 fixture at `.clean-docs/eval.yml`, then run:
+Store a version 1 fixture at `.sourcebound/eval.yml`, then run:
 
 ```bash
-clean-docs eval --history .clean-docs/evaluation-history.json
+sourcebound eval --history .sourcebound/evaluation-history.json
 ```
 
 Replay is the default. It reads recorded responses without invoking a provider. The history is content-addressed and records the corpus, prompt, response, model, scorer, and result for each task.
@@ -38,7 +38,7 @@ Replay is the default. It reads recorded responses without invoking a provider. 
 
 Every task names an audience, prompt, context paths, and scorer. Agent tasks also name either a recorded response adapter or an explicit live command adapter.
 
-<!-- clean-docs:begin evaluation-scorers -->
+<!-- sourcebound:begin evaluation-scorers -->
 | scorer | input | passes when |
 | --- | --- | --- |
 | command | Allowlisted command and documented excerpt | Exit code and required output match |
@@ -46,9 +46,9 @@ Every task names an audience, prompt, context paths, and scorer. Agent tasks als
 | structured-output | Recorded JSON and expected value | Parsed values match exactly |
 | cited-limit | Recorded answer, canonical citation, and forbidden inferences | The answer cites the declared limit without inferring support |
 | mutation-red | Provider proposal, frozen fact, and disposable static repository | The sensitivity state matches without authorizing the relationship |
-<!-- clean-docs:end evaluation-scorers -->
+<!-- sourcebound:end evaluation-scorers -->
 
-A human command expectation must include `documented_as`. clean-docs first finds that exact excerpt in the supplied context, then runs the named allowlisted command and compares its exit code and required output.
+A human command expectation must include `documented_as`. sourcebound first finds that exact excerpt in the supplied context, then runs the named allowlisted command and compares its exit code and required output.
 
 This recorded limitation task contains no provider command:
 
@@ -58,11 +58,11 @@ tasks:
   - id: limitation-retrieval
     audience: agent
     prompt: Does the documented limit permit this behavior?
-    context: [.clean-docs/context/contributor.md]
+    context: [.sourcebound/context/contributor.md]
     model:
       adapter: recorded
       name: recorded-fixture
-      response: .clean-docs/evaluation/responses/limitation.txt
+      response: .sourcebound/evaluation/responses/limitation.txt
     scorer:
       type: cited-limit
       answer: The canonical limitation text
@@ -86,11 +86,11 @@ model:
 Then retain the live response and its run record:
 
 ```bash
-clean-docs eval --mode live --record-dir .clean-docs/evaluation/live
+sourcebound eval --mode live --record-dir .sourcebound/evaluation/live
 ```
 
 The task's command adapter receives a deterministic JSON prompt on standard input. Before invoking
-it, clean-docs writes `<task>.run.json` with the repository, worktree, corpus, prompt, scorer, and
+it, sourcebound writes `<task>.run.json` with the repository, worktree, corpus, prompt, scorer, and
 provider-configuration digests, plus the prompt byte count and deadline. Completion adds the
 response digest. A provider error or deadline preserves the input receipt and records a hashed error
 identity without copying provider output or credentials into the record.
@@ -100,9 +100,38 @@ and evaluation stops.
 The result is labeled `model-specific-live`. Move an accepted response into a recorded fixture
 before relying on it in offline CI.
 
+## Draft a generated reference at init
+
+`init` accepts the same provider-neutral command configuration when a repository wants bounded
+draft selections for its generated reference document. The configured command receives the
+same JSON request shape on standard input and returns only known fact IDs plus allowlisted
+templates. It does not write repository files.
+
+Use an explicit configuration. `argv[0]` is an absolute path to the operator-selected provider,
+and `env` lists only the credential names the provider needs. Sourcebound writes the transcript to
+`.sourcebound/init-proposer-transcript.json` unless `--model-transcript` overrides it:
+
+```yaml
+adapter: command
+name: local-provider
+argv: [/absolute/path/to/provider-cli, --json]
+timeout_seconds: 300
+env: [SOURCEBOUND_PROVIDER_TOKEN]
+```
+
+```bash
+sourcebound init \
+  --model-config .sourcebound/init-provider.yml
+```
+
+The parser rejects an unknown fact, duplicate selection, unsupported template, malformed
+response, or more than five drafts before init writes the generated baseline. A missing,
+failing, or timed-out provider also leaves generated documentation unwritten. Without
+`--model-config`, init follows the same deterministic bootstrap path as before.
+
 ## Score dependency sensitivity
 
-Use `mutation-red` when a provider proposes one `clean-docs.binding-proposal.v1` object and the
+Use `mutation-red` when a provider proposes one `sourcebound.binding-proposal.v1` object and the
 evaluator owns a separate frozen fact. Point the scorer at a disposable Git repository rather than
 letting the provider select its own mutation target:
 
@@ -110,7 +139,7 @@ letting the provider select its own mutation target:
 scorer:
   type: mutation-red
   repository: fixtures/pinned-repository
-  fact: .clean-docs/evaluation/mutation-target.json
+  fact: .sourcebound/evaluation/mutation-target.json
   fact_sha256: 0000000000000000000000000000000000000000000000000000000000000000
   expected_state: sensitive
 ```
@@ -119,7 +148,7 @@ Replace the zero digest with the exact SHA-256 of the frozen target file when th
 created. A digest mismatch is a configuration error, not a failed model task.
 
 The scorer calls the same static sensitivity primitive as
-`clean-docs binding sensitivity`. Its task passes when the observed state matches
+`sourcebound binding sensitivity`. Its task passes when the observed state matches
 `expected_state`; that pass does not accept the relationship. The task detail records the complete
 sensitivity-receipt digest and says that semantic authority remains false. Score semantic precision
 and recall against a separately frozen gold relationship set.
@@ -131,12 +160,12 @@ documents. The request pins the repository commit, byte budget, source path and 
 authority, relationship, rank, and whether the item is required:
 
 ```bash
-clean-docs context compile \
-  --request .clean-docs/context-request.json \
+sourcebound context compile \
+  --request .sourcebound/context-request.json \
   --format json
 ```
 
-The `clean-docs.context-bundle.v1` result lists included and excluded items with reasons. Direct
+The `sourcebound.context-bundle.v1` result lists included and excluded items with reasons. Direct
 evidence outranks repository prose. An accepted policy can carry instruction authority; ordinary
 documentation remains data even when its text resembles a prompt. If required evidence does not
 fit, the bundle is `unknown` and the command exits `2`.
@@ -155,4 +184,4 @@ fit, the bundle is `unknown` and the command exits `2`.
 
 ## Next step
 
-Run `clean-docs project` before evaluation when a task consumes a generated context bundle, then commit the bundle and evaluation history with the canonical documentation change.
+Run `sourcebound project` before evaluation when a task consumes a generated context bundle, then commit the bundle and evaluation history with the canonical documentation change.

@@ -26,8 +26,8 @@ class MigrationPlan:
 
     def as_dict(self) -> dict[str, object]:
         payload = asdict(self)
-        payload["schema"] = "clean-docs.manifest-migration.v1"
-        payload["backup"] = ".clean-docs.yml.v0.bak"
+        payload["schema"] = "sourcebound.manifest-migration.v1"
+        payload["backup"] = ".sourcebound.yml.v0.bak"
         return payload
 
 

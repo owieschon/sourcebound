@@ -76,18 +76,18 @@ def test_parser_preserves_utf8_byte_locations() -> None:
 def test_policy_controls_have_an_mdx_safe_comment_form() -> None:
     source = (
         "# Guide\n\n"
-        "{/* clean-docs:policy register-v2 */}\n"
-        "{/* clean-docs:role reference */}\n"
-        "{/* clean-docs:purpose */}\n"
+        "{/* sourcebound:policy register-v2 */}\n"
+        "{/* sourcebound:role reference */}\n"
+        "{/* sourcebound:purpose */}\n"
         "Look up the current contract.\n"
-        "{/* clean-docs:end purpose */}\n"
+        "{/* sourcebound:end purpose */}\n"
     )
 
     policy_text = parse_mdx(source).policy_text(source)
 
-    assert "<!-- clean-docs:policy register-v2 -->" in policy_text
-    assert "<!-- clean-docs:role reference -->" in policy_text
-    assert "<!-- clean-docs:purpose -->" in policy_text
+    assert "<!-- sourcebound:policy register-v2 -->" in policy_text
+    assert "<!-- sourcebound:role reference -->" in policy_text
+    assert "<!-- sourcebound:purpose -->" in policy_text
     assert "Look up the current contract." in policy_text
 
 

@@ -1,14 +1,14 @@
 # Feedback loop
 
-<!-- clean-docs:policy register-v2 -->
-<!-- clean-docs:purpose -->
+<!-- sourcebound:policy register-v2 -->
+<!-- sourcebound:purpose -->
 Operators can use this page to turn run outcomes into product improvements without giving telemetry
 control over documentation gates, project purpose, or policy.
-<!-- clean-docs:end purpose -->
+<!-- sourcebound:end purpose -->
 
 **[Preview the exact envelope bytes before enabling delivery](#enable-and-inspect-feedback)**.
 
-Feedback is a separate observation plane. clean-docs records bounded outcomes from opted-in runs
+Feedback is a separate observation plane. sourcebound records bounded outcomes from opted-in runs
 and delivers them to a named sink. Delivery never participates in a documentation gate. Aggregate
 results return through the separately governed [behavior-signal path](BEHAVIOR_SIGNALS.md).
 
@@ -17,7 +17,7 @@ results return through the separately governed [behavior-signal path](BEHAVIOR_S
 Feedback is off by default in local runs and CI. While it is off, a run creates no installation
 identifier, envelope, outbox file, or network request.
 
-Enabling feedback writes `.clean-docs/feedback.json`. That visible file names the sink, a
+Enabling feedback writes `.sourcebound/feedback.json`. That visible file names the sink, a
 pseudonymous installation identifier, retention, and queue limits. It never stores a credential.
 Delivery remains explicit: enabled runs add local envelopes, and only `feedback flush` contacts a
 connected sink.
@@ -27,35 +27,51 @@ connected sink.
 Use a repository-local sink to inspect the complete lifecycle without a network request:
 
 ```bash
-clean-docs feedback enable --sink local
-clean-docs check
-clean-docs feedback status
-clean-docs feedback preview
-clean-docs feedback flush
+sourcebound feedback enable --sink local
+sourcebound check
+sourcebound feedback status
+sourcebound feedback preview
+sourcebound feedback flush
 ```
 
-`preview` writes the exact pending `clean-docs.feedback.v1` envelope bytes in delivery order.
+`preview` writes the exact pending `sourcebound.feedback.v1` envelope bytes in delivery order.
 Local delivery preserves those bytes. A connected adapter wraps the same envelope in its transport
 format and reads its credential only during `flush`.
 
 To stop delivery authority immediately while retaining the local queue:
 
 ```bash
-clean-docs feedback disable
+sourcebound feedback disable
 ```
 
 To remove the identifier and every local envelope, signal, case, and delivery record:
 
 ```bash
-clean-docs feedback purge
+sourcebound feedback purge
 ```
 
 `feedback rotate` replaces the pseudonymous installation identifier. It does not rewrite queued
 envelopes.
 
+## What fires, and when
+
+Each opted-in non-feedback command writes one local envelope after it exits. Feedback commands
+manage the queue and do not create another envelope. Nothing fires while feedback is off.
+
+| Exit code | `result_class` | Meaning |
+| --- | --- | --- |
+| `0` | `success` | The command completed its configured contract. |
+| `1` | `drift` | A declared check found documentation drift. |
+| `2` | `invalid` | Input, configuration, or a bounded provider response was invalid. |
+| `3` | `extraction-failed` | Static extraction could not produce required evidence. |
+| Any other code | `failure` | The command stopped outside the defined classes. |
+
+The envelope records the command and exit class, not its arguments, source, prose, prompt, or
+provider response. A capture failure leaves the original command result unchanged.
+
 ## Outgoing envelope
 
-`clean-docs.feedback.v1` contains only bounded operational fields:
+`sourcebound.feedback.v1` contains only bounded operational fields:
 
 | Field | Meaning |
 | --- | --- |
@@ -63,9 +79,9 @@ envelopes.
 | `run_id` | Pseudorandom SHA-256 created once for an opted-in invocation |
 | `outcome_id` | SHA-256 binding that run to its command result and repository revision |
 | `occurred_at` | UTC observation time |
-| `product_version` | clean-docs producer version |
+| `product_version` | sourcebound producer version |
 | `installation_id` | Pseudonymous identifier created by explicit enable |
-| `command` | Top-level clean-docs command, without arguments |
+| `command` | Top-level sourcebound command, without arguments |
 | `exit_code` and `result_class` | Bounded process result |
 | `execution_policy` | `trusted` or `static-only` |
 | `adapter` | Aggregate document adapter class |

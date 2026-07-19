@@ -36,7 +36,7 @@ def _repo(tmp_path: Path) -> tuple[Path, str]:
 def _request(root: Path, commit: str, budget: int) -> Path:
     path = root / "context-request.json"
     path.write_text(json.dumps({
-        "schema": "clean-docs.context-request.v1",
+        "schema": "sourcebound.context-request.v1",
         "repository_commit": commit,
         "budget_bytes": budget,
         "items": [

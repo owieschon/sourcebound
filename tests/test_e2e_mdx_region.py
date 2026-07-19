@@ -48,17 +48,17 @@ import NeverRun from '../../outside.js'
 The source owns this table.
 </Callout>
 
-{/* clean-docs:begin actions */}
+{/* sourcebound:begin actions */}
 | name | tier |
 | --- | --- |
 | check | 1 |
 | drive | 2 |
-{/* clean-docs:end actions */}
+{/* sourcebound:end actions */}
 
 ```md
-{/* clean-docs:begin fake */}
+{/* sourcebound:begin fake */}
 [Missing](missing-inside-fence.md)
-{/* clean-docs:end fake */}
+{/* sourcebound:end fake */}
 ```
 
 Author-owned ending.
@@ -83,7 +83,7 @@ def test_mdx_region_drifts_repairs_and_preserves_every_other_byte(
     root = tmp_path / "repo"
     (root / "docs").mkdir(parents=True)
     (root / "src").mkdir()
-    (root / ".clean-docs.yml").write_text(MANIFEST)
+    (root / ".sourcebound.yml").write_text(MANIFEST)
     (root / "src/actions.py").write_text(SOURCE_TWO)
     document = root / "docs/guide.mdx"
     document.write_text(MDX)

@@ -1,13 +1,13 @@
 # Manifest reference
 
-<!-- clean-docs:policy register-v2 -->
-<!-- clean-docs:purpose -->
-This reference defines the manifest fields and binding surfaces that clean-docs accepts. Use it when you need to protect a repository fact without guessing where that fact belongs.
-<!-- clean-docs:end purpose -->
+<!-- sourcebound:policy register-v2 -->
+<!-- sourcebound:purpose -->
+This reference defines the manifest fields and binding surfaces that sourcebound accepts. Use it when you need to protect a repository fact without guessing where that fact belongs.
+<!-- sourcebound:end purpose -->
 
 **[Create a binding from the runnable tutorial](learn/tutorial-catch-a-lying-doc.md)**.
 
-Confirm the result with [`clean-docs check` and `clean-docs verify`](CLI.md).
+Confirm the result with [`sourcebound check` and `sourcebound verify`](CLI.md).
 
 ## Binding types
 
@@ -16,17 +16,17 @@ registry; the generated table below owns their field-level contract.
 
 This table comes from the manifest validator:
 
-<!-- clean-docs:begin manifest-reference -->
+<!-- sourcebound:begin manifest-reference -->
 | binding | required | verifies |
 | --- | --- | --- |
 | region | id, type, doc, region, extractor, source, renderer | Generated content matches source evidence |
 | claim | id, type, doc, anchor, command, assertion | Command output; declared reader-facing prose when configured |
 | symbol | id, type, doc, anchor, source | A source path or Python symbol still exists |
-<!-- clean-docs:end manifest-reference -->
+<!-- sourcebound:end manifest-reference -->
 
 ## Region example
 
-Create `.clean-docs.yml` at the repository root:
+Create `.sourcebound.yml` at the repository root:
 
 ```yaml
 version: 1
@@ -44,22 +44,22 @@ bindings:
 Mark the generated destination:
 
 ```markdown
-<!-- clean-docs:begin actions -->
-<!-- clean-docs:end actions -->
+<!-- sourcebound:begin actions -->
+<!-- sourcebound:end actions -->
 ```
 
 Inside an `.mdx` document, use MDX comment expressions so the file remains valid MDX:
 
 ```mdx
-{/* clean-docs:begin actions */}
-{/* clean-docs:end actions */}
+{/* sourcebound:begin actions */}
+{/* sourcebound:end actions */}
 ```
 
 MDX policy, role, purpose, allowance, and region controls use the same
-`{/* clean-docs:... */}` form. clean-docs normalizes those standalone controls for policy
+`{/* sourcebound:... */}` form. sourcebound normalizes those standalone controls for policy
 evaluation; it does not evaluate any other expression.
 
-The source assignment may be a list of dictionaries or a dictionary whose values are records. Constructor calls are read as keyword records. clean-docs reads the syntax tree; the [security model](SECURITY_MODEL.md) owns the execution boundary.
+The source assignment may be a list of dictionaries or a dictionary whose values are records. Constructor calls are read as keyword records. sourcebound reads the syntax tree; the [security model](SECURITY_MODEL.md) owns the execution boundary.
 
 ### Path glob bindings
 
@@ -74,7 +74,7 @@ allowlisted JSON command returns the configured expected value. Add `prose` to a
 text appears under the document anchor. `prose` must include the JSON representation of `expected`,
 so the value the reader sees is part of the same contract. A command pin without `prose` is a legacy
 output-only contract; its receipt reports that the anchored prose was not checked. Use a generated
-scalar region when clean-docs should own the bytes, or an accepted
+scalar region when sourcebound should own the bytes, or an accepted
 [source claim check](#source-claim-checks) for bounded prose shapes that static extraction supports.
 
 ```yaml
@@ -89,19 +89,19 @@ assertion:
 
 This table comes from the public capability registry:
 
-<!-- clean-docs:begin supported-bindings -->
+<!-- sourcebound:begin supported-bindings -->
 | binding | source | output | check |
 | --- | --- | --- | --- |
 | command pin (`type: claim`) | Allowlisted JSON command | Configured assertion, with optional declared prose at a document anchor | Compare typed expected and observed values; verify declared anchored prose |
 | region | Static Python, structured data, text, or paths | Table, list, scalar, or fenced text | Re-render and compare |
 | symbol | Static path or Python symbol | Reference at a document anchor | Resolve the cited locator |
-<!-- clean-docs:end supported-bindings -->
+<!-- sourcebound:end supported-bindings -->
 
 ## Depth model
 
 Keep the README focused on the point, first action, proof, and routing. Put procedures in guides and lookup material here. A binding keeps one canonical source for a fact; it does not require every fact to share one page.
 
-Repositories do not configure a standard path. clean-docs bundles the policy pack compiled from [`STANDARD.md`](../STANDARD.md), and CI fails when the authored standard and compiled pack differ.
+Repositories do not configure a standard path. sourcebound bundles the policy pack compiled from [`STANDARD.md`](../STANDARD.md), and CI fails when the authored standard and compiled pack differ.
 
 ## Review contracts
 
@@ -163,7 +163,7 @@ invalid. A file, aggregate-byte, parse, or structured-node overage makes the aff
 unresolved and the contract `unknown`. Because the only supported mode is `observe`, that outcome
 remains advisory.
 
-Within one evaluation, clean-docs reads each unique path once per immutable ref. It reuses the
+Within one evaluation, sourcebound reads each unique path once per immutable ref. It reuses the
 Python AST, structured-data parse, and batched Markdown or MDX parse for every locator on that
 path. It also reuses the digest for an identical ref, path, extractor, and locator. These caches
 bound repeated work; they do not persist across evaluations.
@@ -179,7 +179,7 @@ The comparison of two immutable refs produces one state:
 
 Every state remains advisory in `mode: observe`. `cochanged` records two changes, not review
 completion or semantic correctness. `unknown` exposes broken observation without changing the
-gate. Source and target relationships are repository-declared; clean-docs does not infer them.
+gate. Source and target relationships are repository-declared; sourcebound does not infer them.
 The impact graph preserves `affects` and `requests-review` edges for inspection, but those edges do
 not add artifact roots, make an artifact covered, change `coverage_complete`, or authorize repair.
 An unresolved or `review-recommended` contract can make the impact summary `recommended`; it
@@ -208,7 +208,7 @@ source_claim_checks:
 ```
 
 The check stores no expected value. The number in the document and the statically extracted source
-value remain the two values under comparison. `clean-docs claims` reports every accepted
+value remain the two values under comparison. `sourcebound claims` reports every accepted
 relationship and bounded assessment candidates. Its JSON output distinguishes
 `candidate_population`, `candidate_shown`, and `candidate_truncated`; a cap never looks like the
 whole denominator. A missing accepted locator fails closed.
@@ -231,16 +231,16 @@ The command keeps the provider proposal and the scorer-controlled fact in separa
 
 ```bash
 FACT_SHA256="$(shasum -a 256 mutation-target.json | awk '{print $1}')"
-clean-docs binding sensitivity \
+sourcebound binding sensitivity \
   --proposal proposal.json \
   --fact mutation-target.json \
   --fact-sha256 "$FACT_SHA256" \
   --format json
 ```
 
-`clean-docs.binding-proposal.v1` contains a full `repository_commit` and one `relationship` with
+`sourcebound.binding-proposal.v1` contains a full `repository_commit` and one `relationship` with
 `id`, `kind`, `doc`, `anchor`, `subject`, `source`, and `locator`.
-`clean-docs.mutation-target.v1` binds the same commit, source, locator, and kind to one `member`, the
+`sourcebound.mutation-target.v1` binds the same commit, source, locator, and kind to one `member`, the
 baseline `value_sha256`, and either `configured-source-claim` or `frozen-evaluation-fact` as its
 selection basis. The basis is provenance, not semantic authority. The `--fact-sha256` argument pins
 the complete target file before execution.
@@ -252,7 +252,7 @@ code runs. Duplicate
 keys, dynamic mappings, command pins, plugins, path globs, and any target that needs code execution
 return `unsupported`.
 
-`clean-docs.binding-sensitivity.v1` reports one state:
+`sourcebound.binding-sensitivity.v1` reports one state:
 
 | state | meaning |
 | --- | --- |
@@ -268,10 +268,10 @@ authorize that relationship.
 
 ## Manifest versions
 
-Version 2 removes the `network` key from allowed commands because clean-docs does not provide an
+Version 2 removes the `network` key from allowed commands because sourcebound does not provide an
 operating-system network sandbox. Version 1 remains readable. If it contains `network: false`,
-clean-docs marks that field as deprecated; it neither blocks nor counts network traffic. Run
-`clean-docs migrate --write` to remove the field with a rollback backup.
+sourcebound marks that field as deprecated; it neither blocks nor counts network traffic. Run
+`sourcebound migrate --write` to remove the field with a rollback backup.
 
 ## Structured visual projections
 
@@ -280,13 +280,13 @@ equivalent. Use one when a screenshot or diagram needs numbered callouts, a dark
 complete nonvisual explanation. The record is data; generated outputs are projections and must not
 be edited independently.
 
-The `clean-docs.visual.v1` record requires intrinsic dimensions so percentage coordinates remain
+The `sourcebound.visual.v1` record requires intrinsic dimensions so percentage coordinates remain
 stable as the image scales. `src` and `src_dark` are HTTPS URLs or repository-relative paths.
 Alternative text and captions are single lines. The agent output keeps the full explanation and
 every numbered callout:
 
 ```yaml
-schema: clean-docs.visual.v1
+schema: sourcebound.visual.v1
 id: queue-flow
 kind: screenshot
 src: docs/assets/queue-light.png
@@ -317,18 +317,18 @@ projections:
     - id: queue-flow
       source: docs/visuals/queue-flow.yml
       human_output: docs/generated/queue-flow.mdx
-      agent_output: .clean-docs/visuals/queue-flow.md
+      agent_output: .sourcebound/visuals/queue-flow.md
 ```
 
-Run `clean-docs project` to write both outputs. Run `clean-docs project --check` in CI so a changed
+Run `sourcebound project` to write both outputs. Run `sourcebound project --check` in CI so a changed
 asset record cannot leave either audience on an older projection. Local image paths must exist;
 record IDs, annotation IDs, output paths, coordinates, dimensions, and unknown fields fail closed.
 The [source-bound flow projection](generated/source-bound-flow.md) dogfoods this contract against
-the diagram that introduces clean-docs.
+the diagram that introduces Sourcebound.
 
 ## Context request
 
-`clean-docs.context-request.v1` compiles a provider-neutral evidence packet from the current commit.
+`sourcebound.context-request.v1` compiles a provider-neutral evidence packet from the current commit.
 The byte budget is mandatory. The request contains a full `repository_commit`, positive
 `budget_bytes`, and one or more items.
 Each item names an `id`, `kind`, repository-relative `path`, `start_line`, `end_line`, `authority`,

@@ -50,7 +50,7 @@ def main() -> None:
         raise SystemExit(f"unsupported fixture operation: {operation}")
     json.dump(
         {
-            "schema": "clean-docs.plugin-response.v1",
+            "schema": "sourcebound.plugin-response.v1",
             "api_version": 1,
             "result": result,
         },

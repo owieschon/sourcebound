@@ -29,9 +29,9 @@ TITLE_FILLER = {
     "covers",
     "is",
 }
-PURPOSE_BEGIN = "<!-- clean-docs:purpose -->"
-PURPOSE_END = "<!-- clean-docs:end purpose -->"
-REGISTER_PROFILE = "<!-- clean-docs:policy register-v2 -->"
+PURPOSE_BEGIN = "<!-- sourcebound:purpose -->"
+PURPOSE_END = "<!-- sourcebound:end purpose -->"
+REGISTER_PROFILE = "<!-- sourcebound:policy register-v2 -->"
 CANNED_PURPOSE_STEMS = (
     "read this page before changing or relying on",
     "defines the repository's current contract for this surface",
@@ -39,10 +39,10 @@ CANNED_PURPOSE_STEMS = (
 )
 NON_PROSE_STARTS = ("#", "- ", "* ", ">", "|", "```", "![", "[![", "<img", "<picture")
 POLICY_ALLOW = re.compile(
-    r'<!--\s*clean-docs:allow\s+([a-z][a-z-]+)\s+reason="([^"]+)"\s*-->'
+    r'<!--\s*sourcebound:allow\s+([a-z][a-z-]+)\s+reason="([^"]+)"\s*-->'
 )
 POLICY_YIELD = re.compile(
-    r'<!--\s*clean-docs:yield\s+rule="([a-z][a-z-]+)"\s+'
+    r'<!--\s*sourcebound:yield\s+rule="([a-z][a-z-]+)"\s+'
     r'to="([a-z][a-z-]+)"\s+reason="([^"]+)"\s*-->'
 )
 ABSTRACTION_SUFFIX = re.compile(r"[a-z]+(?:tion|sion|ment|ance|ence|ivity)\b", re.I)
@@ -135,7 +135,7 @@ def _preamble_contract(doc: str, text: str, pack: dict[str, Any]) -> list[Policy
     has_bold_route = bool(re.search(r"\*\*\[[^\]]+\]\([^)]+\)\*\*", joined))
     has_proof = (
         any(line.startswith("[![") for line in window)
-        or bool(re.search(r"\b(?:clean-docs\s+)?verify\b", joined, re.I))
+        or bool(re.search(r"\b(?:sourcebound\s+)?verify\b", joined, re.I))
         or bool(
             re.search(
                 r"\b(?:proof|proves|receipt|outcome|verification)\b",
@@ -357,7 +357,7 @@ def _purpose_contract(doc: str, text: str, pack: dict[str, Any]) -> list[PolicyF
         stripped = lines[first_body].strip()
         if (
             not stripped
-            or stripped.startswith("<!-- clean-docs:allow ")
+            or stripped.startswith("<!-- sourcebound:allow ")
             or stripped == REGISTER_PROFILE
         ):
             first_body += 1
@@ -474,7 +474,7 @@ def ensure_purpose_contract(text: str, *, fallback: bool = False) -> str:
     insertion = h1_index + 1
     while insertion < len(lines) and (
         not lines[insertion].strip()
-        or lines[insertion].strip().startswith("<!-- clean-docs:allow ")
+        or lines[insertion].strip().startswith("<!-- sourcebound:allow ")
     ):
         insertion += 1
     if selected is None:

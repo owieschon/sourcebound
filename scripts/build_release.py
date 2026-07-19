@@ -149,7 +149,7 @@ def _verify_reader_candidate(
 def build_release(output: Path) -> dict[str, object]:
     ref = _run("git", "rev-parse", "HEAD")
     epoch = _run("git", "show", "-s", "--format=%ct", ref)
-    with tempfile.TemporaryDirectory(prefix="clean-docs-release-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="sourcebound-release-") as temporary:
         parent = Path(temporary)
         evidence = parent / "evidence"
         evidence.mkdir()
@@ -174,7 +174,7 @@ def build_release(output: Path) -> dict[str, object]:
         sbom.write_text(first_sbom)
         sbom_digest = hashlib.sha256(first_sbom.encode()).hexdigest()
     receipt: dict[str, object] = {
-        "schema": "clean-docs.release.v1",
+        "schema": "sourcebound.release.v1",
         "ref": ref,
         "source_date_epoch": int(epoch),
         "artifact": {"file": wheel.name, "sha256": digest},

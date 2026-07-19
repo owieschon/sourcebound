@@ -13,7 +13,7 @@ from clean_docs.regions import atomic_write
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "docs/archive/v0/ultra-csm-before-after.md"
-OUTPUT = ROOT / ".clean-docs/learning/ultra-csm-hygiene.json"
+OUTPUT = ROOT / ".sourcebound/learning/ultra-csm-hygiene.json"
 
 
 def _table_rows(text: str) -> list[dict[str, str]]:
@@ -54,7 +54,7 @@ def _examples(text: str) -> list[dict[str, str]]:
 def build_record(source: Path = SOURCE) -> dict[str, object]:
     text = source.read_text(encoding="utf-8")
     return {
-        "schema": "clean-docs.learning-evidence.v1",
+        "schema": "sourcebound.learning-evidence.v1",
         "source": source.relative_to(ROOT).as_posix(),
         "measurements": _table_rows(text),
         "examples": _examples(text),

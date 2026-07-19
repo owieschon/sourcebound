@@ -105,9 +105,9 @@ def test_empty_repository_reaches_protected_baseline_without_manual_docs(
     assert checked.returncode == 0, checked.stderr
     assert projected.returncode == 0, projected.stderr
     assert verified.returncode == 0, verified.stderr
-    assert (root / ".clean-docs.yml").is_file()
+    assert (root / ".sourcebound.yml").is_file()
     assert (root / "llms.txt").is_file()
-    manifest = load_manifest(root / ".clean-docs.yml")
+    manifest = load_manifest(root / ".sourcebound.yml")
     assert manifest.projections is not None
     assert json.loads(verified.stdout)["outcomes"]["protected_baseline_current"]
 
@@ -128,7 +128,7 @@ def test_empty_repository_reaches_protected_baseline_without_manual_docs(
 
     assert strict.returncode == 0, strict.stderr
     assert _run(mature, "audit").returncode == 0
-    assert not (mature / ".clean-docs/audit-baseline.json").exists()
+    assert not (mature / ".sourcebound/audit-baseline.json").exists()
 
 
 def test_full_change_lifecycle_repairs_docs_coverage_projection_and_release(
@@ -203,10 +203,10 @@ def test_all_deterministic_workflows_operate_offline(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     root, base = _initialized_repository(tmp_path)
-    responses = root / ".clean-docs/responses"
+    responses = root / ".sourcebound/responses"
     responses.mkdir(parents=True)
     (responses / "answer.json").write_text('{"status":"ok"}\n')
-    (root / ".clean-docs/eval.yml").write_text(
+    (root / ".sourcebound/eval.yml").write_text(
         """\
 version: 1
 tasks:
@@ -217,7 +217,7 @@ tasks:
     model:
       adapter: recorded
       name: offline-fixture
-      response: .clean-docs/responses/answer.json
+      response: .sourcebound/responses/answer.json
     scorer:
       type: structured-output
       expected: {status: ok}
@@ -227,25 +227,25 @@ tasks:
         "parser.add_parser('serve')\nparser.add_parser('offline')\n"
     )
     head = _commit(root, "offline public change")
-    results, findings = drive(root, root / ".clean-docs.yml")
+    results, findings = drive(root, root / ".sourcebound.yml")
     assert any(item.changed for item in results)
     assert not findings
-    write_projections(root, load_manifest(root / ".clean-docs.yml"))
+    write_projections(root, load_manifest(root / ".sourcebound.yml"))
 
     monkeypatch.setattr(socket, "create_connection", _block_network)
     monkeypatch.setattr(socket.socket, "connect", _block_network)
     monkeypatch.setattr(socket.socket, "connect_ex", _block_network)
 
-    assert not any(item.changed for item in evaluate(root, root / ".clean-docs.yml"))
+    assert not any(item.changed for item in evaluate(root, root / ".sourcebound.yml"))
     assert not any(
         item.changed
-        for item in evaluate_projections(root, load_manifest(root / ".clean-docs.yml"))
+        for item in evaluate_projections(root, load_manifest(root / ".sourcebound.yml"))
     )
     assert build_release_report(root, base, head).deltas
     assert run_evaluation(
         root,
-        root / ".clean-docs.yml",
-        root / ".clean-docs/eval.yml",
+        root / ".sourcebound.yml",
+        root / ".sourcebound/eval.yml",
     ).ok
 
 
@@ -355,7 +355,7 @@ def test_v05_manifest_and_evidence_remain_compatible_at_v10(tmp_path: Path) -> N
             key: result[key]
             for key in ("binding", "doc", "status", "diff", "provenance")
         } == prior
-    manifest = load_manifest(root / ".clean-docs.yml")
+    manifest = load_manifest(root / ".sourcebound.yml")
     assert manifest.version == 1
     assert not any(item.changed for item in evaluate(root, manifest.path))
 
@@ -367,15 +367,15 @@ def test_independent_reader_release_requires_receipts_and_published_tasks_work(
     cli = (PROJECT / "docs/CLI.md").read_text()
     support = (PROJECT / "docs/SUPPORT.md").read_text()
     security = (PROJECT / "docs/SECURITY_MODEL.md").read_text()
-    specification = (PROJECT / "CLEAN_DOCS_SPEC.md").read_text()
+    specification = (PROJECT / "SOURCEBOUND_SPEC.md").read_text()
     supplied_docs = overview + cli + support + security
-    for command in ("clean-docs init", "clean-docs check", "clean-docs verify"):
+    for command in ("sourcebound init", "sourcebound check", "sourcebound verify"):
         assert command in supplied_docs
     assert "not an operating-system sandbox" in security
     assert "Network access is denied unless" not in specification
     assert "not an operating-system sandbox" in specification
 
-    published = tmp_path / "published-clean-docs"
+    published = tmp_path / "published-sourcebound"
     shutil.copytree(
         PROJECT,
         published,
@@ -395,7 +395,7 @@ def test_independent_reader_release_requires_receipts_and_published_tasks_work(
     assert evaluated.returncode == 0, evaluated.stdout + evaluated.stderr
     evaluation = json.loads(evaluated.stdout)
     assert evaluation["ok"]
-    declared = yaml.safe_load((published / ".clean-docs/eval.yml").read_text())
+    declared = yaml.safe_load((published / ".sourcebound/eval.yml").read_text())
     expected_scores: dict[str, dict[str, int]] = {}
     for task in declared["tasks"]:
         audience = task["audience"]
@@ -422,9 +422,9 @@ def test_independent_reader_release_requires_receipts_and_published_tasks_work(
     (release_gate / "pyproject.toml").write_text(
         '[project]\nname = "release-gate"\nversion = "1.0.0"\n'
     )
-    rubric = release_gate / ".clean-docs/reader-trial-rubric.yml"
+    rubric = release_gate / ".sourcebound/reader-trial-rubric.yml"
     rubric.parent.mkdir(parents=True)
-    shutil.copyfile(PROJECT / ".clean-docs/reader-trial-rubric.yml", rubric)
+    shutil.copyfile(PROJECT / ".sourcebound/reader-trial-rubric.yml", rubric)
     reader_trial = yaml.safe_load(rubric.read_text())
     assert [profile["id"] for profile in reader_trial["profiles"]] == [
         "anthropic-opus-4-8",

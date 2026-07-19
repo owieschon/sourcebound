@@ -1,9 +1,9 @@
 # Catch a lying doc
 
-<!-- clean-docs:policy register-v2 -->
-<!-- clean-docs:purpose -->
-This tutorial is for maintainers who want to see one source-bound fact fail and recover in a disposable repository. It turns an easy-to-miss command rename into a named check failure, a region-only repair, and a verified projection using an installed clean-docs release.
-<!-- clean-docs:end purpose -->
+<!-- sourcebound:policy register-v2 -->
+<!-- sourcebound:purpose -->
+This tutorial is for maintainers who want to see one source-bound fact fail and recover in a disposable repository. It turns an easy-to-miss command rename into a named check failure, a region-only repair, and a verified projection using an installed sourcebound release.
+<!-- sourcebound:end purpose -->
 
 **[Install the stable release](../INSTALL.md#install-the-latest-stable-release)**, then
 build the disposable repository below.
@@ -19,7 +19,7 @@ lists every binding, and the [install guide](../INSTALL.md) covers other install
 
 ## Before you begin
 
-Install a stable clean-docs artifact in an isolated environment and confirm `clean-docs --version` works. The [offline procedure](../INSTALL.md#install-without-package-index-access) is the path used to test this tutorial. You also need Git and Python 3.10 or newer.
+Install a stable sourcebound artifact in an isolated environment and confirm `sourcebound --version` works. The [offline procedure](../INSTALL.md#install-without-package-index-access) is the path used to test this tutorial. You also need Git and Python 3.10 or newer.
 
 ## 1. Build the fixture
 
@@ -38,16 +38,16 @@ PY
 cat > README.md <<'MD'
 # Moonbase Status
 
-<!-- clean-docs:purpose -->
+<!-- sourcebound:purpose -->
 Use this guide when a habitat operator needs the current public actions. It keeps the action table tied to source so a renamed command cannot remain plausible in the guide.
-<!-- clean-docs:end purpose -->
+<!-- sourcebound:end purpose -->
 
 ## Operator actions
 
-<!-- clean-docs:begin status-actions -->
-<!-- clean-docs:end status-actions -->
+<!-- sourcebound:begin status-actions -->
+<!-- sourcebound:end status-actions -->
 MD
-cat > .clean-docs.yml <<'YAML'
+cat > .sourcebound.yml <<'YAML'
 version: 1
 bindings:
   - id: status-actions
@@ -72,11 +72,11 @@ YAML
 Render the declared region, generate the projection, and verify the repository:
 
 ```bash
-clean-docs drive
-clean-docs project
-clean-docs check
-clean-docs verify
-git add .clean-docs.yml README.md llms.txt src/actions.py
+sourcebound drive
+sourcebound project
+sourcebound check
+sourcebound verify
+git add .sourcebound.yml README.md llms.txt src/actions.py
 git commit -m "Protect operator actions"
 ```
 
@@ -93,7 +93,7 @@ from pathlib import Path
 path = Path("src/actions.py")
 path.write_text(path.read_text().replace('"report"', '"publish"'))
 PY
-clean-docs check
+sourcebound check
 ```
 
 The final command exits `1` and names `status-actions`. That failure is the lesson: the old prose still reads well, but it no longer gets to pass as current.
@@ -103,25 +103,25 @@ The final command exits `1` and names `status-actions`. That failure is the less
 Repair the bound region, inspect its exact diff, refresh the projection, and run the final gate:
 
 ```bash
-clean-docs drive
+sourcebound drive
 git diff -- README.md
-clean-docs project
-clean-docs check
-clean-docs verify
+sourcebound project
+sourcebound check
+sourcebound verify
 ```
 
 `drive` changes the table row from `report` to `publish` without rewriting the surrounding prose. `project` updates the page digest in `llms.txt`. The last two commands exit `0`.
 
 The release-tested fixture records the same state changes:
 
-<!-- clean-docs:begin tutorial-outcomes -->
+<!-- sourcebound:begin tutorial-outcomes -->
 | moment | command | exit | meaning |
 | --- | --- | --- | --- |
-| Protected baseline | clean-docs check | 0 | The bound page matches source. |
-| Source changed alone | clean-docs check | 1 | The status-actions binding is stale. |
-| Declared region repaired | clean-docs drive | 0 | Only the bound region changes. |
-| Projection refreshed | clean-docs project | 0 | llms.txt receives the repaired page digest. |
-| Repository verified | clean-docs verify | 0 | Bindings and projections are current. |
-<!-- clean-docs:end tutorial-outcomes -->
+| Protected baseline | sourcebound check | 0 | The bound page matches source. |
+| Source changed alone | sourcebound check | 1 | The status-actions binding is stale. |
+| Declared region repaired | sourcebound drive | 0 | Only the bound region changes. |
+| Projection refreshed | sourcebound project | 0 | llms.txt receives the repaired page digest. |
+| Repository verified | sourcebound verify | 0 | Bindings and projections are current. |
+<!-- sourcebound:end tutorial-outcomes -->
 
 You have now seen the full loop. Read [the deterministic seam](deep-dive-the-deterministic-seam.md) to understand why a model can help with wording without gaining authority over this result.

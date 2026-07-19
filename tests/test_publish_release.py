@@ -69,8 +69,8 @@ class FakeReleaseClient:
 
 def _assets(tmp_path: Path) -> tuple[LocalAsset, ...]:
     files = {
-        "clean_docs-1.2.0-py3-none-any.whl": b"wheel",
-        "clean_docs-1.2.0-py3-none-any.spdx.json": b"sbom",
+        "sourcebound-1.2.0-py3-none-any.whl": b"wheel",
+        "sourcebound-1.2.0-py3-none-any.spdx.json": b"sbom",
         "SHA256SUMS": b"checksums",
         "release.json": b"release receipt",
     }
