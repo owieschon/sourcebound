@@ -131,6 +131,8 @@ EXPECTED_IDS_BY_RELEASE = {
         "malformed-audit-fails-closed",
         "valid-impact-classification",
         "malformed-impact-unknown",
+        "mdx-template-placeholder",
+        "fork-static-verdict",
         "exact-region-preservation",
     },
 }

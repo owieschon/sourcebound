@@ -21,5 +21,9 @@ scenarios:
     test: tests/test_impact.py::test_valid_mdx_change_is_classified_as_a_direct_document_change
   - id: malformed-impact-unknown
     test: tests/test_impact.py::test_malformed_mdx_change_is_unknown_and_disclosed
+  - id: mdx-template-placeholder
+    test: tests/test_audit.py::test_mdx_template_placeholder_is_advisory_not_a_broken_link
+  - id: fork-static-verdict
+    test: tests/test_verdict.py::test_static_verdict_classifies_valid_mdx_without_repository_execution
   - id: exact-region-preservation
     test: tests/test_e2e_mdx_region.py::test_mdx_region_drifts_repairs_and_preserves_every_other_byte

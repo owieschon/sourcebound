@@ -888,6 +888,34 @@ def test_audit_never_counts_mdx_as_checked_when_runtime_is_missing(
     )
 
 
+def test_mdx_template_placeholder_is_advisory_not_a_broken_link(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    template = root / "templates/prompt.mdx"
+    template.parent.mkdir()
+    template.write_text(
+        "# Prompt template\n\n"
+        "{/* clean-docs:role template */}\n\n"
+        "Read [the generated destination]({docs_url}).\n"
+    )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    report = audit(root)
+
+    assert report.ok
+    assert any(
+        finding.rule == "placeholder-link"
+        and finding.path == "templates/prompt.mdx"
+        for finding in report.advisories
+    )
+    assert not any(
+        finding.rule == "broken-local-link"
+        and finding.path == "templates/prompt.mdx"
+        for finding in (*report.findings, *report.advisories)
+    )
+
+
 def test_agent_documentation_is_active_while_tool_context_stays_internal(
     tmp_path: Path,
 ) -> None:
