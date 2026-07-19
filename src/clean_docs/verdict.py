@@ -23,6 +23,7 @@ NON_CLAIMS = (
     "unbound prose is not certified",
     "judgment prose is not certified",
     "mutation sensitivity is not semantic correctness",
+    "review-contract co-change is not semantic correctness",
     "catalog coverage is not prose coverage",
 )
 
@@ -118,6 +119,18 @@ class PullRequestVerdict:
             }
             for mechanism in ("region", "command-pin", "symbol", "plugin")
         }
+        review_contract_states = {
+            state: sum(
+                result.state == state
+                for result in self.impact.review_contracts
+            )
+            for state in (
+                "unaffected",
+                "review-recommended",
+                "cochanged",
+                "unknown",
+            )
+        }
         return {
             "schema": VERDICT_SCHEMA,
             "producer": {"name": "clean-docs", "version": __version__},
@@ -187,6 +200,11 @@ class PullRequestVerdict:
                     "current": sum(not result.changed for result in projections),
                     "stale": sum(result.changed for result in projections),
                 },
+                "review-contract": {
+                    "total": len(self.impact.review_contracts),
+                    **review_contract_states,
+                    "semantic_correctness_checked": False,
+                },
             },
             "changed_surface": {
                 "files": list(changed.changed_files),
@@ -219,6 +237,9 @@ class PullRequestVerdict:
             },
             "mutation_receipts": [
                 asdict(receipt) for receipt in self.mutation_receipts
+            ],
+            "review_contracts": [
+                result.as_dict() for result in self.impact.review_contracts
             ],
             "findings": [asdict(finding) for finding in self.findings],
             "non_claims": list(NON_CLAIMS),
@@ -462,6 +483,33 @@ def _collect_findings(
                 "then rerun clean-docs plan",
             )
         )
+    for contract in impact.review_contracts:
+        targets = contract.targets or contract.sources
+        path = targets[0].path if targets else impact.manifest
+        if contract.state == "review-recommended":
+            findings.append(
+                _finding(
+                    "review-contract-review-recommended",
+                    "note",
+                    path,
+                    f"review contract {contract.contract_id} observed source "
+                    "change without substantive target change",
+                    "review the configured target against the source evidence; "
+                    "update it only if the documented guidance changed",
+                )
+            )
+        elif contract.state == "unknown":
+            findings.append(
+                _finding(
+                    "review-contract-unknown",
+                    "note",
+                    path,
+                    f"review contract {contract.contract_id} could not resolve "
+                    "every configured locator",
+                    "repair the unresolved review-contract locator, then rerun "
+                    "clean-docs verdict",
+                )
+            )
     unique = {finding.id: finding for finding in findings}
     return tuple(
         sorted(

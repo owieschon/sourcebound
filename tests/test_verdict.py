@@ -151,6 +151,32 @@ bindings:
     return root
 
 
+def _add_public_api_review_contract(
+    root: Path,
+    *,
+    target_locator: str = "#api",
+) -> None:
+    manifest = root / ".clean-docs.yml"
+    manifest.write_text(
+        manifest.read_text()
+        + f"""\
+review_contracts:
+  - id: public-api-guidance
+    mode: observe
+    sources:
+      - id: public-api-function
+        path: src/api.py
+        extractor: python-symbol
+        locator: public_api
+    targets:
+      - id: api-guidance
+        path: README.md
+        extractor: markdown-section
+        locator: "{target_locator}"
+"""
+    )
+
+
 def _canonical_sha256(value: object) -> str:
     return hashlib.sha256(
         json.dumps(
@@ -234,8 +260,91 @@ def test_private_refactor_is_stable_and_ready_with_coverage_stated(
         "unbound prose is not certified",
         "judgment prose is not certified",
         "mutation sensitivity is not semantic correctness",
+        "review-contract co-change is not semantic correctness",
         "catalog coverage is not prose coverage",
     ]
+
+
+def test_review_contract_advisory_preserves_ready_verdict_and_receipts(
+    tmp_path: Path,
+) -> None:
+    root = _symbol_repository(tmp_path)
+    _add_public_api_review_contract(root)
+    base = _commit(root, "base")
+    source = root / "src/api.py"
+    source.write_text(source.read_text().replace(
+        "return timeout",
+        "return timeout * 2",
+    ))
+    head = _commit(root, "change public API behavior")
+
+    verdict = build_pr_verdict(
+        root,
+        root / ".clean-docs.yml",
+        base=base,
+        head=head,
+    )
+    payload = verdict.as_dict()
+
+    assert verdict.state == "ready"
+    finding = next(
+        item
+        for item in payload["findings"]
+        if item["rule"] == "review-contract-review-recommended"
+    )
+    assert finding["level"] == "note"
+    mechanism = payload["mechanisms"]["review-contract"]
+    assert mechanism == {
+        "total": 1,
+        "unaffected": 0,
+        "review-recommended": 1,
+        "cochanged": 0,
+        "unknown": 0,
+        "semantic_correctness_checked": False,
+    }
+    observation = payload["review_contracts"][0]
+    assert observation["id"] == "public-api-guidance"
+    assert observation["state"] == "review-recommended"
+    assert observation["semantic_correctness_checked"] is False
+    assert (
+        "review-contract co-change is not semantic correctness"
+        in payload["non_claims"]
+    )
+
+    sarif = json.loads(render_verdict_payload_sarif(payload))
+    sarif_finding = next(
+        result
+        for result in sarif["runs"][0]["results"]
+        if result["ruleId"] == "review-contract-review-recommended"
+    )
+    assert sarif_finding["partialFingerprints"]["cleanDocsFindingId"] == (
+        finding["id"]
+    )
+
+
+def test_unknown_review_contract_is_a_nonblocking_note(tmp_path: Path) -> None:
+    root = _symbol_repository(tmp_path)
+    _add_public_api_review_contract(
+        root,
+        target_locator="#missing-api-section",
+    )
+    head = _commit(root, "base")
+
+    verdict = build_pr_verdict(
+        root,
+        root / ".clean-docs.yml",
+        base=head,
+        head=head,
+    )
+
+    assert verdict.state == "ready"
+    finding = next(
+        item
+        for item in verdict.findings
+        if item.rule == "review-contract-unknown"
+    )
+    assert finding.level == "note"
+    assert verdict.as_dict()["mechanisms"]["review-contract"]["unknown"] == 1
 
 
 def test_unsupported_public_change_is_unknown(tmp_path: Path) -> None:
@@ -258,6 +367,11 @@ def test_unsupported_public_change_is_unknown(tmp_path: Path) -> None:
     assert "src/Service.java" in verdict.as_dict()["changed_surface"]["files"]
     assert any(
         finding.rule == "unsupported-public-candidate"
+        for finding in verdict.findings
+    )
+    assert any(
+        finding.rule == "unsupported-public-candidate"
+        and finding.level == "warning"
         for finding in verdict.findings
     )
 
