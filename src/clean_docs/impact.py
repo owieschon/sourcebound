@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import fnmatch
 import hashlib
 import json
 import re
@@ -681,6 +682,75 @@ def _workflow_events(
     return tuple(events)
 
 
+def _workflow_path_filters(raw: object) -> tuple[tuple[str, tuple[str, ...]], ...]:
+    """Return declared event path filters without consulting the hosting provider."""
+    if not isinstance(raw, dict):
+        return ()
+    triggers = raw.get("on", raw.get(True))
+    if not isinstance(triggers, dict):
+        return ()
+    filters: list[tuple[str, tuple[str, ...]]] = []
+    for event, configuration in sorted(triggers.items(), key=lambda item: str(item[0])):
+        if not isinstance(configuration, dict):
+            continue
+        paths = configuration.get("paths")
+        if not isinstance(paths, list) or not all(isinstance(path, str) for path in paths):
+            continue
+        filters.append((str(event), tuple(paths)))
+    return tuple(filters)
+
+
+def _matches_workflow_paths(path: str, patterns: tuple[str, ...]) -> bool:
+    """Apply GitHub's ordered include and negated-path semantics to one repository path."""
+    matched = False
+    for pattern in patterns:
+        negated = pattern.startswith("!")
+        candidate = pattern[1:] if negated else pattern
+        if fnmatch.fnmatchcase(path, candidate):
+            matched = not negated
+    return matched
+
+
+def _workflow_path_filter_findings(
+    root: Path,
+    *,
+    ref: str,
+    workflow_paths: tuple[str, ...],
+    changed_paths: tuple[str, ...],
+    prefix: str,
+) -> tuple[ImpactFinding, ...]:
+    """Report potentially skipped specialized workflows as unknown until a run receipt exists."""
+    relevant_paths = tuple(
+        path for path in changed_paths if Path(path).parts[:2] != (".github", "workflows")
+    )
+    if not relevant_paths:
+        return ()
+    findings: list[ImpactFinding] = []
+    for workflow_path in workflow_paths:
+        try:
+            raw = yaml.safe_load(RepositorySnapshot(root, ref).read_text(Path(workflow_path)))
+        except (yaml.YAMLError, UnicodeDecodeError):
+            continue
+        for event, patterns in _workflow_path_filters(raw):
+            excluded = tuple(
+                path for path in relevant_paths if not _matches_workflow_paths(path, patterns)
+            )
+            if not excluded:
+                continue
+            repository_workflow = _repo_path(prefix, workflow_path)
+            findings.append(
+                _finding(
+                    "unknown",
+                    "ci-path-filter-unverified",
+                    f"{repository_workflow} {event} paths may skip changed paths: "
+                    + ", ".join(excluded),
+                    paths=(repository_workflow, *(_repo_path(prefix, path) for path in excluded)),
+                    obligations=("verify-specialized-ci-run",),
+                )
+            )
+    return tuple(findings)
+
+
 def _finding(
     classification: str,
     rule: str,
@@ -1335,6 +1405,20 @@ def build_impact_plan(
                 obligations=("replay-evaluation",),
             )
         )
+    workflow_paths = tuple(
+        path
+        for path in _git(root, "ls-tree", "-r", "--name-only", changed.head, "--", ".github/workflows").splitlines()
+        if path.endswith((".yml", ".yaml"))
+    )
+    unknown.extend(
+        _workflow_path_filter_findings(
+            root,
+            ref=changed.head,
+            workflow_paths=workflow_paths,
+            changed_paths=changed.changed_files,
+            prefix=prefix,
+        )
+    )
     if manifest_relative.as_posix() in project_changed:
         recommended.append(
             _finding(
