@@ -18,19 +18,26 @@ from pathlib import Path
 import yaml
 
 from clean_docs.errors import ExtractionError
+from clean_docs.mdx import MdxDocument, MdxParserError, parse_mdx_documents
 from clean_docs.models import ReviewContract, ReviewLocator
 from clean_docs.snapshot import RepositorySnapshot
 
 
-_ATX_HEADING = re.compile(
-    r"^ {0,3}(?P<marks>#{1,6})[ \t]+(?P<title>.*?)[ \t]*#*[ \t]*$"
-)
-_SETEXT_HEADING = re.compile(r"^ {0,3}(?P<marks>=+|-+)[ \t]*$")
 _MARKDOWN_MARKUP = re.compile(r"[`*_~]")
 _HTML_TAG = re.compile(r"<[^>]*>")
+_HTML_COMMENT = re.compile(br"<!--.*?-->", re.DOTALL)
 _POINTER_ESCAPE = re.compile(r"~(?:0|1)")
 _CHANGED_STATES = frozenset({"added", "changed", "removed"})
 _SUBSTANTIVE_TARGET_STATES = frozenset({"added", "changed"})
+_MASKED_MARKDOWN_NODE_TYPES = frozenset(
+    {
+        "code",
+        "yaml",
+        "mdxjsEsm",
+        "mdxFlowExpression",
+        "mdxTextExpression",
+    }
+)
 
 
 class _LocatorMissing(Exception):
@@ -210,68 +217,126 @@ def _markdown_slug(title: str) -> str:
 
 @dataclass(frozen=True)
 class _Heading:
-    start: int
-    content_start: int
+    start_byte: int
+    end_byte: int
     level: int
     slug: str
 
 
-def _markdown_headings(lines: list[str]) -> list[_Heading]:
-    raw: list[tuple[int, int, int, str]] = []
-    for index, line in enumerate(lines):
-        match = _ATX_HEADING.match(line)
-        if match:
-            raw.append(
-                (
-                    index,
-                    index + 1,
-                    len(match.group("marks")),
-                    _markdown_slug(match.group("title")),
-                )
-            )
-            continue
-        setext = _SETEXT_HEADING.match(line)
+@dataclass(frozen=True)
+class _MarkdownSnapshot:
+    resolution: str
+    text: str | None = None
+    document: MdxDocument | None = None
+    pre_masked_ranges: tuple[tuple[int, int], ...] = ()
+
+
+_MarkdownKey = tuple[str, str]
+_MarkdownSnapshots = dict[_MarkdownKey, _MarkdownSnapshot]
+
+
+def _html_block(node_type: str, name: str | None) -> bool:
+    return (
+        node_type == "mdxJsxFlowElement"
+        and name is not None
+        and name[:1].islower()
+    )
+
+
+def _masked_ranges(
+    document: MdxDocument,
+    pre_masked_ranges: tuple[tuple[int, int], ...] = (),
+) -> tuple[tuple[int, int], ...]:
+    return pre_masked_ranges + tuple(
+        (node.start_byte, node.end_byte)
+        for node in document.nodes
         if (
-            setext
-            and index > 0
-            and lines[index - 1].strip()
-            and not _ATX_HEADING.match(lines[index - 1])
+            node.type in _MASKED_MARKDOWN_NODE_TYPES
+            or _html_block(node.type, node.name)
+        )
+    )
+
+
+def _inside_range(
+    start: int,
+    end: int,
+    ranges: tuple[tuple[int, int], ...],
+) -> bool:
+    return any(
+        range_start <= start and end <= range_end
+        for range_start, range_end in ranges
+    )
+
+
+def _markdown_headings(
+    document: MdxDocument,
+    pre_masked_ranges: tuple[tuple[int, int], ...],
+) -> tuple[_Heading, ...]:
+    masked_ranges = _masked_ranges(document, pre_masked_ranges)
+    headings: list[_Heading] = []
+    for node in document.nodes:
+        if node.type != "heading" or _inside_range(
+            node.start_byte,
+            node.end_byte,
+            masked_ranges,
         ):
-            raw.append(
-                (
-                    index - 1,
-                    index + 1,
-                    1 if setext.group("marks").startswith("=") else 2,
-                    _markdown_slug(lines[index - 1].strip()),
-                )
+            continue
+        if node.depth is None or node.text is None:
+            raise _LocatorUnresolved
+        headings.append(
+            _Heading(
+                node.start_byte,
+                node.end_byte,
+                node.depth,
+                _markdown_slug(node.text),
             )
-
-    occurrences: dict[str, int] = {}
-    headings = []
-    for start, content_start, level, base_slug in sorted(raw):
-        occurrence = occurrences.get(base_slug, 0)
-        occurrences[base_slug] = occurrence + 1
-        slug = base_slug if occurrence == 0 else f"{base_slug}-{occurrence}"
-        headings.append(_Heading(start, content_start, level, slug))
-    return headings
+        )
+    return tuple(sorted(headings, key=lambda item: item.start_byte))
 
 
-def _markdown_section_digest(text: str, locator: str) -> str:
+def _visible_markdown(
+    text: str,
+    document: MdxDocument,
+    pre_masked_ranges: tuple[tuple[int, int], ...],
+) -> bytes:
+    encoded = bytearray(text.encode("utf-8"))
+    for start, end in _masked_ranges(document, pre_masked_ranges):
+        if start < 0 or end < start or end > len(encoded):
+            raise _LocatorUnresolved
+        for index in range(start, end):
+            if encoded[index] not in {10, 13}:
+                encoded[index] = 32
+    return bytes(encoded)
+
+
+def _markdown_section_digest(
+    text: str,
+    document: MdxDocument,
+    pre_masked_ranges: tuple[tuple[int, int], ...],
+    locator: str,
+) -> str:
     requested = locator.removeprefix("#")
-    lines = text.splitlines()
-    headings = _markdown_headings(lines)
+    headings = _markdown_headings(document, pre_masked_ranges)
     matches = [heading for heading in headings if heading.slug == requested]
     if not matches:
         raise _LocatorMissing
     if len(matches) != 1:
         raise _LocatorUnresolved
     selected = matches[0]
-    end = len(lines)
+    end = len(text.encode("utf-8"))
     for heading in headings:
-        if heading.start > selected.start and heading.level <= selected.level:
-            end = heading.start
+        if (
+            heading.start_byte > selected.start_byte
+            and heading.level <= selected.level
+        ):
+            end = heading.start_byte
             break
-    tokens = re.findall(r"\S+", "\n".join(lines[selected.content_start:end]))
+    visible = _visible_markdown(text, document, pre_masked_ranges)
+    try:
+        section = visible[selected.end_byte:end].decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise _LocatorUnresolved from exc
+    tokens = re.findall(r"\S+", section)
     return _sha256(" ".join(tokens))
 
 
@@ -353,16 +418,126 @@ def _structured_data_digest(path: Path, text: str, locator: str) -> str:
     return _sha256(encoded)
 
 
-def _digest_at(snapshot: RepositorySnapshot, locator: ReviewLocator) -> tuple[str, str | None]:
+def _markdown_key(
+    snapshot: RepositorySnapshot,
+    path: Path,
+) -> _MarkdownKey:
+    return (snapshot.label, path.as_posix())
+
+
+def _mask_html_comments(
+    text: str,
+) -> tuple[str, tuple[tuple[int, int], ...]]:
+    encoded = bytearray(text.encode("utf-8"))
+    ranges = tuple(
+        (match.start(), match.end())
+        for match in _HTML_COMMENT.finditer(encoded)
+    )
+    for start, end in ranges:
+        for index in range(start, end):
+            if encoded[index] not in {10, 13}:
+                encoded[index] = 32
+    return encoded.decode("utf-8"), ranges
+
+
+def _prepare_markdown_snapshots(
+    contracts: tuple[ReviewContract, ...],
+    base_snapshot: RepositorySnapshot,
+    head_snapshot: RepositorySnapshot,
+) -> _MarkdownSnapshots:
+    paths = {
+        locator.path
+        for contract in contracts
+        for locator in contract.sources + contract.targets
+        if locator.extractor == "markdown-section"
+    }
+    snapshots = (base_snapshot, head_snapshot)
+    prepared: _MarkdownSnapshots = {}
+    documents: dict[str, str] = {}
+    identifiers: dict[str, _MarkdownKey] = {}
+    source_texts: dict[str, str] = {}
+    pre_masked_ranges: dict[str, tuple[tuple[int, int], ...]] = {}
+
+    for snapshot in snapshots:
+        for path in sorted(paths):
+            key = _markdown_key(snapshot, path)
+            if key in prepared or key in identifiers.values():
+                continue
+            try:
+                text = _snapshot_text(snapshot, path)
+            except _LocatorMissing:
+                prepared[key] = _MarkdownSnapshot("missing")
+                continue
+            except _LocatorUnresolved:
+                prepared[key] = _MarkdownSnapshot("unresolved")
+                continue
+            identifier = f"review-document-{len(documents)}"
+            parse_text, ranges = _mask_html_comments(text)
+            documents[identifier] = parse_text
+            source_texts[identifier] = text
+            pre_masked_ranges[identifier] = ranges
+            identifiers[identifier] = key
+
+    if not documents:
+        return prepared
     try:
-        text = _snapshot_text(snapshot, locator.path)
+        parsed, errors = parse_mdx_documents(documents)
+    except MdxParserError:
+        for identifier, key in identifiers.items():
+            prepared[key] = _MarkdownSnapshot(
+                "unresolved",
+                text=source_texts[identifier],
+                pre_masked_ranges=pre_masked_ranges[identifier],
+            )
+        return prepared
+
+    for identifier, key in identifiers.items():
+        text = source_texts[identifier]
+        if identifier in errors:
+            prepared[key] = _MarkdownSnapshot(
+                "unresolved",
+                text=text,
+                pre_masked_ranges=pre_masked_ranges[identifier],
+            )
+        else:
+            prepared[key] = _MarkdownSnapshot(
+                "resolved",
+                text=text,
+                document=parsed[identifier],
+                pre_masked_ranges=pre_masked_ranges[identifier],
+            )
+    return prepared
+
+
+def _digest_at(
+    snapshot: RepositorySnapshot,
+    locator: ReviewLocator,
+    markdown_snapshots: _MarkdownSnapshots,
+) -> tuple[str, str | None]:
+    try:
+        if locator.extractor == "markdown-section":
+            markdown = markdown_snapshots.get(
+                _markdown_key(snapshot, locator.path)
+            )
+            if markdown is None or markdown.resolution == "unresolved":
+                raise _LocatorUnresolved
+            if markdown.resolution == "missing":
+                raise _LocatorMissing
+            if markdown.text is None or markdown.document is None:
+                raise _LocatorUnresolved
+            digest = _markdown_section_digest(
+                markdown.text,
+                markdown.document,
+                markdown.pre_masked_ranges,
+                locator.locator,
+            )
+        else:
+            text = _snapshot_text(snapshot, locator.path)
         if locator.extractor == "python-symbol":
             digest = _python_symbol_digest(text, locator.locator)
-        elif locator.extractor == "markdown-section":
-            digest = _markdown_section_digest(text, locator.locator)
         elif locator.extractor == "structured-data":
             digest = _structured_data_digest(locator.path, text, locator.locator)
-        else:
+        elif locator.extractor != "markdown-section":
             raise _LocatorUnresolved
     except _LocatorMissing:
         return "missing", None
@@ -392,9 +567,18 @@ def _evaluate_locator(
     locator: ReviewLocator,
     base_snapshot: RepositorySnapshot,
     head_snapshot: RepositorySnapshot,
+    markdown_snapshots: _MarkdownSnapshots,
 ) -> ReviewLocatorEvidence:
-    base_resolution, base_digest = _digest_at(base_snapshot, locator)
-    head_resolution, head_digest = _digest_at(head_snapshot, locator)
+    base_resolution, base_digest = _digest_at(
+        base_snapshot,
+        locator,
+        markdown_snapshots,
+    )
+    head_resolution, head_digest = _digest_at(
+        head_snapshot,
+        locator,
+        markdown_snapshots,
+    )
     return ReviewLocatorEvidence(
         id=locator.id,
         path=locator.path.as_posix(),
@@ -415,13 +599,24 @@ def _evaluate_review_contract_snapshots(
     contract: ReviewContract,
     base_snapshot: RepositorySnapshot,
     head_snapshot: RepositorySnapshot,
+    markdown_snapshots: _MarkdownSnapshots,
 ) -> ReviewContractResult:
     sources = tuple(
-        _evaluate_locator(locator, base_snapshot, head_snapshot)
+        _evaluate_locator(
+            locator,
+            base_snapshot,
+            head_snapshot,
+            markdown_snapshots,
+        )
         for locator in contract.sources
     )
     targets = tuple(
-        _evaluate_locator(locator, base_snapshot, head_snapshot)
+        _evaluate_locator(
+            locator,
+            base_snapshot,
+            head_snapshot,
+            markdown_snapshots,
+        )
         for locator in contract.targets
     )
 
@@ -470,10 +665,16 @@ def evaluate_review_contract(
     head: str,
 ) -> ReviewContractResult:
     base_snapshot, head_snapshot = _snapshots(root, base, head)
+    markdown_snapshots = _prepare_markdown_snapshots(
+        (contract,),
+        base_snapshot,
+        head_snapshot,
+    )
     return _evaluate_review_contract_snapshots(
         contract,
         base_snapshot,
         head_snapshot,
+        markdown_snapshots,
     )
 
 
@@ -485,11 +686,17 @@ def evaluate_review_contracts(
     head: str,
 ) -> tuple[ReviewContractResult, ...]:
     base_snapshot, head_snapshot = _snapshots(root, base, head)
+    markdown_snapshots = _prepare_markdown_snapshots(
+        contracts,
+        base_snapshot,
+        head_snapshot,
+    )
     return tuple(
         _evaluate_review_contract_snapshots(
             contract,
             base_snapshot,
             head_snapshot,
+            markdown_snapshots,
         )
         for contract in contracts
     )
