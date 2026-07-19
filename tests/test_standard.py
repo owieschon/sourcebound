@@ -159,6 +159,24 @@ def test_reader_facing_concept_pages_apply_bounded_personality() -> None:
     assert "Make stale prose fail loudly." in demo
 
 
+def test_mixed_audience_architecture_keeps_structured_text_canonical() -> None:
+    standard = (ROOT / "STANDARD.md").read_text()
+    normalized = " ".join(standard.split())
+    pack = load_default_pack()
+
+    assert "one structured source owns the architecture" in normalized
+    assert "Record only the dimensions that change interpretation" in normalized
+    assert "machine-readable graph, state, sequence, or event model" in normalized
+    assert "Rendered pixels are never the canonical source." in normalized
+    assert "If the image merely puts boxes around an ordered list, delete it." in normalized
+    assert "Tracing cross-actor timing, retries, or overlap" in standard
+    assert any(
+        "Architecture has one structured source" in check
+        and "only applicable dimensions" in check
+        for check in pack["checklist"]
+    )
+
+
 @pytest.mark.parametrize(
     ("content", "detail"),
     [

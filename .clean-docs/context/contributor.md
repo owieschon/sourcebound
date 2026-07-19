@@ -1,13 +1,13 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `92f0698934ac9dab2fdb9d1e178c1fa39692aff90f476456df6a623e7ae11936`
+- Corpus sha256: `e52076a9889bab17e140dd918295375d7093fed936c485144bc6e9a153efc619`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `827371cf2a5ec3c19a2d5c54174718603dc02cf9324e04c1d0733bb8b85a86b9`
+- Content sha256: `bfb909516e8e4b06c4e25c18efd3591850201764add8f9362f1afeb8ef1adff7`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
@@ -23,12 +23,7 @@ clean-docs is a source-bound documentation engine and CLI for maintainers who ne
 
 The final `clean-docs verify` command prints a [`clean-docs.outcome.v2` receipt](docs/SUPPORT.md#record-local-outcomes) with `"ok": true`.
 
-Audit starts from the document's job. On an untouched repository it is an assessment: broken links,
-machine-specific residue, and repository-neutral corpus signals remain bounded advisories. Run
-`clean-docs audit --preview-policy` to add compatible house-policy candidates without accepting
-them as gates. A manifest accepts repository integrity checks as gates; a policy marker accepts
-compatible writing rules for one document. Neither makes an incompatible rule applicable or
-authorizes clean-docs to flatten repository-native forms.
+Before adoption, `audit` reports bounded repository-neutral advisories. A manifest turns integrity checks into gates; policy markers opt compatible writing rules into specific documents. Neither authorizes clean-docs to flatten repository-native forms.
 
 | If you need to... | Start with | You will leave with... |
 | --- | --- | --- |
@@ -52,8 +47,7 @@ Human review can improve a sentence. It cannot make the sentence fail when its d
 
 ## Install in the repository you want to protect
 
-From that repository, download the latest stable wheel, install it in an isolated environment, and
-run the manifest-free audit:
+From that repository, download the latest stable wheel, install it in an isolated environment, and run the manifest-free audit:
 
 ```bash
 release_dir="$(mktemp -d)"
@@ -74,31 +68,36 @@ clean-docs check
 clean-docs verify
 ```
 
-An established, unregistered README stays byte-for-byte authored. Init writes its detected catalog
-to `.clean-docs/repository-surface.md`; a new README or one that adopted the register may own that
-region directly.
+An established, unregistered README stays byte-for-byte authored. Init writes its detected catalog to `.clean-docs/repository-surface.md`; a new README or one that adopted the register may own that region directly.
 
-After a bound source changes, run `check`, then `drive`, then `project`, then `verify`. The [tutorial](docs/learn/tutorial-catch-a-lying-doc.md) shows the failure before the repair. The [install guide](docs/INSTALL.md) owns release wheels; the [support guide](docs/SUPPORT.md) covers mature-repository adoption.
+After a bound source changes, run `check`, then use `drive` for a declared repair. Run `project` when a declared projection depends on the repaired document, then run `verify`. The [tutorial](docs/learn/tutorial-catch-a-lying-doc.md) shows the failure before the repair; the [support guide](docs/SUPPORT.md) covers mature-repository adoption.
 
 ## How the pieces fit
 
-![Architecture diagram showing repository evidence flowing through source bindings and the writing standard into repair, CI, and context outputs](docs/assets/clean-docs-system-map.svg)
+Three inputs stay separate before the deterministic core:
 
-Repository sources become typed evidence. Bindings assign that evidence to generated regions, command pins, and symbols. Accepted source-claim checks compare bounded prose values with static source locators. The engine checks the implemented policy floor, then repairs declared regions, rejects drift, or publishes verified context. The [manifest page](docs/REFERENCE.md) lists each mechanism and projected output.
+- **Authored intent** records why a surface matters. clean-docs preserves that purpose; it does not infer its priority or turn judgment into gate authority.
+- **Repository contract** declares sources, binding mechanisms, process limits, and projections. Policy markers scope compatible form checks; they do not certify voice.
+- **Change state** combines base and head refs with that contract to produce an immutable impact plan. Static adapters and bounded commands produce typed evidence. Each mechanism proves only its declared relationship; accepted source-claim checks are separate, and unbound prose stays visibly unknown.
+
+The core exposes four job-specific exits:
+
+1. **Repair bounded prose.** `drive` writes only planned regions. `project` runs separately when a declared output depends on changed documentation.
+2. **Reject stale changes.** `check` and `verdict` are read-only. The verdict names changed, bound, unbound, and skipped surfaces.
+3. **Publish agent context.** `project` writes declared outputs such as `llms.txt` and context bundles.
+4. **Record local state.** `verify` emits its own outcome receipt.
+
+`verdict` and `verify` produce independent receipts. Neither certifies unbound or judgment prose. The [product contract](CLEAN_DOCS_SPEC.md) defines each authority boundary.
 
 ## Current boundaries
 
 - Catalog coverage detects source additions, removals, and replacements; it does not validate prose.
 - Source-claim discovery ranks static count and identifier-set candidates. A candidate remains advisory until the repository accepts its exact document and source relationship.
-- Tracked MDX is parsed structurally with the bundled first-party adapter when Node.js 20 or newer is available. Imports and components are never resolved or executed; malformed MDX stays visibly unsupported.
-- `drive` repairs bound regions. Run `project` afterward when a projection includes the repaired document.
 - Declared processes use time, I/O, and environment controls. The host owns network isolation; see the [security model](docs/SECURITY_MODEL.md).
-- Authored purpose and the manifest decide what matters. clean-docs does not infer product goals or certify judgment prose.
+- The manifest decides what clean-docs evaluates. Authored purpose records goals; clean-docs does not infer or certify them.
 - Feedback is off by default. Enabled runs queue bounded local envelopes; only an explicit `feedback flush` contacts the configured sink, and delivery cannot change a gate result.
-- `audit`, `check`, `verify`, and `release` do not change documentation.
-- Exit `1` means drift, exit `2` means invalid configuration, and exit `3` means extraction failed.
 
-Use the [learning path](docs/learn/index.md) for the product map and evidence-backed examples. The [current product contract](CLEAN_DOCS_SPEC.md) states the exact assurance boundary.
+Use the [learning path](docs/learn/index.md) for examples. The [product contract](CLEAN_DOCS_SPEC.md) owns parser, write-boundary, and exit-code details.
 <!-- clean-docs:canonical README.md end -->
 
 ## Canonical document: docs/EVALUATION.md
