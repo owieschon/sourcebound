@@ -44,13 +44,20 @@ class TrialLayout:
 
 def trial_layout(release_version: str) -> TrialLayout:
     """Keep each release line bound to the rubric its candidate readers saw."""
+    release_line = ".".join(release_version.split(".")[:2])
     if release_version.startswith("1.1."):
         return TrialLayout(
             rubric=Path(".clean-docs/reader-trial-rubric-v1.1.yml"),
             receipt=Path(".clean-docs/reader-trial-v1.1.json"),
             evidence_root=Path(".clean-docs/reader-trials-v1.1"),
         )
-    return TrialLayout(rubric=RUBRIC, receipt=RECEIPT, evidence_root=EVIDENCE_ROOT)
+    if release_version.startswith("1.0."):
+        return TrialLayout(rubric=RUBRIC, receipt=RECEIPT, evidence_root=EVIDENCE_ROOT)
+    return TrialLayout(
+        rubric=Path(f".clean-docs/reader-trial-rubric-v{release_line}.yml"),
+        receipt=Path(f".clean-docs/reader-trial-v{release_line}.json"),
+        evidence_root=Path(f".clean-docs/reader-trials-v{release_line}"),
+    )
 
 
 def _sha256(data: bytes) -> str:
@@ -309,15 +316,15 @@ def project_version(root: Path) -> str:
 
 
 def verify_release_reader_trial(root: Path) -> dict[str, object]:
-    """Report release calibration without gating the 1.1 release line on it."""
+    """Require the 1.0 trial and report later release-line calibration when present."""
     version = project_version(root)
     if STABLE_VERSION.fullmatch(version) is None:
         return {"required": False}
     layout = trial_layout(version)
-    if version.startswith("1.1.") and not (root / layout.receipt).is_file():
+    if not version.startswith("1.0.") and not (root / layout.receipt).is_file():
         return {"required": False, "status": "not-attested"}
     summary = verify_reader_trial(root, version)
-    if version.startswith("1.1."):
+    if not version.startswith("1.0."):
         return {"required": False, "status": "verified", **summary}
     return {"required": True, "status": "verified", **summary}
 

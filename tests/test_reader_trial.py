@@ -237,6 +237,19 @@ def test_version_11_reader_calibration_is_reported_but_does_not_gate_release(
     }
 
 
+def test_later_release_does_not_reuse_version_10_reader_evidence(
+    tmp_path: Path,
+) -> None:
+    project = tmp_path / "pyproject.toml"
+    project.write_text('[project]\nname = "fixture"\nversion = "1.2.0"\n')
+    _write_trial(tmp_path)
+
+    assert verify_release_reader_trial(tmp_path) == {
+        "required": False,
+        "status": "not-attested",
+    }
+
+
 def test_candidate_gate_does_not_import_yaml(tmp_path: Path) -> None:
     project = tmp_path / "pyproject.toml"
     project.write_text('[project]\nname = "fixture"\nversion = "1.0.0rc9"\n')
