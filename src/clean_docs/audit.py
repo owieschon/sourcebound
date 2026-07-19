@@ -12,6 +12,7 @@ from urllib.parse import unquote
 from clean_docs.applicability import (
     DocumentProfile,
     classify_document,
+    frontmatter_error,
     role_override_error,
 )
 from clean_docs.corpus import _git_visible_markdown, _is_document_candidate, scan_corpus
@@ -22,8 +23,11 @@ from clean_docs.residue import scan_residue
 from clean_docs.standard import load_default_pack
 
 
-LINK = re.compile(r"\[[^\]]+\]\(([^)\s]+)(?:\s+[^)]*)?\)")
+LINK = re.compile(
+    r"\[[^\]]+\]\(\s*(<[^>\n]*>|\[[^\]\n]+\]|\{[^}\n]+\}|[^)\s]+)"
+)
 HEADING = re.compile(r"^#{2,}\s+(.+?)\s*$")
+IDENTITY_HEADING = re.compile(r"^#{1,6}\s+(.+?)\s*$")
 PURPOSE_BLOCK = re.compile(
     r"<!-- clean-docs:purpose -->\s*(.*?)\s*<!-- clean-docs:end purpose -->",
     re.DOTALL,
@@ -35,7 +39,8 @@ STOCK_PURPOSE_OPENING = re.compile(
 ALLOW = re.compile(
     r'<!--\s*clean-docs:allow\s+([a-z][a-z-]+)\s+reason="([^"]+)"\s*-->'
 )
-AUDIT_BASELINE_SCHEMA = "clean-docs.audit-baseline.v1"
+AUDIT_BASELINE_SCHEMA_V1 = "clean-docs.audit-baseline.v1"
+AUDIT_BASELINE_SCHEMA = "clean-docs.audit-baseline.v2"
 AUDIT_BASELINE_PATH = Path(".clean-docs/audit-baseline.json")
 
 
@@ -77,7 +82,50 @@ class AuditReport:
         return not self.findings and not self.stale_baseline
 
 
-def finding_fingerprint(finding: AuditFinding) -> str:
+@dataclass(frozen=True)
+class _BaselineIdentity:
+    finding: AuditFinding
+    normalized: str
+    section_anchor: str
+    duplicate_ordinal: int
+    fingerprint: str
+
+
+@dataclass(frozen=True)
+class _LoadedBaseline:
+    schema: str
+    identities: tuple[_BaselineIdentity, ...]
+
+
+def _normalized_finding_content(finding: AuditFinding) -> str:
+    return " ".join(finding.detail.split())
+
+
+def finding_fingerprint(
+    finding: AuditFinding,
+    *,
+    section_anchor: str = "__document__",
+    duplicate_ordinal: int = 1,
+) -> str:
+    payload = json.dumps(
+        {
+            "duplicate_ordinal": duplicate_ordinal,
+            "normalized": _normalized_finding_content(finding),
+            "path": finding.path,
+            "rule": finding.rule,
+            "section_anchor": section_anchor,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+
+def _finding_order(finding: AuditFinding) -> tuple[str, int, str, str]:
+    return (finding.path, finding.line, finding.rule, finding.detail)
+
+
+def _legacy_finding_fingerprint(finding: AuditFinding) -> str:
     payload = json.dumps(
         {
             "detail": finding.detail,
@@ -91,8 +139,67 @@ def finding_fingerprint(finding: AuditFinding) -> str:
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
-def _finding_order(finding: AuditFinding) -> tuple[str, int, str, str]:
-    return (finding.path, finding.line, finding.rule, finding.detail)
+def _section_anchor(root: Path | None, finding: AuditFinding) -> str:
+    if root is None:
+        return "__document__"
+    try:
+        lines = (root / finding.path).read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return "__document__"
+    anchor = "__document__"
+    for line in lines[: finding.line]:
+        if match := IDENTITY_HEADING.match(line):
+            anchor = re.sub(
+                r"-+",
+                "-",
+                re.sub(r"[^a-z0-9]+", "-", match.group(1).lower()),
+            ).strip("-") or "__document__"
+    return anchor
+
+
+def _baseline_identities(
+    findings: tuple[AuditFinding, ...],
+    *,
+    root: Path | None,
+) -> tuple[_BaselineIdentity, ...]:
+    prepared = [
+        (
+            finding,
+            _normalized_finding_content(finding),
+            _section_anchor(root, finding),
+        )
+        for finding in findings
+    ]
+    prepared.sort(
+        key=lambda item: (
+            item[0].path,
+            item[0].rule,
+            item[1],
+            item[2],
+            item[0].line,
+            item[0].detail,
+        )
+    )
+    counts: dict[tuple[str, str, str, str], int] = {}
+    identities: list[_BaselineIdentity] = []
+    for finding, normalized, section_anchor in prepared:
+        key = (finding.path, finding.rule, normalized, section_anchor)
+        duplicate_ordinal = counts.get(key, 0) + 1
+        counts[key] = duplicate_ordinal
+        identities.append(
+            _BaselineIdentity(
+                finding,
+                normalized,
+                section_anchor,
+                duplicate_ordinal,
+                finding_fingerprint(
+                    finding,
+                    section_anchor=section_anchor,
+                    duplicate_ordinal=duplicate_ordinal,
+                ),
+            )
+        )
+    return tuple(identities)
 
 
 def _bounded_advisories(
@@ -112,15 +219,23 @@ def _bounded_advisories(
     return tuple(selected), tuple(sorted(totals.items()))
 
 
-def render_audit_baseline(findings: tuple[AuditFinding, ...]) -> str:
+def render_audit_baseline(
+    findings: tuple[AuditFinding, ...],
+    *,
+    root: Path | None = None,
+) -> str:
     entries = []
-    for finding in findings:
+    for identity in _baseline_identities(findings, root=root):
+        finding = identity.finding
         entries.append({
-            "fingerprint": finding_fingerprint(finding),
+            "fingerprint": identity.fingerprint,
             "rule": finding.rule,
             "path": finding.path,
-            "line": finding.line,
+            "line_hint": finding.line,
             "detail": finding.detail,
+            "normalized": identity.normalized,
+            "section_anchor": identity.section_anchor,
+            "duplicate_ordinal": identity.duplicate_ordinal,
         })
     return json.dumps(
         {"schema": AUDIT_BASELINE_SCHEMA, "findings": entries},
@@ -128,46 +243,125 @@ def render_audit_baseline(findings: tuple[AuditFinding, ...]) -> str:
     ) + "\n"
 
 
-def _load_audit_baseline(path: Path) -> tuple[AuditFinding, ...]:
+def _load_audit_baseline(path: Path) -> _LoadedBaseline:
     if path.is_symlink():
         raise ConfigurationError(f"audit baseline cannot be a symbolic link: {path}")
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise ConfigurationError(f"cannot read audit baseline {path}: {exc}") from exc
-    if not isinstance(raw, dict) or raw.get("schema") != AUDIT_BASELINE_SCHEMA:
+    if not isinstance(raw, dict) or raw.get("schema") not in {
+        AUDIT_BASELINE_SCHEMA_V1,
+        AUDIT_BASELINE_SCHEMA,
+    }:
         raise ConfigurationError(f"audit baseline has an unsupported schema: {path}")
+    schema = raw["schema"]
     entries = raw.get("findings")
     if not isinstance(entries, list):
         raise ConfigurationError(f"audit baseline findings must be a list: {path}")
-    findings: list[AuditFinding] = []
+    identities: list[_BaselineIdentity] = []
     fingerprints: set[str] = set()
+    identity_keys: set[tuple[str, str, str, str, int]] = set()
     for index, entry in enumerate(entries):
         if not isinstance(entry, dict):
             raise ConfigurationError(f"audit baseline finding {index} must be an object")
-        expected_keys = {"fingerprint", "rule", "path", "line", "detail"}
+        expected_keys = (
+            {"fingerprint", "rule", "path", "line", "detail"}
+            if schema == AUDIT_BASELINE_SCHEMA_V1
+            else {
+                "fingerprint",
+                "rule",
+                "path",
+                "line_hint",
+                "detail",
+                "normalized",
+                "section_anchor",
+                "duplicate_ordinal",
+            }
+        )
         if set(entry) != expected_keys:
             raise ConfigurationError(
-                f"audit baseline finding {index} must contain exactly "
-                "fingerprint, rule, path, line, and detail"
+                f"audit baseline finding {index} has fields that do not match {schema}"
             )
         if not all(
             isinstance(entry[key], str)
             for key in ("fingerprint", "rule", "path", "detail")
         ):
             raise ConfigurationError(f"audit baseline finding {index} has an invalid string field")
-        if not isinstance(entry["line"], int) or isinstance(entry["line"], bool) or entry["line"] < 1:
+        line_key = "line" if schema == AUDIT_BASELINE_SCHEMA_V1 else "line_hint"
+        if (
+            not isinstance(entry[line_key], int)
+            or isinstance(entry[line_key], bool)
+            or entry[line_key] < 1
+        ):
             raise ConfigurationError(f"audit baseline finding {index} has an invalid line")
-        finding = AuditFinding(entry["rule"], entry["path"], entry["line"], entry["detail"])
-        fingerprint = finding_fingerprint(finding)
+        finding = AuditFinding(
+            entry["rule"],
+            entry["path"],
+            entry[line_key],
+            entry["detail"],
+        )
+        if schema == AUDIT_BASELINE_SCHEMA_V1:
+            normalized = _normalized_finding_content(finding)
+            section_anchor = "__legacy_line__"
+            duplicate_ordinal = 1
+            fingerprint = _legacy_finding_fingerprint(finding)
+        else:
+            if not all(
+                isinstance(entry[key], str)
+                for key in ("normalized", "section_anchor")
+            ):
+                raise ConfigurationError(
+                    f"audit baseline finding {index} has invalid identity material"
+                )
+            duplicate_ordinal = entry["duplicate_ordinal"]
+            if (
+                not isinstance(duplicate_ordinal, int)
+                or isinstance(duplicate_ordinal, bool)
+                or duplicate_ordinal < 1
+            ):
+                raise ConfigurationError(
+                    f"audit baseline finding {index} has an invalid duplicate ordinal"
+                )
+            normalized = entry["normalized"]
+            section_anchor = entry["section_anchor"]
+            if normalized != _normalized_finding_content(finding):
+                raise ConfigurationError(
+                    f"audit baseline finding {index} normalized content does not match"
+                )
+            fingerprint = finding_fingerprint(
+                finding,
+                section_anchor=section_anchor,
+                duplicate_ordinal=duplicate_ordinal,
+            )
         if entry["fingerprint"] != fingerprint:
             raise ConfigurationError(f"audit baseline finding {index} fingerprint does not match")
         if fingerprint in fingerprints:
             raise ConfigurationError(f"audit baseline has duplicate finding {fingerprint}")
+        identity_key = (
+            finding.path,
+            finding.rule,
+            normalized,
+            section_anchor,
+            duplicate_ordinal,
+        )
+        if schema == AUDIT_BASELINE_SCHEMA and identity_key in identity_keys:
+            raise ConfigurationError(
+                f"audit baseline has duplicate identity at finding {index}"
+            )
         fingerprints.add(fingerprint)
-        findings.append(finding)
-    findings.sort(key=_finding_order)
-    return tuple(findings)
+        identity_keys.add(identity_key)
+        identities.append(
+            _BaselineIdentity(
+                finding,
+                normalized,
+                section_anchor,
+                duplicate_ordinal,
+                fingerprint,
+            )
+        )
+    identities.sort(key=lambda item: item.fingerprint)
+    return _LoadedBaseline(schema, tuple(identities))
 
 
 def _tracked_markdown(root: Path) -> list[Path]:
@@ -302,10 +496,31 @@ def _markdown_links(lines: list[str]) -> list[tuple[int, str]]:
             continue
         visible = _mask_inline_code(line)
         for match in LINK.finditer(visible):
-            target = match.group(1)
-            if not any(character in target for character in "{}"):
-                links.append((line_number, target))
+            links.append((line_number, match.group(1)))
     return links
+
+
+def _placeholder_link_target(target: str) -> bool:
+    candidate = target.strip()
+    if candidate in {"...", "…"} or "…" in candidate:
+        return True
+    if re.search(r"<(?:[A-Za-z][A-Za-z0-9_-]*)>", candidate):
+        return True
+    if re.search(r"\{(?:[A-Za-z][A-Za-z0-9_-]*)}", candidate):
+        return True
+    if (
+        candidate.startswith("[")
+        and candidate.endswith("]")
+        and re.search(r"\s", candidate[1:-1])
+    ):
+        return True
+    if (
+        candidate.startswith("<")
+        and candidate.endswith(">")
+        and re.search(r"\s", candidate[1:-1])
+    ):
+        return True
+    return False
 
 
 def _entry_exists(entries: set[str], candidate: str) -> bool:
@@ -324,13 +539,6 @@ def _link_target_exists(
     target = unquote(raw_target.split("#", 1)[0].split("?", 1)[0]).strip()
     if target.startswith("<") and target.endswith(">"):
         target = target[1:-1]
-    if (
-        target in {"...", "…"}
-        or "…" in target
-        or re.search(r"(?:^|[/_-])(?:example|placeholder)(?:$|[/_.-])", target, re.I)
-        or re.search(r"<[^>]+>", target)
-    ):
-        return True
     if not target or not _local_link(target):
         return True
     repository_root = target.startswith("/")
@@ -581,13 +789,18 @@ def _scan_audit(root: Path, *, preview_policy: bool = False) -> AuditReport:
         profile = classify_document(relative, text)
         profiles[normalized] = profile
         role_error = role_override_error(text)
-        if role_error:
+        structure_error = frontmatter_error(text)
+        if role_error or structure_error:
             invalid_roles.add(normalized)
             findings.append(AuditFinding(
-                "invalid-document-role",
+                (
+                    "invalid-document-role"
+                    if role_error
+                    else "malformed-frontmatter"
+                ),
                 normalized,
                 1,
-                role_error,
+                role_error or structure_error or "invalid document structure",
             ))
         allowances = _allowances(lines)
         evaluate_policy = profile.registered or preview_policy
@@ -658,6 +871,19 @@ def _scan_audit(root: Path, *, preview_policy: bool = False) -> AuditReport:
             ):
                 (findings if profile.registered else advisories).append(candidate)
         for line_number, target in _markdown_links(lines):
+            if (
+                _placeholder_link_target(target)
+                and profile.role in {"agent-procedure", "template"}
+            ):
+                advisories.append(
+                    AuditFinding(
+                        "placeholder-link",
+                        normalized,
+                        line_number,
+                        f"template destination is unresolved: {target}",
+                    )
+                )
+                continue
             if not _link_target_exists(root, relative, target, repository_entries):
                 candidate = AuditFinding(
                     "broken-local-link",
@@ -781,8 +1007,20 @@ def audit(
     if not use_baseline or not baseline_path.exists():
         return report
     baseline = _load_audit_baseline(baseline_path)
-    current = {finding_fingerprint(item): item for item in report.findings}
-    recorded = {finding_fingerprint(item): item for item in baseline}
+    if baseline.schema == AUDIT_BASELINE_SCHEMA_V1:
+        current = {
+            _legacy_finding_fingerprint(item): item
+            for item in report.findings
+        }
+    else:
+        current = {
+            identity.fingerprint: identity.finding
+            for identity in _baseline_identities(report.findings, root=root)
+        }
+    recorded = {
+        identity.fingerprint: identity.finding
+        for identity in baseline.identities
+    }
     matched = tuple(sorted(
         (current[fingerprint] for fingerprint in current.keys() & recorded.keys()),
         key=_finding_order,
@@ -814,5 +1052,5 @@ def write_audit_baseline(root: Path) -> Path:
     root = root.resolve()
     path = root / AUDIT_BASELINE_PATH
     raw_report = audit(root, use_baseline=False)
-    atomic_write(path, render_audit_baseline(raw_report.findings))
+    atomic_write(path, render_audit_baseline(raw_report.findings, root=root))
     return path

@@ -1,13 +1,15 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 from pathlib import Path
 
 import pytest
 
-from clean_docs.audit import audit, write_audit_baseline
+from clean_docs.audit import AuditFinding, audit, finding_fingerprint, write_audit_baseline
 from clean_docs.cli import main
+from clean_docs.errors import ConfigurationError
 from clean_docs.policy import REGISTER_PROFILE, ensure_purpose_contract
 
 
@@ -725,10 +727,83 @@ def test_link_checks_use_repository_identity_and_ignore_literal_examples(
         if finding.rule == "broken-local-link"
     ]
     assert [(finding.rule, finding.detail) for finding in link_findings] == [
+        ("broken-local-link", "target does not exist: …"),
+        ("broken-local-link", "target does not exist: docs/<package>/README.md"),
         ("broken-local-link", "target does not exist: <docs/also-missing.md>"),
-        ("broken-local-link", "target does not exist: docs/missing.md"),
     ]
+    assert dict(report.advisory_totals)["broken-local-link"] == 4
     assert not report.repository_integrity_enforced
+
+
+def test_placeholder_links_are_role_scoped_and_parse_complete_destinations(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    agent_doc = root / "AGENTS.md"
+    agent_doc.write_text(
+        "# Agent procedure\n\n"
+        "[Docs]([area docs url])\n"
+        "[Real bracket path](docs/[version]/guide.md)\n"
+        "`[Inline]([inline placeholder])`\n\n"
+        "```markdown\n[Fenced]([fenced placeholder])\n```\n"
+    )
+    guide = root / "GUIDE.md"
+    guide.write_text("# Guide\n\n[Docs]([area docs url])\n")
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    report = audit(root)
+    advisories = {
+        (finding.rule, finding.path, finding.detail)
+        for finding in report.advisories
+    }
+
+    assert (
+        "placeholder-link",
+        "AGENTS.md",
+        "template destination is unresolved: [area docs url]",
+    ) in advisories
+    assert (
+        "broken-local-link",
+        "GUIDE.md",
+        "target does not exist: [area docs url]",
+    ) in advisories
+    assert (
+        "broken-local-link",
+        "AGENTS.md",
+        "target does not exist: docs/[version]/guide.md",
+    ) in advisories
+    assert not any("inline placeholder" in item[2] for item in advisories)
+    assert not any("fenced placeholder" in item[2] for item in advisories)
+
+
+def test_frontmatter_requires_document_start_and_closing_delimiter(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    skill = root / "skills/deploy/guide.md"
+    skill.parent.mkdir(parents=True)
+    skill.write_text("---\nname: deploy\n---\n# Deploy\n\nRun the deployment check.\n")
+    later_rule = root / "GUIDE.md"
+    later_rule.write_text("# Guide\n\nA horizontal rule follows.\n\n---\n")
+    malformed = root / "BROKEN.md"
+    malformed.write_text(
+        "---\nname: broken\n"
+        "<!-- clean-docs:role reference -->\n"
+        "# Broken\n"
+    )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    report = audit(root)
+    profiles = {item.path: item.role for item in report.document_profiles}
+
+    assert profiles["skills/deploy/guide.md"] == "agent-procedure"
+    assert profiles["GUIDE.md"] == "task"
+    assert profiles["BROKEN.md"] == "reference"
+    assert any(
+        finding.rule == "malformed-frontmatter"
+        and finding.path == "BROKEN.md"
+        for finding in report.findings
+    )
 
 
 def test_audit_discloses_mdx_without_claiming_to_check_it(tmp_path: Path) -> None:
@@ -833,6 +908,118 @@ def test_exact_baseline_fails_on_new_and_resolved_findings(tmp_path: Path) -> No
     assert report.findings == ()
     assert [item.rule for item in report.advisories] == ["process-artifact"]
     assert [item.rule for item in report.stale_baseline] == ["broken-local-link"]
+
+
+def test_audit_baseline_v2_is_line_stable_and_uses_multiset_identity(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    readme = root / "README.md"
+    readme.write_text(
+        "# Project\n\n"
+        "## Broken links\n\n"
+        "[Missing](docs/missing.md)\n"
+        "[Missing again](docs/missing.md)\n"
+    )
+    _track(root)
+    baseline_path = write_audit_baseline(root)
+    baseline = json.loads(baseline_path.read_text())
+
+    assert baseline["schema"] == "clean-docs.audit-baseline.v2"
+    assert all("line_hint" in item and "line" not in item for item in baseline["findings"])
+    assert len({item["duplicate_ordinal"] for item in baseline["findings"]}) == 2
+
+    text = readme.read_text()
+    readme.write_text(text.replace("## Broken links", "Intro.\n\n## Broken links"))
+    moved = audit(root)
+    assert moved.ok
+    assert len([
+        item for item in moved.baselined_findings
+        if item.rule == "broken-local-link"
+    ]) == 2
+
+    readme.write_text(
+        readme.read_text().replace("[Missing](docs/missing.md)\n", "", 1)
+    )
+    repaired = audit(root)
+    assert not repaired.ok
+    assert len([
+        item for item in repaired.baselined_findings
+        if item.rule == "broken-local-link"
+    ]) == 1
+    assert len([
+        item for item in repaired.stale_baseline
+        if item.rule == "broken-local-link"
+    ]) == 1
+
+
+def test_audit_baseline_v2_detects_changed_identity_and_duplicate_entries(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    readme = root / "README.md"
+    readme.write_text("# Project\n\n[Missing](docs/missing.md)\n")
+    _track(root)
+    baseline_path = write_audit_baseline(root)
+    baseline = json.loads(baseline_path.read_text())
+
+    readme.write_text(readme.read_text().replace("missing.md", "moved.md"))
+    report = audit(root)
+    assert len(report.findings) == 1
+    assert len(report.stale_baseline) == 1
+
+    baseline["findings"].append(dict(baseline["findings"][0]))
+    baseline_path.write_text(json.dumps(baseline))
+    with pytest.raises(ConfigurationError, match="duplicate"):
+        audit(root)
+
+
+def test_audit_reads_v1_baseline_and_update_migrates_to_v2(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    readme = root / "README.md"
+    readme.write_text("# Project\n\n[Missing](docs/missing.md)\n")
+    _track(root)
+    finding = next(
+        item for item in audit(root, use_baseline=False).findings
+        if item.rule == "broken-local-link"
+    )
+    legacy_payload = json.dumps(
+        {
+            "detail": finding.detail,
+            "line": finding.line,
+            "path": finding.path,
+            "rule": finding.rule,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    baseline_path = root / ".clean-docs/audit-baseline.json"
+    baseline_path.parent.mkdir()
+    baseline_path.write_text(json.dumps({
+        "schema": "clean-docs.audit-baseline.v1",
+        "findings": [{
+            "fingerprint": hashlib.sha256(legacy_payload.encode()).hexdigest(),
+            "rule": finding.rule,
+            "path": finding.path,
+            "line": finding.line,
+            "detail": finding.detail,
+        }],
+    }))
+
+    assert audit(root).ok
+    write_audit_baseline(root)
+    assert json.loads(baseline_path.read_text())["schema"] == (
+        "clean-docs.audit-baseline.v2"
+    )
+
+
+def test_finding_fingerprint_ignores_display_line() -> None:
+    first = AuditFinding("broken-local-link", "README.md", 4, "target does not exist: x")
+    moved = AuditFinding("broken-local-link", "README.md", 40, "target does not exist: x")
+
+    assert finding_fingerprint(first) == finding_fingerprint(moved)
 
 
 def test_update_baseline_is_explicit_and_tampering_is_rejected(

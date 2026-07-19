@@ -56,10 +56,15 @@ integrity checks as gates; a document policy marker accepts compatible determini
 for that page. Unclear ownership, process status, audience fit, historical marks, and text overlap
 remain advisories in either state. The JSON report exposes the enforcement state, policy-preview
 state, every document profile, advisory totals, unsupported MDX paths, and the exact accepted-debt
-baseline under schema `clean-docs.audit.v1`. A maintainer can replace an ambiguous role guess with
-a checked `<!-- clean-docs:role reference -->` marker; invalid role names fail instead of falling
-back. Literal machine paths in recognized test fixtures remain advisories because they can be
-intentional inputs; the same path in product source or a lockfile remains an integrity finding.
+baseline under `clean-docs.audit-baseline.v2`. Baseline identity uses rule, path, normalized
+offending content, section anchor, and duplicate ordinal. A line number is display metadata, so
+moving unchanged debt does not manufacture a new finding. Version 1 baselines remain readable and
+`audit --update-baseline` migrates them. A maintainer can replace an ambiguous role guess with a
+checked `<!-- clean-docs:role reference -->` marker; invalid role names and unclosed opening
+frontmatter fail instead of falling back. Placeholder destinations remain non-blocking only in
+templates and agent procedures. Literal machine paths in recognized test fixtures remain
+advisories because they can be intentional inputs; the same path in product source or a lockfile
+remains an integrity finding.
 
 Use `init --no-model` once to add a repository-surface binding and `llms.txt`. It preserves existing
 documents, repository-native structure, evidence records, and compatibility aliases. A new README
@@ -78,8 +83,9 @@ Use `plan --base REF --head REF` to produce a read-only impact receipt before re
 uses the merge base, classifies every changed artifact, and traverses only affected accepted
 bindings, projections, and evaluations. `impact: none` requires complete adapter coverage;
 unsupported public candidates remain `unknown`. The receipt binds its producer version, immutable
-Git objects, manifest, graph, and findings. Its zero exit code means the receipt was built, not that
-the branch is ready to merge.
+Git objects, manifest, graph, and findings. Unsupported MDX appears in
+`unsupported_documents` and makes the impact `unknown`; it never enters the checked Markdown count.
+The command's zero exit code means the receipt was built, not that the branch is ready to merge.
 
 Use `claims` to inspect ranked static source-to-prose candidates. Candidate ranking is
 assessment-only. A `source_claim_checks` entry accepts one document anchor, subject, source path,
@@ -96,7 +102,8 @@ The [CLI reference](docs/CLI.md) owns the command index. Command-specific `--hel
 
 ## Manifest contract
 
-The canonical file is `.clean-docs.yml`, manifest version `1`. Unknown keys fail validation.
+The canonical file is `.clean-docs.yml`. Init writes manifest version `2`; version `1` remains a
+readable compatibility format. Unknown keys fail validation.
 
 Current binding types are:
 

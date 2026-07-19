@@ -5,6 +5,7 @@
 Choose a command here after you know the repository task. The index names each write boundary, so
 you can select the read or repair path without letting a preview change documentation.
 <!-- clean-docs:end purpose -->
+<!-- clean-docs:allow audience reason="This reference names agent-facing commands and receipt fields as product surfaces" -->
 
 **[Choose from the generated command index](#cli-reference)**.
 
@@ -52,7 +53,9 @@ clean-docs plan --base origin/main --head HEAD --format json
 
 The JSON records the clean-docs producer version and every changed path with its base and head blob,
 adapter decision, coverage state, and graph roots. Its digest binds that producer and those inputs
-to the resulting findings.
+to the resulting findings. `clean-docs.impact-plan.v2` also lists
+`unsupported_documents`. A changed MDX file enters that list and makes coverage unknown; MDX does
+not enter the checked Markdown document count.
 
 | `impact` | Meaning |
 | --- | --- |
