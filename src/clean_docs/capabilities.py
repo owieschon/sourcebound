@@ -18,7 +18,6 @@ ASSURANCE_BOUNDARIES = (
         "clean-docs proves": "Rendered region bytes match configured source evidence",
         "clean-docs does not prove": "Authored prose outside the region is accurate or complete",
     },
-    {"command": "residue", "job": "Manage private cross-project residue matching", "writes": "with init-local", "example": "clean-docs residue status"},
     {
         "surface": "Legacy command pin (`type: claim`)",
         "clean-docs proves": "Allowlisted command output matches the configured expected value and the document anchor exists",
@@ -99,6 +98,7 @@ CLI_REFERENCE = (
         "writes": "with --update-baseline",
         "example": "clean-docs audit --format json",
     },
+    {"command": "residue", "job": "Manage private cross-project residue matching", "writes": "with init-local", "example": "clean-docs residue status"},
     {"command": "inventory", "job": "List detected repository surfaces and coverage", "writes": "no", "example": "clean-docs inventory --format json"},
     {"command": "claims", "job": "Rank and verify static count and column claims", "writes": "no", "example": "clean-docs claims --format json"},
     {"command": "binding", "job": "Inspect one proposed source relationship", "writes": "no", "example": "clean-docs binding --help"},
