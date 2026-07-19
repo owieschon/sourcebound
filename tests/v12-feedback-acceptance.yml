@@ -1,0 +1,37 @@
+version: 1
+release: "1.2-Feedback"
+scenarios:
+  - id: disabled-zero-side-effects
+    test: tests/test_feedback.py::test_disabled_feedback_has_zero_side_effects
+  - id: exact-preview-local-delivery
+    test: tests/test_feedback.py::test_local_feedback_preview_flush_and_deduplication
+  - id: disable-removes-authority
+    test: tests/test_feedback.py::test_disable_preserves_pending_but_removes_delivery_authority
+  - id: gate-result-isolation
+    test: tests/test_feedback.py::test_feedback_failure_never_changes_gate_exit
+  - id: bounded-connected-retries
+    test: tests/test_feedback.py::test_connected_delivery_is_explicit_and_dead_letters_after_three_failures
+  - id: envelope-tamper-fails-closed
+    test: tests/test_feedback.py::test_tampered_envelope_never_reaches_sink
+  - id: connected-event-wire-contract
+    test: tests/test_feedback.py::test_connected_event_maps_idempotency_and_keeps_token_out_of_state
+  - id: purge-removes-identity
+    test: tests/test_feedback.py::test_purge_removes_configuration_identifier_and_all_state
+  - id: local-path-confinement
+    test: tests/test_feedback.py::test_local_sink_cannot_escape_repository
+  - id: symlink-path-confinement
+    test: tests/test_feedback.py::test_local_sink_symlink_cannot_escape_repository
+  - id: bounded-retention
+    test: tests/test_feedback.py::test_retention_prunes_expired_outbox_records
+  - id: canonical-signal-id
+    test: tests/test_feedback.py::test_prepare_signal_adds_reproducible_content_id
+  - id: denominator-and-contributors
+    test: tests/test_feedback.py::test_behavior_signal_requires_denominator_and_multiple_contributors
+  - id: idempotent-observed-state
+    test: tests/test_feedback.py::test_signal_ingest_is_idempotent_and_cannot_skip_states
+  - id: adjacent-receipted-transitions
+    test: tests/test_feedback.py::test_improvement_case_requires_every_receipted_transition
+  - id: receipt-chain-tamper
+    test: tests/test_feedback.py::test_improvement_case_rejects_a_changed_prior_receipt
+  - id: shadow-metric-integrity
+    test: tests/test_feedback.py::test_shadow_measurement_rejects_regression_or_moving_scorer

@@ -1,13 +1,13 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `92e094730f3b39e352c9c736b7251808b5bbe6eba0ec0df390a650a963620e0a`
+- Corpus sha256: `92f0698934ac9dab2fdb9d1e178c1fa39692aff90f476456df6a623e7ae11936`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `f6c6c9a6aff9b22aac8f613d0e873f83544e0d517dfc2decfa62d6ee2fd859d8`
+- Content sha256: `827371cf2a5ec3c19a2d5c54174718603dc02cf9324e04c1d0733bb8b85a86b9`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
@@ -37,6 +37,7 @@ authorizes clean-docs to flatten repository-native forms.
 | Configure a binding | [Manifest reference](docs/REFERENCE.md) | A source-bound fact with the right depth |
 | Investigate an unbound count or column claim | [Source claim checks](docs/REFERENCE.md#source-claim-checks) | A ranked candidate or accepted deterministic relationship |
 | Review a pull request | [Coverage-stating verdict](docs/CLI.md#pull-request-verdicts) | One pinned state with gaps, skips, and non-claims visible |
+| Measure recurring operational problems | [Opt-in feedback loop](docs/FEEDBACK.md) | Bounded envelopes and a receipted improvement case |
 | Understand trust boundaries | [Security model](docs/SECURITY_MODEL.md) | The process and host guarantees |
 
 ## Why clean-docs exists
@@ -93,6 +94,7 @@ Repository sources become typed evidence. Bindings assign that evidence to gener
 - `drive` repairs bound regions. Run `project` afterward when a projection includes the repaired document.
 - Declared processes use time, I/O, and environment controls. The host owns network isolation; see the [security model](docs/SECURITY_MODEL.md).
 - Authored purpose and the manifest decide what matters. clean-docs does not infer product goals or certify judgment prose.
+- Feedback is off by default. Enabled runs queue bounded local envelopes; only an explicit `feedback flush` contacts the configured sink, and delivery cannot change a gate result.
 - `audit`, `check`, `verify`, and `release` do not change documentation.
 - Exit `1` means drift, exit `2` means invalid configuration, and exit `3` means extraction failed.
 

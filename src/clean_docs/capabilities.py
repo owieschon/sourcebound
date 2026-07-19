@@ -57,6 +57,11 @@ ASSURANCE_BOUNDARIES = (
         "clean-docs proves": "Declared markers and configured relationships remain intact",
         "clean-docs does not prove": "The repository chose the right goals, audience, or priority",
     },
+    {
+        "surface": "Opt-in feedback loop",
+        "clean-docs proves": "Validated operational envelopes and improvement-state receipts satisfy their closed schemas",
+        "clean-docs does not prove": "Observed behavior establishes causality, authorizes purpose, or makes a candidate change correct",
+    },
 )
 
 SUPPORTED_BINDINGS = {
@@ -117,6 +122,20 @@ CLI_REFERENCE = (
     {"command": "eval", "job": "Score human tasks and replayable agent round trips", "writes": "with --history or live recording", "example": "clean-docs eval --fixtures .clean-docs/eval.yml"},
     {"command": "release", "job": "Render typed release facts between immutable refs", "writes": "no", "example": "clean-docs release --from v0.9.0 --to HEAD"},
     {"command": "migrate", "job": "Upgrade a prior manifest with rollback backup", "writes": "with --write or --rollback", "example": "clean-docs migrate --write"},
+    {"command": "feedback", "job": "Manage opt-in operational feedback", "writes": "yes", "example": "clean-docs feedback status"},
+    {"command": "feedback enable", "job": "Consent to a named feedback sink", "writes": "yes", "example": "clean-docs feedback enable --sink local"},
+    {"command": "feedback status", "job": "Show feedback consent and pending counts", "writes": "no", "example": "clean-docs feedback status"},
+    {"command": "feedback preview", "job": "Print exact pending envelope bytes", "writes": "no", "example": "clean-docs feedback preview"},
+    {"command": "feedback flush", "job": "Deliver pending feedback envelopes", "writes": "yes", "example": "clean-docs feedback flush"},
+    {"command": "feedback disable", "job": "Remove feedback delivery authority", "writes": "yes", "example": "clean-docs feedback disable"},
+    {"command": "feedback rotate", "job": "Replace the feedback installation identifier", "writes": "yes", "example": "clean-docs feedback rotate"},
+    {"command": "feedback purge", "job": "Delete local feedback state", "writes": "yes", "example": "clean-docs feedback purge"},
+    {"command": "feedback signal", "job": "Validate or ingest aggregate behavior signals", "writes": "varies", "example": "clean-docs feedback signal validate --input signal.json"},
+    {"command": "feedback signal prepare", "job": "Add a canonical content-derived signal ID", "writes": "no", "example": "clean-docs feedback signal prepare --input signal-body.json"},
+    {"command": "feedback signal validate", "job": "Validate one aggregate behavior signal", "writes": "no", "example": "clean-docs feedback signal validate --input signal.json"},
+    {"command": "feedback signal ingest", "job": "Create an observed improvement case", "writes": "yes", "example": "clean-docs feedback signal ingest --input signal.json"},
+    {"command": "feedback case", "job": "Advance a verified improvement case", "writes": "yes", "example": "clean-docs feedback case transition --case ID --to reproduced --receipt receipt.json"},
+    {"command": "feedback case transition", "job": "Apply one adjacent evidence-backed state transition", "writes": "yes", "example": "clean-docs feedback case transition --case ID --to reproduced --receipt receipt.json"},
     {"command": "emit", "job": "Project the manifest into another format", "writes": "yes", "example": "clean-docs emit --help"},
     {
         "command": "emit stepwise-skill",

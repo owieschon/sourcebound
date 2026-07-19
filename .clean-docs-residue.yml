@@ -4,6 +4,8 @@ exclude:
     reason: Frozen Version 0 provenance fixtures stay outside the active product surface.
   - pattern: .clean-docs/reader-trials*/**
     reason: Versioned content-addressed reader evidence preserves observed commands and paths verbatim.
+  - pattern: docs/adapters/connected-event.md
+    reason: The reference connected adapter names the external transport it implements.
 rules:
   - id: project-context-a
     token_sha256: 67e5a3025bc013d09e3a1e6659f2e53efc7d137272ffe72b6dc8344f578461cf
