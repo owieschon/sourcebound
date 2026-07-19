@@ -63,7 +63,7 @@ from clean_docs.release import (
     validate_release_narrative,
 )
 from clean_docs.regions import atomic_write
-from clean_docs.review_ledger import update_review_event_ledger, validate_review_event_ledger
+from clean_docs.review_ledger import validate_review_event_ledger
 from clean_docs.residue import LOCAL_CONFIG_NAME, load_local_residue_rules
 from clean_docs.sensitivity import (
     decode_json_object,
@@ -572,9 +572,7 @@ def _main(argv: list[str] | None = None) -> int:
                         if args.prior_ledger is None or args.prior_ledger.is_absolute()
                         else root / args.prior_ledger
                     )
-                    validate_review_event_ledger(
-                        ledger, candidates, prior_path=prior_ledger
-                    )
+                    validate_review_event_ledger(ledger, candidates, prior_path=prior_ledger)
                 rendered = json.dumps(
                     candidates.as_dict(),
                     indent=2,

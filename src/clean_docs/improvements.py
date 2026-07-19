@@ -344,6 +344,7 @@ def _candidate_identity_evidence(
     identity = []
     for item in evidence:
         normalized = dict(item)
+        normalized.pop("grounding", None)
         receipt = normalized.get("receipt")
         if isinstance(receipt, dict):
             normalized["receipt"] = {
