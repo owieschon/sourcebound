@@ -24,8 +24,6 @@ from clean_docs.improvements import (
 )
 from clean_docs.review_ledger import (
     REVIEW_EVENT_LEDGER_SCHEMA,
-    REVIEW_EVENT_LEDGER_SCHEMA_V1,
-    update_review_event_ledger,
     validate_review_event_ledger,
 )
 
@@ -538,6 +536,22 @@ def test_candidate_identity_ignores_transient_receipt_resolution(tmp_path: Path)
     assert compile_improvement_candidates(moved).candidates[0].id != grounded.candidates[0].id
 
 
+def test_candidate_identity_ignores_repository_grounding(tmp_path: Path) -> None:
+    root = tmp_path / "repository"
+    commit = _repository(root)
+    payload = _payload()
+    payload["repository_commit"] = commit
+    source = root / "review.json"
+    source.write_text(json.dumps(payload))
+
+    unresolved = load_review_candidates(source)
+    grounded = load_review_candidates(source, root=root)
+
+    assert unresolved.candidates[0].id == grounded.candidates[0].id
+    assert unresolved.digest != grounded.digest
+    assert grounded.candidates[0].evidence[0]["grounding"]["state"] == "grounded"
+
+
 def test_cli_writes_and_checks_candidate_set(tmp_path: Path, capsys) -> None:
     source = tmp_path / "review.json"
     source.write_text(json.dumps(_payload()))
@@ -588,33 +602,6 @@ def test_cli_writes_and_checks_candidate_set(tmp_path: Path, capsys) -> None:
         "text",
     ]) == 1
     assert "[drift] .clean-docs/candidates.json" in capsys.readouterr().out
-
-
-def test_cli_appends_explicit_ledger_revision(tmp_path: Path, capsys) -> None:
-    source = tmp_path / "review.json"
-    original = _payload()
-    source.write_text(json.dumps(original))
-    ledger = tmp_path / "events.json"
-    ledger.write_text(json.dumps(_ledger(compile_improvement_candidates(original))))
-
-    revised = _payload()
-    revised["observations"][0]["summary"] = "The documentation hub omits one task route."
-    source.write_text(json.dumps(revised))
-
-    assert main([
-        "--root", str(tmp_path), "review", "candidates",
-        "--input", "review.json", "--ledger", "events.json", "--update-ledger",
-        "--out", ".clean-docs/candidates.json", "--format", "text",
-    ]) == 0
-    assert "[written] .clean-docs/candidates.json: 1 candidate(s)" in capsys.readouterr().out
-    assert json.loads(ledger.read_text())["schema"] == REVIEW_EVENT_LEDGER_SCHEMA
-
-    assert main([
-        "--root", str(tmp_path), "review", "candidates",
-        "--input", "review.json", "--ledger", "events.json", "--update-ledger", "--check",
-        "--out", ".clean-docs/candidates.json",
-    ]) == 2
-    assert "cannot be combined" in capsys.readouterr().err
 
 
 def test_cli_requires_explicit_internal_output_for_check(tmp_path: Path, capsys) -> None:

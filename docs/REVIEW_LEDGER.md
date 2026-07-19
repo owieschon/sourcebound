@@ -26,23 +26,10 @@ The check exits `1` when the compiled set is stale or when the ledger is missing
 retargets a recorded problem. `merged` and `superseded` events point to the candidate that now owns
 the work. The ledger records the review denominator; it does not decide whether a change can merge.
 
-## Append a candidate revision
+## Protect the base history
 
-If the summary, citation coordinates, or proposed tests for an existing problem change, append a
-revision instead of rewriting the earlier event:
-
-```bash
-clean-docs review candidates \
-  --input .clean-docs/reviews/repository-review.json \
-  --ledger .clean-docs/reviews/repository-events.json \
-  --update-ledger \
-  --out .clean-docs/improvement-candidates.json \
-  --format text
-```
-
-The command preserves old event bytes, records the candidate ID it replaces, and moves the ledger
-head. It rejects a missing problem or a candidate removed without a declared disposition. Do not
-combine `--update-ledger` with `--check`; append the revision, then run the ordinary freshness check.
-
-Ledgers using version 1 remain readable. The first appended revision writes version 2 while keeping
-the earlier chained events unchanged.
+In CI, provide the ledger from the protected base commit as `--prior-ledger`. A pull request may
+append events, but it cannot alter base-branch events. The first version 2 record binds the version
+1 head it replaces; later records preserve that anchor. Record a changed problem as a new review
+observation or an explicit `merged` or `superseded` event. Do not rewrite a prior candidate to make
+the check green.
