@@ -457,3 +457,15 @@ decorative `network` key; version 1 remains readable and migratable. Pull-reques
 static-only execution, report skipped commands and plugins, and fail when a change affects one of
 those skipped relationships. Reversible: trusted default-branch checks can still run declared
 processes, but no mode restores the unmeasured request count or the prose-assurance implication.
+
+## 43. Make adoption debt stable by identity, not by line (2026-07-18)
+
+Context: accepted audit debt included its line number in the fingerprint. Inserting prose above an
+unchanged broken link therefore created one new finding and one stale baseline entry. Chose a
+version 2 multiset identity from path, rule, normalized offending content, section anchor, and
+duplicate ordinal. The line remains a display hint. Version 1 baselines remain readable, and an
+explicit baseline update migrates them. The same correction pass closes four adjacent false
+states: path globs with no matches now fail extraction, an opening frontmatter delimiter needs a
+close, placeholder links are exempt only in templates and agent procedures, and changed MDX is
+reported as unsupported unknown impact. Reversible: the version 1 reader remains available, but
+new baselines and impact receipts keep the stricter identities and boundaries.

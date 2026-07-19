@@ -128,6 +128,14 @@ class ImpactPlan:
     def no_impact(self) -> bool:
         return self.impact == "none"
 
+    @property
+    def unsupported_documents(self) -> tuple[str, ...]:
+        return tuple(
+            artifact.path
+            for artifact in self.artifacts
+            if artifact.adapter == "mdx-unsupported"
+        )
+
     def _payload(self) -> dict[str, object]:
         roots = sorted(
             {
@@ -147,7 +155,7 @@ class ImpactPlan:
             }
         )
         return {
-            "schema": "clean-docs.impact-plan.v1",
+            "schema": "clean-docs.impact-plan.v2",
             "producer": {"name": "clean-docs", "version": self.producer_version},
             "read_only": True,
             "requested_base": self.requested_base,
@@ -160,6 +168,7 @@ class ImpactPlan:
             "impact": self.impact,
             "coverage_complete": self.coverage_complete,
             "no_impact": self.no_impact,
+            "unsupported_documents": list(self.unsupported_documents),
             "artifacts": [asdict(item) for item in self.artifacts],
             "events": [asdict(item) for item in self.events],
             "graph": {
@@ -491,6 +500,8 @@ def _adapter_for(
         return "test-files"
     if candidate.suffix == ".md":
         return "markdown"
+    if candidate.suffix == ".mdx":
+        return "mdx-unsupported"
     if candidate.suffix == ".py":
         return "python-ast"
     if candidate.suffix in {".ts", ".tsx"}:
@@ -535,6 +546,8 @@ def _may_expose_public_surface(
         or candidate.parts[:2] == (".github", "workflows")
     )
     if control_surface:
+        return True
+    if adapter == "mdx-unsupported":
         return True
     if adapter != "unsupported":
         return False
@@ -1222,14 +1235,28 @@ def build_impact_plan(
         if artifact.path in classified_paths or artifact.path in public_event_paths:
             continue
         if artifact.coverage == "unknown":
+            unsupported_document = artifact.adapter == "mdx-unsupported"
             unknown.append(
                 _finding(
                     "unknown",
-                    "unsupported-public-candidate",
-                    f"{artifact.path} may expose a public surface, but no adapter can classify it",
+                    (
+                        "unsupported-document-format"
+                        if unsupported_document
+                        else "unsupported-public-candidate"
+                    ),
+                    (
+                        f"{artifact.path} is an unsupported MDX document"
+                        if unsupported_document
+                        else f"{artifact.path} may expose a public surface, "
+                        "but no adapter can classify it"
+                    ),
                     paths=(artifact.path,),
                     roots=artifact.graph_roots,
-                    obligations=("add-adapter-or-declare-scope",),
+                    obligations=(
+                        ("add-mdx-adapter-or-review-manually",)
+                        if unsupported_document
+                        else ("add-adapter-or-declare-scope",)
+                    ),
                 )
             )
         elif artifact.coverage == "generated":

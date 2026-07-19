@@ -143,3 +143,26 @@ def test_static_extractors_render_and_remain_ref_pure(tmp_path: Path) -> None:
     assert "1.2.3" in forward[0][0].expected
     assert "2.0.0" in forward[1][0].expected
     assert (root / "pyproject.toml").read_text() == before
+
+
+def test_path_extractor_rejects_zero_matches_without_writing(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    assert _run(root, "drive").returncode == 0
+    readme = root / "README.md"
+    before = readme.read_text()
+    (root / "guides/start.md").unlink()
+
+    checked = _run(root, "check")
+    driven = _run(root, "drive")
+
+    assert checked.returncode == 3
+    assert "binding guides path glob matched zero files: guides/*.md" in checked.stderr
+    assert driven.returncode == 3
+    assert readme.read_text() == before
+
+    (root / "guides/return.md").write_text("# Return\n")
+    restored = _run(root, "check")
+    assert restored.returncode == 1
+    assert "[drift] guides" in restored.stdout

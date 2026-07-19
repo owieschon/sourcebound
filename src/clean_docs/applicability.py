@@ -160,6 +160,20 @@ def role_override_error(text: str) -> str | None:
     return None
 
 
+def frontmatter_error(text: str) -> str | None:
+    lines = text.splitlines()
+    if not lines or lines[0] != "---":
+        return None
+    if "---" not in lines[1:]:
+        return "frontmatter opens at the document start but has no closing delimiter"
+    return None
+
+
+def _has_frontmatter(text: str) -> bool:
+    lines = text.splitlines()
+    return bool(lines and lines[0] == "---" and "---" in lines[1:])
+
+
 def classify_document(relative: Path, text: str) -> DocumentProfile:
     """Classify a Markdown file by the job its current form performs."""
     normalized = relative.as_posix()
@@ -189,7 +203,7 @@ def classify_document(relative: Path, text: str) -> DocumentProfile:
         name in {"agents.md", "skill.md"}
         or parts[:1] == (".agents",)
         or "skills" in parts
-        and re.search(r"^---\s*$", text)
+        and _has_frontmatter(text)
     ):
         return DocumentProfile(
             normalized,

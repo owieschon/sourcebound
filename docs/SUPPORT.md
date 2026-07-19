@@ -23,7 +23,7 @@ Install, upgrade, rollback, uninstall, and release verification live in the
 | Repository adapters | Static Python, TypeScript, JavaScript, OpenAPI, JSON Schema, package metadata, config schemas, and MCP tool discovery |
 | Local workflow | CLI and pre-commit hooks |
 | Pull-request workflow | Reusable GitHub Actions gate with read-only repository permission |
-| Manifest | Version `1` |
+| Manifest | Versions `1` and `2`; init writes version `2` |
 | Plugin process API | Version `1` |
 
 TypeScript and JavaScript adapters parse source without Node.js. The
@@ -58,14 +58,20 @@ git diff -- .clean-docs/audit-baseline.json
 clean-docs audit
 ```
 
-The committed baseline records each exact blocking rule, path, line, detail, and fingerprint. Init
-does not archive or move existing documents from a filename or similarity heuristic. Ambiguous
-plans, package-owned evidence, compatibility aliases, prompt templates, and agent procedures keep
-their native form. Files named `*.fixture.md` are explicit test inputs rather than reader
-documentation. Git-tracked and non-ignored untracked Markdown files enter the corpus; `.agents`
-documentation is active, other hidden configuration trees stay out, and tracked MDX is disclosed
-as unsupported. `audit` fails when a new blocker appears. It also fails with `stale-baseline` when
-a recorded blocker is resolved, because the baseline must shrink to match current debt.
+The committed version 2 baseline records each blocking rule, path, normalized offending content,
+section anchor, duplicate ordinal, detail, display-only line hint, and fingerprint. Inserting prose
+above the finding does not change its identity. Fixing one of two identical findings leaves one
+matched entry and one stale entry. Version 1 baselines remain readable; the next
+`audit --update-baseline` writes version 2.
+
+Init does not archive or move existing documents from a filename or similarity heuristic.
+Ambiguous plans, package-owned evidence, compatibility aliases, prompt templates, and agent
+procedures keep their native form. Files named `*.fixture.md` are explicit test inputs rather than
+reader documentation. Git-tracked and non-ignored untracked Markdown files enter the corpus;
+`.agents` documentation is active, other hidden configuration trees stay out, and tracked MDX is
+disclosed as unsupported. A changed MDX file produces unknown impact until an adapter or manual
+review resolves it. `audit` fails when a new blocker appears. It also fails with `stale-baseline`
+when a recorded blocker is resolved, because the baseline must shrink to match current debt.
 
 For an established README that has not adopted the policy profile, init writes detected source
 facts to `.clean-docs/repository-surface.md` and leaves the README unchanged. The manifest binds
@@ -90,7 +96,10 @@ Review and commit the baseline change with the documentation change. A malformed
 
 ## Compatibility policy
 
-Manifest version `1`, plugin API version `1`, and published machine-readable schemas remain compatible throughout the 1.x line. A minor release may add optional fields. It cannot change the meaning of an existing field or silently change normalized evidence for a supported adapter.
+Manifest versions `1` and `2`, plugin API version `1`, and published machine-readable schemas
+remain compatible throughout the 1.x line. A minor release may add optional fields. It cannot
+change the meaning of an existing field or silently change normalized evidence for a supported
+adapter.
 
 Before removal, release notes and command output announce a deprecation for at least one minor
 release. Removing a stable CLI command, manifest field, evidence field, or plugin interface breaks

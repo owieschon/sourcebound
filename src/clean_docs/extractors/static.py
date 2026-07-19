@@ -60,6 +60,11 @@ def extract_paths(snapshot: RepositorySnapshot, binding: RegionBinding) -> Evide
     if binding.source.glob is None:
         raise ExtractionError("path extractor requires a glob")
     paths = [path.as_posix() for path in snapshot.matching_files(binding.source.glob)]
+    if not paths:
+        raise ExtractionError(
+            f"binding {binding.id} path glob matched zero files: "
+            f"{binding.source.glob}"
+        )
     return EvidenceValue(
         kind="list",
         value=paths,

@@ -212,10 +212,10 @@ def test_private_refactor_produces_coverage_complete_stable_no_impact(
         ]
     ) == 0
     payload = json.loads(capsys.readouterr().out)
-    assert payload["schema"] == "clean-docs.impact-plan.v1"
+    assert payload["schema"] == "clean-docs.impact-plan.v2"
     assert payload["producer"] == {
         "name": "clean-docs",
-        "version": "1.2.0rc3",
+        "version": "1.2.0rc4",
     }
     assert payload["digest"] == first.digest
     assert payload["no_impact"] is True
@@ -302,6 +302,33 @@ def test_internal_unsupported_script_does_not_expand_the_plan(
     assert plan.artifacts[0].coverage == "unrelated-covered"
     assert {item.rule for item in plan.unrelated} == {
         "no-public-contract-delta"
+    }
+
+
+def test_unsupported_mdx_change_is_unknown_and_disclosed(
+    tmp_path: Path,
+) -> None:
+    root = _symbol_repository(tmp_path)
+    mdx = root / "docs/guide.mdx"
+    mdx.parent.mkdir()
+    mdx.write_text("# Guide\n\n<Callout>Old behavior</Callout>\n")
+    base = _commit(root, "base")
+    mdx.write_text("# Guide\n\n<Callout>New behavior</Callout>\n")
+    head = _commit(root, "change unsupported MDX")
+
+    plan = build_impact_plan(
+        root, root / ".clean-docs.yml", base=base, head=head
+    )
+    payload = plan.as_dict()
+
+    assert plan.impact == "unknown"
+    assert not plan.coverage_complete
+    assert plan.unsupported_documents == ("docs/guide.mdx",)
+    assert payload["unsupported_documents"] == ["docs/guide.mdx"]
+    assert plan.artifacts[0].adapter == "mdx-unsupported"
+    assert plan.artifacts[0].coverage == "unknown"
+    assert {item.rule for item in plan.unknown} == {
+        "unsupported-document-format"
     }
 
 
