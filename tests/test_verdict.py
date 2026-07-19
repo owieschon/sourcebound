@@ -745,6 +745,88 @@ def test_verdict_validation_rejects_resigned_semantic_tampering(
     reject(payload)
 
 
+def test_verdict_validation_rejects_resigned_gate_promotion(
+    tmp_path: Path,
+) -> None:
+    root = _region_repository(tmp_path)
+    base = _commit(root, "base")
+    source = root / "src/actions.py"
+    source.write_text(source.read_text().replace("report", "publish"))
+    head = _commit(root, "drift")
+    payload = build_pr_verdict(
+        root,
+        root / ".clean-docs.yml",
+        base=base,
+        head=head,
+    ).as_dict()
+
+    assert payload["state"] == "not_ready"
+    assert any(finding["level"] == "error" for finding in payload["findings"])
+    payload["state"] = "ready"
+    payload["ready"] = True
+    payload["gate"] = {"state": "ready", "ready": True}
+    _resign_verdict(payload)
+
+    with pytest.raises(
+        ConfigurationError,
+        match="gate state contradicts validated evidence",
+    ):
+        validate_verdict_payload(payload)
+
+
+def test_verdict_validation_accepts_derived_ready_and_unknown_states(
+    tmp_path: Path,
+) -> None:
+    ready_root = _symbol_repository(tmp_path / "ready")
+    ready_head = _commit(ready_root, "base")
+    ready = build_pr_verdict(
+        ready_root,
+        ready_root / ".clean-docs.yml",
+        base=ready_head,
+        head=ready_head,
+    ).as_dict()
+
+    unknown_root = _symbol_repository(tmp_path / "unknown")
+    unknown_base = _commit(unknown_root, "base")
+    (unknown_root / "src/Service.java").write_text(
+        "public final class Service { public void start() {} }\n"
+    )
+    unknown_head = _commit(unknown_root, "add unsupported public service")
+    unknown = build_pr_verdict(
+        unknown_root,
+        unknown_root / ".clean-docs.yml",
+        base=unknown_base,
+        head=unknown_head,
+    ).as_dict()
+
+    assert ready["state"] == "ready"
+    assert unknown["state"] == "unknown"
+    validate_verdict_payload(ready)
+    validate_verdict_payload(unknown)
+
+
+def test_verdict_validation_preserves_exact_legacy_shapes() -> None:
+    payloads: list[dict[str, object]] = [
+        {
+            "schema": "clean-docs.pr-verdict.v1",
+            "state": "ready",
+            "ready": True,
+            "findings": [],
+        },
+        {
+            "schema": "clean-docs.pr-verdict.v1",
+            "producer": {"name": "clean-docs", "version": "1.0.0"},
+            "state": "unknown",
+            "ready": False,
+            "findings": [],
+        },
+    ]
+
+    for payload in payloads:
+        _resign_verdict(payload)
+        validate_verdict_payload(payload)
+
+
 def test_verdict_rejects_dirty_or_detached_input_state(
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
