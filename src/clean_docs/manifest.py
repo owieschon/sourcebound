@@ -27,6 +27,12 @@ from clean_docs.models import (
     SymbolBinding,
     StaticDemoProjection,
 )
+from clean_docs.review_limits import (
+    MAX_REVIEW_CONTRACTS,
+    MAX_REVIEW_LOCATORS,
+    MAX_REVIEW_LOCATORS_PER_CONTRACT,
+    MAX_REVIEW_UNIQUE_PATHS,
+)
 
 ROOT_KEYS = {
     "version",
@@ -192,8 +198,15 @@ def _load_review_locator(raw: Any, where: str) -> ReviewLocator:
 def _load_review_contracts(raw: Any) -> tuple[ReviewContract, ...]:
     if not isinstance(raw, list):
         raise ConfigurationError("review_contracts must be a list")
+    if len(raw) > MAX_REVIEW_CONTRACTS:
+        raise ConfigurationError(
+            "review_contracts must contain at most "
+            f"{MAX_REVIEW_CONTRACTS} contracts"
+        )
     contracts: list[ReviewContract] = []
     contract_ids: set[str] = set()
+    total_locators = 0
+    unique_paths: set[Path] = set()
     for index, raw_contract in enumerate(raw):
         where = f"review_contracts[{index}]"
         data = _mapping(raw_contract, where)
@@ -225,7 +238,37 @@ def _load_review_contracts(raw: Any) -> tuple[ReviewContract, ...]:
                         f"duplicate review locator id in {contract_id}: {locator.id}"
                     )
                 locator_ids.add(locator.id)
+            identities = {
+                (locator.path, locator.extractor, locator.locator)
+                for locator in locators
+            }
+            if len(identities) != len(locators):
+                raise ConfigurationError(
+                    f"review contract {contract_id} {group} must not repeat "
+                    "the same path, extractor, and locator"
+                )
             groups[group] = locators
+        contract_locator_count = len(groups["sources"]) + len(groups["targets"])
+        if contract_locator_count > MAX_REVIEW_LOCATORS_PER_CONTRACT:
+            raise ConfigurationError(
+                f"review contract {contract_id} must contain at most "
+                f"{MAX_REVIEW_LOCATORS_PER_CONTRACT} locators"
+            )
+        total_locators += contract_locator_count
+        if total_locators > MAX_REVIEW_LOCATORS:
+            raise ConfigurationError(
+                "review_contracts must contain at most "
+                f"{MAX_REVIEW_LOCATORS} locators"
+            )
+        unique_paths.update(
+            locator.path
+            for locator in groups["sources"] + groups["targets"]
+        )
+        if len(unique_paths) > MAX_REVIEW_UNIQUE_PATHS:
+            raise ConfigurationError(
+                "review_contracts must reference at most "
+                f"{MAX_REVIEW_UNIQUE_PATHS} unique paths"
+            )
         source_identities = {
             (locator.path, locator.extractor, locator.locator)
             for locator in groups["sources"]

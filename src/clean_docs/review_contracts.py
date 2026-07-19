@@ -11,7 +11,7 @@ import math
 import re
 import subprocess
 import tomllib
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from datetime import date, datetime, time
 from pathlib import Path
 
@@ -20,6 +20,11 @@ import yaml
 from clean_docs.errors import ExtractionError
 from clean_docs.mdx import MdxDocument, MdxParserError, parse_mdx_documents
 from clean_docs.models import ReviewContract, ReviewLocator
+from clean_docs.review_limits import (
+    MAX_REVIEW_FILE_BYTES,
+    MAX_REVIEW_STRUCTURED_NODES,
+    MAX_REVIEW_TOTAL_BYTES,
+)
 from clean_docs.snapshot import RepositorySnapshot
 
 
@@ -91,28 +96,116 @@ def _validate_path(path: Path) -> None:
         raise _LocatorUnresolved
 
 
-def _path_exists(root: Path, ref: str, path: Path) -> bool:
+def _path_size(root: Path, ref: str, path: Path) -> int | None:
     try:
         process = subprocess.run(
-            ["git", "-C", str(root), "cat-file", "-e", f"{ref}:{path.as_posix()}"],
+            ["git", "-C", str(root), "cat-file", "-s", f"{ref}:{path.as_posix()}"],
+            text=True,
             capture_output=True,
             timeout=30,
             check=False,
         )
     except (OSError, subprocess.SubprocessError) as exc:
         raise _LocatorUnresolved from exc
-    return process.returncode == 0
-
-
-def _snapshot_text(snapshot: RepositorySnapshot, path: Path) -> str:
-    _validate_path(path)
-    ref = snapshot.label
-    if not _path_exists(snapshot.root, ref, path):
-        raise _LocatorMissing
+    if process.returncode != 0:
+        return None
     try:
-        return snapshot.read_text(path)
-    except (ExtractionError, UnicodeDecodeError) as exc:
+        size = int(process.stdout.strip())
+    except ValueError as exc:
         raise _LocatorUnresolved from exc
+    if size < 0:
+        raise _LocatorUnresolved
+    return size
+
+
+@dataclass(frozen=True)
+class _TextSnapshot:
+    resolution: str
+    text: str | None = None
+
+
+_ContentKey = tuple[str, str]
+_DigestKey = tuple[str, str, str, str]
+
+
+@dataclass
+class _ReviewCache:
+    total_bytes: int = 0
+    texts: dict[_ContentKey, _TextSnapshot] = field(default_factory=dict)
+    python_trees: dict[_ContentKey, ast.Module | None] = field(default_factory=dict)
+    structured_values: dict[_ContentKey, object] = field(default_factory=dict)
+    structured_failures: set[_ContentKey] = field(default_factory=set)
+    digests: dict[_DigestKey, tuple[str, str | None]] = field(
+        default_factory=dict
+    )
+
+    @staticmethod
+    def key(snapshot: RepositorySnapshot, path: Path) -> _ContentKey:
+        return (snapshot.label, path.as_posix())
+
+    def text(self, snapshot: RepositorySnapshot, path: Path) -> str:
+        _validate_path(path)
+        key = self.key(snapshot, path)
+        cached = self.texts.get(key)
+        if cached is None:
+            size = _path_size(snapshot.root, snapshot.label, path)
+            if size is None:
+                cached = _TextSnapshot("missing")
+            elif (
+                size > MAX_REVIEW_FILE_BYTES
+                or self.total_bytes + size > MAX_REVIEW_TOTAL_BYTES
+            ):
+                cached = _TextSnapshot("unresolved")
+            else:
+                try:
+                    text = snapshot.read_text(path)
+                except (ExtractionError, UnicodeDecodeError):
+                    cached = _TextSnapshot("unresolved")
+                else:
+                    if len(text.encode("utf-8")) != size:
+                        cached = _TextSnapshot("unresolved")
+                    else:
+                        self.total_bytes += size
+                        cached = _TextSnapshot("resolved", text)
+            self.texts[key] = cached
+        if cached.resolution == "missing":
+            raise _LocatorMissing
+        if cached.resolution != "resolved" or cached.text is None:
+            raise _LocatorUnresolved
+        return cached.text
+
+    def python_tree(
+        self,
+        snapshot: RepositorySnapshot,
+        path: Path,
+        text: str,
+    ) -> ast.Module:
+        key = self.key(snapshot, path)
+        if key not in self.python_trees:
+            try:
+                self.python_trees[key] = ast.parse(text)
+            except SyntaxError:
+                self.python_trees[key] = None
+        tree = self.python_trees[key]
+        if tree is None:
+            raise _LocatorUnresolved
+        return tree
+
+    def structured_value(
+        self,
+        snapshot: RepositorySnapshot,
+        path: Path,
+        text: str,
+    ) -> object:
+        key = self.key(snapshot, path)
+        if key not in self.structured_values and key not in self.structured_failures:
+            try:
+                self.structured_values[key] = _load_structured(path, text)
+            except _LocatorUnresolved:
+                self.structured_failures.add(key)
+        if key in self.structured_failures:
+            raise _LocatorUnresolved
+        return self.structured_values[key]
 
 
 def _assignment_names(node: ast.AST) -> set[str]:
@@ -199,11 +292,7 @@ def _normalized_ast(node: ast.AST) -> str:
     return ast.dump(normalized, annotate_fields=True, include_attributes=False)
 
 
-def _python_symbol_digest(text: str, locator: str) -> str:
-    try:
-        tree = ast.parse(text)
-    except SyntaxError as exc:
-        raise _LocatorUnresolved from exc
+def _python_symbol_digest(tree: ast.Module, locator: str) -> str:
     node = _find_python_symbol(tree, locator)
     return _sha256(_normalized_ast(node))
 
@@ -385,7 +474,23 @@ def _resolve_pointer(value: object, pointer: str) -> object:
     return current
 
 
-def _canonical_value(value: object) -> object:
+@dataclass
+class _StructuredNodeBudget:
+    remaining: int = MAX_REVIEW_STRUCTURED_NODES
+
+    def consume(self) -> None:
+        self.remaining -= 1
+        if self.remaining < 0:
+            raise _LocatorUnresolved
+
+
+def _canonical_value(
+    value: object,
+    *,
+    budget: _StructuredNodeBudget,
+    ancestors: frozenset[int] = frozenset(),
+) -> object:
+    budget.consume()
     if value is None or isinstance(value, (str, bool, int)):
         return value
     if isinstance(value, float):
@@ -395,21 +500,39 @@ def _canonical_value(value: object) -> object:
     if isinstance(value, (date, datetime, time)):
         return {"type": type(value).__name__, "value": value.isoformat()}
     if isinstance(value, list):
-        return [_canonical_value(item) for item in value]
+        identity = id(value)
+        if identity in ancestors:
+            raise _LocatorUnresolved
+        nested = ancestors | {identity}
+        return [
+            _canonical_value(item, budget=budget, ancestors=nested)
+            for item in value
+        ]
     if isinstance(value, dict):
         if not all(isinstance(key, str) for key in value):
             raise _LocatorUnresolved
+        identity = id(value)
+        if identity in ancestors:
+            raise _LocatorUnresolved
+        nested = ancestors | {identity}
         return {
-            key: _canonical_value(value[key])
+            key: _canonical_value(
+                value[key],
+                budget=budget,
+                ancestors=nested,
+            )
             for key in sorted(value)
         }
     raise _LocatorUnresolved
 
 
-def _structured_data_digest(path: Path, text: str, locator: str) -> str:
-    value = _resolve_pointer(_load_structured(path, text), locator)
+def _structured_data_digest(value: object, locator: str) -> str:
+    selected = _resolve_pointer(value, locator)
     encoded = json.dumps(
-        _canonical_value(value),
+        _canonical_value(
+            selected,
+            budget=_StructuredNodeBudget(),
+        ),
         sort_keys=True,
         separators=(",", ":"),
         ensure_ascii=False,
@@ -444,6 +567,7 @@ def _prepare_markdown_snapshots(
     contracts: tuple[ReviewContract, ...],
     base_snapshot: RepositorySnapshot,
     head_snapshot: RepositorySnapshot,
+    cache: _ReviewCache,
 ) -> _MarkdownSnapshots:
     paths = {
         locator.path
@@ -464,7 +588,7 @@ def _prepare_markdown_snapshots(
             if key in prepared or key in identifiers.values():
                 continue
             try:
-                text = _snapshot_text(snapshot, path)
+                text = cache.text(snapshot, path)
             except _LocatorMissing:
                 prepared[key] = _MarkdownSnapshot("missing")
                 continue
@@ -513,7 +637,18 @@ def _digest_at(
     snapshot: RepositorySnapshot,
     locator: ReviewLocator,
     markdown_snapshots: _MarkdownSnapshots,
+    cache: _ReviewCache,
 ) -> tuple[str, str | None]:
+    key = (
+        snapshot.label,
+        locator.path.as_posix(),
+        locator.extractor,
+        locator.locator,
+    )
+    cached = cache.digests.get(key)
+    if cached is not None:
+        return cached
+    result: tuple[str, str | None]
     try:
         if locator.extractor == "markdown-section":
             markdown = markdown_snapshots.get(
@@ -532,18 +667,27 @@ def _digest_at(
                 locator.locator,
             )
         else:
-            text = _snapshot_text(snapshot, locator.path)
+            text = cache.text(snapshot, locator.path)
         if locator.extractor == "python-symbol":
-            digest = _python_symbol_digest(text, locator.locator)
+            digest = _python_symbol_digest(
+                cache.python_tree(snapshot, locator.path, text),
+                locator.locator,
+            )
         elif locator.extractor == "structured-data":
-            digest = _structured_data_digest(locator.path, text, locator.locator)
+            digest = _structured_data_digest(
+                cache.structured_value(snapshot, locator.path, text),
+                locator.locator,
+            )
         elif locator.extractor != "markdown-section":
             raise _LocatorUnresolved
     except _LocatorMissing:
-        return "missing", None
+        result = ("missing", None)
     except _LocatorUnresolved:
-        return "unresolved", None
-    return "resolved", digest
+        result = ("unresolved", None)
+    else:
+        result = ("resolved", digest)
+    cache.digests[key] = result
+    return result
 
 
 def _locator_state(
@@ -568,16 +712,19 @@ def _evaluate_locator(
     base_snapshot: RepositorySnapshot,
     head_snapshot: RepositorySnapshot,
     markdown_snapshots: _MarkdownSnapshots,
+    cache: _ReviewCache,
 ) -> ReviewLocatorEvidence:
     base_resolution, base_digest = _digest_at(
         base_snapshot,
         locator,
         markdown_snapshots,
+        cache,
     )
     head_resolution, head_digest = _digest_at(
         head_snapshot,
         locator,
         markdown_snapshots,
+        cache,
     )
     return ReviewLocatorEvidence(
         id=locator.id,
@@ -600,6 +747,7 @@ def _evaluate_review_contract_snapshots(
     base_snapshot: RepositorySnapshot,
     head_snapshot: RepositorySnapshot,
     markdown_snapshots: _MarkdownSnapshots,
+    cache: _ReviewCache,
 ) -> ReviewContractResult:
     sources = tuple(
         _evaluate_locator(
@@ -607,6 +755,7 @@ def _evaluate_review_contract_snapshots(
             base_snapshot,
             head_snapshot,
             markdown_snapshots,
+            cache,
         )
         for locator in contract.sources
     )
@@ -616,6 +765,7 @@ def _evaluate_review_contract_snapshots(
             base_snapshot,
             head_snapshot,
             markdown_snapshots,
+            cache,
         )
         for locator in contract.targets
     )
@@ -665,16 +815,19 @@ def evaluate_review_contract(
     head: str,
 ) -> ReviewContractResult:
     base_snapshot, head_snapshot = _snapshots(root, base, head)
+    cache = _ReviewCache()
     markdown_snapshots = _prepare_markdown_snapshots(
         (contract,),
         base_snapshot,
         head_snapshot,
+        cache,
     )
     return _evaluate_review_contract_snapshots(
         contract,
         base_snapshot,
         head_snapshot,
         markdown_snapshots,
+        cache,
     )
 
 
@@ -686,10 +839,12 @@ def evaluate_review_contracts(
     head: str,
 ) -> tuple[ReviewContractResult, ...]:
     base_snapshot, head_snapshot = _snapshots(root, base, head)
+    cache = _ReviewCache()
     markdown_snapshots = _prepare_markdown_snapshots(
         contracts,
         base_snapshot,
         head_snapshot,
+        cache,
     )
     return tuple(
         _evaluate_review_contract_snapshots(
@@ -697,6 +852,7 @@ def evaluate_review_contracts(
             base_snapshot,
             head_snapshot,
             markdown_snapshots,
+            cache,
         )
         for contract in contracts
     )

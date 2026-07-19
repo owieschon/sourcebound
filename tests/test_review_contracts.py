@@ -11,6 +11,8 @@ from clean_docs.review_contracts import (
     evaluate_review_contract,
     evaluate_review_contracts,
 )
+from clean_docs.review_limits import MAX_REVIEW_FILE_BYTES
+from clean_docs.snapshot import RepositorySnapshot
 
 
 def _repository(tmp_path: Path) -> Path:
@@ -792,3 +794,150 @@ def test_markdown_documents_are_parsed_once_per_contract_batch(
 
     assert len(results) == 2
     assert parse_calls == 1
+
+
+def test_repeated_locators_read_each_ref_path_once(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = _repository(tmp_path)
+    base = _write_pagination_base(root)
+    _add_pagination_behavior_test(root)
+    head = _commit(root, "add pagination")
+    first = _delivery_contract()
+    second = ReviewContract(
+        id="second-delivery-guidance",
+        mode=first.mode,
+        sources=first.sources,
+        targets=first.targets,
+    )
+    calls: list[tuple[str, str]] = []
+    read_text = RepositorySnapshot.read_text
+
+    def counted_read(
+        snapshot: RepositorySnapshot,
+        path: Path,
+    ) -> str:
+        calls.append((snapshot.label, path.as_posix()))
+        return read_text(snapshot, path)
+
+    monkeypatch.setattr(RepositorySnapshot, "read_text", counted_read)
+
+    results = evaluate_review_contracts(
+        root,
+        (first, second),
+        base=base,
+        head=head,
+    )
+
+    assert [result.state for result in results] == [
+        "review-recommended",
+        "review-recommended",
+    ]
+    assert len(calls) == 4
+    assert len(set(calls)) == len(calls)
+
+
+def test_oversized_locator_file_is_not_read(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = _repository(tmp_path)
+    _write(root, "tests/test_delivery.py", "x" * (MAX_REVIEW_FILE_BYTES + 1))
+    _write(
+        root,
+        "docs/delivery.md",
+        "# Delivery\n\n## Reading large results\n\nFetch once.\n",
+    )
+    base = _commit(root, "baseline")
+    _write(
+        root,
+        "docs/delivery.md",
+        "# Delivery\n\n## Reading large results\n\nFetch each page.\n",
+    )
+    head = _commit(root, "change instructions")
+    read_text = RepositorySnapshot.read_text
+
+    def reject_oversized_read(
+        snapshot: RepositorySnapshot,
+        path: Path,
+    ) -> str:
+        if path == Path("tests/test_delivery.py"):
+            raise AssertionError("oversized source must not be read")
+        return read_text(snapshot, path)
+
+    monkeypatch.setattr(RepositorySnapshot, "read_text", reject_oversized_read)
+
+    result = evaluate_review_contract(
+        root,
+        _delivery_contract(),
+        base=base,
+        head=head,
+    )
+
+    assert result.state == "unknown"
+    assert result.sources[0].state == "unknown"
+
+
+def test_aggregate_content_budget_resolves_unknown(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = _repository(tmp_path)
+    base = _write_pagination_base(root)
+    _add_pagination_behavior_test(root)
+    head = _commit(root, "add pagination")
+    monkeypatch.setattr(review_contracts, "MAX_REVIEW_TOTAL_BYTES", 64)
+
+    result = evaluate_review_contract(
+        root,
+        _delivery_contract(),
+        base=base,
+        head=head,
+    )
+
+    assert result.state == "unknown"
+
+
+def test_yaml_alias_expansion_resolves_unknown(tmp_path: Path) -> None:
+    root = _repository(tmp_path)
+    levels = ["leaf: &leaf [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]"]
+    previous = "leaf"
+    for index in range(6):
+        current = f"level{index}"
+        levels.append(
+            f"{current}: &{current} [{', '.join([f'*{previous}'] * 10)}]"
+        )
+        previous = current
+    levels.append(f"payload: *{previous}")
+    _write(root, "config/delivery.yaml", "\n".join(levels) + "\n")
+    _write(
+        root,
+        "docs/delivery.md",
+        "# Delivery\n\n## Reading large results\n\nFetch once.\n",
+    )
+    base = _commit(root, "baseline")
+    _write(
+        root,
+        "docs/delivery.md",
+        "# Delivery\n\n## Reading large results\n\nFetch each page.\n",
+    )
+    head = _commit(root, "change instructions")
+    contract = ReviewContract(
+        id="structured-guidance",
+        mode="observe",
+        sources=(
+            ReviewLocator(
+                id="payload",
+                path=Path("config/delivery.yaml"),
+                extractor="structured-data",
+                locator="/payload",
+            ),
+        ),
+        targets=_delivery_contract().targets,
+    )
+
+    result = evaluate_review_contract(root, contract, base=base, head=head)
+
+    assert result.state == "unknown"
+    assert result.sources[0].state == "unknown"
