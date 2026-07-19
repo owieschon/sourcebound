@@ -9,7 +9,7 @@
 - [SECURITY.md](SECURITY.md): declared canonical context; sha256: 5a10b7b08e5b26a5302e0f775320a59b8bd200da7fa858fc890342d7db0dd270
 - [STANDARD.md](STANDARD.md): declared canonical context; sha256: ad8d962766edbe05585d934be6378a9e737ce3bb1934508f1d44ad53e824f3d2
 - [docs/BEHAVIOR_SIGNALS.md](docs/BEHAVIOR_SIGNALS.md): declared canonical context; sha256: dbcc582397402dcc80ccd59942c8d8180dfe8b8fb3c497e8c8967d4fd9daa4fc
-- [docs/CLI.md](docs/CLI.md): bindings: cli-reference, verdict-reference; sha256: 5cc04c8e867b92a72275da9afe2c7379901c5bef9fc06dead3897151b55c36af
+- [docs/CLI.md](docs/CLI.md): bindings: cli-reference, verdict-reference; sha256: 41c9ebf1165407d6dcab92ee0c3e9aec358eb36255777db0ec67b3b63039bbea
 - [docs/EVALUATION.md](docs/EVALUATION.md): bindings: evaluation-scorers; sha256: d4364212c28b5f8b9bc715e54a3b55152ad5ec09ef96d69d0802ea9b048c518c
 - [docs/EXTENSIONS.md](docs/EXTENSIONS.md): bindings: extension-guide, migration-guide; sha256: 81eb19b309a3d7a73b0fca7640b18add365dd556ea8572577e8fcce5e83084ae
 - [docs/FEEDBACK.md](docs/FEEDBACK.md): declared canonical context; sha256: 0a1ef2b1a53e1749355e25cc1c7c47c796fe18f17ba8616c1ab2f13a44bf6891
@@ -19,7 +19,7 @@
 - [docs/RELEASES.md](docs/RELEASES.md): bindings: release-guide; sha256: cc40c87393dd1784fcca7d1034ac8fd5925a7570011791a51df2853aa8be241b
 - [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md): bindings: security-model; sha256: 988b563e57abc0e8ea1f314390a6905767ee74253ab34ac10ab182045130d03a
 - [docs/SUPPORT.md](docs/SUPPORT.md): bindings: support-guide; sha256: 0d254610380bd7f4070a1edca3bdae1d017c2ff0976e7827794ff2ddd7b8ab7c
-- [docs/SURFACE.md](docs/SURFACE.md): bindings: repository-surface; sha256: 704aba195bde5f93eb9764cf6dbb97f9fca9e528c07a77c4b542b04e0afc96d0
+- [docs/SURFACE.md](docs/SURFACE.md): bindings: repository-surface; sha256: 90dcb355af69e6774a9c7f67af5b5b227f558aba2db02e491a69432d5e48345e
 - [docs/learn/deep-dive-the-deterministic-seam.md](docs/learn/deep-dive-the-deterministic-seam.md): bindings: deterministic-seam-evidence, deterministic-seam-gate, deterministic-seam-phrasing; sha256: be392a4b5c484e2c88d8df783679ba49fe4a4db62e89d844c7f04cf82a547969
 - [docs/learn/index.md](docs/learn/index.md): declared canonical context; sha256: 1348b79a6842d8e479502560fa4aa481322abcc1863fb0e8c9c94365efa93932
 - [docs/learn/postmortem-the-readme-that-lied.md](docs/learn/postmortem-the-readme-that-lied.md): bindings: postmortem-examples, postmortem-measurements; sha256: ec7c89febc6de52884bc6bdf4955ebea1e261d8fd94b1ccacf1386b812597f98
