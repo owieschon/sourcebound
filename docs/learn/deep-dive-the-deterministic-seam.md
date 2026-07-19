@@ -15,9 +15,10 @@ but deterministic code renders the sentence and keeps the keys. Facts enter from
 writes stay bounded to planned documents, and a deterministic result decides whether the repository
 is current.
 
-The [product system map](../../README.md#how-the-pieces-fit) shows the complete path and its text
-equivalent. This page follows the three authority handoffs inside it: evidence enters, a provider
-may select an allowed presentation, and deterministic checks retain rendering and verdict authority.
+The [README architecture contract](../../README.md#how-the-pieces-fit) names the inputs and
+job-specific exits. This page follows the three authority handoffs inside that path: evidence enters,
+a provider may select an allowed presentation, and deterministic checks retain rendering and verdict
+authority.
 
 ## Evidence authority
 

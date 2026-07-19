@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from clean_docs.capabilities import CLI_REFERENCE
 from clean_docs.demo import load_demo_evidence, render_static_demo, validate_static_html
 from clean_docs.errors import ConfigurationError
 from clean_docs.manifest import load_manifest
@@ -63,35 +64,41 @@ def test_static_demo_is_byte_stable_accessible_and_runtime_free(tmp_path: Path) 
     assert "Evidence sha256:" in first
 
 
-def test_readme_architecture_follows_the_first_action_and_has_text_equivalent() -> None:
+def test_readme_architecture_is_text_native_and_preserves_command_boundaries() -> None:
     readme = (ROOT / "README.md").read_text()
-    graphic = (ROOT / "docs/assets/clean-docs-system-map.svg").read_text()
 
     install = readme.index("## Install in the repository you want to protect")
     architecture = readme.index("## How the pieces fit")
     architecture_section = readme[architecture:readme.index("## Current boundaries")]
     assert install < architecture
-    assert "docs/assets/clean-docs-system-map.svg" in architecture_section
+    assert "![" not in architecture_section
+    assert "<svg" not in architecture_section
     for concept in (
-        "Repository sources",
-        "typed evidence",
-        "Bindings",
-        "generated regions",
-        "implemented policy floor",
-        "repairs declared regions",
-        "rejects drift",
-        "publishes verified context",
+        "Authored intent",
+        "does not infer its priority",
+        "Repository contract",
+        "Each mechanism proves only its declared relationship",
+        "accepted source-claim checks are separate",
+        "unbound prose stays visibly unknown",
+        "immutable impact plan",
+        "four job-specific exits",
+        "Repair bounded prose",
+        "Reject stale changes",
+        "Publish agent context",
+        "Record local state",
+        "`check` and `verdict` are read-only",
+        "`verdict` and `verify` produce independent receipts",
+        "Neither certifies unbound or judgment prose",
     ):
         assert concept in architecture_section
-    assert "<title" in graphic
-    assert "<desc" in graphic
-    assert "Repository sources" in graphic
-    assert "Typed evidence" in graphic
-    assert "Source bindings" in graphic
-    assert "clean-docs engine" in graphic
-    assert "Repair documentation" in graphic
-    assert "Reject stale changes" in graphic
-    assert "Project verified context" in graphic
+
+    writes = {row["command"]: row["writes"] for row in CLI_REFERENCE}
+    assert writes["drive"] == "yes"
+    assert writes["project"] == "unless --check"
+    for command in ("check", "verdict"):
+        assert writes[command] == "no"
+    for command in ("drive", "project", "check", "verdict", "verify"):
+        assert f"`{command}`" in architecture_section
 
 
 def test_static_demo_structure_rejects_inaccessible_or_runtime_content(

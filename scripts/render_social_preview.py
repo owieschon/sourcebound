@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Render the repository social preview from the canonical system-map vocabulary."""
+"""Render the repository social preview from its own stable design tokens."""
 
 from __future__ import annotations
 
 import argparse
-import re
 import shutil
 import struct
 import subprocess
@@ -15,39 +14,27 @@ from clean_docs.regions import atomic_write
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SYSTEM_MAP = ROOT / "docs/assets/clean-docs-system-map.svg"
 SVG_OUTPUT = ROOT / "docs/assets/clean-docs-social.svg"
 PNG_OUTPUT = ROOT / "docs/assets/clean-docs-social.png"
 WIDTH = 1280
 HEIGHT = 640
 
 
-def _system_tokens(source: Path) -> dict[str, str]:
-    text = source.read_text(encoding="utf-8")
-    required = {
-        "Repository sources": "Repository sources",
-        "Source bindings": "Source bindings",
-        "Reject stale changes": "Reject stale changes",
-    }
-    missing = [label for label in required if label not in text]
-    if missing:
-        raise RuntimeError(f"system map is missing social-preview concepts: {', '.join(missing)}")
-    colors = re.findall(r"#[0-9a-fA-F]{6}", text)
-    for color in ("#edf6ff", "#25225f", "#302d78", "#4541a2"):
-        if color not in colors:
-            raise RuntimeError(f"system map is missing expected design token: {color}")
+def _design_tokens() -> dict[str, str]:
     return {
         "background": "#edf6ff",
         "ink": "#15143b",
         "line": "#25225f",
         "border": "#302d78",
         "accent": "#4541a2",
-        **required,
+        "Repository sources": "Repository sources",
+        "Source bindings": "Source bindings",
+        "Reject stale changes": "Reject stale changes",
     }
 
 
-def render_svg(source: Path = SYSTEM_MAP) -> str:
-    token = _system_tokens(source)
+def render_svg() -> str:
+    token = _design_tokens()
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{WIDTH}" height="{HEIGHT}" viewBox="0 0 {WIDTH} {HEIGHT}" role="img" aria-labelledby="title desc">
   <title id="title">clean-docs: docs that answer to code</title>
   <desc id="desc">A three-step source-bound documentation flow. Repository sources own facts, bindings connect facts to prose, and a deterministic check rejects stale changes.</desc>
