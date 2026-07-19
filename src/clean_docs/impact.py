@@ -803,7 +803,9 @@ def build_impact_plan(
     merge_base = _git(root, "merge-base", requested_base, head_sha).strip()
     if not merge_base:
         raise ConfigurationError("impact planning could not resolve a merge base")
-    with RepositorySnapshot(root, head_sha).materialized_root() as snapshot:
+    with RepositorySnapshot(root, head_sha).materialized_root(
+        paths=(() if project == Path(".") else (project,))
+    ) as snapshot:
         preparation = _prepare_impact_plan(
             root,
             manifest_path,
