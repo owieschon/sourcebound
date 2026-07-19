@@ -135,6 +135,25 @@ EXPECTED_IDS_BY_RELEASE = {
         "fork-static-verdict",
         "exact-region-preservation",
     },
+    "1.2-Feedback": {
+        "disabled-zero-side-effects",
+        "exact-preview-local-delivery",
+        "disable-removes-authority",
+        "gate-result-isolation",
+        "bounded-connected-retries",
+        "envelope-tamper-fails-closed",
+        "connected-event-wire-contract",
+        "purge-removes-identity",
+        "local-path-confinement",
+        "symlink-path-confinement",
+        "bounded-retention",
+        "canonical-signal-id",
+        "denominator-and-contributors",
+        "idempotent-observed-state",
+        "adjacent-receipted-transitions",
+        "receipt-chain-tamper",
+        "shadow-metric-integrity",
+    },
 }
 
 

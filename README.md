@@ -25,6 +25,7 @@ authorizes clean-docs to flatten repository-native forms.
 | Configure a binding | [Manifest reference](docs/REFERENCE.md) | A source-bound fact with the right depth |
 | Investigate an unbound count or column claim | [Source claim checks](docs/REFERENCE.md#source-claim-checks) | A ranked candidate or accepted deterministic relationship |
 | Review a pull request | [Coverage-stating verdict](docs/CLI.md#pull-request-verdicts) | One pinned state with gaps, skips, and non-claims visible |
+| Measure recurring operational problems | [Opt-in feedback loop](docs/FEEDBACK.md) | Bounded envelopes and a receipted improvement case |
 | Understand trust boundaries | [Security model](docs/SECURITY_MODEL.md) | The process and host guarantees |
 
 ## Why clean-docs exists
@@ -81,6 +82,7 @@ Repository sources become typed evidence. Bindings assign that evidence to gener
 - `drive` repairs bound regions. Run `project` afterward when a projection includes the repaired document.
 - Declared processes use time, I/O, and environment controls. The host owns network isolation; see the [security model](docs/SECURITY_MODEL.md).
 - Authored purpose and the manifest decide what matters. clean-docs does not infer product goals or certify judgment prose.
+- Feedback is off by default. Enabled runs queue bounded local envelopes; only an explicit `feedback flush` contacts the configured sink, and delivery cannot change a gate result.
 - `audit`, `check`, `verify`, and `release` do not change documentation.
 - Exit `1` means drift, exit `2` means invalid configuration, and exit `3` means extraction failed.
 
