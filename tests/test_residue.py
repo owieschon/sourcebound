@@ -111,6 +111,49 @@ def test_v2_rejects_published_residue_rules(tmp_path: Path) -> None:
         load_residue_config(path)
 
 
+def test_scans_public_residue_policy_metadata_without_reading_digest_as_text(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    digest = hashlib.sha256(b"foreign-token").hexdigest()
+    (root / ".clean-docs-residue.yml").write_text(f"""\
+version: 1
+rules:
+  - id: foreign-context
+    token_sha256: {digest}
+    include: ["*.md"]
+    reason: Keep foreign-token out of published policy metadata.
+exclude: []
+""")
+    (root / "README.md").write_text("# Product\n")
+    _track(root)
+
+    findings = scan_residue(root)
+
+    assert [(finding.rule, finding.doc, finding.line, finding.detail) for finding in findings] == [
+        (
+            "residue-policy-metadata",
+            ".clean-docs-residue.yml",
+            6,
+            "remove restricted context from residue policy metadata",
+        ),
+    ]
+
+
+def test_public_policy_metadata_allows_unrelated_technical_terms(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    (root / ".clean-docs-residue.yml").write_text("""\
+version: 2
+exclude:
+  - pattern: docs/archive/**
+    reason: Preserve historical evidence without scanning its text.
+""")
+    (root / "README.md").write_text("# Product\n")
+    _track(root)
+
+    assert scan_residue(root) == []
+
+
 def test_private_residue_status_is_redacted_and_initializer_is_restricted(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
