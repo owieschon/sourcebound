@@ -12,9 +12,15 @@
       "evidence": [
         {
           "kind": "receipt",
-          "source": ".clean-docs/audit-baseline.json",
+          "source": ".clean-docs/reviews/receipts/audit-baseline.json",
           "locator": "findings",
-          "detail": "The baseline records six nominalization-density and three sentence-variance findings in DECISION_LOG.md."
+          "detail": "The baseline records six nominalization-density and three sentence-variance findings in DECISION_LOG.md.",
+          "receipt": {
+            "sha256": "d1b04696451637c6a6448bd18dd84cd18a2af9d46d5a88e06e9e364eb2b368c1",
+            "producer_version": "clean-docs 1.1.0rc5",
+            "repository_commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "command": ["clean-docs", "audit", "--format", "json"]
+          }
         }
       ],
       "documentation": {
@@ -342,9 +348,15 @@
       "evidence": [
         {
           "kind": "receipt",
-          "source": "clean-docs verify",
+          "source": ".clean-docs/reviews/receipts/direct-coverage.json",
           "locator": "coverage",
-          "detail": "A verify run at the pinned repository state reports 642 surfaces: 9 directly bound and 633 cataloged."
+          "detail": "A verify run at the pinned repository state reports 642 surfaces: 9 directly bound and 633 cataloged.",
+          "receipt": {
+            "sha256": "708548b5941ee2061f32b24ac50e3fca3cacba844cc01d8be3b19913bf4512ce",
+            "producer_version": "clean-docs 1.1.0rc5",
+            "repository_commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "command": ["clean-docs", "verify", "--format", "json"]
+          }
         },
         {
           "kind": "repository",
@@ -582,9 +594,15 @@
         },
         {
           "kind": "receipt",
-          "source": "verify_release_reader_trial",
+          "source": ".clean-docs/reviews/receipts/reader-trial.json",
           "locator": "current repository",
-          "detail": "The current result is required false and status not-attested."
+          "detail": "The current result is required false and status not-attested.",
+          "receipt": {
+            "sha256": "da02c4080a393c75c9fad8901a48be20852fb34bcf8f3645f9fe49c8b841a8d0",
+            "producer_version": "clean-docs 1.1.0rc5",
+            "repository_commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "command": ["python", "scripts/verify_release_reader_trial.py"]
+          }
         }
       ],
       "documentation": {
