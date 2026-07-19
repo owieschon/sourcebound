@@ -482,3 +482,13 @@ ranges under an explicit byte budget, records exclusions, and grants instruction
 accepted policy. It uses no vector store or semantic retriever. Reversible: recorded evaluation and
 unbounded, manually prepared context remain readable; callers can ignore the new compiler and
 provider-run receipt without changing deterministic checks.
+
+## 45. Match Python's effective mapping keys (2026-07-19)
+
+Context: a demonstrated fixture with two occurrences of the same string key produced duplicate
+identifier evidence and a raw entry count, although Python keeps only the last value for that key.
+That mismatch could report drift against documentation listing the effective mapping once. Chose
+to deduplicate static string-key evidence and count distinct, statically evaluable dictionary or
+set keys. Mappings with unpacked or non-literal keys remain uncounted because their effective size
+is not available without execution. Reversible: accepted facts keep the same locators and schemas;
+only previously duplicated or unknowable dictionary and set evidence changes.

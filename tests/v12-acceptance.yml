@@ -33,3 +33,5 @@ scenarios:
     test: tests/test_evaluation.py::test_live_provider_failure_preserves_pre_invocation_receipt
   - id: provider-write-conflict
     test: tests/test_evaluation.py::test_live_provider_repository_write_becomes_conflict
+  - id: effective-mapping-key-semantics
+    test: tests/test_source_claims.py::test_mapping_fact_uses_effective_python_keys_once

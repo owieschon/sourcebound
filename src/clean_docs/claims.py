@@ -242,11 +242,28 @@ def _assignment(node: ast.AST) -> tuple[str, ast.AST] | None:
 
 
 def _sequence_length(node: ast.AST) -> int | None:
-    if isinstance(node, (ast.List, ast.Tuple, ast.Set)):
+    if isinstance(node, (ast.List, ast.Tuple)):
         return len(node.elts)
-    if isinstance(node, ast.Dict):
-        return len(node.keys)
-    return None
+    candidates: list[ast.AST | None]
+    if isinstance(node, ast.Set):
+        candidates = list(node.elts)
+    elif isinstance(node, ast.Dict):
+        candidates = list(node.keys)
+    else:
+        return None
+    if candidates:
+        keys: set[object] = set()
+        for key in candidates:
+            if key is None:
+                return None
+            try:
+                value = ast.literal_eval(key)
+                hash(value)
+            except (TypeError, ValueError):
+                return None
+            keys.add(value)
+        return len(keys)
+    return 0
 
 
 def _mapping_keys(node: ast.AST) -> tuple[str, ...] | None:
@@ -258,7 +275,7 @@ def _mapping_keys(node: ast.AST) -> tuple[str, ...] | None:
             return None
         if not key.value.startswith("_"):
             keys.append(key.value)
-    return tuple(sorted(keys))
+    return tuple(sorted(set(keys)))
 
 
 def _keyword(node: ast.Call, name: str) -> ast.AST | None:
