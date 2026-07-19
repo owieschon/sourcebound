@@ -30,4 +30,8 @@ def test_version_12a_registry_names_every_scenario() -> None:
         "provider-write-conflict",
         "effective-mapping-key-semantics",
         "bounded-candidate-ranking",
+        "independent-fact-sensitivity",
+        "wrong-fact-red-boundary",
+        "ambiguous-mutation-unsupported",
+        "shared-evaluation-primitive",
     ]

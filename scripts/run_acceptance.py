@@ -100,6 +100,10 @@ EXPECTED_IDS_BY_RELEASE = {
         "provider-write-conflict",
         "effective-mapping-key-semantics",
         "bounded-candidate-ranking",
+        "independent-fact-sensitivity",
+        "wrong-fact-red-boundary",
+        "ambiguous-mutation-unsupported",
+        "shared-evaluation-primitive",
     },
 }
 

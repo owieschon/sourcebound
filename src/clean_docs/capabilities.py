@@ -38,6 +38,11 @@ ASSURANCE_BOUNDARIES = (
         "clean-docs does not prove": "A ranked candidate names the right semantic relationship",
     },
     {
+        "surface": "Binding sensitivity receipt",
+        "clean-docs proves": "One static check becomes stale after one independently frozen source fact changes",
+        "clean-docs does not prove": "The document and source describe the same concept or that the relationship should be accepted",
+    },
+    {
         "surface": "Packaged writing policy",
         "clean-docs proves": "Implemented deterministic rules pass",
         "clean-docs does not prove": "Motivation, pedagogy, personality, or usefulness pass judgment",
@@ -79,6 +84,13 @@ CLI_REFERENCE = (
     },
     {"command": "inventory", "job": "List detected repository surfaces and coverage", "writes": "no", "example": "clean-docs inventory --format json"},
     {"command": "claims", "job": "Rank and verify static count and column claims", "writes": "no", "example": "clean-docs claims --format json"},
+    {"command": "binding", "job": "Inspect one proposed source relationship", "writes": "no", "example": "clean-docs binding --help"},
+    {
+        "command": "binding sensitivity",
+        "job": "Test whether one static check depends on a frozen source fact",
+        "writes": "no",
+        "example": "clean-docs binding sensitivity --help",
+    },
     {"command": "context", "job": "Compile provider-neutral evidence packets", "writes": "no", "example": "clean-docs context --help"},
     {"command": "context compile", "job": "Compile a bounded source-addressed context bundle", "writes": "no", "example": "clean-docs context compile --request context-request.json"},
     {"command": "init", "job": "Write a source-bound documentation baseline", "writes": "yes", "example": "clean-docs init --no-model"},
@@ -132,5 +144,10 @@ EVALUATION_SCORERS = (
         "scorer": "cited-limit",
         "input": "Recorded answer, canonical citation, and forbidden inferences",
         "passes when": "The answer cites the declared limit without inferring support",
+    },
+    {
+        "scorer": "mutation-red",
+        "input": "Provider proposal, frozen fact, and disposable static repository",
+        "passes when": "The sensitivity state matches without authorizing the relationship",
     },
 )

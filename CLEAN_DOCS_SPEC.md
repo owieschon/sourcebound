@@ -36,6 +36,7 @@ The table below is part of the shipped capability registry:
 | Symbol reference | The configured source path or Python symbol exists | The surrounding prose describes that symbol accurately |
 | Repository catalog | Detected additions, removals, and replacements stay visible | Every cataloged item needs or has a reader-facing explanation |
 | Accepted static source claim | The documented count or identifier set matches its accepted source locator | A ranked candidate names the right semantic relationship |
+| Binding sensitivity receipt | One static check becomes stale after one independently frozen source fact changes | The document and source describe the same concept or that the relationship should be accepted |
 | Packaged writing policy | Implemented deterministic rules pass | Motivation, pedagogy, personality, or usefulness pass judgment |
 | Authored purpose and scope | Declared markers and configured relationships remain intact | The repository chose the right goals, audience, or priority |
 <!-- clean-docs:end assurance-boundaries -->
@@ -94,6 +95,13 @@ candidate population, the bounded count shown, and any truncation. A `source_cla
 accepts one document anchor, subject, source path, and locator as a gate without copying the
 expected value into configuration. Accepted checks fail closed when either side disappears.
 Changed checks evaluate them only when the document, source, or manifest changed.
+
+Use `binding sensitivity` only after an independent process freezes a source fact. The command
+renames one supported static mapping member inside a disposable copy and reports whether the
+selected check becomes stale. A `sensitive` result proves dependency on that fact. It does not
+prove that the prose and source describe the same concept, and it never accepts the relationship.
+The proposal and fact travel as separate, digested inputs so a provider cannot choose the mutation
+that scores its own proposal.
 
 Use `drive` to repair region bindings after deterministic policy checks. It does not rewrite
 unbound prose. Run `project` afterward when a projection includes a repaired page, then run
@@ -174,6 +182,7 @@ clean-docs does not:
 - infer or authorize product goals, audience priorities, non-goals, or safety policy;
 - decide that every detected symbol deserves reader documentation;
 - treat a ranked source-claim candidate as proof or rewrite unrelated prose after a source change;
+- treat mutation sensitivity as semantic correctness or relationship authority;
 - use model judgment as a required gate;
 - provide operating-system or network isolation;
 - maintain a hosted service, account system, or runtime dashboard;

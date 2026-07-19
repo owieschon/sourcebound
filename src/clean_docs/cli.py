@@ -36,6 +36,11 @@ from clean_docs.release import (
     validate_release_narrative,
 )
 from clean_docs.regions import atomic_write
+from clean_docs.sensitivity import (
+    decode_json_object,
+    evaluate_binding_sensitivity,
+    load_json_object,
+)
 from clean_docs.standard import compile_standard, pack_matches_standard, write_pack
 from clean_docs.snapshot import RepositorySnapshot
 
@@ -68,6 +73,37 @@ def _parser() -> argparse.ArgumentParser:
     inventory_parser.add_argument("--format", choices=("text", "json"), default="text")
     claims_parser = sub.add_parser("claims", help=_command_help("claims"))
     claims_parser.add_argument("--format", choices=("text", "json"), default="text")
+    binding_parser = sub.add_parser("binding", help=_command_help("binding"))
+    binding_sub = binding_parser.add_subparsers(
+        dest="binding_command",
+        required=True,
+    )
+    binding_sensitivity = binding_sub.add_parser(
+        "sensitivity",
+        help=_command_help("binding sensitivity"),
+    )
+    binding_sensitivity.add_argument(
+        "--proposal",
+        type=Path,
+        required=True,
+        help="proposal JSON path, or - for standard input",
+    )
+    binding_sensitivity.add_argument(
+        "--fact",
+        type=Path,
+        required=True,
+        help="independently frozen mutation-target JSON",
+    )
+    binding_sensitivity.add_argument(
+        "--fact-sha256",
+        required=True,
+        help="expected SHA-256 of the complete mutation-target file",
+    )
+    binding_sensitivity.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="json",
+    )
     context_parser = sub.add_parser("context")
     context_sub = context_parser.add_subparsers(dest="context_command", required=True)
     context_compile = context_sub.add_parser(
@@ -448,6 +484,55 @@ def main(argv: list[str] | None = None) -> int:
                 f"ranked candidate(s); {claim_report.authority}"
             )
         return 0 if claim_report.ok else 1
+    if args.command == "binding":
+        fact_path = args.fact if args.fact.is_absolute() else root / args.fact
+        try:
+            if args.proposal == Path("-"):
+                proposal_bytes = sys.stdin.read().encode()
+                proposal = decode_json_object(proposal_bytes, "proposal")
+            else:
+                proposal_path = (
+                    args.proposal
+                    if args.proposal.is_absolute()
+                    else root / args.proposal
+                )
+                proposal, proposal_bytes = load_json_object(
+                    proposal_path,
+                    "proposal",
+                )
+            fact, fact_bytes = load_json_object(fact_path, "fact")
+            receipt = evaluate_binding_sensitivity(
+                root,
+                proposal,
+                fact,
+                proposal_bytes=proposal_bytes,
+                fact_bytes=fact_bytes,
+                expected_fact_file_sha256=args.fact_sha256,
+            )
+        except CleanDocsError as exc:
+            print(f"clean-docs: {exc}", file=sys.stderr)
+            return exc.exit_code
+        if args.format == "json":
+            print(json.dumps(receipt, indent=2))
+        else:
+            inputs = receipt["inputs"]
+            assert isinstance(inputs, dict)
+            relationship = inputs["relationship"]
+            assert isinstance(relationship, dict)
+            print(
+                f"[{receipt['state']}] {relationship['id']}: "
+                f"{receipt['detail']}"
+            )
+            print(
+                "semantic relationship authorized: "
+                f"{str(receipt['semantic_relationship_authorized']).lower()}"
+            )
+        return {
+            "sensitive": 0,
+            "insensitive": 1,
+            "invalid": 2,
+            "unsupported": 3,
+        }[str(receipt["state"])]
     if args.command == "context":
         request = args.request if args.request.is_absolute() else root / args.request
         try:

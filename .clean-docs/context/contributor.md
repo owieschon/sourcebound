@@ -1,7 +1,7 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `257432ee609a9d4bb907b6eadb6474dab40e9ec8b1c799a3161ca4b6f1af435d`
+- Corpus sha256: `9ac1a4ca7bfa6a9e24f46e37c92419fcb2f5d2760c7baae10f6caf236d91fa90`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
@@ -100,7 +100,7 @@ Use the [learning path](docs/learn/index.md) for the product map and evidence-ba
 ## Canonical document: docs/EVALUATION.md
 
 - Source: [docs/EVALUATION.md](../../docs/EVALUATION.md)
-- Content sha256: `73a1df37e6d257706d4c6e9ffe53d4f0f6f539aeda7c8f7f98ce46054c22e9af`
+- Content sha256: `d4364212c28b5f8b9bc715e54a3b55152ad5ec09ef96d69d0802ea9b048c518c`
 
 <!-- clean-docs:canonical docs/EVALUATION.md begin -->
 # Evaluate documentation tasks
@@ -148,6 +148,7 @@ Every task names an audience, prompt, context paths, and scorer. Agent tasks als
 | configuration | Recorded manifest and fixture repository | Schema validation and check pass |
 | structured-output | Recorded JSON and expected value | Parsed values match exactly |
 | cited-limit | Recorded answer, canonical citation, and forbidden inferences | The answer cites the declared limit without inferring support |
+| mutation-red | Provider proposal, frozen fact, and disposable static repository | The sensitivity state matches without authorizing the relationship |
 <!-- clean-docs:end evaluation-scorers -->
 
 A human command expectation must include `documented_as`. clean-docs first finds that exact excerpt in the supplied context, then runs the named allowlisted command and compares its exit code and required output.
@@ -201,6 +202,30 @@ and evaluation stops.
 
 The result is labeled `model-specific-live`. Move an accepted response into a recorded fixture
 before relying on it in offline CI.
+
+## Score dependency sensitivity
+
+Use `mutation-red` when a provider proposes one `clean-docs.binding-proposal.v1` object and the
+evaluator owns a separate frozen fact. Point the scorer at a disposable Git repository rather than
+letting the provider select its own mutation target:
+
+```yaml
+scorer:
+  type: mutation-red
+  repository: fixtures/pinned-repository
+  fact: .clean-docs/evaluation/mutation-target.json
+  fact_sha256: 0000000000000000000000000000000000000000000000000000000000000000
+  expected_state: sensitive
+```
+
+Replace the zero digest with the exact SHA-256 of the frozen target file when the fixture is
+created. A digest mismatch is a configuration error, not a failed model task.
+
+The scorer calls the same static sensitivity primitive as
+`clean-docs binding sensitivity`. Its task passes when the observed state matches
+`expected_state`; that pass does not accept the relationship. The task detail records the complete
+sensitivity-receipt digest and says that semantic authority remains false. Score semantic precision
+and recall against a separately frozen gold relationship set.
 
 ## Compile bounded context
 
