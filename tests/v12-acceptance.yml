@@ -31,6 +31,8 @@ scenarios:
     test: tests/test_context.py::test_required_context_over_budget_is_unknown_not_empty_success
   - id: provider-failure-receipt
     test: tests/test_evaluation.py::test_live_provider_failure_preserves_pre_invocation_receipt
+  - id: provider-deadline-receipt
+    test: tests/test_evaluation.py::test_live_provider_timeout_preserves_bounded_failed_receipt
   - id: provider-write-conflict
     test: tests/test_evaluation.py::test_live_provider_repository_write_becomes_conflict
   - id: effective-mapping-key-semantics

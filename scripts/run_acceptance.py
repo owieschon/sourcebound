@@ -96,6 +96,7 @@ EXPECTED_IDS_BY_RELEASE = {
         "bounded-context-authority",
         "required-context-overflow",
         "provider-failure-receipt",
+        "provider-deadline-receipt",
         "provider-write-conflict",
         "effective-mapping-key-semantics",
         "bounded-candidate-ranking",

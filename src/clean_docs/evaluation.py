@@ -27,7 +27,9 @@ from clean_docs.regions import atomic_write
 
 
 TASK_KEYS = {"id", "audience", "prompt", "context", "model", "scorer"}
-MODEL_KEYS = {"adapter", "name", "response", "argv"}
+MODEL_KEYS = {"adapter", "name", "response", "argv", "timeout_seconds"}
+DEFAULT_PROVIDER_TIMEOUT_SECONDS = 120
+MAX_PROVIDER_TIMEOUT_SECONDS = 3600
 SCORER_KEYS = {
     "command": {"type", "commands"},
     "structured-output": {"type", "expected"},
@@ -59,6 +61,7 @@ class ModelSpec:
     name: str
     response: Path | None = None
     argv: tuple[str, ...] = ()
+    timeout_seconds: int = DEFAULT_PROVIDER_TIMEOUT_SECONDS
 
 
 @dataclass(frozen=True)
@@ -135,12 +138,20 @@ class CommandResponseProvider:
     argv: tuple[str, ...]
     name: str
     root: Path
+    timeout_seconds: int = DEFAULT_PROVIDER_TIMEOUT_SECONDS
     adapter: str = "command"
 
     @property
     def configuration_sha256(self) -> str:
         return hashlib.sha256(
-            json.dumps(self.argv, separators=(",", ":")).encode()
+            json.dumps(
+                {
+                    "argv": self.argv,
+                    "timeout_seconds": self.timeout_seconds,
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode()
         ).hexdigest()
 
     def complete(self, prompt: str) -> str:
@@ -151,7 +162,7 @@ class CommandResponseProvider:
                 input=prompt,
                 text=True,
                 capture_output=True,
-                timeout=120,
+                timeout=self.timeout_seconds,
                 check=False,
                 env=_command_environment(),
             )
@@ -239,6 +250,7 @@ def _provider_run_record(
     worktree_files: int,
     corpus_digest: str,
     prompt_digest: str,
+    prompt_bytes: int,
     scorer_digest: str,
 ) -> dict[str, object]:
     identity = {
@@ -273,12 +285,14 @@ def _provider_run_record(
         "inputs": {
             "corpus_sha256": corpus_digest,
             "prompt_sha256": prompt_digest,
+            "prompt_bytes": prompt_bytes,
             "scorer_sha256": scorer_digest,
         },
         "provider": {
             "adapter": provider.adapter,
             "name": provider.name,
             "configuration_sha256": provider.configuration_sha256,
+            "timeout_seconds": getattr(provider, "timeout_seconds", None),
         },
         "response_sha256": None,
         "error": None,
@@ -345,15 +359,31 @@ def _model(raw: Any, where: str) -> ModelSpec:
     if not isinstance(name, str) or not name:
         raise ConfigurationError(f"{where}.name must be non-empty")
     if adapter == "recorded":
-        if "argv" in data:
-            raise ConfigurationError(f"{where}.argv is only valid for command adapters")
+        command_only = sorted({"argv", "timeout_seconds"} & set(data))
+        if command_only:
+            raise ConfigurationError(
+                f"{where}.{command_only[0]} is only valid for command adapters"
+            )
         return ModelSpec(adapter, name, response=_relative(data.get("response"), f"{where}.response"))
     if "response" in data:
         raise ConfigurationError(f"{where}.response is only valid for recorded adapters")
+    timeout_seconds = data.get(
+        "timeout_seconds", DEFAULT_PROVIDER_TIMEOUT_SECONDS
+    )
+    if (
+        not isinstance(timeout_seconds, int)
+        or isinstance(timeout_seconds, bool)
+        or not 1 <= timeout_seconds <= MAX_PROVIDER_TIMEOUT_SECONDS
+    ):
+        raise ConfigurationError(
+            f"{where}.timeout_seconds must be an integer from 1 to "
+            f"{MAX_PROVIDER_TIMEOUT_SECONDS}"
+        )
     return ModelSpec(
         adapter,
         name,
         argv=_strings(data.get("argv"), f"{where}.argv", nonempty=True),
+        timeout_seconds=timeout_seconds,
     )
 
 
@@ -583,7 +613,12 @@ def _provider(
         return RecordedResponseProvider(root / model.response, model.name)
     if model.adapter != "command" or not model.argv:
         raise ConfigurationError(f"live mode requires a command adapter for task {task.id}")
-    return CommandResponseProvider(model.argv, model.name, root)
+    return CommandResponseProvider(
+        model.argv,
+        model.name,
+        root,
+        timeout_seconds=model.timeout_seconds,
+    )
 
 
 def run_evaluation(
@@ -629,6 +664,7 @@ def run_evaluation(
                     worktree_files=worktree_files,
                     corpus_digest=corpus_digest,
                     prompt_digest=prompt_digest,
+                    prompt_bytes=len(prompt.encode()),
                     scorer_digest=scorer_digest,
                 )
                 atomic_write(

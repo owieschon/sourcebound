@@ -161,8 +161,11 @@ checks, CI, and release extraction do not need a model.
 
 Live evaluation writes `clean-docs.provider-run.v1` before it invokes a command provider. The
 pre-invocation record binds the immutable commit when available, worktree bytes, corpus, prompt,
-scorer, and provider configuration. Completion adds the response and post-worktree digests. Failure keeps
-the input record, and an unexpected repository byte change becomes a conflict.
+scorer, provider configuration, prompt byte count, and bounded process deadline. Completion adds
+the response and post-worktree digests. Failure keeps the input record, and an unexpected
+repository byte change becomes a conflict. Existing command fixtures use a 120-second compatibility
+default; an explicit `timeout_seconds` value from one to 3,600 seconds becomes part of provider
+identity.
 
 ## Current non-goals
 
