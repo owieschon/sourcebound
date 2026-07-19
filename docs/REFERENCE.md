@@ -86,8 +86,10 @@ Repositories do not configure a standard path. clean-docs bundles the policy pac
 
 The boundary is narrow. Two prose shapes are in scope: numeric collection counts and identifier
 rows in a table under a `Columns` heading. `claims` ranks a static Python source when the subject,
-locator name, and repository path support the match. The detector proposes a relationship; it does
-not pretend to understand arbitrary sentences or prove that both sides describe the same concept.
+locator name, and document ownership signals support the match. Counts require a shared file stem
+or directory; identifier tables may also use an exact heading-to-locator match. A deep common path
+is not ownership by itself. The detector proposes a relationship; it does not pretend to understand
+arbitrary sentences or prove that both sides describe the same concept.
 
 Accept a relationship once by recording its document anchor and static source locator:
 
@@ -104,7 +106,9 @@ source_claim_checks:
 
 The check stores no expected value. The number in the document and the statically extracted source
 value remain the two values under comparison. `clean-docs claims` reports every accepted
-relationship and bounded assessment candidates. A missing accepted locator fails closed.
+relationship and bounded assessment candidates. Its JSON output distinguishes
+`candidate_population`, `candidate_shown`, and `candidate_truncated`; a cap never looks like the
+whole denominator. A missing accepted locator fails closed.
 
 Use `identifier-set` for a reference section whose `Columns` block should match the public keys of
 a static Python mapping. Its locator ends in `#keys`, such as `USERS.fields#keys`. Leading

@@ -247,6 +247,9 @@ def test_unconfigured_discovery_is_assessment_only(
     assert sum(count for _status, count in report.candidate_totals) == 20
     assert len([item for item in report.candidates if item.status == "drift"]) == 3
     assert all(item.authority == "assessment" for item in report.candidates)
+    assert report.as_dict()["candidate_population"] == 20
+    assert report.as_dict()["candidate_shown"] == 20
+    assert report.as_dict()["candidate_truncated"] == 0
 
 
 def test_discovery_uses_locator_specificity_across_repository_paths(
@@ -316,6 +319,59 @@ def test_mapping_fact_uses_effective_python_keys_once() -> None:
     assert keys.value == ("id", "name")
     assert count.value == 2
     assert set_count.value == 2
+
+
+def test_candidate_rank_requires_ownership_and_precedes_drift_status(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "candidate-ranking"
+    (root / "docs").mkdir(parents=True)
+    (root / "src").mkdir()
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
+    (root / "docs/widgets.md").write_text(
+        "# Widgets\n\n## Inventory\n\nThe service contains 2 widgets.\n"
+    )
+    (root / "src/widgets.py").write_text("WIDGETS = ['one', 'two']\n")
+    for index in range(101):
+        module = root / "deep/a/b/c/d" / f"module-{index:03d}"
+        module.mkdir(parents=True)
+        (module / "guide.md").write_text(
+            "# Module\n\n## Items\n\nThe module contains 1 items.\n"
+        )
+        (module / "catalog.py").write_text("ITEMS = ['one', 'two']\n")
+    unrelated_doc = claim_module.DocumentClaim(
+        "count",
+        "connectors/factorial/guide.md",
+        "sync-modes",
+        1,
+        "days",
+        30,
+        "doc",
+    )
+    unrelated_fact = claim_module.SourceFact(
+        "count",
+        "connectors/llama/settings.py",
+        "DAY_INCREMENTAL#count",
+        1,
+        ("day", "incremental"),
+        4,
+        "source",
+    )
+
+    assert claim_module._relationship_rank(unrelated_doc, unrelated_fact) == 0
+
+    report = scan_source_claims(root)
+    payload = report.as_dict()
+
+    assert payload["candidate_population"] == 102
+    assert payload["candidate_shown"] == 100
+    assert payload["candidate_truncated"] == 2
+    assert any(
+        item.doc == "docs/widgets.md"
+        and item.source == "src/widgets.py"
+        and item.status == "current"
+        for item in report.candidates
+    )
 
 
 def test_enforcement_reads_only_accepted_relationship_paths(

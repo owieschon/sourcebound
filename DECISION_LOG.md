@@ -492,3 +492,13 @@ to deduplicate static string-key evidence and count distinct, statically evaluab
 set keys. Mappings with unpacked or non-literal keys remain uncounted because their effective size
 is not available without execution. Reversible: accepted facts keep the same locators and schemas;
 only previously duplicated or unknowable dictionary and set evidence changes.
+
+## 46. Rank relationship evidence before drift status (2026-07-19)
+
+Context: a frozen external corpus produced 330 assessment candidates. Deep sibling paths and
+generic file tokens gave unrelated pairs high scores, while the 100-item display cap hid every
+current pair. Chose conservative ownership signals: counts need the same directory or a meaningful
+file-stem match; identifier tables may also use an exact heading-to-locator match. Common path depth
+is only a tie-breaker, relationship rank precedes value equality, and the report states its full
+population and truncation. Reversible: accepted relationships and enforcement do not use discovery
+ranking; callers may ignore the additive population fields.

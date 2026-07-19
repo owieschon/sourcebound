@@ -35,3 +35,5 @@ scenarios:
     test: tests/test_evaluation.py::test_live_provider_repository_write_becomes_conflict
   - id: effective-mapping-key-semantics
     test: tests/test_source_claims.py::test_mapping_fact_uses_effective_python_keys_once
+  - id: bounded-candidate-ranking
+    test: tests/test_source_claims.py::test_candidate_rank_requires_ownership_and_precedes_drift_status

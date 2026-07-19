@@ -88,10 +88,12 @@ Git objects, manifest, graph, and findings. Unsupported MDX appears in
 The command's zero exit code means the receipt was built, not that the branch is ready to merge.
 
 Use `claims` to inspect ranked static source-to-prose candidates. Candidate ranking is
-assessment-only. A `source_claim_checks` entry accepts one document anchor, subject, source path,
-and locator as a gate without copying the expected value into configuration. Accepted checks fail
-closed when either side disappears. Changed checks evaluate them only when the document, source,
-or manifest changed.
+assessment-only. It requires a subject match plus ownership evidence from the document heading,
+file stem, or directory. Path depth alone cannot establish ownership. The report states the full
+candidate population, the bounded count shown, and any truncation. A `source_claim_checks` entry
+accepts one document anchor, subject, source path, and locator as a gate without copying the
+expected value into configuration. Accepted checks fail closed when either side disappears.
+Changed checks evaluate them only when the document, source, or manifest changed.
 
 Use `drive` to repair region bindings after deterministic policy checks. It does not rewrite
 unbound prose. Run `project` afterward when a projection includes a repaired page, then run

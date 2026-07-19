@@ -4,7 +4,7 @@
 
 ## Canonical documentation
 
-- [CLEAN_DOCS_SPEC.md](CLEAN_DOCS_SPEC.md): bindings: assurance-boundaries; sha256: 84a768b5e1c8831c8d5a902a2d1c10799531caaf696217955cfd6b1a8361c5d2
+- [CLEAN_DOCS_SPEC.md](CLEAN_DOCS_SPEC.md): bindings: assurance-boundaries; sha256: fc0335bd3cf0bdd0ae335dccabb8f2675d542c506f1aad6f6c0f5b6154e6a95b
 - [README.md](README.md): bindings: product-overview; sha256: a039bcfd2ddda9fccb0e728890879bcc51ece7ec6fe4eb5bf550751635ce0468
 - [SECURITY.md](SECURITY.md): declared canonical context; sha256: 5a10b7b08e5b26a5302e0f775320a59b8bd200da7fa858fc890342d7db0dd270
 - [STANDARD.md](STANDARD.md): declared canonical context; sha256: eb314abb935153e6dd264fe302c769db704e03d42f2cd75a5ef177ec1afa5034
@@ -12,7 +12,7 @@
 - [docs/EVALUATION.md](docs/EVALUATION.md): bindings: evaluation-scorers; sha256: 0aad641d1d36a93cd407ce618683eb0e409972e9a4506d6346d83001d3153554
 - [docs/EXTENSIONS.md](docs/EXTENSIONS.md): bindings: extension-guide, migration-guide; sha256: 81eb19b309a3d7a73b0fca7640b18add365dd556ea8572577e8fcce5e83084ae
 - [docs/INSTALL.md](docs/INSTALL.md): declared canonical context; sha256: f885606b3baa4f8795391dff0bb952201d5b6be4b2b83ea07d6a403b5b7165c9
-- [docs/REFERENCE.md](docs/REFERENCE.md): bindings: manifest-reference, supported-bindings; sha256: 5ab4dbcd93f4684f7fd8acb576b27d383e51286bdb67625edb5db6ae1f8b9ef4
+- [docs/REFERENCE.md](docs/REFERENCE.md): bindings: manifest-reference, supported-bindings; sha256: 37df0c60586eab56b060216d4061a6203dec3599a0eed0ac01e25afdacc2bd1e
 - [docs/RELEASES.md](docs/RELEASES.md): bindings: release-guide; sha256: cc40c87393dd1784fcca7d1034ac8fd5925a7570011791a51df2853aa8be241b
 - [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md): bindings: security-model; sha256: 2d69107e67485a3ca04dd8b4472dd4a625035e0fca3dfef33e4c83e4b6ad8d91
 - [docs/SUPPORT.md](docs/SUPPORT.md): bindings: support-guide; sha256: 6efe3d4379f77ec0a8556ca2b25ef8a79df79f9772dbd626f1780a52360598d5
