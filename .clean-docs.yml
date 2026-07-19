@@ -188,6 +188,7 @@ projections:
       - docs/learn/postmortem-the-readme-that-lied.md
       - docs/learn/deep-dive-the-deterministic-seam.md
       - skill/SKILL.md
+      - skills/clean-docs-verify/SKILL.md
   bundles:
     - id: contributor
       output: .clean-docs/context/contributor.md

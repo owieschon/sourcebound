@@ -31,19 +31,23 @@ Core code validates response schemas, computes evidence IDs and digests, rejects
 
 The process controls are not an operating-system sandbox. A declared executable can open a network connection or address an absolute host path if the surrounding runner permits it. Run untrusted declared code in a network-blocked container or equivalent OS sandbox. Keep local manifests limited to commands and plugins you would run directly.
 
-You can still use `audit`, `inventory`, static `init`, static bindings, projections, recorded task
-scoring, and release facts when no declared process is trusted. Those paths do not run repository
-code unless the manifest explicitly adds a command or plugin.
+You can still use `audit`, `inventory --no-exec`, static `init`, static bindings, projections,
+recorded task scoring, and release facts when no declared process is trusted. Those paths do not
+run repository code. Plain `inventory` may start an explicitly declared discoverer plugin, so use
+its static flag for an untrusted revision.
 
 Live evaluation is different: its explicit command provider is a process selected by the operator.
 clean-docs records repository bytes before launch and rejects an unexpected change afterward, but
 it does not sandbox the process or revoke host access. Use an execution environment that enforces
 the provider's filesystem and network boundary.
 
-For an untrusted pull request, run `plan`, `check`, and `verify` with `--no-exec`. clean-docs skips
-manifest commands and plugins, labels the missing assurance, and fails a changed-surface check when
-the pull request affects that skipped relationship. The reusable workflow fixes this policy for
-pull-request events; a pull request cannot turn trusted execution back on.
+For an untrusted pull request, run `inventory`, `plan`, `check`, and `verify` with `--no-exec`.
+clean-docs skips manifest commands and plugins, labels the missing assurance, and fails a
+changed-surface check when the pull request affects that skipped relationship. `verdict` is always
+static-only. The reusable workflow runs one verdict and exposes no input that can turn trusted
+execution on. It starts Python in isolated mode and writes evidence under the runner's trusted
+temporary directory, not the inspected checkout. An unsafe repository symlink fails the verdict
+instead of redirecting a receipt write.
 
 ## Adversarial checks
 

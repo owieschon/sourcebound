@@ -97,6 +97,17 @@ lists sparse coverage, skipped execution, unsupported documents, and four explic
 a partial gate cannot present itself as corpus-wide proof. The
 [CLI contract](docs/CLI.md#pull-request-verdicts) owns the schema and exit meanings.
 
+Use the [reusable gate](docs/SUPPORT.md#run-the-reusable-pull-request-gate) to carry that verdict
+through GitHub Actions. No target process starts. The workflow runs one static verdict, renders SARIF from the recorded JSON,
+hashes every evidence file, and derives its job result from the validated verdict bytes. It has
+read-only repository permission and no input that enables repository commands or plugins. Python
+runs in isolated mode, while transport evidence stays outside the inspected checkout.
+
+Use the [read-only verification skill](skills/clean-docs-verify/SKILL.md) when an external agent
+needs the same boundary outside the reusable workflow. It cannot repair. The skill limits the agent to static
+inventory, claims, impact, verdict, and independently frozen sensitivity receipts. The existing
+maintenance skill remains the explicit repair path.
+
 Use `claims` to inspect ranked static source-to-prose candidates. Candidate ranking is
 assessment-only. It requires a subject match plus ownership evidence from the document heading,
 file stem, or directory. Path depth alone cannot establish ownership. The report states the full

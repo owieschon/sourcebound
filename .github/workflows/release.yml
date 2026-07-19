@@ -29,6 +29,16 @@ jobs:
       - run: /tmp/clean-docs-release/bin/clean-docs --version
       - run: /tmp/clean-docs-release/bin/clean-docs --root . verify
       - run: python scripts/test_release_lifecycle.py --wheel dist/*.whl
+      - run: >-
+          python -m pip download
+          --only-binary=:all:
+          --dest /tmp/clean-docs-wheelhouse
+          "PyYAML==6.0.3"
+      - run: >-
+          python scripts/test_readme_quickstart.py
+          --wheel dist/*.whl
+          --wheelhouse /tmp/clean-docs-wheelhouse
+          --out clean-docs-quickstart.json
       - name: Resolve release files
         id: release-files
         shell: bash
@@ -73,5 +83,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: clean-docs-release-publication-${{ github.sha }}
-          path: release-publication.json
+          path: |
+            release-publication.json
+            clean-docs-quickstart.json
           if-no-files-found: error

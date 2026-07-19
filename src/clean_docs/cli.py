@@ -22,6 +22,7 @@ from clean_docs.errors import CleanDocsError, ConfigurationError
 from clean_docs.execution import ExecutionPolicy
 from clean_docs.explain import explain
 from clean_docs.impact import build_impact_plan, render_impact_plan
+from clean_docs.inventory import scan_inventory
 from clean_docs.plugins import scan_extended_inventory
 from clean_docs.manifest import load_manifest
 from clean_docs.models import BindingResult
@@ -76,6 +77,11 @@ def _parser() -> argparse.ArgumentParser:
     )
     inventory_parser = sub.add_parser("inventory", help=_command_help("inventory"))
     inventory_parser.add_argument("--format", choices=("text", "json"), default="text")
+    inventory_parser.add_argument(
+        "--no-exec",
+        action="store_true",
+        help="skip repository-declared discoverer plugins",
+    )
     claims_parser = sub.add_parser("claims", help=_command_help("claims"))
     claims_parser.add_argument("--format", choices=("text", "json"), default="text")
     binding_parser = sub.add_parser("binding", help=_command_help("binding"))
@@ -444,12 +450,36 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if report.ok else 1
     if args.command == "inventory":
         try:
-            inventory_report = scan_extended_inventory(root)
+            manifest_path = root / args.manifest
+            manifest = load_manifest(manifest_path) if manifest_path.is_file() else None
+            discoverer_ids = (
+                sorted(
+                    plugin.id
+                    for plugin in manifest.plugins
+                    if "discoverer" in plugin.interfaces
+                )
+                if manifest is not None
+                else []
+            )
+            inventory_report = (
+                scan_inventory(root)
+                if args.no_exec
+                else scan_extended_inventory(root)
+            )
         except CleanDocsError as exc:
             print(f"clean-docs: {exc}", file=sys.stderr)
             return exc.exit_code
         if args.format == "json":
-            print(json.dumps(inventory_report.as_dict(), indent=2))
+            payload = inventory_report.as_dict()
+            payload["execution"] = {
+                "mode": (
+                    ExecutionPolicy.STATIC_ONLY.value
+                    if args.no_exec
+                    else ExecutionPolicy.TRUSTED.value
+                ),
+                "skipped_plugin_ids": discoverer_ids if args.no_exec else [],
+            }
+            print(json.dumps(payload, indent=2))
         else:
             for item in inventory_report.items:
                 print(f"[{item.coverage}] {item.kind} {item.name}: {item.source}#{item.locator}")

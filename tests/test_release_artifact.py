@@ -83,6 +83,17 @@ def test_release_toolchain_and_ci_install_are_pinned() -> None:
     assert "/tmp/clean-docs-release/bin/clean-docs --help" in commands
     assert "/tmp/clean-docs-release/bin/clean-docs --root . audit" in commands
     assert "python scripts/test_release_lifecycle.py --wheel dist/*.whl" in commands
+    quickstart = workflow["jobs"]["quickstart-artifact"]
+    assert quickstart["strategy"]["matrix"]["os"] == ["ubuntu-latest", "macos-latest"]
+    quickstart_commands = [
+        step["run"] for step in quickstart["steps"] if "run" in step
+    ]
+    assert any("pip download --only-binary=:all:" in command for command in quickstart_commands)
+    assert any("scripts/test_readme_quickstart.py" in command for command in quickstart_commands)
+    quickstart_upload = next(
+        step for step in quickstart["steps"] if step.get("uses") == UPLOAD_ARTIFACT
+    )
+    assert quickstart_upload["with"]["if-no-files-found"] == "error"
     assert "verify_release_reader_trial" in (ROOT / "scripts/build_release.py").read_text()
     upload = next(step for step in steps if step.get("uses") == UPLOAD_ARTIFACT)
     assert upload["with"]["if-no-files-found"] == "error"
@@ -99,6 +110,8 @@ def test_release_workflow_attests_wheel_and_sbom() -> None:
     steps = workflow["jobs"]["release"]["steps"]
     commands = [step["run"] for step in steps if "run" in step]
     assert "python scripts/test_release_lifecycle.py --wheel dist/*.whl" in commands
+    assert any("scripts/test_readme_quickstart.py" in command for command in commands)
+    assert any("pip download --only-binary=:all:" in command for command in commands)
     attestations = [step for step in steps if str(step.get("uses", "")).startswith("actions/attest@")]
     assert len(attestations) == 2
     assert attestations[0]["with"] == {"subject-path": "dist/*.whl"}
@@ -117,7 +130,8 @@ def test_release_workflow_attests_wheel_and_sbom() -> None:
     publication_upload = next(
         step for step in steps if step.get("name") == "Upload publication receipt"
     )
-    assert publication_upload["with"]["path"] == "release-publication.json"
+    assert "release-publication.json" in publication_upload["with"]["path"]
+    assert "clean-docs-quickstart.json" in publication_upload["with"]["path"]
     assert publication_upload["with"]["if-no-files-found"] == "error"
 
 

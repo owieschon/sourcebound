@@ -65,3 +65,15 @@ scenarios:
     test: tests/test_verdict.py::test_verdict_rejects_dirty_or_detached_input_state
   - id: machine-readable-extraction-failure
     test: tests/test_verdict.py::test_extraction_failure_stays_machine_readable
+  - id: fork-safe-action-contract
+    test: tests/test_doctor_integrations.py::test_distribution_integrations_are_strict
+  - id: fork-hostile-runtime-boundary
+    test: tests/test_doctor_integrations.py::test_reusable_action_fails_closed_and_isolates_fork_files
+  - id: action-receipt-byte-enforcement
+    test: tests/test_doctor_integrations.py::test_reusable_action_enforces_the_recorded_verdict_bytes
+  - id: static-inventory-plugin-boundary
+    test: tests/test_plugins.py::test_static_only_inventory_discloses_skipped_discoverer_without_starting_it
+  - id: read-only-skill-immutability
+    test: tests/test_verify_skill.py::test_read_only_skill_commands_are_bounded_and_leave_fixture_unchanged
+  - id: installed-artifact-quickstart-contract
+    test: tests/test_v04_acceptance.py::test_human_quickstart_installs_and_runs_from_declared_docs
