@@ -7,7 +7,7 @@ import json
 import subprocess
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Mapping
+from typing import Iterable, Mapping
 
 from clean_docs import __version__
 from clean_docs.errors import ConfigurationError
@@ -440,9 +440,24 @@ def _validate_review_contract(
     return expected
 
 
-def _validate_findings(value: object) -> None:
+def _derive_gate_state(
+    finding_levels: Iterable[str],
+    *,
+    coverage_complete: bool,
+    impact: str,
+) -> str:
+    levels = tuple(finding_levels)
+    if "error" in levels:
+        return "not_ready"
+    if not coverage_complete or impact == "unknown" or "warning" in levels:
+        return "unknown"
+    return "ready"
+
+
+def _validate_findings(value: object) -> tuple[str, ...]:
     if not isinstance(value, list):
         raise ConfigurationError("verdict findings must be a list")
+    levels: list[str] = []
     for finding in value:
         finding_data = _object(
             finding,
@@ -453,6 +468,8 @@ def _validate_findings(value: object) -> None:
             _string(finding_data[field], f"verdict finding {field}")
         if finding_data["level"] not in {"error", "warning", "note"}:
             raise ConfigurationError("verdict finding level is invalid")
+        levels.append(finding_data["level"])
+    return tuple(levels)
 
 
 def _validate_legacy_verdict_payload(payload: Mapping[str, object]) -> None:
@@ -1007,7 +1024,16 @@ def validate_verdict_payload(payload: Mapping[str, object]) -> None:
                 f"verdict.mutation_receipts[{index}] cannot authorize semantics"
             )
 
-    _validate_findings(data["findings"])
+    finding_levels = _validate_findings(data["findings"])
+    expected_gate_state = _derive_gate_state(
+        finding_levels,
+        coverage_complete=coverage_complete,
+        impact=changed["impact"],
+    )
+    if state != expected_gate_state:
+        raise ConfigurationError(
+            "verdict gate state contradicts validated evidence"
+        )
 
     non_claims = _strings(data["non_claims"], "verdict.non_claims")
     if tuple(non_claims) != NON_CLAIMS:
@@ -1276,13 +1302,11 @@ def build_pr_verdict(
         use_cache=False,
     )
     findings = _collect_findings(evidence, impact)
-    errors = any(finding.level == "error" for finding in findings)
-    unknown = (
-        not impact.coverage_complete
-        or impact.impact == "unknown"
-        or any(finding.level == "warning" for finding in findings)
+    state = _derive_gate_state(
+        (finding.level for finding in findings),
+        coverage_complete=impact.coverage_complete,
+        impact=impact.impact,
     )
-    state = "not_ready" if errors else "unknown" if unknown else "ready"
     try:
         manifest_relative = manifest_path.resolve().relative_to(root).as_posix()
     except ValueError as exc:
