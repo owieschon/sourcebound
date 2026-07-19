@@ -4,12 +4,12 @@
 
 ## Canonical documentation
 
-- [CLEAN_DOCS_SPEC.md](CLEAN_DOCS_SPEC.md): bindings: assurance-boundaries; sha256: fc0335bd3cf0bdd0ae335dccabb8f2675d542c506f1aad6f6c0f5b6154e6a95b
+- [CLEAN_DOCS_SPEC.md](CLEAN_DOCS_SPEC.md): bindings: assurance-boundaries; sha256: 726ac328cb66f651299c0fa8f3afdee7bb00cfbadfa35ff7410e279865e7b293
 - [README.md](README.md): bindings: product-overview; sha256: a039bcfd2ddda9fccb0e728890879bcc51ece7ec6fe4eb5bf550751635ce0468
 - [SECURITY.md](SECURITY.md): declared canonical context; sha256: 5a10b7b08e5b26a5302e0f775320a59b8bd200da7fa858fc890342d7db0dd270
 - [STANDARD.md](STANDARD.md): declared canonical context; sha256: eb314abb935153e6dd264fe302c769db704e03d42f2cd75a5ef177ec1afa5034
 - [docs/CLI.md](docs/CLI.md): bindings: cli-reference; sha256: 49c2b01d1948623e6252ddd6522735ca783249550f268fc1165175d4ea4188dc
-- [docs/EVALUATION.md](docs/EVALUATION.md): bindings: evaluation-scorers; sha256: 0aad641d1d36a93cd407ce618683eb0e409972e9a4506d6346d83001d3153554
+- [docs/EVALUATION.md](docs/EVALUATION.md): bindings: evaluation-scorers; sha256: 73a1df37e6d257706d4c6e9ffe53d4f0f6f539aeda7c8f7f98ce46054c22e9af
 - [docs/EXTENSIONS.md](docs/EXTENSIONS.md): bindings: extension-guide, migration-guide; sha256: 81eb19b309a3d7a73b0fca7640b18add365dd556ea8572577e8fcce5e83084ae
 - [docs/INSTALL.md](docs/INSTALL.md): declared canonical context; sha256: f885606b3baa4f8795391dff0bb952201d5b6be4b2b83ea07d6a403b5b7165c9
 - [docs/REFERENCE.md](docs/REFERENCE.md): bindings: manifest-reference, supported-bindings; sha256: 37df0c60586eab56b060216d4061a6203dec3599a0eed0ac01e25afdacc2bd1e

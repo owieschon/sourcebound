@@ -69,7 +69,18 @@ tasks:
 
 ## Run a live provider
 
-Live execution is explicit and must retain its response:
+Live execution is explicit. Declare a bounded deadline with the command adapter; fixtures that
+omit it retain the 120-second compatibility default:
+
+```yaml
+model:
+  adapter: command
+  name: local-provider
+  argv: [provider-cli, --json]
+  timeout_seconds: 300
+```
+
+Then retain the live response and its run record:
 
 ```bash
 clean-docs eval --mode live --record-dir .clean-docs/evaluation/live
@@ -77,9 +88,9 @@ clean-docs eval --mode live --record-dir .clean-docs/evaluation/live
 
 The task's command adapter receives a deterministic JSON prompt on standard input. Before invoking
 it, clean-docs writes `<task>.run.json` with the repository, worktree, corpus, prompt, scorer, and
-provider-configuration digests. Completion adds the response digest. A provider error preserves the
-input receipt and records a hashed error identity without copying provider output or credentials
-into the record.
+provider-configuration digests, plus the prompt byte count and deadline. Completion adds the
+response digest. A provider error or deadline preserves the input receipt and records a hashed error
+identity without copying provider output or credentials into the record.
 If the provider changes repository bytes outside the record directory, the run becomes a conflict
 and evaluation stops.
 
@@ -108,6 +119,8 @@ fit, the bundle is `unknown` and the command exits `2`.
 - Scorers are deterministic; live provider output is model-specific.
 - Replay proves the saved response against the named corpus digest, not current behavior of the named model.
 - Provider commands run only in live mode. The execution environment owns their network isolation.
+- Command-provider deadlines accept one to 3,600 seconds. The deadline bounds one process attempt;
+  it does not predict how long a model needs for a given prompt.
 - Provider-run receipts detect repository byte changes; they do not sandbox the provider process.
 - Context compilation is lexical and source-addressed. It does not use semantic retrieval or a
   vector index.

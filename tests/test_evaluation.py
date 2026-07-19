@@ -10,6 +10,8 @@ import yaml
 
 from clean_docs.errors import ConfigurationError
 from clean_docs.evaluation import (
+    DEFAULT_PROVIDER_TIMEOUT_SECONDS,
+    CommandResponseProvider,
     _command_environment,
     load_evaluation_tasks,
     run_evaluation,
@@ -251,6 +253,7 @@ def test_live_provider_is_explicit_and_records_model_specific_output(tmp_path: P
                 "adapter": "command",
                 "name": "local-provider",
                 "argv": [sys.executable, "-c", "print('{\"command\": \"clean-docs check\"}')"],
+                "timeout_seconds": 45,
             },
             "scorer": {
                 "type": "structured-output",
@@ -289,7 +292,109 @@ def test_live_provider_is_explicit_and_records_model_specific_output(tmp_path: P
     )
     assert run_record["response_sha256"]
     assert run_record["error"] is None
+    assert run_record["inputs"]["prompt_bytes"] > 0
+    assert run_record["provider"]["timeout_seconds"] == 45
     assert len(run_record["provider"]["configuration_sha256"]) == 64
+
+
+def test_command_provider_deadline_changes_configuration_identity(
+    tmp_path: Path,
+) -> None:
+    first = CommandResponseProvider(("provider",), "fixture", tmp_path, 30)
+    second = CommandResponseProvider(("provider",), "fixture", tmp_path, 60)
+
+    assert first.configuration_sha256 != second.configuration_sha256
+
+
+def test_command_provider_uses_default_deadline_for_compatible_fixtures(
+    tmp_path: Path,
+) -> None:
+    root = _root(tmp_path)
+    tasks = load_evaluation_tasks(root / ".clean-docs/eval.yml")
+
+    assert all(
+        task.model is None
+        or task.model.timeout_seconds == DEFAULT_PROVIDER_TIMEOUT_SECONDS
+        for task in tasks
+    )
+
+
+@pytest.mark.parametrize("value", [0, -1, 3601, True, "120"])
+def test_command_provider_rejects_invalid_deadline(
+    tmp_path: Path, value: object
+) -> None:
+    path = tmp_path / "eval.yml"
+    path.write_text(yaml.safe_dump({
+        "version": 1,
+        "tasks": [{
+            "id": "invalid-timeout",
+            "audience": "agent",
+            "prompt": "Return a value.",
+            "context": ["README.md"],
+            "model": {
+                "adapter": "command",
+                "name": "provider",
+                "argv": [sys.executable, "-c", "print('{}')"],
+                "timeout_seconds": value,
+            },
+            "scorer": {"type": "structured-output", "expected": {}},
+        }],
+    }, sort_keys=False))
+
+    with pytest.raises(
+        ConfigurationError,
+        match="timeout_seconds must be an integer from 1 to 3600",
+    ):
+        load_evaluation_tasks(path)
+
+
+def test_live_provider_timeout_preserves_bounded_failed_receipt(
+    tmp_path: Path,
+) -> None:
+    root = _root(tmp_path)
+    fixture_path = root / ".clean-docs/live-timeout.yml"
+    fixture_path.write_text(yaml.safe_dump({
+        "version": 1,
+        "tasks": [{
+            "id": "live-timeout",
+            "audience": "agent",
+            "prompt": "Return the command.",
+            "context": [".clean-docs/context/contributor.md"],
+            "model": {
+                "adapter": "command",
+                "name": "slow-provider",
+                "argv": [
+                    sys.executable,
+                    "-c",
+                    "import time; time.sleep(2); print('{}')",
+                ],
+                "timeout_seconds": 1,
+            },
+            "scorer": {"type": "structured-output", "expected": {}},
+        }],
+    }, sort_keys=False))
+    record_dir = root / ".clean-docs/live-timeout-records"
+
+    with pytest.raises(ConfigurationError, match="timed out after 1 seconds"):
+        run_evaluation(
+            root,
+            root / ".clean-docs.yml",
+            fixture_path,
+            mode="live",
+            record_dir=record_dir,
+        )
+
+    run_record = json.loads(
+        (record_dir / "live-timeout.run.json").read_text()
+    )
+    assert run_record["state"] == "failed"
+    assert run_record["provider"]["timeout_seconds"] == 1
+    assert run_record["inputs"]["prompt_bytes"] > 0
+    assert run_record["response_sha256"] is None
+    assert run_record["repository"]["worktree_before_sha256"] == (
+        run_record["repository"]["worktree_after_sha256"]
+    )
+    assert not (record_dir / "live-timeout.txt").exists()
 
 
 def test_live_provider_failure_preserves_pre_invocation_receipt(
