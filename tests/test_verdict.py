@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import subprocess
@@ -188,6 +189,11 @@ def _canonical_sha256(value: object) -> str:
     ).hexdigest()
 
 
+def _resign_verdict(payload: dict[str, object]) -> None:
+    unsigned = {key: value for key, value in payload.items() if key != "digest"}
+    payload["digest"] = _canonical_sha256(unsigned)
+
+
 def _mutation_receipt(path: Path, head: str) -> None:
     plan = {
         "generator": "fixture@1",
@@ -241,7 +247,20 @@ def test_private_refactor_is_stable_and_ready_with_coverage_stated(
     assert first.digest == second.digest
     payload = first.as_dict()
     assert first.state == "ready"
-    assert payload["scope"] == "configured-contract-and-changed-surface"
+    assert payload["state"] == payload["gate"]["state"] == "ready"
+    assert payload["ready"] is payload["gate"]["ready"] is True
+    assert payload["scope"] == "required-gates-and-changed-surface"
+    assert payload["observations"] == {
+        "state": "clear",
+        "complete": True,
+        "total": 0,
+        "counts": {
+            "unaffected": 0,
+            "review-recommended": 0,
+            "cochanged": 0,
+            "unknown": 0,
+        },
+    }
     assert payload["coverage"]["catalog_only"] >= 0
     assert payload["coverage"]["unbound_prose_checked"] is False
     changed = payload["changed_surface"]
@@ -262,6 +281,7 @@ def test_private_refactor_is_stable_and_ready_with_coverage_stated(
         "mutation sensitivity is not semantic correctness",
         "review-contract co-change is not semantic correctness",
         "catalog coverage is not prose coverage",
+        "gate readiness is not observation completeness",
     ]
 
 
@@ -272,10 +292,12 @@ def test_review_contract_advisory_preserves_ready_verdict_and_receipts(
     _add_public_api_review_contract(root)
     base = _commit(root, "base")
     source = root / "src/api.py"
-    source.write_text(source.read_text().replace(
-        "return timeout",
-        "return timeout * 2",
-    ))
+    source.write_text(
+        source.read_text().replace(
+            "return timeout",
+            "return timeout * 2",
+        )
+    )
     head = _commit(root, "change public API behavior")
 
     verdict = build_pr_verdict(
@@ -287,6 +309,18 @@ def test_review_contract_advisory_preserves_ready_verdict_and_receipts(
     payload = verdict.as_dict()
 
     assert verdict.state == "ready"
+    assert payload["gate"] == {"state": "ready", "ready": True}
+    assert payload["observations"] == {
+        "state": "review-recommended",
+        "complete": True,
+        "total": 1,
+        "counts": {
+            "unaffected": 0,
+            "review-recommended": 1,
+            "cochanged": 0,
+            "unknown": 0,
+        },
+    }
     finding = next(
         item
         for item in payload["findings"]
@@ -307,8 +341,7 @@ def test_review_contract_advisory_preserves_ready_verdict_and_receipts(
     assert observation["state"] == "review-recommended"
     assert observation["semantic_correctness_checked"] is False
     assert (
-        "review-contract co-change is not semantic correctness"
-        in payload["non_claims"]
+        "review-contract co-change is not semantic correctness" in payload["non_claims"]
     )
 
     sarif = json.loads(render_verdict_payload_sarif(payload))
@@ -317,9 +350,7 @@ def test_review_contract_advisory_preserves_ready_verdict_and_receipts(
         for result in sarif["runs"][0]["results"]
         if result["ruleId"] == "review-contract-review-recommended"
     )
-    assert sarif_finding["partialFingerprints"]["cleanDocsFindingId"] == (
-        finding["id"]
-    )
+    assert sarif_finding["partialFingerprints"]["cleanDocsFindingId"] == (finding["id"])
 
 
 def test_unknown_review_contract_is_a_nonblocking_note(tmp_path: Path) -> None:
@@ -339,12 +370,23 @@ def test_unknown_review_contract_is_a_nonblocking_note(tmp_path: Path) -> None:
 
     assert verdict.state == "ready"
     finding = next(
-        item
-        for item in verdict.findings
-        if item.rule == "review-contract-unknown"
+        item for item in verdict.findings if item.rule == "review-contract-unknown"
     )
     assert finding.level == "note"
-    assert verdict.as_dict()["mechanisms"]["review-contract"]["unknown"] == 1
+    payload = verdict.as_dict()
+    assert payload["gate"] == {"state": "ready", "ready": True}
+    assert payload["observations"] == {
+        "state": "unknown",
+        "complete": False,
+        "total": 1,
+        "counts": {
+            "unaffected": 0,
+            "review-recommended": 0,
+            "cochanged": 0,
+            "unknown": 1,
+        },
+    }
+    assert payload["mechanisms"]["review-contract"]["unknown"] == 1
 
 
 def test_unsupported_public_change_is_unknown(tmp_path: Path) -> None:
@@ -366,12 +408,10 @@ def test_unsupported_public_change_is_unknown(tmp_path: Path) -> None:
     assert not verdict.ok
     assert "src/Service.java" in verdict.as_dict()["changed_surface"]["files"]
     assert any(
-        finding.rule == "unsupported-public-candidate"
-        for finding in verdict.findings
+        finding.rule == "unsupported-public-candidate" for finding in verdict.findings
     )
     assert any(
-        finding.rule == "unsupported-public-candidate"
-        and finding.level == "warning"
+        finding.rule == "unsupported-public-candidate" and finding.level == "warning"
         for finding in verdict.findings
     )
 
@@ -430,7 +470,7 @@ def test_affected_command_is_unknown_without_executing_target(
     (root / "scripts/count.py").write_text(
         "from pathlib import Path\n"
         "Path('command-ran.txt').write_text('ran')\n"
-        'print(\'{"collected": 340}\')\n'
+        "print('{\"collected\": 340}')\n"
     )
     head = _commit(root, "change declared command")
 
@@ -503,22 +543,26 @@ def test_mutation_receipt_must_match_head_and_plan_digest(
     _mutation_receipt(receipt, head)
     linked_receipt = tmp_path / "linked-receipt.json"
     linked_receipt.symlink_to(receipt)
-    assert main(
-        [
-            "--root",
-            str(root),
-            "verdict",
-            "--base",
-            head,
-            "--head",
-            head,
-            "--mutation-receipt",
-            str(linked_receipt),
-        ]
-    ) == 2
-    assert "must not be a symbolic link" in json.loads(
-        capsys.readouterr().out
-    )["error"]["detail"]
+    assert (
+        main(
+            [
+                "--root",
+                str(root),
+                "verdict",
+                "--base",
+                head,
+                "--head",
+                head,
+                "--mutation-receipt",
+                str(linked_receipt),
+            ]
+        )
+        == 2
+    )
+    assert (
+        "must not be a symbolic link"
+        in json.loads(capsys.readouterr().out)["error"]["detail"]
+    )
 
     verdict = build_pr_verdict(
         root,
@@ -528,9 +572,10 @@ def test_mutation_receipt_must_match_head_and_plan_digest(
         mutation_receipt_paths=(receipt,),
     )
     assert verdict.state == "ready"
-    assert verdict.as_dict()["mutation_receipts"][0][
-        "semantic_relationship_authorized"
-    ] is False
+    assert (
+        verdict.as_dict()["mutation_receipts"][0]["semantic_relationship_authorized"]
+        is False
+    )
 
     raw = json.loads(receipt.read_text())
     raw["mutation"]["plan_sha256"] = "0" * 64
@@ -564,33 +609,39 @@ def test_json_and_sarif_share_finding_ids(
     source.write_text(source.read_text().replace("report", "publish"))
     head = _commit(root, "change action")
 
-    assert main(
-        [
-            "--root",
-            str(root),
-            "verdict",
-            "--base",
-            base,
-            "--head",
-            head,
-            "--format",
-            "json",
-        ]
-    ) == 1
+    assert (
+        main(
+            [
+                "--root",
+                str(root),
+                "verdict",
+                "--base",
+                base,
+                "--head",
+                head,
+                "--format",
+                "json",
+            ]
+        )
+        == 1
+    )
     json_payload = json.loads(capsys.readouterr().out)
-    assert main(
-        [
-            "--root",
-            str(root),
-            "verdict",
-            "--base",
-            base,
-            "--head",
-            head,
-            "--format",
-            "sarif",
-        ]
-    ) == 1
+    assert (
+        main(
+            [
+                "--root",
+                str(root),
+                "verdict",
+                "--base",
+                base,
+                "--head",
+                head,
+                "--format",
+                "sarif",
+            ]
+        )
+        == 1
+    )
     sarif = json.loads(capsys.readouterr().out)
 
     json_ids = {finding["id"] for finding in json_payload["findings"]}
@@ -599,8 +650,9 @@ def test_json_and_sarif_share_finding_ids(
         for result in sarif["runs"][0]["results"]
     }
     assert json_ids == sarif_ids
-    assert sarif["runs"][0]["properties"]["cleanDocsVerdictDigest"] == (
-        json_payload["digest"]
+    assert (
+        sarif["runs"][0]["properties"]["cleanDocsVerdictDigest"]
+        == (json_payload["digest"])
     )
 
     rendered = json.loads(render_verdict_payload_sarif(json_payload))
@@ -609,6 +661,88 @@ def test_json_and_sarif_share_finding_ids(
     json_payload["state"] = "ready"
     with pytest.raises(ConfigurationError, match="digest does not match"):
         validate_verdict_payload(json_payload)
+
+
+def test_verdict_validation_rejects_resigned_semantic_tampering(
+    tmp_path: Path,
+) -> None:
+    root = _symbol_repository(tmp_path)
+    _add_public_api_review_contract(
+        root,
+        target_locator="#missing-api-section",
+    )
+    head = _commit(root, "base")
+    original = build_pr_verdict(
+        root,
+        root / ".clean-docs.yml",
+        base=head,
+        head=head,
+    ).as_dict()
+    validate_verdict_payload(original)
+
+    def reject(payload: dict[str, object]) -> None:
+        _resign_verdict(payload)
+        with pytest.raises(ConfigurationError):
+            validate_verdict_payload(payload)
+
+    payload = copy.deepcopy(original)
+    payload["state"] = "not_ready"
+    payload["ready"] = False
+    reject(payload)
+
+    payload = copy.deepcopy(original)
+    payload["ready"] = False
+    reject(payload)
+
+    payload = copy.deepcopy(original)
+    payload["gate"]["ready"] = 1
+    reject(payload)
+
+    payload = copy.deepcopy(original)
+    payload["observations"]["state"] = "clear"
+    reject(payload)
+
+    payload = copy.deepcopy(original)
+    payload["observations"]["complete"] = True
+    reject(payload)
+
+    payload = copy.deepcopy(original)
+    payload["observations"]["counts"]["unknown"] = 0
+    payload["observations"]["counts"]["unaffected"] = 1
+    reject(payload)
+
+    payload = copy.deepcopy(original)
+    payload["mechanisms"]["review-contract"]["unknown"] = 0
+    payload["mechanisms"]["review-contract"]["unaffected"] = 1
+    reject(payload)
+
+    payload = copy.deepcopy(original)
+    payload["mechanisms"]["review-contract"]["semantic_correctness_checked"] = True
+    reject(payload)
+
+    payload = copy.deepcopy(original)
+    payload["review_contracts"][0]["semantic_correctness_checked"] = True
+    reject(payload)
+
+    payload = copy.deepcopy(original)
+    payload["review_contracts"][0]["state"] = "cochanged"
+    reject(payload)
+
+    payload = copy.deepcopy(original)
+    payload["review_contracts"][0]["sources"][0]["state"] = "certified"
+    reject(payload)
+
+    payload = copy.deepcopy(original)
+    payload["review_contracts"] = "not-a-list"
+    reject(payload)
+
+    payload = copy.deepcopy(original)
+    payload["findings"][0]["level"] = "success"
+    reject(payload)
+
+    payload = copy.deepcopy(original)
+    payload["unexpected"] = True
+    reject(payload)
 
 
 def test_verdict_rejects_dirty_or_detached_input_state(
@@ -622,36 +756,41 @@ def test_verdict_rejects_dirty_or_detached_input_state(
     head = _commit(root, "refactor")
     (root / "scratch.txt").write_text("dirty\n")
 
-    assert main(
-        [
-            "--root",
-            str(root),
-            "verdict",
-            "--base",
-            base,
-            "--head",
-            head,
-        ]
-    ) == 2
-    assert "clean caller worktree" in json.loads(
-        capsys.readouterr().out
-    )["error"]["detail"]
+    assert (
+        main(
+            [
+                "--root",
+                str(root),
+                "verdict",
+                "--base",
+                base,
+                "--head",
+                head,
+            ]
+        )
+        == 2
+    )
+    assert (
+        "clean caller worktree"
+        in json.loads(capsys.readouterr().out)["error"]["detail"]
+    )
 
     (root / "scratch.txt").unlink()
-    assert main(
-        [
-            "--root",
-            str(root),
-            "verdict",
-            "--base",
-            base,
-            "--head",
-            base,
-        ]
-    ) == 2
-    assert "head must match" in json.loads(
-        capsys.readouterr().out
-    )["error"]["detail"]
+    assert (
+        main(
+            [
+                "--root",
+                str(root),
+                "verdict",
+                "--base",
+                base,
+                "--head",
+                base,
+            ]
+        )
+        == 2
+    )
+    assert "head must match" in json.loads(capsys.readouterr().out)["error"]["detail"]
 
 
 def test_extraction_failure_stays_machine_readable(
@@ -675,17 +814,20 @@ bindings:
     )
     head = _commit(root, "invalid extraction")
 
-    assert main(
-        [
-            "--root",
-            str(root),
-            "verdict",
-            "--base",
-            head,
-            "--head",
-            head,
-        ]
-    ) == 3
+    assert (
+        main(
+            [
+                "--root",
+                str(root),
+                "verdict",
+                "--base",
+                head,
+                "--head",
+                head,
+            ]
+        )
+        == 3
+    )
     payload = json.loads(capsys.readouterr().out)
     assert payload["state"] == "invalid"
     assert payload["error"]["class"] == "extraction"
