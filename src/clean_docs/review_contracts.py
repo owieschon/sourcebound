@@ -15,9 +15,9 @@ from datetime import date, datetime, time
 from pathlib import Path
 
 try:
-    import tomllib
+    import tomllib  # type: ignore[import-not-found]
 except ModuleNotFoundError:
-    import tomli as tomllib
+    import tomli as tomllib  # type: ignore[import-not-found, no-redef]
 
 import yaml
 
