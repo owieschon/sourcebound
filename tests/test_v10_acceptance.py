@@ -395,10 +395,14 @@ def test_independent_reader_release_requires_receipts_and_published_tasks_work(
     assert evaluated.returncode == 0, evaluated.stdout + evaluated.stderr
     evaluation = json.loads(evaluated.stdout)
     assert evaluation["ok"]
-    assert evaluation["scores"] == {
-        "human": {"passed": 1, "attempted": 1},
-        "agent": {"passed": 4, "attempted": 4},
-    }
+    declared = yaml.safe_load((published / ".clean-docs/eval.yml").read_text())
+    expected_scores: dict[str, dict[str, int]] = {}
+    for task in declared["tasks"]:
+        audience = task["audience"]
+        score = expected_scores.setdefault(audience, {"passed": 0, "attempted": 0})
+        score["passed"] += 1
+        score["attempted"] += 1
+    assert evaluation["scores"] == expected_scores
 
     root = _source_repository(tmp_path)
     assert _run(root, "--version").returncode == 0
