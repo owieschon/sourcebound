@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 
 import clean_docs.impact as impact_module
+import clean_docs.extractors.inventory as inventory_extractor
 from clean_docs.cli import main
 from clean_docs.impact import build_impact_plan
 from clean_docs.snapshot import RepositorySnapshot
@@ -215,7 +216,7 @@ def test_private_refactor_produces_coverage_complete_stable_no_impact(
     assert payload["schema"] == "clean-docs.impact-plan.v2"
     assert payload["producer"] == {
         "name": "clean-docs",
-        "version": "1.2.0rc13",
+        "version": "1.2.0rc14",
     }
     assert payload["digest"] == first.digest
     assert payload["no_impact"] is True
@@ -447,6 +448,50 @@ def test_workflow_job_change_is_supported_advisory_impact(
     assert {item.rule for item in plan.recommended} == {
         "public-contract-change"
     }
+
+
+def test_impact_reuses_changed_inventory_for_repository_overview(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = _symbol_repository(tmp_path)
+    (root / "docs").mkdir()
+    (root / "docs/SURFACE.md").write_text(
+        "# Surface\n\n<!-- clean-docs:begin repository-surface -->\n"
+        "<!-- clean-docs:end repository-surface -->\n"
+    )
+    with (root / ".clean-docs.yml").open("a") as manifest:
+        manifest.write(
+            """\
+  - id: repository-surface
+    type: region
+    doc: docs/SURFACE.md
+    region: repository-surface
+    extractor: repository-overview
+    source: {path: .}
+    renderer: markdown-fragment
+"""
+        )
+    assert main(["--root", str(root), "derive", "--write"]) == 0
+    base = _commit(root, "base")
+    source = root / "src/api.py"
+    source.write_text(source.read_text().replace("return timeout", "return int(timeout)"))
+    head = _commit(root, "refactor implementation")
+
+    def unexpected_rescan(_root: Path) -> object:
+        raise AssertionError("repository-overview rescanned the head inventory")
+
+    monkeypatch.setattr(inventory_extractor, "scan_inventory", unexpected_rescan)
+
+    plan = build_impact_plan(
+        root,
+        root / ".clean-docs.yml",
+        base=base,
+        head=head,
+        use_cache=False,
+    )
+
+    assert plan.impact == "none"
 
 
 def test_malformed_workflow_cannot_become_no_impact(
