@@ -5,8 +5,12 @@ from pathlib import Path
 
 import pytest
 
+import clean_docs.review_contracts as review_contracts
 from clean_docs.models import ReviewContract, ReviewLocator
-from clean_docs.review_contracts import evaluate_review_contract
+from clean_docs.review_contracts import (
+    evaluate_review_contract,
+    evaluate_review_contracts,
+)
 
 
 def _repository(tmp_path: Path) -> Path:
@@ -107,6 +111,29 @@ class TestDelivery:
         assert len(response.body) == 8000
         assert response.body_next_offset == 8000
 """.lstrip(),
+    )
+
+
+def _markdown_target_contract() -> ReviewContract:
+    return ReviewContract(
+        id="delivery-guidance",
+        mode="observe",
+        sources=(
+            ReviewLocator(
+                id="delivery-mode",
+                path=Path("src/delivery.py"),
+                extractor="python-symbol",
+                locator="DELIVERY_MODE",
+            ),
+        ),
+        targets=(
+            ReviewLocator(
+                id="delivery-instructions",
+                path=Path("docs/guide.mdx"),
+                extractor="markdown-section",
+                locator="#target",
+            ),
+        ),
     )
 
 
@@ -494,3 +521,274 @@ def test_dotted_assignment_locator_hashes_only_selected_assignment(
     assert result.state == "cochanged"
     assert result.sources[0].state == "changed"
     assert result.targets[0].state == "changed"
+
+
+def test_fenced_heading_before_real_target_does_not_hide_real_change(
+    tmp_path: Path,
+) -> None:
+    root = _repository(tmp_path)
+    _write(root, "src/delivery.py", 'DELIVERY_MODE = "single"\n')
+    _write(
+        root,
+        "docs/guide.mdx",
+        """
+# Delivery
+
+```markdown
+## Target
+Example content.
+```
+
+## Target
+
+Fetch one complete result.
+
+## Next
+
+Continue elsewhere.
+""".lstrip(),
+    )
+    base = _commit(root, "baseline")
+    _write(root, "src/delivery.py", 'DELIVERY_MODE = "paged"\n')
+    _write(
+        root,
+        "docs/guide.mdx",
+        """
+# Delivery
+
+```markdown
+## Target
+Example content.
+```
+
+## Target
+
+Fetch each page until the continuation token is absent.
+
+## Next
+
+Continue elsewhere.
+""".lstrip(),
+    )
+    head = _commit(root, "change delivery guidance")
+
+    result = evaluate_review_contract(
+        root,
+        _markdown_target_contract(),
+        base=base,
+        head=head,
+    )
+
+    assert result.state == "cochanged"
+    assert result.sources[0].state == "changed"
+    assert result.targets[0].state == "changed"
+
+
+def test_change_only_inside_fenced_example_leaves_target_unchanged(
+    tmp_path: Path,
+) -> None:
+    root = _repository(tmp_path)
+    _write(root, "src/delivery.py", 'DELIVERY_MODE = "single"\n')
+    _write(
+        root,
+        "docs/guide.mdx",
+        """
+# Delivery
+
+```markdown
+## Target
+Example content.
+```
+
+## Target
+
+Fetch one complete result.
+
+```markdown
+## Example
+The example uses one result.
+```
+""".lstrip(),
+    )
+    base = _commit(root, "baseline")
+    _write(
+        root,
+        "docs/guide.mdx",
+        """
+# Delivery
+
+```markdown
+## Target
+Rewritten example content.
+```
+
+## Target
+
+Fetch one complete result.
+
+```markdown
+## Example
+The rewritten example uses several results.
+```
+""".lstrip(),
+    )
+    head = _commit(root, "edit fenced example")
+
+    result = evaluate_review_contract(
+        root,
+        _markdown_target_contract(),
+        base=base,
+        head=head,
+    )
+
+    assert result.state == "unaffected"
+    assert result.sources[0].state == "unchanged"
+    assert result.targets[0].state == "unchanged"
+
+
+def test_duplicate_rendered_heading_is_unknown(tmp_path: Path) -> None:
+    root = _repository(tmp_path)
+    _write(root, "src/delivery.py", 'DELIVERY_MODE = "single"\n')
+    _write(
+        root,
+        "docs/guide.mdx",
+        """
+# Delivery
+
+## Target
+
+First instruction.
+
+## Target
+
+Second instruction.
+""".lstrip(),
+    )
+    head = _commit(root, "ambiguous guide")
+
+    result = evaluate_review_contract(
+        root,
+        _markdown_target_contract(),
+        base=head,
+        head=head,
+    )
+
+    assert result.state == "unknown"
+    assert result.targets[0].state == "unknown"
+    assert result.targets[0].base_digest is None
+    assert result.targets[0].head_digest is None
+
+
+def test_html_block_and_mdx_expression_do_not_create_section_headings(
+    tmp_path: Path,
+) -> None:
+    root = _repository(tmp_path)
+    _write(root, "src/delivery.py", 'DELIVERY_MODE = "single"\n')
+    _write(
+        root,
+        "docs/guide.mdx",
+        """
+# Delivery
+
+<div>
+## Target
+HTML example content.
+</div>
+
+{`## Target`}
+
+<!--
+## Target
+HTML comment content.
+-->
+
+## Target
+
+Fetch one complete result.
+""".lstrip(),
+    )
+    base = _commit(root, "baseline")
+    _write(root, "src/delivery.py", 'DELIVERY_MODE = "paged"\n')
+    _write(
+        root,
+        "docs/guide.mdx",
+        """
+# Delivery
+
+<div>
+## Target
+HTML example content.
+</div>
+
+{`## Target`}
+
+<!--
+## Target
+HTML comment content.
+-->
+
+## Target
+
+Fetch each page.
+""".lstrip(),
+    )
+    head = _commit(root, "change rendered instructions")
+
+    result = evaluate_review_contract(
+        root,
+        _markdown_target_contract(),
+        base=base,
+        head=head,
+    )
+
+    assert result.state == "cochanged"
+    assert result.targets[0].state == "changed"
+
+
+def test_markdown_documents_are_parsed_once_per_contract_batch(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = _repository(tmp_path)
+    _write(root, "src/delivery.py", 'DELIVERY_MODE = "single"\n')
+    _write(
+        root,
+        "docs/guide.mdx",
+        "# Delivery\n\n## Target\n\nFetch one complete result.\n",
+    )
+    head = _commit(root, "baseline")
+    parse_calls = 0
+    parse_documents = review_contracts.parse_mdx_documents
+
+    def counted_parse(
+        documents: dict[str, str],
+    ) -> tuple[
+        dict[str, review_contracts.MdxDocument],
+        dict[str, str],
+    ]:
+        nonlocal parse_calls
+        parse_calls += 1
+        return parse_documents(documents)
+
+    monkeypatch.setattr(
+        review_contracts,
+        "parse_mdx_documents",
+        counted_parse,
+    )
+    first = _markdown_target_contract()
+    second = ReviewContract(
+        id="second-delivery-guidance",
+        mode=first.mode,
+        sources=first.sources,
+        targets=first.targets,
+    )
+
+    results = evaluate_review_contracts(
+        root,
+        (first, second),
+        base=head,
+        head=head,
+    )
+
+    assert len(results) == 2
+    assert parse_calls == 1
