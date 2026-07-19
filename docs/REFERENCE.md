@@ -231,6 +231,8 @@ projections:
 Run `clean-docs project` to write both outputs. Run `clean-docs project --check` in CI so a changed
 asset record cannot leave either audience on an older projection. Local image paths must exist;
 record IDs, annotation IDs, output paths, coordinates, dimensions, and unknown fields fail closed.
+The [source-bound flow projection](generated/source-bound-flow.md) dogfoods this contract against
+the diagram that introduces clean-docs.
 
 ## Context request
 

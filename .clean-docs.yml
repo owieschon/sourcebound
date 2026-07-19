@@ -206,3 +206,8 @@ projections:
   demo:
     output: docs/demo/index.html
     evidence: .clean-docs/demo/evidence.json
+  visuals:
+    - id: source-bound-flow
+      source: docs/visuals/source-bound-flow.yml
+      human_output: docs/generated/source-bound-flow.md
+      agent_output: .clean-docs/visuals/source-bound-flow.md
