@@ -23,6 +23,7 @@ RULE_KEYS = {"id", "token_sha256", "include", "reason"}
 LOCAL_RULE_KEYS = {"id", "token", "include"}
 EXCLUDE_KEYS = {"pattern", "reason"}
 TOKEN = re.compile(r"[A-Za-z][A-Za-z0-9_-]*")
+POLICY_METADATA = re.compile(r"^\s*(?:-\s+)?(?:id|pattern|reason):\s*(?P<value>.*)$")
 LOCAL_PATH = re.compile(
     r"(?<![A-Za-z0-9_])/(?:Users|home)/(?P<owner>[^/\s]+)/"
 )
@@ -218,12 +219,47 @@ def _machine_path_match(line: str) -> bool:
     return False
 
 
+def _policy_metadata_findings(
+    root: Path,
+    path: Path,
+    config: ResidueConfig,
+    local_rules: tuple[LocalResidueRule, ...],
+) -> list[PolicyFinding]:
+    """Check public policy labels without exposing restricted rule material."""
+    try:
+        relative = path.resolve().relative_to(root).as_posix()
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except (OSError, ValueError):
+        return []
+    findings = []
+    for line_number, line in enumerate(lines, start=1):
+        match = POLICY_METADATA.match(line)
+        if match is None:
+            continue
+        tokens = {token.lower() for token in TOKEN.findall(match.group("value"))}
+        digests = {
+            hashlib.sha256(token.encode("utf-8")).hexdigest()
+            for token in tokens
+        }
+        if any(rule.token_sha256 in digests for rule in config.rules) or any(
+            rule.token in tokens for rule in local_rules
+        ):
+            findings.append(PolicyFinding(
+                relative,
+                line_number,
+                "residue-policy-metadata",
+                "remove restricted context from residue policy metadata",
+            ))
+    return findings
+
+
 def scan_residue(root: Path, config_path: Path | None = None) -> list[PolicyFinding]:
     """Scan the tracked product surface for configured tokens and machine residue."""
     root = root.resolve()
-    config = load_residue_config(config_path or root / CONFIG_NAME)
+    policy_path = config_path or root / CONFIG_NAME
+    config = load_residue_config(policy_path)
     local_rules = load_local_residue_rules(root / LOCAL_CONFIG_NAME)
-    findings = []
+    findings = _policy_metadata_findings(root, policy_path, config, local_rules)
     exclusions = tuple(item.pattern for item in config.exclude)
     for path in _repository_files(root):
         relative = path.relative_to(root).as_posix()
