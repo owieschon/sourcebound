@@ -47,6 +47,27 @@ clean-docs records repository bytes before launch and rejects an unexpected chan
 it does not sandbox the process or revoke host access. Use an execution environment that enforces
 the provider's filesystem and network boundary.
 
+## Feedback transport
+
+Feedback is off by default. A disabled run does not create an identifier, envelope, outbox record,
+or network request. `feedback enable` writes a visible configuration with a named sink and a
+pseudonymous installation identifier. Credentials stay in an operator-selected environment
+variable and are read only by an explicit `feedback flush`.
+
+The outgoing envelope contains bounded operational classes and digests. It excludes source, prose,
+paths, remotes, command arguments, prompts, model responses, environment values, credentials, and
+unbounded errors. `preview` exposes the exact pending envelope bytes before delivery. Connected
+adapters may wrap those bytes in a transport-specific request.
+
+Capture failures are swallowed after the original command result is known. Transport failures make
+only `feedback flush` non-zero and leave the envelope queued for a bounded retry. Neither path can
+turn a failed documentation gate green or a passing gate red.
+
+Incoming behavior signals are aggregate, schema-closed evidence. They can create an observed
+improvement case, but they cannot authorize purpose, policy, scorers, safety boundaries, source
+relationships, or repository writes. The [feedback contract](FEEDBACK.md) owns the required
+state transitions in the [behavior-signal contract](BEHAVIOR_SIGNALS.md).
+
 For an untrusted pull request, run `inventory`, `plan`, `check`, and `verify` with `--no-exec`.
 clean-docs skips manifest commands and plugins, labels the missing assurance, and fails a
 changed-surface check when the pull request affects that skipped relationship. `verdict` is always

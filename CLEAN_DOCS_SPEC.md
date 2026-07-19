@@ -40,6 +40,7 @@ The table below is part of the shipped capability registry:
 | Pull-request verdict | Static configured checks and changed-surface evidence produce the reported state at one pinned commit | Unbound prose, skipped processes, semantic relationships, or authored judgment are correct |
 | Packaged writing policy | Implemented deterministic rules pass | Motivation, pedagogy, personality, or usefulness pass judgment |
 | Authored purpose and scope | Declared markers and configured relationships remain intact | The repository chose the right goals, audience, or priority |
+| Opt-in feedback loop | Validated operational envelopes and improvement-state receipts satisfy their closed schemas | Observed behavior establishes causality, authorizes purpose, or makes a candidate change correct |
 <!-- clean-docs:end assurance-boundaries -->
 
 An outcome with `"ok": true` means the configured contract passed. Read
@@ -130,6 +131,19 @@ unbound prose. Run `project` afterward when a projection includes a repaired pag
 `verify` for the combined audit, binding, projection, coverage, and optional changed-surface
 receipt.
 
+Use `feedback` only after an operator explicitly enables a named sink. Normal runs then write
+bounded local `clean-docs.feedback.v1` envelopes; they still make no network request. `preview`
+shows pending envelope bytes and `flush` performs delivery. Capture and delivery never participate
+in an audit, check, verdict, or verify result.
+
+An external controller may return an aggregate `clean-docs.behavior-signal.v1`. Ingest records it
+as an observed hypothesis. Each later step needs its own receipt: reproduce the problem, classify
+its cause, propose a test, add a failing fixture, measure the candidate in shadow, prepare the
+change, and submit an ordinary verified pull request. Behavior is evidence about outcomes, not
+authority over product purpose or deterministic policy. The
+[feedback contract](docs/FEEDBACK.md) owns consent and delivery. The
+[behavior-signal contract](docs/BEHAVIOR_SIGNALS.md) owns the return path.
+
 The [CLI reference](docs/CLI.md) owns the command index. Command-specific `--help` owns exact flags.
 
 ## Manifest contract
@@ -208,7 +222,7 @@ clean-docs does not:
 - use model judgment as a required gate;
 - provide operating-system or network isolation;
 - maintain a hosted service, account system, or runtime dashboard;
-- send telemetry from the CLI;
+- send feedback unless an operator explicitly enabled a sink and invoked `feedback flush`;
 - claim that generated prose reaches the quality of a skilled human writer.
 
 ## Compatibility

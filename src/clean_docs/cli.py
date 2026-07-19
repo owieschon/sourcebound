@@ -21,6 +21,20 @@ from clean_docs.evaluation import run_evaluation, write_evaluation_history
 from clean_docs.errors import CleanDocsError, ConfigurationError
 from clean_docs.execution import ExecutionPolicy
 from clean_docs.explain import explain
+from clean_docs.feedback import (
+    disable_feedback,
+    enable_feedback,
+    enqueue_feedback,
+    flush_feedback,
+    ingest_behavior_signal,
+    load_behavior_signal,
+    load_feedback_config,
+    preview_feedback,
+    prepare_behavior_signal,
+    purge_feedback,
+    rotate_feedback_identity,
+    transition_improvement_case,
+)
 from clean_docs.impact import build_impact_plan, render_impact_plan
 from clean_docs.inventory import scan_inventory
 from clean_docs.plugins import scan_extended_inventory
@@ -239,6 +253,57 @@ def _parser() -> argparse.ArgumentParser:
     migration_mode.add_argument("--write", action="store_true")
     migration_mode.add_argument("--rollback", action="store_true")
     migrate.add_argument("--format", choices=("text", "json"), default="text")
+    feedback = sub.add_parser("feedback", help=_command_help("feedback"))
+    feedback_sub = feedback.add_subparsers(dest="feedback_command", required=True)
+    feedback_enable = feedback_sub.add_parser(
+        "enable",
+        help="enable feedback with a visible sink configuration",
+    )
+    feedback_enable.add_argument("--sink", choices=("local", "connected"), required=True)
+    feedback_enable.add_argument("--target")
+    feedback_enable.add_argument("--endpoint")
+    feedback_enable.add_argument("--token-env")
+    feedback_sub.add_parser("status", help="show feedback configuration and queue counts")
+    feedback_sub.add_parser("preview", help="write exact pending envelope bytes")
+    feedback_sub.add_parser("flush", help="deliver pending envelopes explicitly")
+    feedback_sub.add_parser("disable", help="remove delivery authority immediately")
+    feedback_sub.add_parser("rotate", help="replace the pseudonymous installation identifier")
+    feedback_sub.add_parser("purge", help="delete queued, delivered, and signal state")
+    feedback_signal = feedback_sub.add_parser(
+        "signal",
+        help="validate or ingest aggregate behavior signals",
+    )
+    feedback_signal_sub = feedback_signal.add_subparsers(
+        dest="feedback_signal_command",
+        required=True,
+    )
+    for signal_command in ("prepare", "validate", "ingest"):
+        signal_parser = feedback_signal_sub.add_parser(signal_command)
+        signal_parser.add_argument("--input", type=Path, required=True)
+    feedback_case = feedback_sub.add_parser(
+        "case",
+        help="advance a verified improvement case",
+    )
+    feedback_case_sub = feedback_case.add_subparsers(
+        dest="feedback_case_command",
+        required=True,
+    )
+    feedback_transition = feedback_case_sub.add_parser("transition")
+    feedback_transition.add_argument("--case", required=True)
+    feedback_transition.add_argument(
+        "--to",
+        required=True,
+        choices=(
+            "reproduced",
+            "root-cause-classified",
+            "evaluation-proposed",
+            "regression-added",
+            "shadow-measured",
+            "candidate-change",
+            "ordinary-verified-pr",
+        ),
+    )
+    feedback_transition.add_argument("--receipt", type=Path, required=True)
     emit = sub.add_parser("emit", help=_command_help("emit"))
     emit_sub = emit.add_subparsers(dest="target", required=True)
     stepwise = emit_sub.add_parser(
@@ -359,7 +424,7 @@ def _text(results: list[BindingResult], *, repaired: bool = False) -> str:
     return "\n".join(lines) + "\n"
 
 
-def main(argv: list[str] | None = None) -> int:
+def _main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
         _validate_arguments(args)
@@ -367,6 +432,100 @@ def main(argv: list[str] | None = None) -> int:
         print(f"clean-docs: {exc}", file=sys.stderr)
         return exc.exit_code
     root = args.root.resolve()
+    if args.command == "feedback":
+        try:
+            if args.feedback_command == "enable":
+                config = enable_feedback(
+                    root,
+                    sink=args.sink,
+                    target=args.target,
+                    endpoint=args.endpoint,
+                    token_env=args.token_env,
+                )
+                print(json.dumps(config.as_dict(), indent=2))
+                return 0
+            if args.feedback_command == "status":
+                status_config = load_feedback_config(root)
+                pending = preview_feedback(root)
+                print(json.dumps({
+                    "schema": "clean-docs.feedback-status.v1",
+                    "configured": status_config is not None,
+                    "enabled": (
+                        status_config.enabled if status_config is not None else False
+                    ),
+                    "sink": (
+                        dict(status_config.sink)
+                        if status_config is not None
+                        else None
+                    ),
+                    "pending_bytes": len(pending),
+                    "pending_records": pending.count(b"\n"),
+                }, indent=2))
+                return 0
+            if args.feedback_command == "preview":
+                sys.stdout.buffer.write(preview_feedback(root))
+                return 0
+            if args.feedback_command == "flush":
+                flush_result = flush_feedback(root)
+                print(json.dumps({
+                    "schema": "clean-docs.feedback-flush.v1",
+                    **flush_result,
+                }, indent=2))
+                return 0 if flush_result["failed"] == 0 else 1
+            if args.feedback_command == "disable":
+                config = disable_feedback(root)
+                print(json.dumps(config.as_dict(), indent=2))
+                return 0
+            if args.feedback_command == "rotate":
+                config = rotate_feedback_identity(root)
+                print(json.dumps(config.as_dict(), indent=2))
+                return 0
+            if args.feedback_command == "signal":
+                signal_path = (
+                    args.input if args.input.is_absolute() else root / args.input
+                )
+                if args.feedback_signal_command == "prepare":
+                    try:
+                        signal_body_raw = json.loads(
+                            signal_path.read_text(encoding="utf-8")
+                        )
+                    except (OSError, json.JSONDecodeError) as exc:
+                        raise ConfigurationError(
+                            f"cannot read behavior signal body {signal_path}"
+                        ) from exc
+                    if not isinstance(signal_body_raw, dict):
+                        raise ConfigurationError(
+                            "behavior signal body must be an object"
+                        )
+                    signal = prepare_behavior_signal(signal_body_raw)
+                    print(json.dumps(signal, indent=2))
+                elif args.feedback_signal_command == "validate":
+                    signal, _source = load_behavior_signal(signal_path)
+                    print(json.dumps(signal, indent=2))
+                else:
+                    case = ingest_behavior_signal(root, signal_path)
+                    print(json.dumps(case, indent=2))
+                return 0
+            if args.feedback_command == "case":
+                receipt_path = (
+                    args.receipt
+                    if args.receipt.is_absolute()
+                    else root / args.receipt
+                )
+                case = transition_improvement_case(
+                    root,
+                    case_id=args.case,
+                    target_state=args.to,
+                    receipt_path=receipt_path,
+                )
+                print(json.dumps(case, indent=2))
+                return 0
+            purge_feedback(root)
+            print("feedback: local state purged")
+            return 0
+        except CleanDocsError as exc:
+            print(f"clean-docs: {exc}", file=sys.stderr)
+            return exc.exit_code
     if args.command == "audit":
         try:
             if args.update_baseline:
@@ -1044,3 +1203,25 @@ def main(argv: list[str] | None = None) -> int:
     except CleanDocsError as exc:
         print(f"clean-docs: {exc}", file=sys.stderr)
         return exc.exit_code
+
+
+def main(argv: list[str] | None = None) -> int:
+    effective_argv = argv if argv is not None else sys.argv[1:]
+    exit_code = _main(effective_argv)
+    try:
+        args = _parser().parse_args(effective_argv)
+        if args.command != "feedback":
+            enqueue_feedback(
+                args.root.resolve(),
+                command=args.command,
+                exit_code=exit_code,
+                execution_policy=(
+                    ExecutionPolicy.STATIC_ONLY.value
+                    if getattr(args, "no_exec", False)
+                    else ExecutionPolicy.TRUSTED.value
+                ),
+            )
+    except (CleanDocsError, OSError, ValueError):
+        # Feedback is an opt-in observation plane. It cannot alter gate behavior.
+        pass
+    return exit_code

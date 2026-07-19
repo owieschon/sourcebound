@@ -38,6 +38,20 @@ The table is generated from the command registry used by the parser:
 | eval | Score human tasks and replayable agent round trips | with --history or live recording | clean-docs eval --fixtures .clean-docs/eval.yml |
 | release | Render typed release facts between immutable refs | no | clean-docs release --from v0.9.0 --to HEAD |
 | migrate | Upgrade a prior manifest with rollback backup | with --write or --rollback | clean-docs migrate --write |
+| feedback | Manage opt-in operational feedback | yes | clean-docs feedback status |
+| feedback enable | Consent to a named feedback sink | yes | clean-docs feedback enable --sink local |
+| feedback status | Show feedback consent and pending counts | no | clean-docs feedback status |
+| feedback preview | Print exact pending envelope bytes | no | clean-docs feedback preview |
+| feedback flush | Deliver pending feedback envelopes | yes | clean-docs feedback flush |
+| feedback disable | Remove feedback delivery authority | yes | clean-docs feedback disable |
+| feedback rotate | Replace the feedback installation identifier | yes | clean-docs feedback rotate |
+| feedback purge | Delete local feedback state | yes | clean-docs feedback purge |
+| feedback signal | Validate or ingest aggregate behavior signals | varies | clean-docs feedback signal validate --input signal.json |
+| feedback signal prepare | Add a canonical content-derived signal ID | no | clean-docs feedback signal prepare --input signal-body.json |
+| feedback signal validate | Validate one aggregate behavior signal | no | clean-docs feedback signal validate --input signal.json |
+| feedback signal ingest | Create an observed improvement case | yes | clean-docs feedback signal ingest --input signal.json |
+| feedback case | Advance a verified improvement case | yes | clean-docs feedback case transition --case ID --to reproduced --receipt receipt.json |
+| feedback case transition | Apply one adjacent evidence-backed state transition | yes | clean-docs feedback case transition --case ID --to reproduced --receipt receipt.json |
 | emit | Project the manifest into another format | yes | clean-docs emit --help |
 | emit stepwise-skill | Write a manifest-derived stepwise skill package | yes | clean-docs emit stepwise-skill --out skill |
 | emit llms-txt | Write an index of source-bound documents | yes | clean-docs emit llms-txt --out llms.txt |
