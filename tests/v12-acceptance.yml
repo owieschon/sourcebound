@@ -47,3 +47,21 @@ scenarios:
     test: tests/test_sensitivity.py::test_ambiguous_duplicate_mapping_key_is_unsupported
   - id: shared-evaluation-primitive
     test: tests/test_sensitivity.py::test_evaluation_mutation_red_scorer_reuses_the_sensitivity_primitive
+  - id: stable-coverage-verdict
+    test: tests/test_verdict.py::test_private_refactor_is_stable_and_ready_with_coverage_stated
+  - id: unsupported-change-unknown
+    test: tests/test_verdict.py::test_unsupported_public_change_is_unknown
+  - id: bound-drift-not-ready
+    test: tests/test_verdict.py::test_bound_region_drift_is_not_ready
+  - id: affected-execution-unknown
+    test: tests/test_verdict.py::test_affected_command_is_unknown_without_executing_target
+  - id: legacy-prose-nonclaim
+    test: tests/test_verdict.py::test_unaffected_command_pin_does_not_certify_legacy_prose
+  - id: mutation-receipt-pin
+    test: tests/test_verdict.py::test_mutation_receipt_must_match_head_and_plan_digest
+  - id: json-sarif-finding-parity
+    test: tests/test_verdict.py::test_json_and_sarif_share_finding_ids
+  - id: verdict-input-state
+    test: tests/test_verdict.py::test_verdict_rejects_dirty_or_detached_input_state
+  - id: machine-readable-extraction-failure
+    test: tests/test_verdict.py::test_extraction_failure_stays_machine_readable

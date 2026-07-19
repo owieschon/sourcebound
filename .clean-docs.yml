@@ -79,6 +79,13 @@ bindings:
     source:
       path: src/clean_docs/sensitivity.py
       symbol: evaluate_binding_sensitivity
+  - id: verdict-reference
+    type: symbol
+    doc: docs/CLI.md
+    anchor: pull-request-verdicts
+    source:
+      path: src/clean_docs/verdict.py
+      symbol: build_pr_verdict
   - id: release-guide
     type: symbol
     doc: docs/RELEASES.md

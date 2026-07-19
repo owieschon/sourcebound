@@ -104,6 +104,15 @@ EXPECTED_IDS_BY_RELEASE = {
         "wrong-fact-red-boundary",
         "ambiguous-mutation-unsupported",
         "shared-evaluation-primitive",
+        "stable-coverage-verdict",
+        "unsupported-change-unknown",
+        "bound-drift-not-ready",
+        "affected-execution-unknown",
+        "legacy-prose-nonclaim",
+        "mutation-receipt-pin",
+        "json-sarif-finding-parity",
+        "verdict-input-state",
+        "machine-readable-extraction-failure",
     },
 }
 

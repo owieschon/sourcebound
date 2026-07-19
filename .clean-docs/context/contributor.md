@@ -1,13 +1,13 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `9ac1a4ca7bfa6a9e24f46e37c92419fcb2f5d2760c7baae10f6caf236d91fa90`
+- Corpus sha256: `3140670c0b435265f6ba9f0aeb999f27362ba995bace5fda07bd600b32417a2f`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `a039bcfd2ddda9fccb0e728890879bcc51ece7ec6fe4eb5bf550751635ce0468`
+- Content sha256: `0c3e4ec09dbf9e7ee15ec8a1955c6c3841a5af7a271aa19d0dfd5f3eefcb1654`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
@@ -36,6 +36,7 @@ authorizes clean-docs to flatten repository-native forms.
 | Choose a command | [CLI reference](docs/CLI.md) | The command and its write boundary |
 | Configure a binding | [Manifest reference](docs/REFERENCE.md) | A source-bound fact with the right depth |
 | Investigate an unbound count or column claim | [Source claim checks](docs/REFERENCE.md#source-claim-checks) | A ranked candidate or accepted deterministic relationship |
+| Review a pull request | [Coverage-stating verdict](docs/CLI.md#pull-request-verdicts) | One pinned state with gaps, skips, and non-claims visible |
 | Understand trust boundaries | [Security model](docs/SECURITY_MODEL.md) | The process and host guarantees |
 
 ## Why clean-docs exists

@@ -526,3 +526,16 @@ Every receipt sets `semantic_relationship_authorized` to false. The `mutation-re
 same code; a red result cannot accept the link. Reversible: removing the command and scorer leaves
 configured source-claim enforcement unchanged; no manifest or published gate depends on this
 additive receipt.
+
+## 49. Make pull-request readiness one coverage-stating receipt (2026-07-19)
+
+Context: the reusable gate exposed separate audit, binding, changed-surface, and action receipts.
+Each result was accurate within its own scope, but a caller had to reconcile them and could present
+sparse coverage as repository-wide proof. Chose one static-only pull-request verdict composed from
+the existing library results. It pins the checked-out head, reports each mechanism and coverage
+class separately, carries stable JSON and SARIF finding IDs, and names what it does not certify.
+Unsupported public change and affected skipped execution become `unknown`; neither can exit zero.
+A caller may attach a sensitivity receipt, so clean-docs verifies its commit and mutation plan.
+That attached receipt cannot alter the state or authorize the relationship. Reversible: the
+independent audit, check, plan, verify, and binding-sensitivity schemas remain available, and
+removing the command changes no manifest or repair behavior.

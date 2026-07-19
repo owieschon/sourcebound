@@ -43,6 +43,11 @@ ASSURANCE_BOUNDARIES = (
         "clean-docs does not prove": "The document and source describe the same concept or that the relationship should be accepted",
     },
     {
+        "surface": "Pull-request verdict",
+        "clean-docs proves": "Static configured checks and changed-surface evidence produce the reported state at one pinned commit",
+        "clean-docs does not prove": "Unbound prose, skipped processes, semantic relationships, or authored judgment are correct",
+    },
+    {
         "surface": "Packaged writing policy",
         "clean-docs proves": "Implemented deterministic rules pass",
         "clean-docs does not prove": "Motivation, pedagogy, personality, or usefulness pass judgment",
@@ -101,6 +106,12 @@ CLI_REFERENCE = (
     {"command": "derive", "job": "Preview or write generated region changes", "writes": "with --write", "example": "clean-docs derive --check"},
     {"command": "drive", "job": "Repair bound regions after deterministic policy checks", "writes": "yes", "example": "clean-docs drive"},
     {"command": "plan", "job": "Build an immutable read-only documentation impact plan", "writes": "no", "example": "clean-docs plan --base origin/main --head HEAD --format json"},
+    {
+        "command": "verdict",
+        "job": "Compose one coverage-stating static PR verdict",
+        "writes": "no",
+        "example": "clean-docs verdict --base origin/main --head HEAD --format json",
+    },
     {"command": "check", "job": "Fail on binding drift or uncovered changed surface", "writes": "no", "example": "clean-docs check --changed --base origin/main --head HEAD"},
     {"command": "project", "job": "Regenerate configured documentation projections", "writes": "unless --check", "example": "clean-docs project --check"},
     {"command": "eval", "job": "Score human tasks and replayable agent round trips", "writes": "with --history or live recording", "example": "clean-docs eval --fixtures .clean-docs/eval.yml"},

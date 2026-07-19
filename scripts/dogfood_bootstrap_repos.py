@@ -21,6 +21,7 @@ from clean_docs.engine import evaluate
 from clean_docs.inventory import scan_inventory
 from clean_docs.manifest import load_manifest
 from clean_docs.models import RegionBinding
+from clean_docs.verdict import build_pr_verdict
 
 if __package__:
     from scripts.dogfood_public_repos import require, run_git
@@ -148,6 +149,17 @@ def _run_case(case: BootstrapDogfoodCase, parent: Path) -> dict[str, object]:
     require(cached_first.as_dict() == normalized, f"{case.name}: cached report varied")
     require(cached_second.as_dict() == normalized, f"{case.name}: cache hit report varied")
     require(cached_second.cache_hits == 2, f"{case.name}: immutable refs missed cache")
+    verdict = build_pr_verdict(
+        root,
+        manifest.path,
+        base=base,
+        head=head,
+    )
+    require(
+        verdict.state == "not_ready",
+        f"{case.name}: stale external baseline did not block the verdict",
+    )
+    verdict_payload = verdict.as_dict()
     median_seconds = statistics.median(durations)
     require(
         median_seconds <= CHANGED_CHECK_BUDGET_SECONDS,
@@ -170,6 +182,12 @@ def _run_case(case: BootstrapDogfoodCase, parent: Path) -> dict[str, object]:
         "changed_check_median_seconds": round(median_seconds, 6),
         "changed_check_budget_seconds": CHANGED_CHECK_BUDGET_SECONDS,
         "cached_report_identical": True,
+        "verdict_state": verdict.state,
+        "verdict_digest": verdict.digest,
+        "verdict_coverage_complete": verdict_payload["changed_surface"][
+            "coverage_complete"
+        ],
+        "verdict_non_claims": verdict_payload["non_claims"],
     }
 
 
