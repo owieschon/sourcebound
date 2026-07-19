@@ -43,4 +43,10 @@ def test_version_12a_registry_names_every_scenario() -> None:
         "json-sarif-finding-parity",
         "verdict-input-state",
         "machine-readable-extraction-failure",
+        "fork-safe-action-contract",
+        "fork-hostile-runtime-boundary",
+        "action-receipt-byte-enforcement",
+        "static-inventory-plugin-boundary",
+        "read-only-skill-immutability",
+        "installed-artifact-quickstart-contract",
     ]

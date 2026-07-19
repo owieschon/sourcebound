@@ -113,6 +113,12 @@ EXPECTED_IDS_BY_RELEASE = {
         "json-sarif-finding-parity",
         "verdict-input-state",
         "machine-readable-extraction-failure",
+        "fork-safe-action-contract",
+        "fork-hostile-runtime-boundary",
+        "action-receipt-byte-enforcement",
+        "static-inventory-plugin-boundary",
+        "read-only-skill-immutability",
+        "installed-artifact-quickstart-contract",
     },
 }
 

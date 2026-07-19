@@ -7,6 +7,7 @@ import json
 import subprocess
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import Mapping
 
 from clean_docs import __version__
 from clean_docs.errors import ConfigurationError
@@ -237,6 +238,29 @@ def _digest(value: object) -> str:
         ensure_ascii=False,
     ).encode()
     return hashlib.sha256(encoded).hexdigest()
+
+
+def validate_verdict_payload(payload: Mapping[str, object]) -> None:
+    """Reject a serialized verdict that cannot be the output of this schema."""
+    if payload.get("schema") != VERDICT_SCHEMA:
+        raise ConfigurationError(f"verdict schema must be {VERDICT_SCHEMA}")
+    if payload.get("state") not in {"ready", "not_ready", "unknown"}:
+        raise ConfigurationError("verdict state is invalid")
+    digest = payload.get("digest")
+    if not isinstance(digest, str):
+        raise ConfigurationError("verdict digest is missing")
+    unsigned = {key: value for key, value in payload.items() if key != "digest"}
+    if _digest(unsigned) != digest:
+        raise ConfigurationError("verdict digest does not match its payload")
+    findings = payload.get("findings")
+    if not isinstance(findings, list):
+        raise ConfigurationError("verdict findings must be a list")
+    for finding in findings:
+        if not isinstance(finding, dict):
+            raise ConfigurationError("verdict finding must be an object")
+        required = ("id", "rule", "level", "path", "message", "repair")
+        if any(not isinstance(finding.get(field), str) for field in required):
+            raise ConfigurationError("verdict finding fields are invalid")
 
 
 def _git(root: Path, *args: str) -> bytes:
@@ -516,8 +540,24 @@ def build_pr_verdict(
     )
 
 
-def render_verdict_sarif(verdict: PullRequestVerdict) -> str:
-    payload = {
+def render_verdict_payload_sarif(payload: Mapping[str, object]) -> str:
+    """Render SARIF from one already-computed verdict payload."""
+    validate_verdict_payload(payload)
+    producer = payload.get("producer")
+    findings = payload["findings"]
+    assert isinstance(producer, dict)
+    assert isinstance(findings, list)
+    version = producer.get("version")
+    if not isinstance(version, str):
+        raise ConfigurationError("verdict producer version is invalid")
+    rules = sorted(
+        {
+            str(finding["rule"])
+            for finding in findings
+            if isinstance(finding, dict)
+        }
+    )
+    sarif = {
         "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
         "version": "2.1.0",
         "runs": [
@@ -525,7 +565,7 @@ def render_verdict_sarif(verdict: PullRequestVerdict) -> str:
                 "tool": {
                     "driver": {
                         "name": "clean-docs",
-                        "version": __version__,
+                        "version": version,
                         "rules": [
                             {
                                 "id": rule,
@@ -533,41 +573,43 @@ def render_verdict_sarif(verdict: PullRequestVerdict) -> str:
                                     "text": rule.replace("-", " ")
                                 },
                             }
-                            for rule in sorted(
-                                {finding.rule for finding in verdict.findings}
-                            )
+                            for rule in rules
                         ],
                     }
                 },
                 "properties": {
-                    "cleanDocsVerdictState": verdict.state,
-                    "cleanDocsVerdictDigest": verdict.digest,
+                    "cleanDocsVerdictState": payload["state"],
+                    "cleanDocsVerdictDigest": payload["digest"],
                 },
                 "results": [
                     {
-                        "ruleId": finding.rule,
-                        "level": finding.level,
+                        "ruleId": finding["rule"],
+                        "level": finding["level"],
                         "message": {
                             "text": (
-                                f"{finding.message}. Repair: {finding.repair}"
+                                f"{finding['message']}. Repair: {finding['repair']}"
                             )
                         },
                         "partialFingerprints": {
-                            "cleanDocsFindingId": finding.id
+                            "cleanDocsFindingId": finding["id"]
                         },
                         "locations": [
                             {
                                 "physicalLocation": {
                                     "artifactLocation": {
-                                        "uri": finding.path
+                                        "uri": finding["path"]
                                     }
                                 }
                             }
                         ],
                     }
-                    for finding in verdict.findings
+                    for finding in findings
                 ],
             }
         ],
     }
-    return json.dumps(payload, indent=2, sort_keys=True) + "\n"
+    return json.dumps(sarif, indent=2, sort_keys=True) + "\n"
+
+
+def render_verdict_sarif(verdict: PullRequestVerdict) -> str:
+    return render_verdict_payload_sarif(verdict.as_dict())

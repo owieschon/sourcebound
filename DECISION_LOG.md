@@ -539,3 +539,19 @@ A caller may attach a sensitivity receipt, so clean-docs verifies its commit and
 That attached receipt cannot alter the state or authorize the relationship. Reversible: the
 independent audit, check, plan, verify, and binding-sensitivity schemas remain available, and
 removing the command changes no manifest or repair behavior.
+
+## 50. Keep pull-request delivery static and package verification separately (2026-07-19)
+
+Context: the reusable workflow recomputed audit, binding, and changed-surface results, then built a
+second action-level decision. The generic maintenance skill could write documentation, and its
+apparently read-only inventory command could still start a declared discoverer plugin. Chose one
+static verdict as the workflow authority. SARIF is rendered from those recorded JSON bytes, the
+artifact receipt hashes every transport file, and the final job validates the verdict digest and
+file hashes before using its state. The workflow exposes no execution switch. A separate
+verification skill permits only static inventory, claims, impact, verdict, and independently frozen
+sensitivity commands; `inventory --no-exec` reports skipped plugin IDs. Release CI runs the exact
+README quickstart from the wheel outside the source checkout on Linux and macOS. Reversible:
+callers can pin the prior workflow or remove the skill without changing CLI checks, manifests, or
+repair behavior. The workflow also starts Python in isolated mode and writes receipts outside the
+checkout, preventing fork-controlled import hooks or symlinks from redirecting trusted evidence;
+static pull-request execution remains the security floor.

@@ -144,7 +144,8 @@ the complete target file before execution.
 
 The first release supports Python `identifier-set` facts backed by a direct static mapping or a
 mapping-valued constructor keyword. It reads committed UTF-8 blobs with Git, parses syntax without
-importing the module, and applies one deterministic key rename in a disposable directory. Duplicate
+importing the module, and applies one deterministic key rename in a disposable directory. No target
+code runs. Duplicate
 keys, dynamic mappings, command pins, plugins, path globs, and any target that needs code execution
 return `unsupported`.
 
@@ -172,7 +173,8 @@ clean-docs marks that field as deprecated; it neither blocks nor counts network 
 ## Context request
 
 `clean-docs.context-request.v1` compiles a provider-neutral evidence packet from the current commit.
-The request contains a full `repository_commit`, positive `budget_bytes`, and one or more items.
+The byte budget is mandatory. The request contains a full `repository_commit`, positive
+`budget_bytes`, and one or more items.
 Each item names an `id`, `kind`, repository-relative `path`, `start_line`, `end_line`, `authority`,
 `relationship`, `reason`, numeric `rank`, and boolean `required` and `instruction` flags.
 

@@ -40,7 +40,22 @@ jobs:
     with: {package-ref: FULL_40_CHARACTER_CLEAN_DOCS_COMMIT}
 ```
 
-The workflow rejects tags, branches, abbreviated commits, and non-hexadecimal input before installation. It requests read-only repository permission. Its `clean-docs-evidence` artifact contains the raw audit, binding, and changed-surface reports plus `clean-docs-run.json`. That receipt identifies the installed clean-docs version and commit, the checked repository ref and commit, the workflow run and attempt, each result state, and the byte count and SHA-256 digest of every accompanying evidence file. Keep the artifact with a release or repair receipt when the run itself may expire.
+The workflow rejects tags, branches, abbreviated commits, and non-hexadecimal input before
+installation. It checks out the immutable head, requests read-only repository permission, and runs
+one static `verdict`. Python starts in isolated mode, and evidence is written outside the checkout
+so fork-controlled import hooks and symlinks cannot capture the gate. Pull-request content cannot
+enable commands or plugins. Its
+`clean-docs-evidence` artifact contains the authoritative verdict JSON, a SARIF projection from
+those same bytes, the command exit receipt, and `clean-docs-run.json`. The transport receipt
+identifies the installed version and commit, comparison commits, workflow run and attempt, verdict
+digest, and the byte count and SHA-256 of every evidence file. The job validates those bytes before
+using the recorded verdict state as its result.
+
+Use the separate [read-only verification skill](../skills/clean-docs-verify/SKILL.md) when an
+external agent needs the same static boundary. It never writes. The skill can inspect inventory, source-claim
+candidates, impact, verdicts, and independently frozen sensitivity receipts. It cannot repair,
+project, initialize, migrate, update baselines, run live evaluation, or start repository-declared
+processes.
 
 ## Adopt an existing documentation corpus
 

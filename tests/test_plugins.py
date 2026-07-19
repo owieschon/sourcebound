@@ -159,6 +159,28 @@ def test_static_only_check_skips_plugin_without_starting_it(tmp_path: Path) -> N
     assert not marker.exists()
 
 
+def test_static_only_inventory_discloses_skipped_discoverer_without_starting_it(
+    tmp_path: Path,
+) -> None:
+    root = _root(tmp_path)
+    marker = root / "plugin-started.txt"
+    (root / "fixture_plugin/__main__.py").write_text(
+        "from pathlib import Path\n"
+        "Path('plugin-started.txt').write_text('started')\n"
+        "raise SystemExit(9)\n"
+    )
+
+    inventory = _run(root, "inventory", "--no-exec", "--format", "json")
+
+    assert inventory.returncode == 0, inventory.stderr
+    payload = json.loads(inventory.stdout)
+    assert payload["execution"] == {
+        "mode": "static-only",
+        "skipped_plugin_ids": ["fixture"],
+    }
+    assert not marker.exists()
+
+
 def test_plugin_policy_blocks_plugin_rendered_output_before_write(tmp_path: Path) -> None:
     root = _root(tmp_path)
     (root / "facts.ext").write_text("FORBIDDEN\n")

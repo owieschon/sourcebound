@@ -9,6 +9,13 @@ permissions:
   contents: read
 
 jobs:
+  reusable-gate:
+    uses: ./.github/workflows/reusable-clean-docs.yml
+    with:
+      package-ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      base-ref: ${{ github.event.pull_request.base.sha || github.event.before || github.sha }}
+      head-ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
   test:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -97,6 +104,40 @@ jobs:
             dist/*.spdx.json
             dist/SHA256SUMS
             dist/release.json
+          if-no-files-found: error
+
+  quickstart-artifact:
+    needs: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: >-
+          python -m pip install
+          "build==1.2.2.post1" "PyYAML==6.0.3" "setuptools==75.8.0" "wheel==0.45.1"
+      - run: >-
+          python -m pip download
+          --only-binary=:all:
+          --dest wheelhouse
+          "PyYAML==6.0.3"
+      - run: python scripts/build_release.py --out dist
+      - run: >-
+          python scripts/test_readme_quickstart.py
+          --wheel dist/*.whl
+          --wheelhouse wheelhouse
+          --out clean-docs-quickstart.json
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: clean-docs-quickstart-${{ matrix.os }}-${{ github.sha }}
+          path: clean-docs-quickstart.json
           if-no-files-found: error
 
   acceptance-v0-1:

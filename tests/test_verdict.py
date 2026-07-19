@@ -8,7 +8,12 @@ from pathlib import Path
 import pytest
 
 from clean_docs.cli import main
-from clean_docs.verdict import build_pr_verdict
+from clean_docs.errors import ConfigurationError
+from clean_docs.verdict import (
+    build_pr_verdict,
+    render_verdict_payload_sarif,
+    validate_verdict_payload,
+)
 
 
 def _commit(root: Path, message: str) -> str:
@@ -457,6 +462,13 @@ def test_json_and_sarif_share_finding_ids(
     assert sarif["runs"][0]["properties"]["cleanDocsVerdictDigest"] == (
         json_payload["digest"]
     )
+
+    rendered = json.loads(render_verdict_payload_sarif(json_payload))
+    assert rendered == sarif
+
+    json_payload["state"] = "ready"
+    with pytest.raises(ConfigurationError, match="digest does not match"):
+        validate_verdict_payload(json_payload)
 
 
 def test_verdict_rejects_dirty_or_detached_input_state(
