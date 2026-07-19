@@ -1,7 +1,7 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `8c7b1bca074781e84778da93f3e763647796b9cb932e408c1887b1bdb934d768`
+- Corpus sha256: `257432ee609a9d4bb907b6eadb6474dab40e9ec8b1c799a3161ca4b6f1af435d`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
@@ -100,7 +100,7 @@ Use the [learning path](docs/learn/index.md) for the product map and evidence-ba
 ## Canonical document: docs/EVALUATION.md
 
 - Source: [docs/EVALUATION.md](../../docs/EVALUATION.md)
-- Content sha256: `0aad641d1d36a93cd407ce618683eb0e409972e9a4506d6346d83001d3153554`
+- Content sha256: `73a1df37e6d257706d4c6e9ffe53d4f0f6f539aeda7c8f7f98ce46054c22e9af`
 
 <!-- clean-docs:canonical docs/EVALUATION.md begin -->
 # Evaluate documentation tasks
@@ -174,7 +174,18 @@ tasks:
 
 ## Run a live provider
 
-Live execution is explicit and must retain its response:
+Live execution is explicit. Declare a bounded deadline with the command adapter; fixtures that
+omit it retain the 120-second compatibility default:
+
+```yaml
+model:
+  adapter: command
+  name: local-provider
+  argv: [provider-cli, --json]
+  timeout_seconds: 300
+```
+
+Then retain the live response and its run record:
 
 ```bash
 clean-docs eval --mode live --record-dir .clean-docs/evaluation/live
@@ -182,9 +193,9 @@ clean-docs eval --mode live --record-dir .clean-docs/evaluation/live
 
 The task's command adapter receives a deterministic JSON prompt on standard input. Before invoking
 it, clean-docs writes `<task>.run.json` with the repository, worktree, corpus, prompt, scorer, and
-provider-configuration digests. Completion adds the response digest. A provider error preserves the
-input receipt and records a hashed error identity without copying provider output or credentials
-into the record.
+provider-configuration digests, plus the prompt byte count and deadline. Completion adds the
+response digest. A provider error or deadline preserves the input receipt and records a hashed error
+identity without copying provider output or credentials into the record.
 If the provider changes repository bytes outside the record directory, the run becomes a conflict
 and evaluation stops.
 
@@ -213,6 +224,8 @@ fit, the bundle is `unknown` and the command exits `2`.
 - Scorers are deterministic; live provider output is model-specific.
 - Replay proves the saved response against the named corpus digest, not current behavior of the named model.
 - Provider commands run only in live mode. The execution environment owns their network isolation.
+- Command-provider deadlines accept one to 3,600 seconds. The deadline bounds one process attempt;
+  it does not predict how long a model needs for a given prompt.
 - Provider-run receipts detect repository byte changes; they do not sandbox the provider process.
 - Context compilation is lexical and source-addressed. It does not use semantic retrieval or a
   vector index.

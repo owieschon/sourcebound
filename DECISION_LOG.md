@@ -502,3 +502,15 @@ file-stem match; identifier tables may also use an exact heading-to-locator matc
 is only a tie-breaker, relationship rank precedes value equality, and the report states its full
 population and truncation. Reversible: accepted relationships and enforcement do not use discovery
 ranking; callers may ignore the additive population fields.
+
+## 47. Make provider deadlines part of the run contract (2026-07-19)
+
+Context: a second frozen external calibration reached the command provider's hard-coded
+120-second boundary without a response. The pre-invocation receipt preserved the failed attempt and
+proved the target bytes had not changed, but neither the provider identity nor the receipt exposed
+the deadline, and the receipt did not state the prompt size that consumed it. Chose a bounded
+`timeout_seconds` command-adapter field from one to 3,600 seconds, with the prior 120-second value as
+the compatibility default. The deadline participates in provider identity. Pre-invocation receipts
+state it and the prompt byte count before execution. A timeout remains a failed provider attempt,
+never a content-quality result. Reversible: existing fixtures retain their prior deadline; callers
+can remove an explicit value to return to it without changing scorer semantics.
