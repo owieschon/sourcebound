@@ -20,6 +20,8 @@ from clean_docs.models import (
     PluginSpec,
     ProjectionConfig,
     RegionBinding,
+    ReviewContract,
+    ReviewLocator,
     Source,
     SourceClaimCheck,
     SymbolBinding,
@@ -32,6 +34,7 @@ ROOT_KEYS = {
     "execution",
     "plugins",
     "projections",
+    "review_contracts",
     "source_claim_checks",
 }
 BINDING_KEYS = {
@@ -65,6 +68,14 @@ SOURCE_CLAIM_CHECK_KEYS = {
     "locator",
 }
 SOURCE_CLAIM_KINDS = {"count", "identifier-set"}
+REVIEW_CONTRACT_KEYS = {"id", "mode", "sources", "targets"}
+REVIEW_LOCATOR_KEYS = {"id", "path", "extractor", "locator"}
+REVIEW_EXTRACTORS = {"markdown-section", "python-symbol", "structured-data"}
+REVIEW_EXTRACTOR_SUFFIXES = {
+    "markdown-section": {".md", ".mdx"},
+    "python-symbol": {".py"},
+    "structured-data": {".json", ".toml", ".yaml", ".yml"},
+}
 MANIFEST_REFERENCE = (
     {
         "binding": "region",
@@ -111,6 +122,119 @@ def _one_line(raw: Any, where: str) -> str | None:
     if not isinstance(raw, str) or not raw.strip() or "\n" in raw or "\r" in raw:
         raise ConfigurationError(f"{where} must be one non-empty line")
     return raw.strip()
+
+
+def _required_string(raw: Any, where: str) -> str:
+    if (
+        not isinstance(raw, str)
+        or not raw.strip()
+        or "\n" in raw
+        or "\r" in raw
+    ):
+        raise ConfigurationError(f"{where} must be one non-empty line")
+    return raw.strip()
+
+
+def _valid_json_pointer(pointer: str) -> bool:
+    if not pointer.startswith("/"):
+        return False
+    index = 0
+    while index < len(pointer):
+        if pointer[index] != "~":
+            index += 1
+            continue
+        if index + 1 >= len(pointer) or pointer[index + 1] not in {"0", "1"}:
+            return False
+        index += 2
+    return True
+
+
+def _load_review_locator(raw: Any, where: str) -> ReviewLocator:
+    data = _mapping(raw, where)
+    _reject_unknown(data, REVIEW_LOCATOR_KEYS, where)
+    locator_id = _required_string(data.get("id"), f"{where}.id")
+    path = _relative_path(data.get("path"), f"{where}.path")
+    extractor = data.get("extractor")
+    if extractor not in REVIEW_EXTRACTORS:
+        raise ConfigurationError(
+            f"{where}.extractor must be one of: "
+            + ", ".join(sorted(REVIEW_EXTRACTORS))
+        )
+    locator = _required_string(data.get("locator"), f"{where}.locator")
+    suffixes = REVIEW_EXTRACTOR_SUFFIXES[extractor]
+    if path.suffix.lower() not in suffixes:
+        expected = ", ".join(sorted(suffixes))
+        raise ConfigurationError(
+            f"{where}.path must end with one of {expected} for {extractor}"
+        )
+    if extractor == "python-symbol" and not all(
+        part.isidentifier() for part in locator.split(".")
+    ):
+        raise ConfigurationError(
+            f"{where}.locator must be a dotted Python identifier for python-symbol"
+        )
+    if extractor == "markdown-section" and (
+        not locator.startswith("#")
+        or len(locator) == 1
+        or "#" in locator[1:]
+        or any(character.isspace() for character in locator)
+    ):
+        raise ConfigurationError(
+            f"{where}.locator must be a #fragment anchor for markdown-section"
+        )
+    if extractor == "structured-data" and not _valid_json_pointer(locator):
+        raise ConfigurationError(
+            f"{where}.locator must be a JSON Pointer starting with / for structured-data"
+        )
+    return ReviewLocator(locator_id, path, extractor, locator)
+
+
+def _load_review_contracts(raw: Any) -> tuple[ReviewContract, ...]:
+    if not isinstance(raw, list):
+        raise ConfigurationError("review_contracts must be a list")
+    contracts: list[ReviewContract] = []
+    contract_ids: set[str] = set()
+    for index, raw_contract in enumerate(raw):
+        where = f"review_contracts[{index}]"
+        data = _mapping(raw_contract, where)
+        _reject_unknown(data, REVIEW_CONTRACT_KEYS, where)
+        contract_id = _required_string(data.get("id"), f"{where}.id")
+        if contract_id in contract_ids:
+            raise ConfigurationError(f"duplicate review contract id: {contract_id}")
+        contract_ids.add(contract_id)
+        mode = data.get("mode")
+        if mode != "observe":
+            raise ConfigurationError(f"{where}.mode must be observe")
+
+        locator_ids: set[str] = set()
+        groups: dict[str, tuple[ReviewLocator, ...]] = {}
+        for group in ("sources", "targets"):
+            raw_locators = data.get(group)
+            if not isinstance(raw_locators, list) or not raw_locators:
+                raise ConfigurationError(f"{where}.{group} must be a non-empty list")
+            locators = tuple(
+                _load_review_locator(
+                    raw_locator,
+                    f"{where}.{group}[{locator_index}]",
+                )
+                for locator_index, raw_locator in enumerate(raw_locators)
+            )
+            for locator in locators:
+                if locator.id in locator_ids:
+                    raise ConfigurationError(
+                        f"duplicate review locator id in {contract_id}: {locator.id}"
+                    )
+                locator_ids.add(locator.id)
+            groups[group] = locators
+        contracts.append(
+            ReviewContract(
+                id=contract_id,
+                mode=mode,
+                sources=groups["sources"],
+                targets=groups["targets"],
+            )
+        )
+    return tuple(contracts)
 
 
 def _load_projections(raw: Any, bound_docs: set[Path]) -> ProjectionConfig | None:
@@ -556,6 +680,7 @@ def load_manifest(path: Path) -> Manifest:
     projections = _load_projections(
         root.get("projections"), {binding.doc for binding in bindings}
     )
+    review_contracts = _load_review_contracts(root.get("review_contracts", []))
     return Manifest(
         path=path,
         version=version,
@@ -564,5 +689,6 @@ def load_manifest(path: Path) -> Manifest:
         plugins=tuple(plugins),
         projections=projections,
         source_claim_checks=tuple(source_claim_checks),
+        review_contracts=review_contracts,
         deprecations=tuple(deprecations),
     )
