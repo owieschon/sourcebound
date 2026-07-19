@@ -53,6 +53,11 @@ jobs:
           --check
           --format text
       - run: >-
+          clean-docs --root . review lifecycle check
+          --input .clean-docs/reviews/wizard-docs-context-mill.json
+          --state .clean-docs/improvement-lifecycle.json
+          --format text
+      - run: >-
           clean-docs --root . verdict
           --base "${{ github.event.pull_request.base.sha || github.event.before || github.sha }}"
           --head HEAD

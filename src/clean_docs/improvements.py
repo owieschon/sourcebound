@@ -9,12 +9,13 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-from clean_docs.errors import ConfigurationError
+from clean_docs.errors import ConfigurationError, PolicyError
 from clean_docs.regions import atomic_write
 
 
 OBSERVATIONS_SCHEMA = "clean-docs.review-observations.v1"
 CANDIDATES_SCHEMA = "clean-docs.improvement-candidates.v1"
+LIFECYCLE_SCHEMA = "clean-docs.improvement-candidate-lifecycle.v1"
 TEST_KINDS = {
     "command",
     "fixture",
@@ -24,6 +25,21 @@ TEST_KINDS = {
     "static-analysis",
 }
 EVIDENCE_KINDS = {"external", "repository", "receipt"}
+LIFECYCLE_EVIDENCE_KINDS = {"commit", "decision", "issue", "test-receipt"}
+LIFECYCLE_STATES = {"proposed", "reproduced", "implemented", "verified", "declined"}
+LIFECYCLE_TRANSITIONS = {
+    "proposed": {"reproduced", "declined"},
+    "reproduced": {"implemented", "declined"},
+    "implemented": {"verified", "declined"},
+    "verified": set(),
+    "declined": set(),
+}
+LIFECYCLE_EVIDENCE_BY_STATE = {
+    "reproduced": {"test-receipt"},
+    "implemented": {"commit", "issue"},
+    "verified": {"test-receipt"},
+    "declined": {"decision", "issue"},
+}
 SHA1 = re.compile(r"^[0-9a-f]{40}$")
 IDENTIFIER = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
@@ -100,6 +116,44 @@ class ImprovementCandidateSet:
             ],
             "digest": self.digest,
         }
+
+
+@dataclass(frozen=True)
+class LifecycleEvidence:
+    kind: str
+    reference: str
+    detail: str
+
+
+@dataclass(frozen=True)
+class LifecycleEvent:
+    from_state: str
+    to_state: str
+    evidence: LifecycleEvidence
+
+
+@dataclass(frozen=True)
+class CandidateLifecycle:
+    observation_id: str
+    candidate_id: str
+    state: str
+    history: tuple[LifecycleEvent, ...]
+
+
+@dataclass(frozen=True)
+class CandidateLifecycleSet:
+    review_id: str
+    candidate_digest: str
+    candidates: tuple[CandidateLifecycle, ...]
+    digest: str
+
+    def as_dict(self) -> dict[str, object]:
+        payload = _lifecycle_payload(
+            self.review_id,
+            self.candidate_digest,
+            self.candidates,
+        )
+        return {"schema": LIFECYCLE_SCHEMA, **payload, "digest": self.digest}
 
 
 def _mapping(value: Any, where: str) -> dict[str, Any]:
@@ -336,4 +390,253 @@ def write_improvement_candidates(
         output,
         json.dumps(candidates.as_dict(), indent=2, ensure_ascii=False) + "\n",
     )
+    return output
+
+
+def _lifecycle_authority() -> dict[str, object]:
+    return {
+        "state": "assessment",
+        "gate_authority": False,
+        "change_authority": False,
+        "next_step": (
+            "Use linked evidence to record the candidate lifecycle; ordinary repository "
+            "gates still decide whether a change is accepted."
+        ),
+    }
+
+
+def _lifecycle_payload(
+    review_id: str,
+    candidate_digest: str,
+    candidates: tuple[CandidateLifecycle, ...],
+) -> dict[str, object]:
+    return {
+        "candidate_set": {
+            "review_id": review_id,
+            "digest": candidate_digest,
+        },
+        "authority": _lifecycle_authority(),
+        "candidates": [
+            {
+                "observation_id": candidate.observation_id,
+                "candidate_id": candidate.candidate_id,
+                "state": candidate.state,
+                "history": [
+                    {
+                        "from": event.from_state,
+                        "to": event.to_state,
+                        "evidence": asdict(event.evidence),
+                    }
+                    for event in candidate.history
+                ],
+            }
+            for candidate in candidates
+        ],
+    }
+
+
+def _lifecycle_digest(
+    review_id: str,
+    candidate_digest: str,
+    candidates: tuple[CandidateLifecycle, ...],
+) -> str:
+    return _digest(_lifecycle_payload(review_id, candidate_digest, candidates))
+
+
+def _lifecycle_evidence(value: Any, where: str) -> LifecycleEvidence:
+    raw = _mapping(value, where)
+    _exact_keys(raw, {"kind", "reference", "detail"}, where)
+    kind = _string(raw["kind"], f"{where}.kind")
+    if kind not in LIFECYCLE_EVIDENCE_KINDS:
+        raise ConfigurationError(
+            f"{where}.kind must be one of: "
+            f"{', '.join(sorted(LIFECYCLE_EVIDENCE_KINDS))}"
+        )
+    return LifecycleEvidence(
+        kind=kind,
+        reference=_string(raw["reference"], f"{where}.reference"),
+        detail=_string(raw["detail"], f"{where}.detail"),
+    )
+
+
+def _lifecycle_event(value: Any, where: str) -> LifecycleEvent:
+    raw = _mapping(value, where)
+    _exact_keys(raw, {"from", "to", "evidence"}, where)
+    from_state = _string(raw["from"], f"{where}.from")
+    to_state = _string(raw["to"], f"{where}.to")
+    if from_state not in LIFECYCLE_STATES or to_state not in LIFECYCLE_STATES:
+        raise ConfigurationError(f"{where} has an invalid lifecycle state")
+    if to_state not in LIFECYCLE_TRANSITIONS[from_state]:
+        raise ConfigurationError(
+            f"{where} cannot transition from {from_state} to {to_state}"
+        )
+    evidence = _lifecycle_evidence(raw["evidence"], f"{where}.evidence")
+    if evidence.kind not in LIFECYCLE_EVIDENCE_BY_STATE[to_state]:
+        raise ConfigurationError(
+            f"{where}.evidence.kind must support transition to {to_state}"
+        )
+    return LifecycleEvent(from_state, to_state, evidence)
+
+
+def initialize_candidate_lifecycle(
+    candidates: ImprovementCandidateSet,
+) -> CandidateLifecycleSet:
+    """Start an assessment-only lifecycle for every candidate in one review."""
+    records = tuple(
+        CandidateLifecycle(
+            observation_id=candidate.observation_id,
+            candidate_id=candidate.id,
+            state="proposed",
+            history=(),
+        )
+        for candidate in candidates.candidates
+    )
+    return CandidateLifecycleSet(
+        review_id=candidates.review_id,
+        candidate_digest=candidates.digest,
+        candidates=records,
+        digest=_lifecycle_digest(candidates.review_id, candidates.digest, records),
+    )
+
+
+def load_candidate_lifecycle(
+    path: Path,
+    candidates: ImprovementCandidateSet,
+) -> CandidateLifecycleSet:
+    """Load a lifecycle record and prove that it still matches one candidate set."""
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ConfigurationError(f"cannot read candidate lifecycle {path}: {exc}") from exc
+    root = _mapping(raw, "candidate lifecycle")
+    _exact_keys(
+        root,
+        {"schema", "candidate_set", "authority", "candidates", "digest"},
+        "candidate lifecycle",
+    )
+    if root["schema"] != LIFECYCLE_SCHEMA:
+        raise ConfigurationError(f"candidate lifecycle schema must be {LIFECYCLE_SCHEMA}")
+    candidate_set = _mapping(root["candidate_set"], "candidate lifecycle.candidate_set")
+    _exact_keys(candidate_set, {"review_id", "digest"}, "candidate lifecycle.candidate_set")
+    review_id = _identifier(candidate_set["review_id"], "candidate lifecycle.candidate_set.review_id")
+    candidate_digest = _string(
+        candidate_set["digest"], "candidate lifecycle.candidate_set.digest"
+    )
+    if not re.fullmatch(r"[0-9a-f]{64}", candidate_digest):
+        raise ConfigurationError("candidate lifecycle.candidate_set.digest must be a SHA-256")
+    authority = _mapping(root["authority"], "candidate lifecycle.authority")
+    if authority != _lifecycle_authority():
+        raise ConfigurationError("candidate lifecycle.authority must preserve assessment-only authority")
+    raw_records = root["candidates"]
+    if not isinstance(raw_records, list):
+        raise ConfigurationError("candidate lifecycle.candidates must be a list")
+    records = []
+    seen: set[str] = set()
+    for index, item in enumerate(raw_records):
+        where = f"candidate lifecycle.candidates[{index}]"
+        record = _mapping(item, where)
+        _exact_keys(record, {"observation_id", "candidate_id", "state", "history"}, where)
+        observation_id = _identifier(record["observation_id"], f"{where}.observation_id")
+        if observation_id in seen:
+            raise ConfigurationError(f"duplicate lifecycle observation id: {observation_id}")
+        seen.add(observation_id)
+        candidate_id = _string(record["candidate_id"], f"{where}.candidate_id")
+        if not re.fullmatch(r"[0-9a-f]{64}", candidate_id):
+            raise ConfigurationError(f"{where}.candidate_id must be a SHA-256")
+        state = _string(record["state"], f"{where}.state")
+        if state not in LIFECYCLE_STATES:
+            raise ConfigurationError(f"{where}.state is invalid")
+        raw_history = record["history"]
+        if not isinstance(raw_history, list):
+            raise ConfigurationError(f"{where}.history must be a list")
+        history = tuple(
+            _lifecycle_event(event, f"{where}.history[{event_index}]")
+            for event_index, event in enumerate(raw_history)
+        )
+        derived = "proposed"
+        for event in history:
+            if event.from_state != derived:
+                raise ConfigurationError(
+                    f"{where}.history does not continue from {derived}"
+                )
+            derived = event.to_state
+        if state != derived:
+            raise ConfigurationError(f"{where}.state contradicts its history")
+        records.append(CandidateLifecycle(observation_id, candidate_id, state, history))
+    records.sort(key=lambda record: record.observation_id)
+    records_tuple = tuple(records)
+    expected_records = tuple(
+        (candidate.observation_id, candidate.id)
+        for candidate in candidates.candidates
+    )
+    observed_records = tuple(
+        (record.observation_id, record.candidate_id) for record in records_tuple
+    )
+    if review_id != candidates.review_id or candidate_digest != candidates.digest:
+        raise PolicyError("candidate lifecycle is stale for the current review candidate set")
+    if observed_records != expected_records:
+        raise PolicyError("candidate lifecycle records do not match the current candidate set")
+    digest = _string(root["digest"], "candidate lifecycle.digest")
+    expected_digest = _lifecycle_digest(review_id, candidate_digest, records_tuple)
+    if digest != expected_digest:
+        raise ConfigurationError("candidate lifecycle.digest does not match its content")
+    return CandidateLifecycleSet(review_id, candidate_digest, records_tuple, digest)
+
+
+def transition_candidate_lifecycle(
+    lifecycle: CandidateLifecycleSet,
+    *,
+    observation_id: str,
+    to_state: str,
+    evidence: LifecycleEvidence,
+) -> CandidateLifecycleSet:
+    """Apply one evidence-backed adjacent transition without granting authority."""
+    observation_id = _identifier(observation_id, "lifecycle observation id")
+    if to_state not in LIFECYCLE_STATES:
+        raise ConfigurationError("lifecycle transition target state is invalid")
+    evidence = _lifecycle_evidence(asdict(evidence), "lifecycle transition evidence")
+    records = []
+    found = False
+    for record in lifecycle.candidates:
+        if record.observation_id != observation_id:
+            records.append(record)
+            continue
+        found = True
+        if to_state not in LIFECYCLE_TRANSITIONS[record.state]:
+            raise ConfigurationError(
+                f"candidate {observation_id} cannot transition from {record.state} to {to_state}"
+            )
+        if evidence.kind not in LIFECYCLE_EVIDENCE_BY_STATE[to_state]:
+            raise ConfigurationError(
+                f"evidence kind {evidence.kind} cannot support transition to {to_state}"
+            )
+        records.append(
+            CandidateLifecycle(
+                observation_id=record.observation_id,
+                candidate_id=record.candidate_id,
+                state=to_state,
+                history=(*record.history, LifecycleEvent(record.state, to_state, evidence)),
+            )
+        )
+    if not found:
+        raise ConfigurationError(f"candidate observation id was not found: {observation_id}")
+    records_tuple = tuple(records)
+    return CandidateLifecycleSet(
+        review_id=lifecycle.review_id,
+        candidate_digest=lifecycle.candidate_digest,
+        candidates=records_tuple,
+        digest=_lifecycle_digest(
+            lifecycle.review_id,
+            lifecycle.candidate_digest,
+            records_tuple,
+        ),
+    )
+
+
+def write_candidate_lifecycle(
+    lifecycle: CandidateLifecycleSet,
+    output: Path,
+) -> Path:
+    """Write one explicit lifecycle record."""
+    atomic_write(output, json.dumps(lifecycle.as_dict(), indent=2, ensure_ascii=False) + "\n")
     return output

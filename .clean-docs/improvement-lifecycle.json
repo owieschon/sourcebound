@@ -1,0 +1,76 @@
+{
+  "schema": "clean-docs.improvement-candidate-lifecycle.v1",
+  "candidate_set": {
+    "review_id": "wizard-docs-context-mill",
+    "digest": "b0ac6e159dac74637df1c89e4303ba5830387a3c588aab117a528011cae32b5d"
+  },
+  "authority": {
+    "state": "assessment",
+    "gate_authority": false,
+    "change_authority": false,
+    "next_step": "Use linked evidence to record the candidate lifecycle; ordinary repository gates still decide whether a change is accepted."
+  },
+  "candidates": [
+    {
+      "observation_id": "accepted-writing-debt",
+      "candidate_id": "55a8491fffcf0ed969cfd481626684c7a73c8385a7804af3a052a4b455d3a26a",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "context-package-delivery",
+      "candidate_id": "9a6b784edfd7e8287e3634808c39594065b0e89383765b4b5121b0e95f4b886d",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "direct-coverage-gap",
+      "candidate_id": "34621882519847c982dbfa29bc81b2243f4eb942ceb5b1ac743e9c12ec01d216",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "first-party-source-breadth",
+      "candidate_id": "e43a36635f308b636096312741adfa68cc04bb1f271d57aa73244d81e79b849f",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "navigation-reachability",
+      "candidate_id": "fba09f0bc089e85f77236aa40b615d484e554727654e60ba974237967db1d2b0",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "novice-terminology-load",
+      "candidate_id": "975e7c6a41a4ca4295df4e37f7eb866ce610b4890eab42ea48614a5d1df46bdc",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "portable-context-package",
+      "candidate_id": "f0727414d89aa6fe507092a7d310189d560f1cb38538b9f91924995230d09861",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "production-shaped-adoption-examples",
+      "candidate_id": "0117bd3a322fe99ea1cacb6d2a7b98bb967c345148b123ddbcfa4ad5c011046f",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "published-package-evaluation",
+      "candidate_id": "ea7a679fb139dee100e8b64ceb6581e3f269942052743520a657a12f12b73881",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "release-reader-attestation",
+      "candidate_id": "9d3316ea761a234c5cd78461f1ac456ceba1961cb5ae7693ee27b9001c62f2b4",
+      "state": "proposed",
+      "history": []
+    }
+  ],
+  "digest": "996714db3408f2d00cb0b242599f6af4d18248e3cd79aa54fd3c28495b132aa9"
+}

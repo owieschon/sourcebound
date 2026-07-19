@@ -61,6 +61,37 @@ clean-docs review candidates \
 The check exits `1` when an observation changed without regenerating its candidate set.
 The repository CI runs this check after installing the current checkout.
 
+## Track candidate lifecycle
+
+Initialize one lifecycle record from the review. It binds every observation ID and candidate ID to
+the exact candidate-set digest, starts every record at `proposed`, and remains assessment-only:
+
+```bash
+clean-docs review lifecycle init --input .clean-docs/reviews/wizard-docs-context-mill.json --out .clean-docs/improvement-lifecycle.json --format text
+```
+
+Initialization refuses to replace an existing record. Use `--force` only when intentionally
+discarding its history.
+
+Advance one candidate only through adjacent states: `proposed` → `reproduced` → `implemented` →
+`verified`, or `declined` from any non-terminal state. Every transition needs a typed reference.
+To mark a candidate reproduced or verified, point to a `test-receipt`. To mark one implemented,
+point to a commit or issue. To decline one, point to an issue or decision:
+
+```bash
+clean-docs review lifecycle transition --input .clean-docs/reviews/wizard-docs-context-mill.json --state .clean-docs/improvement-lifecycle.json --observation accepted-writing-debt --to reproduced --evidence-kind test-receipt --reference tests/test_improvements.py --detail "The fixture reproduces the accepted finding." --format text
+```
+
+Check the lifecycle before relying on it. The check fails if the review changed, a candidate ID no
+longer matches, or any history skips a state:
+
+```bash
+clean-docs review lifecycle check --input .clean-docs/reviews/wizard-docs-context-mill.json --state .clean-docs/improvement-lifecycle.json --format text
+```
+
+The lifecycle records references; it does not validate an external issue, accept a test, or change
+an ordinary gate result.
+
 ## Move from candidate to verified change
 
 Use this sequence for each candidate:
@@ -71,9 +102,10 @@ Use this sequence for each candidate:
 4. Run the ordinary clean-docs and repository gates.
 5. Record the verified change in the repository's issue or pull-request system.
 
-The candidate compiler never performs these transitions. Aggregate operational behavior belongs
-in the separately governed [feedback and behavior-signal path](BEHAVIOR_SIGNALS.md); a qualitative
-review must not masquerade as a metric or establish causality.
+The lifecycle compiler records these transitions but never performs the linked work. Aggregate
+operational behavior belongs in the separately governed [feedback and behavior-signal
+path](BEHAVIOR_SIGNALS.md); a qualitative review must not masquerade as a metric or establish
+causality.
 
 Use the [evaluation guide](EVALUATION.md) when a proposed test needs a recorded human or agent task,
 and the [CLI reference](CLI.md) for the command's exact write boundary.

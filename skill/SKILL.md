@@ -64,3 +64,14 @@ clean-docs review candidates \
 
 Do not implement a candidate until its observation is reproduced and its proposed test has a
 fixture and assertion. Candidate output has neither change nor gate authority.
+
+Initialize and preserve its assessment-only lifecycle before acting on it:
+
+```bash
+clean-docs review lifecycle init \
+  --input .clean-docs/reviews/REVIEW.json \
+  --out .clean-docs/improvement-lifecycle.json
+```
+
+Advance only adjacent states with a typed issue, commit, decision, or test-receipt reference. The
+lifecycle links evidence; it does not accept the change or alter an ordinary gate.

@@ -37,7 +37,14 @@ from clean_docs.feedback import (
 )
 from clean_docs.impact import build_impact_plan, render_impact_plan
 from clean_docs.improvements import (
+    LIFECYCLE_EVIDENCE_KINDS,
+    LIFECYCLE_STATES,
+    LifecycleEvidence,
+    initialize_candidate_lifecycle,
+    load_candidate_lifecycle,
     load_review_candidates,
+    transition_candidate_lifecycle,
+    write_candidate_lifecycle,
     write_improvement_candidates,
 )
 from clean_docs.inventory import scan_inventory
@@ -158,6 +165,51 @@ def _parser() -> argparse.ArgumentParser:
         choices=("text", "json"),
         default="json",
     )
+    review_lifecycle = review_sub.add_parser(
+        "lifecycle",
+        help=_command_help("review lifecycle"),
+    )
+    review_lifecycle_sub = review_lifecycle.add_subparsers(
+        dest="review_lifecycle_command",
+        required=True,
+    )
+    lifecycle_init = review_lifecycle_sub.add_parser(
+        "init",
+        help=_command_help("review lifecycle init"),
+    )
+    lifecycle_init.add_argument("--input", type=Path, required=True)
+    lifecycle_init.add_argument("--out", type=Path, required=True)
+    lifecycle_init.add_argument(
+        "--force",
+        action="store_true",
+        help="replace an existing lifecycle record",
+    )
+    lifecycle_init.add_argument("--format", choices=("text", "json"), default="json")
+    lifecycle_transition = review_lifecycle_sub.add_parser(
+        "transition",
+        help=_command_help("review lifecycle transition"),
+    )
+    lifecycle_transition.add_argument("--input", type=Path, required=True)
+    lifecycle_transition.add_argument("--state", type=Path, required=True)
+    lifecycle_transition.add_argument("--observation", required=True)
+    lifecycle_transition.add_argument("--to", choices=tuple(sorted(LIFECYCLE_STATES)), required=True)
+    lifecycle_transition.add_argument(
+        "--evidence-kind",
+        choices=tuple(sorted(LIFECYCLE_EVIDENCE_KINDS)),
+        required=True,
+    )
+    lifecycle_transition.add_argument("--reference", required=True)
+    lifecycle_transition.add_argument("--detail", required=True)
+    lifecycle_transition.add_argument(
+        "--format", choices=("text", "json"), default="json"
+    )
+    lifecycle_check = review_lifecycle_sub.add_parser(
+        "check",
+        help=_command_help("review lifecycle check"),
+    )
+    lifecycle_check.add_argument("--input", type=Path, required=True)
+    lifecycle_check.add_argument("--state", type=Path, required=True)
+    lifecycle_check.add_argument("--format", choices=("text", "json"), default="json")
     init_parser = sub.add_parser("init", help=_command_help("init"))
     model_mode = init_parser.add_mutually_exclusive_group()
     model_mode.add_argument(
@@ -465,51 +517,111 @@ def _main(argv: list[str] | None = None) -> int:
         try:
             source = args.input if args.input.is_absolute() else root / args.input
             candidates = load_review_candidates(source)
-            rendered = json.dumps(
-                candidates.as_dict(),
-                indent=2,
-                ensure_ascii=False,
-            ) + "\n"
-            if args.out is None:
-                print(rendered, end="")
-                return 0
-            output = args.out if args.out.is_absolute() else root / args.out
-            try:
-                relative_output = output.resolve().relative_to(root)
-            except ValueError as exc:
-                raise ConfigurationError(
-                    "review candidates --out must stay inside the repository"
-                ) from exc
-            if args.check:
+            if args.review_command == "candidates":
+                rendered = json.dumps(
+                    candidates.as_dict(),
+                    indent=2,
+                    ensure_ascii=False,
+                ) + "\n"
+                if args.out is None:
+                    print(rendered, end="")
+                    return 0
+                output = args.out if args.out.is_absolute() else root / args.out
                 try:
-                    observed = output.read_text(encoding="utf-8")
-                except FileNotFoundError:
-                    observed = ""
-                except OSError as exc:
+                    relative_output = output.resolve().relative_to(root)
+                except ValueError as exc:
                     raise ConfigurationError(
-                        f"cannot read improvement candidates {output}: {exc}"
+                        "review candidates --out must stay inside the repository"
                     ) from exc
-                current = observed == rendered
+                if args.check:
+                    try:
+                        observed = output.read_text(encoding="utf-8")
+                    except FileNotFoundError:
+                        observed = ""
+                    except OSError as exc:
+                        raise ConfigurationError(
+                            f"cannot read improvement candidates {output}: {exc}"
+                        ) from exc
+                    current = observed == rendered
+                    if args.format == "json":
+                        print(json.dumps({
+                            "schema": "clean-docs.improvement-candidate-check.v1",
+                            "ok": current,
+                            "output": relative_output.as_posix(),
+                            "candidate_digest": candidates.digest,
+                        }, indent=2))
+                    else:
+                        print(
+                            f"[{'current' if current else 'drift'}] "
+                            f"{relative_output.as_posix()}"
+                        )
+                    return 0 if current else 1
+                write_improvement_candidates(candidates, output)
                 if args.format == "json":
-                    print(json.dumps({
-                        "schema": "clean-docs.improvement-candidate-check.v1",
-                        "ok": current,
-                        "output": relative_output.as_posix(),
-                        "candidate_digest": candidates.digest,
-                    }, indent=2))
+                    print(rendered, end="")
                 else:
                     print(
-                        f"[{'current' if current else 'drift'}] "
-                        f"{relative_output.as_posix()}"
+                        f"[written] {relative_output.as_posix()}: "
+                        f"{len(candidates.candidates)} candidate(s)"
                     )
-                return 0 if current else 1
-            write_improvement_candidates(candidates, output)
+                return 0
+
+            state_argument = args.out if args.review_lifecycle_command == "init" else args.state
+            state_path = (
+                state_argument if state_argument.is_absolute() else root / state_argument
+            )
+            try:
+                relative_state = state_path.resolve().relative_to(root)
+            except ValueError as exc:
+                raise ConfigurationError(
+                    "review lifecycle state must stay inside the repository"
+                ) from exc
+            if args.review_lifecycle_command == "init":
+                if state_path.exists() and not args.force:
+                    raise ConfigurationError(
+                        "review lifecycle init refuses to replace an existing state; use --force"
+                    )
+                lifecycle = initialize_candidate_lifecycle(candidates)
+                write_candidate_lifecycle(lifecycle, state_path)
+                if args.format == "json":
+                    print(json.dumps(lifecycle.as_dict(), indent=2))
+                else:
+                    print(
+                        f"[written] {relative_state.as_posix()}: "
+                        f"{len(lifecycle.candidates)} candidate(s)"
+                    )
+                return 0
+            if args.review_lifecycle_command == "check":
+                lifecycle = load_candidate_lifecycle(state_path, candidates)
+                if args.format == "json":
+                    print(json.dumps({
+                        "schema": "clean-docs.improvement-candidate-lifecycle-check.v1",
+                        "ok": True,
+                        "state": relative_state.as_posix(),
+                        "candidate_digest": lifecycle.candidate_digest,
+                        "lifecycle_digest": lifecycle.digest,
+                    }, indent=2))
+                else:
+                    print(f"[current] {relative_state.as_posix()}")
+                return 0
+            lifecycle = load_candidate_lifecycle(state_path, candidates)
+            lifecycle = transition_candidate_lifecycle(
+                lifecycle,
+                observation_id=args.observation,
+                to_state=args.to,
+                evidence=LifecycleEvidence(
+                    kind=args.evidence_kind,
+                    reference=args.reference,
+                    detail=args.detail,
+                ),
+            )
+            write_candidate_lifecycle(lifecycle, state_path)
             if args.format == "json":
-                print(rendered, end="")
+                print(json.dumps(lifecycle.as_dict(), indent=2))
             else:
                 print(
-                    f"[written] {relative_output.as_posix()}: "
-                    f"{len(candidates.candidates)} candidate(s)"
+                    f"[transitioned] {args.observation}: {args.to} "
+                    f"in {relative_state.as_posix()}"
                 )
             return 0
         except CleanDocsError as exc:

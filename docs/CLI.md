@@ -26,6 +26,10 @@ The table is generated from the command registry used by the parser:
 | context compile | Compile a bounded source-addressed context bundle | no | clean-docs context compile --request context-request.json |
 | review | Turn review observations into testable improvement candidates | with --out | clean-docs review --help |
 | review candidates | Compile documentation and product test candidates from one review | with --out | clean-docs review candidates --input review-observations.json |
+| review lifecycle | Track assessment-only candidate status with typed evidence | with init or transition | clean-docs review lifecycle --help |
+| review lifecycle init | Initialize a lifecycle record for one candidate set | yes | clean-docs review lifecycle init --input review.json --out lifecycle.json |
+| review lifecycle transition | Apply one evidence-backed candidate transition | yes | clean-docs review lifecycle transition --help |
+| review lifecycle check | Check a lifecycle record against its candidate set | no | clean-docs review lifecycle check --input review.json --state lifecycle.json |
 | init | Write a source-bound documentation baseline | yes | clean-docs init --no-model |
 | explain | Explain a finding or coverage state | no | clean-docs explain purpose-contract --format json |
 | doctor | Check repository and integration readiness | with --bundle | clean-docs doctor --bundle doctor.json |
