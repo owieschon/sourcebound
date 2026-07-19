@@ -40,6 +40,7 @@ from clean_docs.improvements import (
     LIFECYCLE_EVIDENCE_KINDS,
     LIFECYCLE_STATES,
     LifecycleEvidence,
+    check_candidate_lifecycle,
     initialize_candidate_lifecycle,
     load_candidate_lifecycle,
     load_review_candidates,
@@ -62,7 +63,7 @@ from clean_docs.release import (
     validate_release_narrative,
 )
 from clean_docs.regions import atomic_write
-from clean_docs.review_ledger import validate_review_event_ledger
+from clean_docs.review_ledger import update_review_event_ledger, validate_review_event_ledger
 from clean_docs.residue import LOCAL_CONFIG_NAME, load_local_residue_rules
 from clean_docs.sensitivity import (
     decode_json_object,
@@ -649,20 +650,25 @@ def _main(argv: list[str] | None = None) -> int:
                 return 0
             if args.review_lifecycle_command == "check":
                 lifecycle = load_candidate_lifecycle(state_path, candidates)
+                unknown = check_candidate_lifecycle(lifecycle, root=root)
                 if args.format == "json":
                     print(json.dumps({
                         "schema": "clean-docs.improvement-candidate-lifecycle-check.v1",
-                        "ok": True,
+                        "ok": not unknown,
+                        "status": "current" if not unknown else "unknown",
                         "state": relative_state.as_posix(),
                         "candidate_digest": lifecycle.candidate_digest,
                         "lifecycle_digest": lifecycle.digest,
+                        "unknown_evidence": list(unknown),
                     }, indent=2))
                 else:
-                    print(f"[current] {relative_state.as_posix()}")
-                return 0
+                    status = "current" if not unknown else "unknown"
+                    print(f"[{status}] {relative_state.as_posix()}")
+                return 0 if not unknown else 1
             lifecycle = load_candidate_lifecycle(state_path, candidates)
             lifecycle = transition_candidate_lifecycle(
                 lifecycle,
+                root=root,
                 observation_id=args.observation,
                 to_state=args.to,
                 evidence=LifecycleEvidence(
@@ -672,14 +678,13 @@ def _main(argv: list[str] | None = None) -> int:
                 ),
             )
             write_candidate_lifecycle(lifecycle, state_path)
+            unknown = check_candidate_lifecycle(lifecycle, root=root)
             if args.format == "json":
                 print(json.dumps(lifecycle.as_dict(), indent=2))
             else:
-                print(
-                    f"[transitioned] {args.observation}: {args.to} "
-                    f"in {relative_state.as_posix()}"
-                )
-            return 0
+                status = "transitioned" if not unknown else "unknown"
+                print(f"[{status}] {args.observation}: {args.to} in {relative_state.as_posix()}")
+            return 0 if not unknown else 1
         except CleanDocsError as exc:
             print(f"clean-docs: {exc}", file=sys.stderr)
             return exc.exit_code

@@ -10,12 +10,13 @@ authorized change.
 
 **[Compile the repository's recorded review](#compile-candidates)**.
 
-The output indexes proposed work: every candidate has a content-derived ID, evidence fields, two
-proposed tests, and explicit `gate_authority: false` and `change_authority: false` fields.
-Compilation validates shape and immutable receipt contracts and, when run in a repository, resolves
-repository evidence at the pinned review commit. `--check` validates projection freshness. Neither
-mode validates external evidence, judges whether a proposed test is adequate, or proves that the
-observation set is complete.
+The output lists proposed work: every candidate has a stable content-derived ID, cited material, two
+proposed tests, and explicit `gate_authority: false` and `change_authority: false` fields. Its ID
+joins the review, observed problem, summary, citation coordinates, and proposed tests. The
+candidate-set digest separately records the cited material's current state, so resolving a receipt
+cannot retarget the problem. Compilation validates shape and immutable receipt contracts and, when
+run in a repository, resolves repository citations at the pinned review commit. It does not validate
+external evidence, judge a proposed test, or prove that the observation set is complete.
 
 ## Review observations
 
@@ -62,8 +63,8 @@ or product track, unsupported test kinds, duplicate observation IDs, and output 
 repository.
 
 When the command runs in a repository, it opens each cited file at the pinned review commit and
-searches the locator. The output marks a repository citation `grounded` or `unknown`; receipt
-evidence reports whether its immutable bytes are available and match the recorded contract.
+searches the locator. The output marks the citation `grounded` or `unknown`; remote sources and
+command receipts remain `unverified` until immutable records bind them.
 
 Check that the committed candidate set still matches its observations:
 
@@ -85,39 +86,10 @@ v2 record names the v1 head it replaces; every later record keeps the base ledge
 
 ## Track candidate lifecycle
 
-Initialize one lifecycle record from the review. It binds every observation ID and candidate ID to
-the exact candidate-set digest, starts every record at `proposed`, and remains assessment-only:
-
-```bash
-clean-docs review lifecycle init --input .clean-docs/reviews/repository-review.json --out .clean-docs/improvement-lifecycle.json --format text
-```
-
-Initialization refuses to replace an existing record. Use `--force` only when intentionally
-discarding its history.
-
-This lifecycle protects one frozen candidate set. It cannot reconcile a changed set or prove that
-all review events were recorded, so the independent issue or review ledger remains the denominator.
-`--force` resets history rather than migrating it.
-
-Advance one candidate only through adjacent states: `proposed` → `reproduced` → `implemented` →
-`verified`, or `declined` from any non-terminal state. Every transition needs a typed reference.
-To mark a candidate reproduced or verified, point to a `test-receipt`. To mark one implemented,
-point to a commit or issue. To decline one, point to an issue or decision:
-
-```bash
-clean-docs review lifecycle transition --input .clean-docs/reviews/repository-review.json --state .clean-docs/improvement-lifecycle.json --observation accepted-writing-debt --to reproduced --evidence-kind test-receipt --reference tests/test_improvements.py --detail "The fixture reproduces the accepted finding." --format text
-```
-
-Check the lifecycle before relying on it. The check fails if the review changed, a candidate ID no
-longer matches, or any history skips a state:
-
-```bash
-clean-docs review lifecycle check --input .clean-docs/reviews/repository-review.json --state .clean-docs/improvement-lifecycle.json --format text
-```
-
-The lifecycle validates state-compatible evidence kinds and records reference strings. It does not
-resolve a commit, issue, decision, or test receipt, accept the linked work, or change an ordinary
-gate result.
+After compiling candidates, use the [lifecycle-evidence reference](LIFECYCLE_EVIDENCE.md) to record
+local proof for each attempted state change. It explains the permitted states, migration boundary,
+and failure behavior. The lifecycle remains assessment-only; the review ledger remains the
+denominator.
 
 ## Move from candidate to verified change
 

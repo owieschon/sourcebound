@@ -16,7 +16,7 @@
   },
   "candidates": [
     {
-      "id": "342a476a6b356e7aea0ba0142abed4b6541f2f86e17780bf68f2fc0f96b9b35f",
+      "id": "2e646e9cf01844250cd5a3d66a617034127d251551634538186d0ea5f500076e",
       "observation_id": "accepted-writing-debt",
       "summary": "Nine registered writing findings remain accepted in the documentation baseline.",
       "evidence": [
@@ -516,7 +516,7 @@
       "change_authority": false
     },
     {
-      "id": "f454212db98a015c049639d5318c752e340ece5ec38bd0f8cbde293d6eccfe8a",
+      "id": "38a649a41670524e61ba64b6df7e2fa2bf2cba4dcefc9d95c0f6682d319490af",
       "observation_id": "direct-coverage-gap",
       "summary": "Repository-wide catalog coverage is complete while direct source coverage remains incomplete.",
       "evidence": [
@@ -1281,7 +1281,7 @@
       "change_authority": false
     },
     {
-      "id": "453610965cf6e3684a7f8cdc723c8d5f6e3f9c3728dda80f4265585de4e1751e",
+      "id": "e0f51c8c99245778b3d80e0943d15efb9d35d0eb6f476d721d1989a2fb974c94",
       "observation_id": "release-reader-attestation",
       "summary": "The current release is not attested by a fresh independent reader trial.",
       "evidence": [
@@ -1742,5 +1742,5 @@
       "change_authority": false
     }
   ],
-  "digest": "435e266842829c32c74f7843f4d2535b448f42b5383762f396626a2ab159d575"
+  "digest": "df005508aef26269d512931c4fb1974820903b636195d11d66cb2020af037c16"
 }

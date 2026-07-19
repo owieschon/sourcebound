@@ -2,8 +2,8 @@
 
 <!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
-Use this page when you want operational outcomes to inform product improvements without giving
-telemetry control over documentation gates, project purpose, or policy.
+Operators can use this page to turn run outcomes into product improvements without giving telemetry
+control over documentation gates, project purpose, or policy.
 <!-- clean-docs:end purpose -->
 
 **[Preview the exact envelope bytes before enabling delivery](#enable-and-inspect-feedback)**.

@@ -2,9 +2,9 @@
 
 <!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
-Use this page when aggregate run outcomes suggest a product defect or unsupported surface and an
-external controller needs to turn that observation into a verified change without taking control
-of purpose, policy, or gates.
+Aggregate run outcomes can expose a product defect or unsupported surface. This page shows an
+external controller how to turn that signal into a verified change without taking control of
+purpose, policy, or gates.
 <!-- clean-docs:end purpose -->
 
 **[Prepare and validate one aggregate signal](#prepare-a-signal)**.

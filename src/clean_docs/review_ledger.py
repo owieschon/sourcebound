@@ -11,6 +11,7 @@ from typing import Any
 
 from clean_docs.errors import ConfigurationError, PolicyError
 from clean_docs.improvements import ImprovementCandidateSet
+from clean_docs.regions import atomic_write
 
 
 REVIEW_EVENT_LEDGER_SCHEMA = "clean-docs.review-event-ledger.v2"
@@ -28,6 +29,7 @@ class ReviewEvent:
     successor: str | None
     previous_digest: str | None
     digest: str
+    replaces_candidate_id: str | None = None
 
 
 def _object(value: Any, where: str) -> dict[str, Any]:
@@ -56,19 +58,20 @@ def _digest(payload: dict[str, Any]) -> str:
 
 
 def _event_digest(event: ReviewEvent) -> str:
-    return _digest(
-        {
-            "id": event.id,
-            "observation_id": event.observation_id,
-            "disposition": event.disposition,
-            "candidate_id": event.candidate_id,
-            "successor": event.successor,
-            "previous_digest": event.previous_digest,
-        }
-    )
+    payload: dict[str, Any] = {
+        "id": event.id,
+        "observation_id": event.observation_id,
+        "disposition": event.disposition,
+        "candidate_id": event.candidate_id,
+        "successor": event.successor,
+        "previous_digest": event.previous_digest,
+    }
+    if event.replaces_candidate_id is not None:
+        payload["replaces_candidate_id"] = event.replaces_candidate_id
+    return _digest(payload)
 
 
-def _event(value: Any, index: int) -> ReviewEvent:
+def _event(value: Any, index: int, *, schema: str) -> ReviewEvent:
     where = f"review event ledger.events[{index}]"
     raw = _object(value, where)
     expected = {
@@ -80,7 +83,10 @@ def _event(value: Any, index: int) -> ReviewEvent:
         "previous_digest",
         "digest",
     }
-    if set(raw) != expected:
+    revision_keys = expected | {"replaces_candidate_id"}
+    if set(raw) != expected and (
+        schema == REVIEW_EVENT_LEDGER_SCHEMA_V1 or set(raw) != revision_keys
+    ):
         raise ConfigurationError(f"{where} must contain exactly: {', '.join(sorted(expected))}")
     disposition = _string(raw["disposition"], f"{where}.disposition")
     if disposition not in {"candidate", "superseded", "merged"}:
@@ -97,6 +103,15 @@ def _event(value: Any, index: int) -> ReviewEvent:
         if candidate_id is not None:
             raise ConfigurationError(f"{where}.candidate_id must be null for {disposition}")
         successor = _identifier(successor, f"{where}.successor")
+    replaces_candidate_id = raw.get("replaces_candidate_id")
+    if replaces_candidate_id is not None:
+        if disposition != "candidate":
+            raise ConfigurationError(f"{where}.replaces_candidate_id requires candidate disposition")
+        replaces_candidate_id = _string(replaces_candidate_id, f"{where}.replaces_candidate_id")
+        if not _SHA256.fullmatch(replaces_candidate_id):
+            raise ConfigurationError(f"{where}.replaces_candidate_id must be a SHA-256")
+        if replaces_candidate_id == candidate_id:
+            raise ConfigurationError(f"{where}.replaces_candidate_id must differ from candidate_id")
     previous_digest = raw["previous_digest"]
     if previous_digest is not None:
         previous_digest = _string(previous_digest, f"{where}.previous_digest")
@@ -110,6 +125,7 @@ def _event(value: Any, index: int) -> ReviewEvent:
         successor=successor,
         previous_digest=previous_digest,
         digest=_string(raw["digest"], f"{where}.digest"),
+        replaces_candidate_id=replaces_candidate_id,
     )
     if event.digest != _event_digest(event):
         raise ConfigurationError(f"{where}.digest does not match its content")
@@ -153,9 +169,14 @@ def _load_review_event_ledger(path: Path) -> ReviewEventLedger:
     review_id = _identifier(root["review_id"], "review event ledger.review_id")
     if not isinstance(root["events"], list) or not root["events"]:
         raise ConfigurationError("review event ledger.events must be a non-empty list")
-    events = tuple(_event(item, index) for index, item in enumerate(root["events"]))
+    events = tuple(_event(item, index, schema=schema) for index, item in enumerate(root["events"]))
+    return root, schema, events
+
+
+def _validated_events(root: dict[str, Any], schema: str, events: tuple[ReviewEvent, ...]) -> dict[str, ReviewEvent]:
+    """Validate append-only event edges and return the current event for each observation."""
     seen_ids: set[str] = set()
-    by_observation: dict[str, ReviewEvent] = {}
+    current: dict[str, ReviewEvent] = {}
     previous: str | None = None
     for event in events:
         if event.id in seen_ids:
@@ -164,9 +185,20 @@ def _load_review_event_ledger(path: Path) -> ReviewEventLedger:
         if event.previous_digest != previous:
             raise ConfigurationError("review event ledger chain is not append-only")
         previous = event.digest
-        if event.observation_id in by_observation:
-            raise ConfigurationError(f"duplicate review event observation id: {event.observation_id}")
-        by_observation[event.observation_id] = event
+        prior = current.get(event.observation_id)
+        if prior is not None:
+            if (
+                schema != REVIEW_EVENT_LEDGER_SCHEMA
+                or event.disposition != "candidate"
+                or event.replaces_candidate_id != prior.candidate_id
+                or prior.disposition != "candidate"
+            ):
+                raise ConfigurationError(f"duplicate review event observation id: {event.observation_id}")
+        elif event.replaces_candidate_id is not None:
+            raise ConfigurationError(
+                f"review event {event.id} replaces a candidate without a prior observation"
+            )
+        current[event.observation_id] = event
     if root["head_digest"] != previous:
         raise ConfigurationError("review event ledger.head_digest does not match the event chain")
     assert previous is not None
@@ -230,3 +262,69 @@ def validate_review_event_ledger(
             if successor is None or successor.disposition != "candidate":
                 raise PolicyError(f"review event {event.id} has no candidate successor")
     return events[-1].digest
+
+
+def update_review_event_ledger(path: Path, candidates: ImprovementCandidateSet) -> bool:
+    """Append explicit candidate revisions without rewriting historical ledger events."""
+    root, schema, events = _load_review_event_ledger(path)
+    if _identifier(root["review_id"], "review event ledger.review_id") != candidates.review_id:
+        raise PolicyError("review event ledger belongs to another review")
+    current = _validated_events(root, schema, events)
+    candidate_ids = {candidate.observation_id: candidate.id for candidate in candidates.candidates}
+    missing = sorted(set(candidate_ids) - set(current))
+    if missing:
+        raise PolicyError(f"review event ledger is missing observation: {missing[0]}")
+    removed = sorted(
+        observation_id
+        for observation_id, event in current.items()
+        if event.disposition == "candidate" and observation_id not in candidate_ids
+    )
+    if removed:
+        raise PolicyError(f"review candidate is silently removed from the review: {removed[0]}")
+    updated_events = list(root["events"])
+    previous = events[-1].digest
+    for observation_id in sorted(candidate_ids):
+        event = current[observation_id]
+        candidate_id = candidate_ids[observation_id]
+        if event.disposition != "candidate":
+            raise PolicyError(f"review event ledger retargets observation: {observation_id}")
+        if event.candidate_id == candidate_id:
+            continue
+        event_id = f"revision-{observation_id}-{candidate_id[:12]}"
+        if any(item["id"] == event_id for item in updated_events):
+            raise ConfigurationError(f"duplicate review event id: {event_id}")
+        revision = ReviewEvent(
+            id=event_id,
+            observation_id=observation_id,
+            disposition="candidate",
+            candidate_id=candidate_id,
+            successor=None,
+            previous_digest=previous,
+            replaces_candidate_id=event.candidate_id,
+            digest="",
+        )
+        revision = ReviewEvent(**{**revision.__dict__, "digest": _event_digest(revision)})
+        updated_events.append(
+            {
+                "id": revision.id,
+                "observation_id": revision.observation_id,
+                "disposition": revision.disposition,
+                "candidate_id": revision.candidate_id,
+                "successor": revision.successor,
+                "previous_digest": revision.previous_digest,
+                "replaces_candidate_id": revision.replaces_candidate_id,
+                "digest": revision.digest,
+            }
+        )
+        previous = revision.digest
+    if len(updated_events) == len(events):
+        return False
+    updated_root = {
+        "schema": REVIEW_EVENT_LEDGER_SCHEMA,
+        "review_id": root["review_id"],
+        "events": updated_events,
+        "head_digest": previous,
+    }
+    atomic_write(path, json.dumps(updated_root, indent=2, ensure_ascii=False) + "\n")
+    validate_review_event_ledger(path, candidates)
+    return True

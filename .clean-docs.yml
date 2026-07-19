@@ -205,6 +205,8 @@ projections:
       - docs/EXTENSIONS.md
       - docs/INSTALL.md
       - docs/IMPROVEMENTS.md
+      - docs/LIFECYCLE_EVIDENCE.md
+      - docs/REVIEW_LEDGER.md
       - docs/RELEASES.md
       - docs/REFERENCE.md
       - docs/SECURITY_MODEL.md

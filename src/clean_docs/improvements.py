@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import subprocess
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -16,7 +17,11 @@ from clean_docs.snapshot import RepositorySnapshot
 
 OBSERVATIONS_SCHEMA = "clean-docs.review-observations.v1"
 CANDIDATES_SCHEMA = "clean-docs.improvement-candidates.v1"
-LIFECYCLE_SCHEMA = "clean-docs.improvement-candidate-lifecycle.v1"
+LIFECYCLE_SCHEMA_V1 = "clean-docs.improvement-candidate-lifecycle.v1"
+LIFECYCLE_SCHEMA = "clean-docs.improvement-candidate-lifecycle.v2"
+LIFECYCLE_PROVIDER_SCHEMA = "clean-docs.lifecycle-evidence-providers.v1"
+LIFECYCLE_PROVIDER_PATH = Path(".clean-docs/lifecycle-evidence-providers.json")
+LIFECYCLE_TEST_RECEIPT_SCHEMA = "clean-docs.lifecycle-test-receipt.v1"
 TEST_KINDS = {
     "command",
     "fixture",
@@ -128,10 +133,25 @@ class LifecycleEvidence:
 
 
 @dataclass(frozen=True)
+class LifecycleResolution:
+    state: str
+    reason: str
+    evidence: dict[str, object]
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "state": self.state,
+            "reason": self.reason,
+            "evidence": self.evidence,
+        }
+
+
+@dataclass(frozen=True)
 class LifecycleEvent:
     from_state: str
     to_state: str
     evidence: LifecycleEvidence
+    resolution: LifecycleResolution | None
 
 
 @dataclass(frozen=True)
@@ -144,18 +164,22 @@ class CandidateLifecycle:
 
 @dataclass(frozen=True)
 class CandidateLifecycleSet:
+    schema: str
     review_id: str
+    repository_commit: str
     candidate_digest: str
     candidates: tuple[CandidateLifecycle, ...]
     digest: str
 
     def as_dict(self) -> dict[str, object]:
         payload = _lifecycle_payload(
+            self.schema,
             self.review_id,
+            self.repository_commit,
             self.candidate_digest,
             self.candidates,
         )
-        return {"schema": LIFECYCLE_SCHEMA, **payload, "digest": self.digest}
+        return {"schema": self.schema, **payload, "digest": self.digest}
 
 
 def _mapping(value: Any, where: str) -> dict[str, Any]:
@@ -610,15 +634,22 @@ def _lifecycle_authority() -> dict[str, object]:
 
 
 def _lifecycle_payload(
+    schema: str,
     review_id: str,
+    repository_commit: str,
     candidate_digest: str,
     candidates: tuple[CandidateLifecycle, ...],
 ) -> dict[str, object]:
+    if schema not in {LIFECYCLE_SCHEMA_V1, LIFECYCLE_SCHEMA}:
+        raise ConfigurationError(f"unsupported lifecycle schema: {schema}")
+    candidate_set: dict[str, object] = {
+        "review_id": review_id,
+        "digest": candidate_digest,
+    }
+    if schema == LIFECYCLE_SCHEMA:
+        candidate_set["repository_commit"] = repository_commit
     return {
-        "candidate_set": {
-            "review_id": review_id,
-            "digest": candidate_digest,
-        },
+        "candidate_set": candidate_set,
         "authority": _lifecycle_authority(),
         "candidates": [
             {
@@ -630,6 +661,11 @@ def _lifecycle_payload(
                         "from": event.from_state,
                         "to": event.to_state,
                         "evidence": asdict(event.evidence),
+                        **(
+                            {"resolution": event.resolution.as_dict()}
+                            if schema == LIFECYCLE_SCHEMA and event.resolution is not None
+                            else {}
+                        ),
                     }
                     for event in candidate.history
                 ],
@@ -640,11 +676,21 @@ def _lifecycle_payload(
 
 
 def _lifecycle_digest(
+    schema: str,
     review_id: str,
+    repository_commit: str,
     candidate_digest: str,
     candidates: tuple[CandidateLifecycle, ...],
 ) -> str:
-    return _digest(_lifecycle_payload(review_id, candidate_digest, candidates))
+    return _digest(
+        _lifecycle_payload(
+            schema,
+            review_id,
+            repository_commit,
+            candidate_digest,
+            candidates,
+        )
+    )
 
 
 def _lifecycle_evidence(value: Any, where: str) -> LifecycleEvidence:
@@ -663,9 +709,26 @@ def _lifecycle_evidence(value: Any, where: str) -> LifecycleEvidence:
     )
 
 
-def _lifecycle_event(value: Any, where: str) -> LifecycleEvent:
+def _lifecycle_resolution(value: Any, where: str) -> LifecycleResolution:
     raw = _mapping(value, where)
-    _exact_keys(raw, {"from", "to", "evidence"}, where)
+    _exact_keys(raw, {"state", "reason", "evidence"}, where)
+    state = _string(raw["state"], f"{where}.state")
+    if state not in {"grounded", "unknown"}:
+        raise ConfigurationError(f"{where}.state must be grounded or unknown")
+    evidence = _mapping(raw["evidence"], f"{where}.evidence")
+    return LifecycleResolution(
+        state=state,
+        reason=_string(raw["reason"], f"{where}.reason"),
+        evidence=dict(evidence),
+    )
+
+
+def _lifecycle_event(value: Any, where: str, *, schema: str) -> LifecycleEvent:
+    raw = _mapping(value, where)
+    expected = {"from", "to", "evidence"}
+    if schema == LIFECYCLE_SCHEMA:
+        expected.add("resolution")
+    _exact_keys(raw, expected, where)
     from_state = _string(raw["from"], f"{where}.from")
     to_state = _string(raw["to"], f"{where}.to")
     if from_state not in LIFECYCLE_STATES or to_state not in LIFECYCLE_STATES:
@@ -679,7 +742,169 @@ def _lifecycle_event(value: Any, where: str) -> LifecycleEvent:
         raise ConfigurationError(
             f"{where}.evidence.kind must support transition to {to_state}"
         )
-    return LifecycleEvent(from_state, to_state, evidence)
+    resolution = (
+        _lifecycle_resolution(raw["resolution"], f"{where}.resolution")
+        if schema == LIFECYCLE_SCHEMA
+        else None
+    )
+    return LifecycleEvent(from_state, to_state, evidence, resolution)
+
+
+def _unknown_resolution(reason: str, **evidence: object) -> LifecycleResolution:
+    return LifecycleResolution("unknown", reason, dict(evidence))
+
+
+def _contained_path(root: Path, reference: str) -> Path | None:
+    # Evidence paths are repository-relative POSIX references, independent of the host OS.
+    if "\\" in reference:
+        return None
+    candidate = Path(reference)
+    if candidate.is_absolute() or ".." in candidate.parts:
+        return None
+    try:
+        resolved = (root / candidate).resolve()
+        resolved.relative_to(root.resolve())
+    except ValueError:
+        return None
+    return resolved
+
+
+def _git_succeeds(root: Path, *args: str) -> bool:
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(root), *args],
+            text=True,
+            capture_output=True,
+            timeout=10,
+            check=False,
+        )
+    except OSError:
+        return False
+    return proc.returncode == 0
+
+
+def _provider_config(root: Path) -> tuple[dict[str, object], str] | None:
+    path = root / LIFECYCLE_PROVIDER_PATH
+    try:
+        raw_bytes = path.read_bytes()
+    except FileNotFoundError:
+        return None
+    except OSError:
+        return None
+    try:
+        raw = json.loads(raw_bytes)
+    except json.JSONDecodeError as exc:
+        raise ConfigurationError(f"cannot parse lifecycle provider config {path}: {exc}") from exc
+    config = _mapping(raw, "lifecycle evidence providers")
+    _exact_keys(config, {"schema", "providers"}, "lifecycle evidence providers")
+    if config["schema"] != LIFECYCLE_PROVIDER_SCHEMA:
+        raise ConfigurationError(
+            f"lifecycle evidence providers schema must be {LIFECYCLE_PROVIDER_SCHEMA}"
+        )
+    providers = _mapping(config["providers"], "lifecycle evidence providers.providers")
+    return providers, hashlib.sha256(raw_bytes).hexdigest()
+
+
+def _resolve_provider_evidence(
+    evidence: LifecycleEvidence,
+    *,
+    root: Path,
+) -> LifecycleResolution:
+    configured = _provider_config(root)
+    if configured is None:
+        return _unknown_resolution("provider-unconfigured", kind=evidence.kind)
+    providers, config_digest = configured
+    provider = providers.get(evidence.kind)
+    if provider is None:
+        return _unknown_resolution("provider-unconfigured", kind=evidence.kind)
+    raw_provider = _mapping(provider, f"lifecycle evidence provider {evidence.kind}")
+    _exact_keys(raw_provider, {"kind", "root"}, f"lifecycle evidence provider {evidence.kind}")
+    if raw_provider["kind"] != "local-file":
+        return _unknown_resolution("provider-unsupported", kind=evidence.kind)
+    provider_root = _contained_path(root, _string(raw_provider["root"], "lifecycle provider root"))
+    reference = _contained_path(provider_root, evidence.reference) if provider_root else None
+    if reference is None:
+        return _unknown_resolution("provider-reference-invalid", kind=evidence.kind)
+    try:
+        content = reference.read_bytes()
+    except OSError:
+        return _unknown_resolution("provider-reference-unavailable", kind=evidence.kind)
+    return LifecycleResolution(
+        "grounded",
+        "resolved",
+        {
+            "provider_config_sha256": config_digest,
+            "sha256": hashlib.sha256(content).hexdigest(),
+        },
+    )
+
+
+def _resolve_lifecycle_evidence(
+    evidence: LifecycleEvidence,
+    *,
+    root: Path,
+    repository_commit: str,
+) -> LifecycleResolution:
+    if not _git_succeeds(root, "cat-file", "-e", f"{repository_commit}^{{commit}}"):
+        return _unknown_resolution("review-commit-unavailable", commit=repository_commit)
+    if evidence.kind == "commit":
+        if not SHA1.fullmatch(evidence.reference):
+            return _unknown_resolution("commit-reference-invalid")
+        if not _git_succeeds(root, "cat-file", "-e", f"{evidence.reference}^{{commit}}"):
+            return _unknown_resolution("commit-unavailable", commit=evidence.reference)
+        if not _git_succeeds(
+            root,
+            "merge-base",
+            "--is-ancestor",
+            repository_commit,
+            evidence.reference,
+        ):
+            return _unknown_resolution("commit-wrong-repository", commit=evidence.reference)
+        return LifecycleResolution(
+            "grounded",
+            "resolved",
+            {"commit": evidence.reference, "review_commit": repository_commit},
+        )
+    if evidence.kind == "test-receipt":
+        receipt_path = _contained_path(root, evidence.reference)
+        if receipt_path is None:
+            return _unknown_resolution("receipt-reference-invalid")
+        try:
+            receipt_bytes = receipt_path.read_bytes()
+        except OSError:
+            return _unknown_resolution("receipt-unavailable", reference=evidence.reference)
+        try:
+            receipt = _mapping(json.loads(receipt_bytes), "lifecycle test receipt")
+        except (ConfigurationError, json.JSONDecodeError):
+            return _unknown_resolution("receipt-schema-invalid")
+        required = {"schema", "repository_commit", "producer_version", "command", "ok"}
+        if not required <= set(receipt):
+            return _unknown_resolution("receipt-schema-invalid")
+        if receipt["schema"] != LIFECYCLE_TEST_RECEIPT_SCHEMA:
+            return _unknown_resolution("receipt-schema-invalid")
+        if receipt["repository_commit"] != repository_commit:
+            return _unknown_resolution("receipt-wrong-repository")
+        if not isinstance(receipt["producer_version"], str) or not receipt["producer_version"].strip():
+            return _unknown_resolution("receipt-schema-invalid")
+        command = receipt["command"]
+        if not isinstance(command, list) or not command or not all(
+            isinstance(item, str) and item for item in command
+        ):
+            return _unknown_resolution("receipt-schema-invalid")
+        if receipt["ok"] is not True:
+            return _unknown_resolution("receipt-not-passing")
+        return LifecycleResolution(
+            "grounded",
+            "resolved",
+            {
+                "sha256": hashlib.sha256(receipt_bytes).hexdigest(),
+                "schema": LIFECYCLE_TEST_RECEIPT_SCHEMA,
+                "repository_commit": repository_commit,
+                "producer_version": receipt["producer_version"].strip(),
+                "command": list(command),
+            },
+        )
+    return _resolve_provider_evidence(evidence, root=root)
 
 
 def initialize_candidate_lifecycle(
@@ -696,10 +921,18 @@ def initialize_candidate_lifecycle(
         for candidate in candidates.candidates
     )
     return CandidateLifecycleSet(
+        schema=LIFECYCLE_SCHEMA,
         review_id=candidates.review_id,
+        repository_commit=candidates.repository_commit,
         candidate_digest=candidates.digest,
         candidates=records,
-        digest=_lifecycle_digest(candidates.review_id, candidates.digest, records),
+        digest=_lifecycle_digest(
+            LIFECYCLE_SCHEMA,
+            candidates.review_id,
+            candidates.repository_commit,
+            candidates.digest,
+            records,
+        ),
     )
 
 
@@ -718,16 +951,31 @@ def load_candidate_lifecycle(
         {"schema", "candidate_set", "authority", "candidates", "digest"},
         "candidate lifecycle",
     )
-    if root["schema"] != LIFECYCLE_SCHEMA:
-        raise ConfigurationError(f"candidate lifecycle schema must be {LIFECYCLE_SCHEMA}")
+    schema = _string(root["schema"], "candidate lifecycle.schema")
+    if schema not in {LIFECYCLE_SCHEMA_V1, LIFECYCLE_SCHEMA}:
+        raise ConfigurationError(
+            f"candidate lifecycle schema must be {LIFECYCLE_SCHEMA_V1} or {LIFECYCLE_SCHEMA}"
+        )
     candidate_set = _mapping(root["candidate_set"], "candidate lifecycle.candidate_set")
-    _exact_keys(candidate_set, {"review_id", "digest"}, "candidate lifecycle.candidate_set")
+    _exact_keys(
+        candidate_set,
+        ({"review_id", "digest", "repository_commit"}
+         if schema == LIFECYCLE_SCHEMA else {"review_id", "digest"}),
+        "candidate lifecycle.candidate_set",
+    )
     review_id = _identifier(candidate_set["review_id"], "candidate lifecycle.candidate_set.review_id")
     candidate_digest = _string(
         candidate_set["digest"], "candidate lifecycle.candidate_set.digest"
     )
     if not re.fullmatch(r"[0-9a-f]{64}", candidate_digest):
         raise ConfigurationError("candidate lifecycle.candidate_set.digest must be a SHA-256")
+    repository_commit = (
+        _string(candidate_set["repository_commit"], "candidate lifecycle.candidate_set.repository_commit")
+        if schema == LIFECYCLE_SCHEMA
+        else candidates.repository_commit
+    )
+    if repository_commit != candidates.repository_commit:
+        raise PolicyError("candidate lifecycle belongs to another repository commit")
     authority = _mapping(root["authority"], "candidate lifecycle.authority")
     if authority != _lifecycle_authority():
         raise ConfigurationError("candidate lifecycle.authority must preserve assessment-only authority")
@@ -754,7 +1002,11 @@ def load_candidate_lifecycle(
         if not isinstance(raw_history, list):
             raise ConfigurationError(f"{where}.history must be a list")
         history = tuple(
-            _lifecycle_event(event, f"{where}.history[{event_index}]")
+            _lifecycle_event(
+                event,
+                f"{where}.history[{event_index}]",
+                schema=schema,
+            )
             for event_index, event in enumerate(raw_history)
         )
         derived = "proposed"
@@ -781,15 +1033,29 @@ def load_candidate_lifecycle(
     if observed_records != expected_records:
         raise PolicyError("candidate lifecycle records do not match the current candidate set")
     digest = _string(root["digest"], "candidate lifecycle.digest")
-    expected_digest = _lifecycle_digest(review_id, candidate_digest, records_tuple)
+    expected_digest = _lifecycle_digest(
+        schema,
+        review_id,
+        repository_commit,
+        candidate_digest,
+        records_tuple,
+    )
     if digest != expected_digest:
         raise ConfigurationError("candidate lifecycle.digest does not match its content")
-    return CandidateLifecycleSet(review_id, candidate_digest, records_tuple, digest)
+    return CandidateLifecycleSet(
+        schema,
+        review_id,
+        repository_commit,
+        candidate_digest,
+        records_tuple,
+        digest,
+    )
 
 
 def transition_candidate_lifecycle(
     lifecycle: CandidateLifecycleSet,
     *,
+    root: Path,
     observation_id: str,
     to_state: str,
     evidence: LifecycleEvidence,
@@ -798,6 +1064,10 @@ def transition_candidate_lifecycle(
     observation_id = _identifier(observation_id, "lifecycle observation id")
     if to_state not in LIFECYCLE_STATES:
         raise ConfigurationError("lifecycle transition target state is invalid")
+    if lifecycle.schema != LIFECYCLE_SCHEMA:
+        raise ConfigurationError(
+            "legacy lifecycle records cannot transition; reinitialize the state to migrate"
+        )
     evidence = _lifecycle_evidence(asdict(evidence), "lifecycle transition evidence")
     records = []
     found = False
@@ -814,27 +1084,84 @@ def transition_candidate_lifecycle(
             raise ConfigurationError(
                 f"evidence kind {evidence.kind} cannot support transition to {to_state}"
             )
+        resolution = _resolve_lifecycle_evidence(
+            evidence,
+            root=root,
+            repository_commit=lifecycle.repository_commit,
+        )
         records.append(
             CandidateLifecycle(
                 observation_id=record.observation_id,
                 candidate_id=record.candidate_id,
                 state=to_state,
-                history=(*record.history, LifecycleEvent(record.state, to_state, evidence)),
+                history=(
+                    *record.history,
+                    LifecycleEvent(record.state, to_state, evidence, resolution),
+                ),
             )
         )
     if not found:
         raise ConfigurationError(f"candidate observation id was not found: {observation_id}")
     records_tuple = tuple(records)
     return CandidateLifecycleSet(
+        schema=lifecycle.schema,
         review_id=lifecycle.review_id,
+        repository_commit=lifecycle.repository_commit,
         candidate_digest=lifecycle.candidate_digest,
         candidates=records_tuple,
         digest=_lifecycle_digest(
+            lifecycle.schema,
             lifecycle.review_id,
+            lifecycle.repository_commit,
             lifecycle.candidate_digest,
             records_tuple,
         ),
     )
+
+
+def check_candidate_lifecycle(
+    lifecycle: CandidateLifecycleSet,
+    *,
+    root: Path,
+) -> tuple[dict[str, object], ...]:
+    """Return unresolved lifecycle evidence without granting the record gate authority."""
+    unknown: list[dict[str, object]] = []
+    for record in lifecycle.candidates:
+        for index, event in enumerate(record.history):
+            if event.resolution is None:
+                unknown.append(
+                    {
+                        "observation_id": record.observation_id,
+                        "history_index": index,
+                        "state": "unknown",
+                        "reason": "legacy-unresolved",
+                    }
+                )
+                continue
+            observed = _resolve_lifecycle_evidence(
+                event.evidence,
+                root=root,
+                repository_commit=lifecycle.repository_commit,
+            )
+            if event.resolution != observed:
+                unknown.append(
+                    {
+                        "observation_id": record.observation_id,
+                        "history_index": index,
+                        "state": "unknown",
+                        "reason": "resolution-changed",
+                    }
+                )
+            elif observed.state != "grounded":
+                unknown.append(
+                    {
+                        "observation_id": record.observation_id,
+                        "history_index": index,
+                        "state": "unknown",
+                        "reason": observed.reason,
+                    }
+                )
+    return tuple(unknown)
 
 
 def write_candidate_lifecycle(

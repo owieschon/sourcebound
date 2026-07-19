@@ -17,6 +17,7 @@
 - [docs/INSTALL.md](docs/INSTALL.md): declared canonical context; sha256: eb672f96492df6086317218bc22fae0ae5b4c80363bbe5aa30df260ffe31266c
 - [docs/REFERENCE.md](docs/REFERENCE.md): bindings: binding-sensitivity-reference, manifest-reference, supported-bindings; sha256: 643257d679069f738de434d6ec10f55e62cd1304bc05bed0318837aad793a7e3
 - [docs/RELEASES.md](docs/RELEASES.md): bindings: release-guide; sha256: cc40c87393dd1784fcca7d1034ac8fd5925a7570011791a51df2853aa8be241b
+- [docs/REVIEW_LEDGER.md](docs/REVIEW_LEDGER.md): declared canonical context; sha256: dc9def20909953f75836881309bdb858fb81ec7fe5f168d10180754c6ae0bd93
 - [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md): bindings: security-model; sha256: 74cbe8147924bcd0d1d229b1d28fc17fa1234f04bb44ef9520218ced7b6c6d23
 - [docs/SUPPORT.md](docs/SUPPORT.md): bindings: support-guide; sha256: 01fd67c5ee7ad0b6ccc7320ee3ce5b73767267539f7287e501b690aa35f478cb
 - [docs/SURFACE.md](docs/SURFACE.md): bindings: repository-surface; sha256: a72ee8e56b099f7d6a44a062f91e79f73ff91987f3e4980215ee2c8ff6e0c4c7
