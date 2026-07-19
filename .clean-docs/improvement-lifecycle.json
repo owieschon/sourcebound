@@ -1,8 +1,8 @@
 {
   "schema": "clean-docs.improvement-candidate-lifecycle.v1",
   "candidate_set": {
-    "review_id": "wizard-docs-context-mill",
-    "digest": "b0ac6e159dac74637df1c89e4303ba5830387a3c588aab117a528011cae32b5d"
+    "review_id": "repository-review",
+    "digest": "01d881fc9bce533de25c0e1c23d60ce106cb1d0f4c5952b0045a68b38dcdce8b"
   },
   "authority": {
     "state": "assessment",
@@ -13,64 +13,226 @@
   "candidates": [
     {
       "observation_id": "accepted-writing-debt",
-      "candidate_id": "55a8491fffcf0ed969cfd481626684c7a73c8385a7804af3a052a4b455d3a26a",
+      "candidate_id": "bd9642d87d1c56dca2773c4fc43941bba1cf92ad6cd134901e7b7751d7f85865",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "archive-extraction-policy",
+      "candidate_id": "5438d0001170037ebec0a4642d7504bc08e99d075d195868fbe93bed6b899aa4",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "binding-specificity-control",
+      "candidate_id": "d82348ce8bb0724c4f4f04ecb7b51faacef4b3684160f705ea182fac0f9a6085",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "candidate-authoring-conventions",
+      "candidate_id": "7637397869b82d3bf9fcc1935f2e5679fc7912d97a53a310821871278568ea80",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "candidate-compilation-limits",
+      "candidate_id": "5a2a3c60418024da735ec96129243a77e23359abd23d5c383f38a514a326eb05",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "candidate-compiler-boundary-tests",
+      "candidate_id": "aef15afcc7c4e8c93515a5b8af30d9bfe634c954d0943964caa7345bdf188eef",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "candidate-observation-denominator",
+      "candidate_id": "e238f319f78b8bcdc79ce0e218cf94382beb20e2276829bc1c1c58320e1ce625",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "canonical-target-denominator",
+      "candidate_id": "a7406c10985383895fc437818ea93bc2fa8bdbe80fe9366dd998d8974e75e15c",
       "state": "proposed",
       "history": []
     },
     {
       "observation_id": "context-package-delivery",
-      "candidate_id": "9a6b784edfd7e8287e3634808c39594065b0e89383765b4b5121b0e95f4b886d",
+      "candidate_id": "c5ea6fb750626b7b4fa20e8b926bb6b05286514e7feba1cfdc01a6b40225a663",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "cross-repository-evaluation-receipt",
+      "candidate_id": "b01eb2959e278844c50fa5025fb005a4ef6fe12b84e3e987a59ea91d20611b16",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "derived-verdict-state",
+      "candidate_id": "08cc4cdbb978686ff2aa07bfe81b130a752b442f47cc97c5139ffd27837b6312",
       "state": "proposed",
       "history": []
     },
     {
       "observation_id": "direct-coverage-gap",
-      "candidate_id": "34621882519847c982dbfa29bc81b2243f4eb942ceb5b1ac743e9c12ec01d216",
+      "candidate_id": "1557a31489e1e0ccf5ec60c062885aacaef9a41682b58fba218938e1c538b667",
       "state": "proposed",
       "history": []
     },
     {
       "observation_id": "first-party-source-breadth",
-      "candidate_id": "e43a36635f308b636096312741adfa68cc04bb1f271d57aa73244d81e79b849f",
+      "candidate_id": "c6eeab5ac6c670da8eb28e0499b34982e808640fa0b78a2c157a635190e4d93a",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "historical-residue-exposure",
+      "candidate_id": "050796ab08659b8b322198a8596ad19bc1c9d0bf69c3639208fd9f2705f2c105",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "immutable-receipt-evidence",
+      "candidate_id": "521dc3fddfc504465bf7b7d028a7869c867d151dc2625e91e05e02fda5975ae4",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "lifecycle-reference-resolution",
+      "candidate_id": "09622e01dc95e49e9081571767b58b4a9451111c0589a38ebf90161c5c0b049f",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "locator-resolution-reasons",
+      "candidate_id": "ca12dd593952304ad32ab884c9f994fad512644420b8a5626c80410d82a83fb0",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "markdown-locator-syntax",
+      "candidate_id": "2f8a85526e15606c905ce993145ee94796920ab298abdd3521001c2fe7c549bc",
       "state": "proposed",
       "history": []
     },
     {
       "observation_id": "navigation-reachability",
-      "candidate_id": "fba09f0bc089e85f77236aa40b615d484e554727654e60ba974237967db1d2b0",
+      "candidate_id": "247965fdd35111e18287923360ccebf0d97353933a9be2a72bc0110c69b9a0af",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "nested-verdict-validation",
+      "candidate_id": "286c8c30decd06aa209cf1fee7dd3b8f4fcd1e7f877c7095d1e7f95def610d03",
       "state": "proposed",
       "history": []
     },
     {
       "observation_id": "novice-terminology-load",
-      "candidate_id": "975e7c6a41a4ca4295df4e37f7eb866ce610b4890eab42ea48614a5d1df46bdc",
+      "candidate_id": "5a5effc23cf80159b20c7eddaa9adc46f1d414486f6094c1f52bb8d717c56017",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "pinned-evidence-resolution",
+      "candidate_id": "1a0bac6a2d8e572f4185ddf575a211a8f0af646ce33c880f9a5cdffbe8bda8c2",
       "state": "proposed",
       "history": []
     },
     {
       "observation_id": "portable-context-package",
-      "candidate_id": "f0727414d89aa6fe507092a7d310189d560f1cb38538b9f91924995230d09861",
+      "candidate_id": "fe842b1a4df4988b3845eaeb1887d99969aa27b779c5a1150b1d6bdaafa33444",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "privacy-safe-residue-rules",
+      "candidate_id": "af8c1ce10dbcd35d80038563b7e5d1f9c9aa9ef0a8da86b601abe60cb47cbd0e",
       "state": "proposed",
       "history": []
     },
     {
       "observation_id": "production-shaped-adoption-examples",
-      "candidate_id": "0117bd3a322fe99ea1cacb6d2a7b98bb967c345148b123ddbcfa4ad5c011046f",
+      "candidate_id": "c4745f8d77d8e1a25d00fb55c61c07c22376822d1c6de534e8865319684c4f2f",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "project-scoped-changed-checks",
+      "candidate_id": "b5617720f8a9972b796ea6e3da3a17c6861ee599bac99273c1059553a9db005a",
       "state": "proposed",
       "history": []
     },
     {
       "observation_id": "published-package-evaluation",
-      "candidate_id": "ea7a679fb139dee100e8b64ceb6581e3f269942052743520a657a12f12b73881",
+      "candidate_id": "c20ac8f6c0c7375e2912fc0e75c70d0945231645bb76f3714812d58ff732f50d",
       "state": "proposed",
       "history": []
     },
     {
       "observation_id": "release-reader-attestation",
-      "candidate_id": "9d3316ea761a234c5cd78461f1ac456ceba1961cb5ae7693ee27b9001c62f2b4",
+      "candidate_id": "9a4011c2ddebb8884e8b1de489e222e024ffffb0a017db1e9700d61195c5620f",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "residue-policy-self-scan",
+      "candidate_id": "42b18b42256ac657c1f70439d0d3d7e4764939d9de810beec220a125dd150f33",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "review-contract-history",
+      "candidate_id": "df286538ee1e7c0e1433134f0382341f372943553fe18842f20fe8e76c290ff1",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "review-contract-tautology-guard",
+      "candidate_id": "3e97fa947520697d52df88757c0b4ff9b2f3edfb3e82a610e3aacbfc81e6b069",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "review-contract-work-bounds",
+      "candidate_id": "f189e68921def19bc7ee1c3f79f4563fdb6743db71e77517a6c7bd07bb1cac2c",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "snapshot-path-boundaries",
+      "candidate_id": "b4272929743909a7b2e21ff7ed9009dc02bae3128317bb0fad4b5a5e99a0df4a",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "unconfigured-assessment-state",
+      "candidate_id": "96773859d1cf70de2a0e4aa10708f09b89f05838926461601642e48c684fa457",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "verdict-observation-axis",
+      "candidate_id": "a3dda0fa13542877d915b29613023dfed483e6a54d13e669c5a442f8200694c9",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "visual-generated-targets",
+      "candidate_id": "6ba5478e8775bd8865def73151ed0401f6627762205d6f3b7a07cc017b2450a1",
+      "state": "proposed",
+      "history": []
+    },
+    {
+      "observation_id": "workflow-path-filter-observation",
+      "candidate_id": "6d4163edae4ea6c23789edcab4f630b1ae5f54406bda335142b006a6ffd5618e",
       "state": "proposed",
       "history": []
     }
   ],
-  "digest": "996714db3408f2d00cb0b242599f6af4d18248e3cd79aa54fd3c28495b132aa9"
+  "digest": "c3a881fb7e81d0071dadd4fa4fb29f5f4b2bba11c410bb4048508d1532250c7c"
 }
