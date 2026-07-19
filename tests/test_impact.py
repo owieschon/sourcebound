@@ -154,9 +154,13 @@ def test_impact_plan_materializes_each_immutable_revision_once(
     original = RepositorySnapshot.materialized_root
 
     @contextmanager
-    def counted(snapshot: RepositorySnapshot) -> Iterator[Path]:
+    def counted(
+        snapshot: RepositorySnapshot,
+        *,
+        paths: tuple[Path, ...] = (),
+    ) -> Iterator[Path]:
         counts[snapshot.label] += 1
-        with original(snapshot) as materialized:
+        with original(snapshot, paths=paths) as materialized:
             yield materialized
 
     monkeypatch.setattr(RepositorySnapshot, "materialized_root", counted)

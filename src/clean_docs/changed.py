@@ -157,7 +157,9 @@ def _inventory(
     snapshot_context = (
         nullcontext(materialized_root)
         if materialized_root is not None
-        else repository_snapshot.materialized_root()
+        else repository_snapshot.materialized_root(
+            paths=(() if project == Path(".") else (project,))
+        )
     )
     with snapshot_context as snapshot:
         project_root = snapshot / project
