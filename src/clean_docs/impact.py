@@ -17,6 +17,7 @@ from clean_docs.errors import ConfigurationError
 from clean_docs.execution import ExecutionPolicy
 from clean_docs.inventory import PUBLIC_SURFACE_KINDS, InventoryItem
 from clean_docs.manifest import load_manifest
+from clean_docs.mdx import MdxParserError, parse_mdx
 from clean_docs.models import Manifest, SymbolBinding
 from clean_docs.projections import evaluate_projections
 from clean_docs.snapshot import RepositorySnapshot
@@ -133,7 +134,7 @@ class ImpactPlan:
         return tuple(
             artifact.path
             for artifact in self.artifacts
-            if artifact.adapter == "mdx-unsupported"
+            if artifact.adapter.startswith("mdx-static:failed")
         )
 
     def _payload(self) -> dict[str, object]:
@@ -501,7 +502,7 @@ def _adapter_for(
     if candidate.suffix == ".md":
         return "markdown"
     if candidate.suffix == ".mdx":
-        return "mdx-unsupported"
+        return "mdx-static"
     if candidate.suffix == ".py":
         return "python-ast"
     if candidate.suffix in {".ts", ".tsx"}:
@@ -547,8 +548,6 @@ def _may_expose_public_surface(
     )
     if control_surface:
         return True
-    if adapter == "mdx-unsupported":
-        return True
     if adapter != "unsupported":
         return False
     return candidate.suffix.lower() in SOURCE_SUFFIXES and (
@@ -557,11 +556,13 @@ def _may_expose_public_surface(
 
 
 def _adapter_failed(root: Path, ref: str, path: str, adapter: str) -> bool:
-    if adapter != "python-ast":
-        return False
     try:
-        ast.parse(RepositorySnapshot(root, ref).read_text(Path(path)), filename=path)
-    except (SyntaxError, UnicodeDecodeError):
+        text = RepositorySnapshot(root, ref).read_text(Path(path))
+        if adapter == "python-ast":
+            ast.parse(text, filename=path)
+        elif adapter == "mdx-static":
+            parse_mdx(text)
+    except (SyntaxError, UnicodeDecodeError, MdxParserError):
         return True
     return False
 
@@ -1025,7 +1026,7 @@ def build_impact_plan(
         elif adapter == "unsupported":
             coverage = "unrelated-covered"
             decision = "unsupported artifact is outside recognized public source paths"
-        elif path.endswith(".md"):
+        elif path.endswith((".md", ".mdx")):
             coverage = "document-direct"
             decision = "documentation changed directly"
         else:
@@ -1235,7 +1236,7 @@ def build_impact_plan(
         if artifact.path in classified_paths or artifact.path in public_event_paths:
             continue
         if artifact.coverage == "unknown":
-            unsupported_document = artifact.adapter == "mdx-unsupported"
+            unsupported_document = artifact.adapter.startswith("mdx-static:failed")
             unknown.append(
                 _finding(
                     "unknown",

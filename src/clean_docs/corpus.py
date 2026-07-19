@@ -6,8 +6,10 @@ import re
 import subprocess
 import sys
 from collections.abc import Iterable
+from collections.abc import Mapping
 from pathlib import Path
 
+from clean_docs.mdx import MdxParserError, parse_mdx
 from clean_docs.policy import PolicyFinding
 
 
@@ -85,6 +87,7 @@ def _git_visible_markdown(root: Path) -> list[Path] | None:
                 "--exclude-standard",
                 "--",
                 "*.md",
+                "*.mdx",
             ],
             capture_output=True,
             text=True,
@@ -133,7 +136,8 @@ def list_documents(root: Path) -> list[Path]:
         ]
     return sorted(
         path
-        for path in root.rglob("*.md")
+        for pattern in ("*.md", "*.mdx")
+        for path in root.rglob(pattern)
         if _is_document_candidate(path.relative_to(root), fallback=True)
         and "archive" not in path.relative_to(root).parts
         and ".clean-docs" not in path.relative_to(root).parts
@@ -143,9 +147,15 @@ def list_documents(root: Path) -> list[Path]:
 
 def _read(path: Path) -> str:
     try:
-        return path.read_text(encoding="utf-8", errors="replace")
+        text = path.read_text(encoding="utf-8")
     except OSError:
         return ""
+    if path.suffix.lower() == ".mdx":
+        try:
+            return parse_mdx(text).policy_text(text)
+        except MdxParserError:
+            return ""
+    return text
 
 
 def _content_tokens(text: str) -> frozenset[str]:
@@ -240,6 +250,7 @@ def scan_corpus(
     root: Path,
     *,
     include_lengths: bool = True,
+    prepared_documents: Mapping[str, str] | None = None,
 ) -> list[PolicyFinding]:
     """Run the tuned Version 0 corpus rules with stable finding identifiers."""
     root = root.resolve()
@@ -248,10 +259,18 @@ def scan_corpus(
     paragraph_index: dict[str, list[int]] = {}
     paragraphs: list[tuple[str, int, frozenset[str], str]] = []
 
-    for path in list_documents(root):
-        relative = os.path.relpath(path, base)
-        name = path.name
-        text = _read(path)
+    document_rows = (
+        (
+            os.path.relpath(path, base),
+            path.name,
+            _read(path),
+        )
+        for path in list_documents(root)
+    ) if prepared_documents is None else (
+        (relative, Path(relative).name, text)
+        for relative, text in sorted(prepared_documents.items())
+    )
+    for relative, name, text in document_rows:
         if PROCESS_RE.search(name):
             findings.append(PolicyFinding(
                 relative,

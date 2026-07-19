@@ -18,6 +18,23 @@ def test_sbom_is_deterministic_and_describes_wheel_dependencies(tmp_path: Path) 
             "Version: 1.0.0\n"
             "Requires-Dist: PyYAML>=6.0\n",
         )
+        archive.writestr(
+            "clean_docs/adapters/mdx_dependencies.json",
+            json.dumps(
+                {
+                    "schema": "clean-docs.mdx-dependencies.v1",
+                    "lock_sha256": "0" * 64,
+                    "packages": [
+                        {
+                            "integrity": "sha512-fixture",
+                            "license": "MIT",
+                            "name": "@mdx-js/mdx",
+                            "version": "3.1.1",
+                        }
+                    ],
+                }
+            ),
+        )
 
     first = render_sbom(wheel, 1_700_000_000)
     second = render_sbom(wheel, 1_700_000_000)
@@ -34,6 +51,7 @@ def test_sbom_is_deterministic_and_describes_wheel_dependencies(tmp_path: Path) 
     assert {item["name"] for item in payload["packages"]} == {
         "clean-docs",
         "PyYAML",
+        "@mdx-js/mdx",
     }
     assert any(
         item["relationshipType"] == "DEPENDS_ON"

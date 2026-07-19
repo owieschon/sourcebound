@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import subprocess
 import sys
@@ -72,6 +73,31 @@ def verify_lifecycle(candidate: Path) -> None:
                 f"candidate upgrade reported {upgraded_version!r}, "
                 f"expected {candidate_version!r}"
             )
+        fixture = workspace / "mdx-fixture"
+        fixture.mkdir()
+        _command("git", "init", "-q", str(fixture))
+        (fixture / "README.md").write_text("# Fixture\n", encoding="utf-8")
+        (fixture / "guide.mdx").write_text(
+            "# MDX guide\n\n<Callout>Static content.</Callout>\n",
+            encoding="utf-8",
+        )
+        _command("git", "-C", str(fixture), "add", ".")
+        mdx_audit = json.loads(
+            _command(
+                str(executable),
+                "--root",
+                str(fixture),
+                "audit",
+                "--format",
+                "json",
+                env=environment,
+            )
+        )
+        if (
+            "guide.mdx" not in mdx_audit["documents"]
+            or mdx_audit["unsupported_documents"]
+        ):
+            raise RuntimeError("installed wheel did not activate its bundled MDX parser")
 
         _command(str(pip), "install", "--force-reinstall", str(prior), env=environment)
         rolled_back_version = _command(str(executable), "--version", env=environment)
