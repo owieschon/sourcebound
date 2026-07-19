@@ -87,6 +87,48 @@ rules:
     ]
 
 
+def test_v2_uses_private_local_rules_without_publishing_token_material(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    (root / ".clean-docs-residue.yml").write_text("version: 2\nexclude: []\n")
+    local = root / ".clean-docs-residue.local.yml"
+    local.write_text("version: 1\nrules:\n  - id: private-context\n    token: foreign-token\n    include: ['*']\n")
+    local.chmod(0o600)
+    (root / "README.md").write_text("# Product\n\nforeign-token\n")
+    _track(root)
+
+    findings = scan_residue(root)
+
+    assert [(finding.rule, finding.doc, finding.line) for finding in findings] == [
+        ("cross-project-residue", "README.md", 3),
+    ]
+
+
+def test_v2_rejects_published_residue_rules(tmp_path: Path) -> None:
+    path = tmp_path / ".clean-docs-residue.yml"
+    path.write_text("version: 2\nrules: []\nexclude: []\n")
+
+    with pytest.raises(ConfigurationError, match="permits exclusions only"):
+        load_residue_config(path)
+
+
+def test_private_residue_status_is_redacted_and_initializer_is_restricted(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    root = _repo(tmp_path)
+
+    assert main(["--root", str(root), "residue", "status"]) == 0
+    assert "inactive" in capsys.readouterr().out
+    assert main(["--root", str(root), "residue", "init-local"]) == 0
+    local = root / ".clean-docs-residue.local.yml"
+    assert local.stat().st_mode & 0o777 == 0o600
+    local.write_text("version: 1\nrules:\n  - id: private-context\n    token: private-value\n    include: ['*']\n")
+    local.chmod(0o600)
+    assert main(["--root", str(root), "residue", "status"]) == 0
+    output = capsys.readouterr().out
+    assert "active" in output
+    assert "private-value" not in output
+
+
 def test_local_path_rule_ignores_placeholders_and_embedded_route_names(
     tmp_path: Path,
 ) -> None:

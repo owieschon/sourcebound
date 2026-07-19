@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import fnmatch
 import hashlib
+import os
 import re
+import stat
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -15,8 +17,10 @@ from clean_docs.policy import PolicyFinding
 
 
 CONFIG_NAME = ".clean-docs-residue.yml"
+LOCAL_CONFIG_NAME = ".clean-docs-residue.local.yml"
 ROOT_KEYS = {"version", "exclude", "rules"}
 RULE_KEYS = {"id", "token_sha256", "include", "reason"}
+LOCAL_RULE_KEYS = {"id", "token", "include"}
 EXCLUDE_KEYS = {"pattern", "reason"}
 TOKEN = re.compile(r"[A-Za-z][A-Za-z0-9_-]*")
 LOCAL_PATH = re.compile(
@@ -34,6 +38,8 @@ SHA256 = re.compile(r"[0-9a-f]{64}")
 GENERATED_PARTS = {"__pycache__", ".DS_Store"}
 GENERATED_SUFFIXES = {".pyc", ".pyo"}
 MAX_TEXT_BYTES = 1_000_000
+MAX_LOCAL_BYTES = 64 * 1024
+MAX_LOCAL_RULES = 128
 
 
 @dataclass(frozen=True)
@@ -54,6 +60,13 @@ class ResidueExclusion:
 class ResidueConfig:
     rules: tuple[ResidueRule, ...]
     exclude: tuple[ResidueExclusion, ...]
+
+
+@dataclass(frozen=True)
+class LocalResidueRule:
+    id: str
+    token: str
+    include: tuple[str, ...]
 
 
 def _mapping(value: Any, where: str) -> dict[str, Any]:
@@ -85,8 +98,11 @@ def load_residue_config(path: Path) -> ResidueConfig:
         raise ConfigurationError(f"invalid YAML in residue config {path}: {exc}") from exc
     root = _mapping(raw, "residue config")
     _reject_unknown(root, ROOT_KEYS, "residue config")
-    if root.get("version") != 1:
-        raise ConfigurationError("residue config version must be 1")
+    version = root.get("version")
+    if version not in {1, 2}:
+        raise ConfigurationError("residue config version must be 1 or 2")
+    if version == 2 and "rules" in root:
+        raise ConfigurationError("residue config version 2 permits exclusions only")
 
     rules = []
     identifiers: set[str] = set()
@@ -130,6 +146,50 @@ def load_residue_config(path: Path) -> ResidueConfig:
     return ResidueConfig(tuple(rules), tuple(exclusions))
 
 
+def load_local_residue_rules(path: Path) -> tuple[LocalResidueRule, ...]:
+    """Load untracked plaintext residue rules without exposing their values."""
+    if not path.exists():
+        return ()
+    try:
+        metadata = path.lstat()
+    except OSError as exc:
+        raise ConfigurationError(f"cannot inspect local residue config: {exc}") from exc
+    if not stat.S_ISREG(metadata.st_mode) or stat.S_ISLNK(metadata.st_mode):
+        raise ConfigurationError("local residue config must be a regular file")
+    if os.name == "posix" and stat.S_IMODE(metadata.st_mode) != 0o600:
+        raise ConfigurationError("local residue config must have mode 0600")
+    if metadata.st_size > MAX_LOCAL_BYTES:
+        raise ConfigurationError("local residue config exceeds 64 KiB")
+    try:
+        root = _mapping(yaml.safe_load(path.read_text(encoding="utf-8")), "local residue config")
+    except OSError as exc:
+        raise ConfigurationError(f"cannot read local residue config: {exc}") from exc
+    except yaml.YAMLError as exc:
+        raise ConfigurationError(f"invalid YAML in local residue config: {exc}") from exc
+    _reject_unknown(root, {"version", "rules"}, "local residue config")
+    if root.get("version") != 1:
+        raise ConfigurationError("local residue config version must be 1")
+    raw_rules = root.get("rules", [])
+    if not isinstance(raw_rules, list) or len(raw_rules) > MAX_LOCAL_RULES:
+        raise ConfigurationError("local residue config permits at most 128 rules")
+    rules = []
+    identifiers: set[str] = set()
+    for index, item in enumerate(raw_rules):
+        where = f"local residue config rules[{index}]"
+        data = _mapping(item, where)
+        _reject_unknown(data, LOCAL_RULE_KEYS, where)
+        identifier = _nonempty(data.get("id"), f"{where}.id")
+        if identifier in identifiers:
+            raise ConfigurationError(f"duplicate local residue rule id: {identifier}")
+        identifiers.add(identifier)
+        token = _nonempty(data.get("token"), f"{where}.token")
+        include = data.get("include")
+        if not isinstance(include, list) or not include or not all(isinstance(value, str) and value for value in include):
+            raise ConfigurationError(f"{where}.include must be a non-empty string list")
+        rules.append(LocalResidueRule(identifier, token.lower(), tuple(include)))
+    return tuple(rules)
+
+
 def _repository_files(root: Path) -> list[Path]:
     proc = subprocess.run(
         ["git", "-C", str(root), "ls-files", "-z"],
@@ -162,10 +222,13 @@ def scan_residue(root: Path, config_path: Path | None = None) -> list[PolicyFind
     """Scan the tracked product surface for configured tokens and machine residue."""
     root = root.resolve()
     config = load_residue_config(config_path or root / CONFIG_NAME)
+    local_rules = load_local_residue_rules(root / LOCAL_CONFIG_NAME)
     findings = []
     exclusions = tuple(item.pattern for item in config.exclude)
     for path in _repository_files(root):
         relative = path.relative_to(root).as_posix()
+        if relative == LOCAL_CONFIG_NAME:
+            continue
         if _matches(relative, exclusions):
             continue
         if set(path.parts) & GENERATED_PARTS or path.suffix in GENERATED_SUFFIXES:
@@ -199,6 +262,14 @@ def scan_residue(root: Path, config_path: Path | None = None) -> list[PolicyFind
                         line_number,
                         "cross-project-residue",
                         f"remove token matched by repository residue rule {rule.id!r}",
+                    ))
+            for local_rule in local_rules:
+                if local_rule.token in {token.lower() for token in TOKEN.findall(line)} and _matches(relative, local_rule.include):
+                    findings.append(PolicyFinding(
+                        relative,
+                        line_number,
+                        "cross-project-residue",
+                        f"remove token matched by local repository residue rule {local_rule.id!r}",
                     ))
     findings.sort(key=lambda finding: (finding.doc, finding.line, finding.rule, finding.detail))
     return findings

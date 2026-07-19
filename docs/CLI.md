@@ -18,6 +18,9 @@ The table is generated from the command registry used by the parser:
 | command | job | writes | example |
 | --- | --- | --- | --- |
 | audit | Assess documentation and enforce adopted scopes | with --update-baseline | clean-docs audit --format json |
+| residue | Manage private cross-project residue matching | with init-local | clean-docs residue status |
+| residue status | Report whether private residue matching is active | no | clean-docs residue status |
+| residue init-local | Create a permission-restricted private residue template | yes | clean-docs residue init-local |
 | inventory | List detected repository surfaces and coverage | no | clean-docs inventory --format json |
 | claims | Rank and verify static count and column claims | no | clean-docs claims --format json |
 | binding | Inspect one proposed source relationship | no | clean-docs binding --help |

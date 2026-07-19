@@ -76,6 +76,16 @@ execution on. It starts Python in isolated mode and writes evidence under the ru
 temporary directory, not the inspected checkout. An unsafe repository symlink fails the verdict
 instead of redirecting a receipt write.
 
+## Private residue rules
+
+The tracked `.clean-docs-residue.yml` policy is public and contains exclusions only. Do not put a
+token, a token digest, or a private rule in it; an unsalted digest can reveal a low-entropy token.
+
+To enable local cross-project residue matching, run `clean-docs residue init-local`. It creates the
+ignored `.clean-docs-residue.local.yml` with mode `0600` on POSIX. Add plaintext rules only there.
+`clean-docs residue status` reports whether matching is active without printing rule values or
+digests. CI has no local policy and reports inactive matching honestly.
+
 ## Adversarial checks
 
 Required CI covers prompt injection, escaping symlinks, shell metacharacters, secret output, oversized output, hanging processes, extension identity collisions, and attempts to change files through relative paths. Each test asserts the exit contract and verifies that no caller-owned file changed.
