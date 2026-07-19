@@ -13,7 +13,9 @@ A passing run prints the attempted and passed counts for each audience. Those co
 for that run; a history file binds them to the corpus, prompt, response, model, and scorer digests.
 
 A passing evaluation is a receipt for one task, not a halo around the whole corpus. It records who
-attempted what, which context they saw, how the result was scored, and whether it passed.
+attempted what, which context they saw, how the result was scored, and whether it passed. Cover the
+reader jobs a consequential corpus promises. Test retrieval, action, verification, recovery from
+drift, and stating a documented limit instead of guessing past it.
 
 ## Prerequisites
 

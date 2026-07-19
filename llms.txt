@@ -10,7 +10,7 @@
 - [STANDARD.md](STANDARD.md): declared canonical context; sha256: ed382a09f6af450218940d8d59d2a32e1e0aea8c9fe5803b502d26e338a62d82
 - [docs/BEHAVIOR_SIGNALS.md](docs/BEHAVIOR_SIGNALS.md): declared canonical context; sha256: dbcc582397402dcc80ccd59942c8d8180dfe8b8fb3c497e8c8967d4fd9daa4fc
 - [docs/CLI.md](docs/CLI.md): bindings: cli-reference, verdict-reference; sha256: 41c9ebf1165407d6dcab92ee0c3e9aec358eb36255777db0ec67b3b63039bbea
-- [docs/EVALUATION.md](docs/EVALUATION.md): bindings: evaluation-scorers; sha256: d4364212c28b5f8b9bc715e54a3b55152ad5ec09ef96d69d0802ea9b048c518c
+- [docs/EVALUATION.md](docs/EVALUATION.md): bindings: evaluation-scorers; sha256: 9023127c402fa6106d16e102727ed06804f8eee90aabea16a3527f7d0ae5d721
 - [docs/EXTENSIONS.md](docs/EXTENSIONS.md): bindings: extension-guide, migration-guide; sha256: 81eb19b309a3d7a73b0fca7640b18add365dd556ea8572577e8fcce5e83084ae
 - [docs/FEEDBACK.md](docs/FEEDBACK.md): declared canonical context; sha256: 0a1ef2b1a53e1749355e25cc1c7c47c796fe18f17ba8616c1ab2f13a44bf6891
 - [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md): bindings: improvement-candidate-guide; sha256: f980247483ec9ecf24cea9b241bf6e2df9277e83c97563ad134200302f0fe263
