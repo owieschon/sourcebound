@@ -7,8 +7,11 @@ from pathlib import Path
 
 from clean_docs.cli import main
 from clean_docs.engine import evaluate, write_results
-from clean_docs.extractors.inventory import _extract_repository_overview_legacy
-from clean_docs.inventory import scan_inventory
+from clean_docs.extractors.inventory import (
+    _extract_repository_overview_legacy,
+    _inventory_rows_from_items,
+)
+from clean_docs.inventory import InventoryItem, scan_inventory
 from clean_docs.manifest import load_manifest
 from clean_docs.models import RegionBinding
 from clean_docs.regions import replace_region
@@ -92,6 +95,33 @@ def test_python_inventory_is_static_typed_and_deterministic(tmp_path: Path) -> N
     assert public_api.digest == hashlib.sha256(
         b"def public_api():\n    return True"
     ).hexdigest()
+
+
+def test_repository_overview_reuse_excludes_plugin_inventory() -> None:
+    core = InventoryItem(
+        "api-symbol:src/api.py:serve",
+        "api-symbol",
+        "serve",
+        "src/api.py",
+        "serve",
+        "python-ast",
+        "a" * 64,
+        "cataloged",
+    )
+    plugin = InventoryItem(
+        "api-symbol:plugin.py:invented",
+        "api-symbol",
+        "invented",
+        "plugin.py",
+        "invented",
+        "plugin:fixture",
+        "b" * 64,
+        "standard-gap",
+    )
+
+    rows = _inventory_rows_from_items((plugin, core))
+
+    assert [row["name"] for row in rows] == ["serve"]
 
 
 def test_typescript_package_inventory_needs_no_project_execution(tmp_path: Path) -> None:

@@ -263,6 +263,7 @@ def _check_changed_details(
                 head_manifest,
                 binding_id=binding.id,
                 execution_policy=execution_policy,
+                inventory_items=head_inventory,
             ):
                 if not result.changed:
                     continue
