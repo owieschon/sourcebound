@@ -98,6 +98,7 @@ EXPECTED_IDS_BY_RELEASE = {
         "provider-failure-receipt",
         "provider-write-conflict",
         "effective-mapping-key-semantics",
+        "bounded-candidate-ranking",
     },
 }
 

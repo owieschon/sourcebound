@@ -46,6 +46,29 @@ STOP_SUBJECTS = {
     "to",
     "with",
 }
+OWNERSHIP_STOP = STOP_SUBJECTS | {
+    "api",
+    "backend",
+    "catalog",
+    "config",
+    "configuration",
+    "data",
+    "doc",
+    "docs",
+    "guide",
+    "index",
+    "readme",
+    "reference",
+    "script",
+    "scripts",
+    "service",
+    "settings",
+    "skill",
+    "test",
+    "tests",
+    "util",
+    "utils",
+}
 
 
 @dataclass(frozen=True)
@@ -126,6 +149,7 @@ class SourceClaimReport:
         )
 
     def as_dict(self) -> dict[str, object]:
+        candidate_population = sum(count for _status, count in self.candidate_totals)
         return {
             "schema": CLAIM_REPORT_SCHEMA,
             "ok": self.ok,
@@ -134,6 +158,11 @@ class SourceClaimReport:
             "candidates": [result.as_dict() for result in self.candidates],
             "missing": [asdict(item) for item in self.missing],
             "candidate_totals": dict(self.candidate_totals),
+            "candidate_population": candidate_population,
+            "candidate_shown": len(self.candidates),
+            "candidate_truncated": max(
+                0, candidate_population - len(self.candidates)
+            ),
         }
 
 
@@ -159,7 +188,11 @@ def _subject(value: str) -> str:
 
 
 def _tokens(value: str) -> tuple[str, ...]:
-    parts = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", value).replace("_", " ")
+    parts = (
+        re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", value)
+        .replace("_", " ")
+        .replace("-", " ")
+    )
     return tuple(
         sorted(
             {
@@ -491,21 +524,40 @@ def _relationship_rank(claim: DocumentClaim, fact: SourceFact) -> int:
         if left != right:
             break
         common += 1
-    context = set(_tokens(Path(doc).stem)) | set(_tokens(anchor))
-    source_context = set(_tokens(Path(source).stem))
-    rank = common * 100 + len(context & source_context) * 10
-
+    doc_stem = set(_tokens(Path(doc).stem)) - OWNERSHIP_STOP
+    anchor_context = set(_tokens(anchor))
+    source_context = set(_tokens(Path(source).stem)) - OWNERSHIP_STOP
     locator_parts = fact.locator.rsplit("#", 1)[0].split(".")
     root_subject = _subject(locator_parts[0])
     claim_subject = _subject(claim.subject)
-    if claim_subject == root_subject:
+    exact_root = claim_subject == root_subject
+    exact_nested = (
+        len(locator_parts) > 1
+        and claim_subject == _subject(locator_parts[-1])
+    )
+    same_parent = Path(doc).parent == Path(source).parent
+    stem_overlap = bool(doc_stem & source_context)
+    anchor_match = claim_subject in anchor_context
+    exact_locator = exact_root or exact_nested
+    if claim.kind == "identifier-set":
+        ownership = same_parent or stem_overlap or (exact_locator and anchor_match)
+    else:
+        ownership = same_parent or stem_overlap
+    if not ownership:
+        return 0
+    if not exact_locator and not (
+        same_parent and (stem_overlap or anchor_match)
+    ):
+        return 0
+
+    rank = min(common, 2) * 10
+    rank += 100 if same_parent else 0
+    rank += 300 if stem_overlap else 0
+    rank += 100 if anchor_match else 0
+    if exact_locator:
         rank += 200
     elif claim_subject in _tokens(locator_parts[0]):
-        # Prefer a collection's own count to a nested aggregate that inherits
-        # the same root token. A token-only match cannot bridge unrelated paths.
         rank += 50 if len(locator_parts) == 1 else 25
-    if len(locator_parts) > 1 and claim_subject == _subject(locator_parts[-1]):
-        rank += 200
     return rank
 
 
@@ -718,8 +770,8 @@ def scan_source_claims(
         )
     candidates.sort(
         key=lambda item: (
-            item.status != "drift",
             -item.rank,
+            item.status != "drift",
             item.doc,
             item.line,
             item.source,

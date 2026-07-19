@@ -28,4 +28,5 @@ def test_version_12a_registry_names_every_scenario() -> None:
         "provider-failure-receipt",
         "provider-write-conflict",
         "effective-mapping-key-semantics",
+        "bounded-candidate-ranking",
     ]
