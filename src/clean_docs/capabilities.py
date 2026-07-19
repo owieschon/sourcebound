@@ -18,6 +18,7 @@ ASSURANCE_BOUNDARIES = (
         "clean-docs proves": "Rendered region bytes match configured source evidence",
         "clean-docs does not prove": "Authored prose outside the region is accurate or complete",
     },
+    {"command": "residue", "job": "Manage private cross-project residue matching", "writes": "with init-local", "example": "clean-docs residue status"},
     {
         "surface": "Legacy command pin (`type: claim`)",
         "clean-docs proves": "Allowlisted command output matches the configured expected value and the document anchor exists",

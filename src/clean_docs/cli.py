@@ -62,6 +62,7 @@ from clean_docs.release import (
     validate_release_narrative,
 )
 from clean_docs.regions import atomic_write
+from clean_docs.residue import LOCAL_CONFIG_NAME, load_local_residue_rules
 from clean_docs.sensitivity import (
     decode_json_object,
     evaluate_binding_sensitivity,
@@ -100,6 +101,10 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="report compatible house-policy candidates without accepting them as gates",
     )
+    residue = sub.add_parser("residue", help="manage private residue matching")
+    residue_sub = residue.add_subparsers(dest="residue_command", required=True)
+    residue_sub.add_parser("status", help="report whether private matching is active")
+    residue_sub.add_parser("init-local", help="create a permission-restricted local rule template")
     inventory_parser = sub.add_parser("inventory", help=_command_help("inventory"))
     inventory_parser.add_argument("--format", choices=("text", "json"), default="text")
     inventory_parser.add_argument(
@@ -513,6 +518,22 @@ def _main(argv: list[str] | None = None) -> int:
         print(f"clean-docs: {exc}", file=sys.stderr)
         return exc.exit_code
     root = args.root.resolve()
+    if args.command == "residue":
+        local = root / LOCAL_CONFIG_NAME
+        try:
+            if args.residue_command == "init-local":
+                if local.exists():
+                    raise ConfigurationError("local residue config already exists")
+                atomic_write(local, "version: 1\nrules: []\n")
+                local.chmod(0o600)
+                print(f"residue: initialized {LOCAL_CONFIG_NAME}")
+                return 0
+            active = bool(load_local_residue_rules(local))
+        except CleanDocsError as exc:
+            print(f"clean-docs: {exc}", file=sys.stderr)
+            return exc.exit_code
+        print(f"residue: private matching {'active' if active else 'inactive'}")
+        return 0
     if args.command == "review":
         try:
             source = args.input if args.input.is_absolute() else root / args.input
