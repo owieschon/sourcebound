@@ -42,24 +42,24 @@ def _commit(root: Path, message: str) -> str:
     ).strip()
 
 
-def _pagination_contract() -> ReviewContract:
+def _delivery_contract() -> ReviewContract:
     return ReviewContract(
-        id="skill-body-delivery",
+        id="result-page-delivery",
         mode="observe",
         sources=(
             ReviewLocator(
                 id="default-pagination-test",
-                path=Path("tests/test_skills.py"),
+                path=Path("tests/test_delivery.py"),
                 extractor="python-symbol",
-                locator="TestSkills.test_get_skill_by_name_caps_first_page",
+                locator="TestDelivery.test_fetch_caps_first_page",
             ),
         ),
         targets=(
             ReviewLocator(
-                id="large-skill-instructions",
-                path=Path("docs/skills.md"),
+                id="large-result-instructions",
+                path=Path("docs/delivery.md"),
                 extractor="markdown-section",
-                locator="#reading-a-large-skill-efficiently",
+                locator="#reading-large-results",
             ),
         ),
     )
@@ -68,24 +68,24 @@ def _pagination_contract() -> ReviewContract:
 def _write_pagination_base(root: Path) -> str:
     _write(
         root,
-        "tests/test_skills.py",
+        "tests/test_delivery.py",
         """
-class TestSkills:
-    def test_get_skill_by_name_returns_short_body(self):
+class TestDelivery:
+    def test_fetch_returns_short_body(self):
         assert fetch("short").body == "short"
 """.lstrip(),
     )
     _write(
         root,
-        "docs/skills.md",
+        "docs/delivery.md",
         """
-# Skills
+# Delivery
 
-## Reading a large skill efficiently
+## Reading large results
 
-Call `skill-get` once and read the returned body.
+Fetch once and read the returned body.
 
-## Editing a skill
+## Publishing a result
 
 Use the current version when writing.
 """.lstrip(),
@@ -96,13 +96,13 @@ Use the current version when writing.
 def _add_pagination_behavior_test(root: Path) -> None:
     _write(
         root,
-        "tests/test_skills.py",
+        "tests/test_delivery.py",
         """
-class TestSkills:
-    def test_get_skill_by_name_returns_short_body(self):
+class TestDelivery:
+    def test_fetch_returns_short_body(self):
         assert fetch("short").body == "short"
 
-    def test_get_skill_by_name_caps_first_page(self):
+    def test_fetch_caps_first_page(self):
         response = fetch("x" * 8050)
         assert len(response.body) == 8000
         assert response.body_next_offset == 8000
@@ -120,7 +120,7 @@ def test_new_behavior_with_unchanged_instruction_recommends_review(
 
     result = evaluate_review_contract(
         root,
-        _pagination_contract(),
+        _delivery_contract(),
         base=base,
         head=head,
     )
@@ -140,16 +140,16 @@ def test_behavior_and_relevant_instruction_change_are_cochanged(
     _add_pagination_behavior_test(root)
     _write(
         root,
-        "docs/skills.md",
+        "docs/delivery.md",
         """
-# Skills
+# Delivery
 
-## Reading a large skill efficiently
+## Reading large results
 
 Read the first page, then pass `body_next_offset` as `body_offset`.
 Continue until `body_next_offset` is null.
 
-## Editing a skill
+## Publishing a result
 
 Use the current version when writing.
 """.lstrip(),
@@ -158,7 +158,7 @@ Use the current version when writing.
 
     result = evaluate_review_contract(
         root,
-        _pagination_contract(),
+        _delivery_contract(),
         base=base,
         head=head,
     )
@@ -175,10 +175,10 @@ def test_unrelated_code_and_whitespace_changes_are_unaffected(
     root = _repository(tmp_path)
     _write(
         root,
-        "src/skills.py",
+        "src/delivery.py",
         '''
-class SkillViewSet:
-    def get_by_name(self, request):
+class Delivery:
+    def fetch(self, request):
         """Return one body page."""
         body_length = request.get("body_length")
         return body_length
@@ -192,9 +192,9 @@ DEFAULT_BODY_PAGE_LENGTH = 8000
     )
     _write(
         root,
-        "docs/skills.md",
+        "docs/delivery.md",
         """
-# Skills
+# Delivery
 
 ## Fetching a body
 
@@ -209,10 +209,10 @@ The service reports its health.
 
     _write(
         root,
-        "src/skills.py",
+        "src/delivery.py",
         '''
-class SkillViewSet:
-    def get_by_name( self, request ):
+class Delivery:
+    def fetch( self, request ):
         """A rewritten docstring does not change behavior."""
         # Comments and formatting are not contract evidence.
         body_length=request.get( "body_length" )
@@ -227,9 +227,9 @@ DEFAULT_BODY_PAGE_LENGTH = 4000
     )
     _write(
         root,
-        "docs/skills.md",
+        "docs/delivery.md",
         """
-# Skills
+# Delivery
 
 ## Fetching a body
 
@@ -243,20 +243,20 @@ The service now reports detailed health.
     )
     head = _commit(root, "unrelated implementation and whitespace")
     contract = ReviewContract(
-        id="get-by-name",
+        id="fetch-result",
         mode="observe",
         sources=(
             ReviewLocator(
                 id="method",
-                path=Path("src/skills.py"),
+                path=Path("src/delivery.py"),
                 extractor="python-symbol",
-                locator="SkillViewSet.get_by_name",
+                locator="Delivery.fetch",
             ),
         ),
         targets=(
             ReviewLocator(
                 id="instructions",
-                path=Path("docs/skills.md"),
+                path=Path("docs/delivery.md"),
                 extractor="markdown-section",
                 locator="#fetching-a-body",
             ),
@@ -272,10 +272,10 @@ The service now reports detailed health.
 
 def test_missing_locator_is_unknown(tmp_path: Path) -> None:
     root = _repository(tmp_path)
-    _write(root, "src/skills.py", "class SkillViewSet:\n    pass\n")
-    _write(root, "docs/skills.md", "# Skills\n\n## Fetching a body\n\nFetch it.\n")
+    _write(root, "src/delivery.py", "class Delivery:\n    pass\n")
+    _write(root, "docs/delivery.md", "# Delivery\n\n## Fetching a body\n\nFetch it.\n")
     base = _commit(root, "baseline")
-    _write(root, "docs/skills.md", "# Skills\n\n## Fetching a body\n\nFetch it now.\n")
+    _write(root, "docs/delivery.md", "# Delivery\n\n## Fetching a body\n\nFetch it now.\n")
     head = _commit(root, "edit instructions")
     contract = ReviewContract(
         id="missing-source",
@@ -283,15 +283,15 @@ def test_missing_locator_is_unknown(tmp_path: Path) -> None:
         sources=(
             ReviewLocator(
                 id="missing-method",
-                path=Path("src/skills.py"),
+                path=Path("src/delivery.py"),
                 extractor="python-symbol",
-                locator="SkillViewSet.get_by_name",
+                locator="Delivery.fetch",
             ),
         ),
         targets=(
             ReviewLocator(
                 id="instructions",
-                path=Path("docs/skills.md"),
+                path=Path("docs/delivery.md"),
                 extractor="markdown-section",
                 locator="#fetching-a-body",
             ),
