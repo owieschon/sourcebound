@@ -59,3 +59,35 @@ def test_snapshot_rejects_symlink_that_escapes_root(tmp_path: Path) -> None:
     with pytest.raises(ExtractionError, match="unsafe path"):
         with RepositorySnapshot(root, ref).materialized_root():
             pass
+
+
+def test_snapshot_materializes_only_selected_project(tmp_path: Path) -> None:
+    root = tmp_path / "repository"
+    (root / "apps/docs").mkdir(parents=True)
+    (root / "large-sibling").mkdir()
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
+    (root / "apps/docs/README.md").write_text("# Docs\n")
+    (root / "large-sibling/payload.txt").write_text("not selected\n")
+    ref = _commit(root)
+
+    with RepositorySnapshot(root, ref).materialized_root(
+        paths=(Path("apps/docs"),)
+    ) as snapshot:
+        assert (snapshot / "apps/docs/README.md").read_text() == "# Docs\n"
+        assert not (snapshot / "large-sibling").exists()
+
+
+def test_snapshot_rejects_selected_path_that_escapes_root(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "repository"
+    root.mkdir()
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
+    (root / "README.md").write_text("# Docs\n")
+    ref = _commit(root)
+
+    with pytest.raises(ExtractionError, match="snapshot path escapes repository"):
+        with RepositorySnapshot(root, ref).materialized_root(
+            paths=(Path("../outside"),)
+        ):
+            pass

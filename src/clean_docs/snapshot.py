@@ -66,19 +66,35 @@ class RepositorySnapshot:
         return [Path(path) for path in proc.stdout.splitlines() if fnmatch(path, pattern)]
 
     @contextmanager
-    def materialized_root(self) -> Iterator[Path]:
+    def materialized_root(
+        self,
+        *,
+        paths: tuple[Path, ...] = (),
+    ) -> Iterator[Path]:
         if self.ref is None:
             yield self.root
             return
+        archive_paths: list[str] = []
+        for path in paths:
+            if path == Path("."):
+                continue
+            if path.is_absolute() or ".." in path.parts:
+                raise ExtractionError(
+                    f"snapshot path escapes repository: {path}"
+                )
+            archive_paths.append(path.as_posix().strip("/"))
         with tempfile.TemporaryDirectory(prefix="clean-docs-snapshot-") as temporary:
             destination = Path(temporary)
             archive = destination / "snapshot.tar"
-            self._git(
+            arguments = [
                 "archive",
                 "--format=tar",
                 f"--output={archive}",
                 self.label,
-            )
+            ]
+            if archive_paths:
+                arguments.extend(("--", *archive_paths))
+            self._git(*arguments)
             with tarfile.open(archive) as handle:
                 for member in handle.getmembers():
                     if not _member_is_safe(member):
