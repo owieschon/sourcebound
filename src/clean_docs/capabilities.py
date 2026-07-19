@@ -43,6 +43,11 @@ ASSURANCE_BOUNDARIES = (
         "clean-docs does not prove": "The document and source describe the same concept or that the relationship should be accepted",
     },
     {
+        "surface": "Declared review contract",
+        "clean-docs proves": "At two immutable refs, repository-declared source locators changed without every declared target locator changing",
+        "clean-docs does not prove": "The target is stale, a co-change is semantically correct, or the locators describe the same concept",
+    },
+    {
         "surface": "Pull-request verdict",
         "clean-docs proves": "Static configured checks and changed-surface evidence produce the reported state at one pinned commit",
         "clean-docs does not prove": "Unbound prose, skipped processes, semantic relationships, or authored judgment are correct",

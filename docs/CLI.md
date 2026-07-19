@@ -84,6 +84,19 @@ unsupported list, and makes coverage unknown.
 | `none` | Every changed artifact is classified, and the affected graph creates no documentation obligation. |
 | `unknown` | A plausible public surface lacks enough adapter or relationship coverage. This is never reported as no impact. |
 
+Observe-only `review_contracts` appear in the plan's `review_contracts` evidence. A
+`review-recommended` or unresolved contract also adds an advisory entry to
+`findings.recommended`; it never enters `findings.required`. Each observation names the contract,
+source and target locator states and digests, and `semantic_correctness_checked: false`. The
+pull-request verdict preserves the same observations and reports their state counts under
+`mechanisms.review-contract`. These observations do not change the gate result.
+
+Use `plan --project PATH` when a repository contains independently owned projects. The selected
+project scopes the manifest, changed paths, inventory, and static impact evidence. Immutable
+materialization includes that project plus transitive repository-internal targets required by its
+symlinks. Read the receipt's `project` field before reusing `impact: none`; sibling projects remain
+outside that conclusion.
+
 A valid plan exits zero even when `impact` is `required` or `unknown`; the exit code says the receipt
 was built, not that the branch is documentation-complete. Use `check --changed` for the existing
 blocking gate. A projection output is evidence of prior work, so changing only that generated file
