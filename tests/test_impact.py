@@ -216,7 +216,7 @@ def test_private_refactor_produces_coverage_complete_stable_no_impact(
     assert payload["schema"] == "clean-docs.impact-plan.v2"
     assert payload["producer"] == {
         "name": "clean-docs",
-        "version": "1.2.0rc14",
+        "version": "1.2.0",
     }
     assert payload["digest"] == first.digest
     assert payload["no_impact"] is True
