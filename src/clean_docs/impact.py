@@ -18,8 +18,12 @@ from clean_docs.execution import ExecutionPolicy
 from clean_docs.inventory import PUBLIC_SURFACE_KINDS, InventoryItem
 from clean_docs.manifest import load_manifest
 from clean_docs.mdx import MdxParserError, parse_mdx
-from clean_docs.models import Manifest, SymbolBinding
+from clean_docs.models import Manifest, ReviewContract, SymbolBinding
 from clean_docs.projections import evaluate_projections
+from clean_docs.review_contracts import (
+    ReviewContractResult,
+    evaluate_review_contracts,
+)
 from clean_docs.snapshot import RepositorySnapshot
 
 
@@ -115,6 +119,7 @@ class ImpactPlan:
     coverage_complete: bool
     artifacts: tuple[ImpactArtifact, ...]
     events: tuple[ImpactEvent, ...]
+    review_contracts: tuple[ReviewContractResult, ...]
     edges: tuple[ImpactEdge, ...]
     required: tuple[ImpactFinding, ...]
     recommended: tuple[ImpactFinding, ...]
@@ -172,6 +177,9 @@ class ImpactPlan:
             "unsupported_documents": list(self.unsupported_documents),
             "artifacts": [asdict(item) for item in self.artifacts],
             "events": [asdict(item) for item in self.events],
+            "review_contracts": [
+                item.as_dict() for item in self.review_contracts
+            ],
             "graph": {
                 "roots": roots,
                 "edges": [asdict(item) for item in self.edges],
@@ -389,6 +397,44 @@ def _project_path(prefix: str, path: str) -> str:
     if prefix and path.startswith(prefix):
         return path.removeprefix(prefix)
     return path
+
+
+def _repository_review_contract(
+    contract: ReviewContract,
+    project: Path,
+) -> ReviewContract:
+    if project == Path("."):
+        return contract
+    return replace(
+        contract,
+        sources=tuple(
+            replace(locator, path=project / locator.path)
+            for locator in contract.sources
+        ),
+        targets=tuple(
+            replace(locator, path=project / locator.path)
+            for locator in contract.targets
+        ),
+    )
+
+
+def _project_review_result(
+    result: ReviewContractResult,
+    prefix: str,
+) -> ReviewContractResult:
+    if not prefix:
+        return result
+    return replace(
+        result,
+        sources=tuple(
+            replace(item, path=_project_path(prefix, item.path))
+            for item in result.sources
+        ),
+        targets=tuple(
+            replace(item, path=_project_path(prefix, item.path))
+            for item in result.targets
+        ),
+    )
 
 
 def _blob_id(root: Path, ref: str, path: str) -> str | None:
@@ -817,6 +863,42 @@ def build_impact_plan(
         manifest = load_manifest(head_manifest_path)
         manifest_bytes = head_manifest_path.read_bytes()
         manifest_digest = hashlib.sha256(manifest_bytes).hexdigest()
+        review_contract_results = tuple(
+            _project_review_result(result, prefix)
+            for result in evaluate_review_contracts(
+                root,
+                tuple(
+                    _repository_review_contract(contract, project)
+                    for contract in manifest.review_contracts
+                ),
+                base=changed.base,
+                head=changed.head,
+            )
+        )
+        for result in review_contract_results:
+            contract_root = f"review-contract:{result.contract_id}"
+            for source_evidence in result.sources:
+                repository_path = _repo_path(prefix, source_evidence.path)
+                edges.add(
+                    ImpactEdge(
+                        f"artifact:{repository_path}",
+                        contract_root,
+                        "affects",
+                    )
+                )
+                if (
+                    source_evidence.state in {"added", "changed", "removed"}
+                    and source_evidence.path in artifact_roots
+                ):
+                    artifact_roots[source_evidence.path].add(contract_root)
+            for target_evidence in result.targets:
+                edges.add(
+                    ImpactEdge(
+                        contract_root,
+                        f"artifact:{_repo_path(prefix, target_evidence.path)}",
+                        "requests-review",
+                    )
+                )
         binding_docs = {
             binding.id: binding.doc.as_posix() for binding in manifest.bindings
         }
@@ -1057,6 +1139,31 @@ def build_impact_plan(
     recommended: list[ImpactFinding] = []
     unrelated: list[ImpactFinding] = []
     unknown: list[ImpactFinding] = []
+
+    for result in review_contract_results:
+        if result.state not in {"review-recommended", "unknown"}:
+            continue
+        contract_root = f"review-contract:{result.contract_id}"
+        message = (
+            f"review contract {result.contract_id} observed a source change; "
+            "its declared targets require review"
+            if result.state == "review-recommended"
+            else f"review contract {result.contract_id} could not resolve "
+            "every declared locator"
+        )
+        recommended.append(
+            _finding(
+                "recommended",
+                "review-contract",
+                message,
+                paths=tuple(
+                    _repo_path(prefix, item.path)
+                    for item in result.sources + result.targets
+                ),
+                roots=(contract_root,),
+                obligations=("review-declared-targets",),
+            )
+        )
 
     for changed_finding in changed.required:
         finding_roots = tuple(
@@ -1325,6 +1432,9 @@ def build_impact_plan(
             "project": project.as_posix(),
             "manifest": manifest_repo_path,
             "manifest_digest": manifest_digest,
+            "review_contracts": [
+                result.as_dict() for result in review_contract_results
+            ],
             "artifacts": [
                 {
                     "path": artifact.path,
@@ -1348,6 +1458,7 @@ def build_impact_plan(
         coverage_complete=coverage_complete,
         artifacts=normalized_artifacts,
         events=normalized_events,
+        review_contracts=review_contract_results,
         edges=tuple(
             sorted(edges, key=lambda item: (item.source, item.target, item.kind))
         ),
