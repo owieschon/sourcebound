@@ -48,13 +48,13 @@ jobs:
       - run: clean-docs --root . project --check
       - run: >-
           clean-docs --root . review candidates
-          --input .clean-docs/reviews/wizard-docs-context-mill.json
+          --input .clean-docs/reviews/repository-review.json
           --out .clean-docs/improvement-candidates.json
           --check
           --format text
       - run: >-
           clean-docs --root . review lifecycle check
-          --input .clean-docs/reviews/wizard-docs-context-mill.json
+          --input .clean-docs/reviews/repository-review.json
           --state .clean-docs/improvement-lifecycle.json
           --format text
       - run: >-

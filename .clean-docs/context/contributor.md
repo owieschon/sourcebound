@@ -1,7 +1,7 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `197b7a2fbc8d8dd55092d619eca9c6d5e7d0bdd8f96e50d5224b7ae4c5c2ebe0`
+- Corpus sha256: `0b42bd96c4ba690633cde2b140a755a21248fe95c154c9961debbfbada5cd3c1`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
