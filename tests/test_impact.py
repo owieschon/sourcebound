@@ -639,6 +639,64 @@ def test_generated_projection_change_does_not_trigger_itself(
     assert not any(item.rule == "projection-refresh" for item in plan.required)
 
 
+def test_visual_record_change_triggers_both_audience_projections(
+    tmp_path: Path,
+) -> None:
+    root = _projection_repository(tmp_path)
+    (root / "docs/visuals").mkdir(parents=True)
+    (root / "docs/assets").mkdir(parents=True)
+    (root / "docs/assets/queue.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+    record = root / "docs/visuals/queue-flow.yml"
+    record.write_text(
+        """\
+schema: clean-docs.visual.v1
+id: queue-flow
+kind: diagram
+src: docs/assets/queue.png
+width: 1200
+height: 800
+alt: Queue A sends work to queue B
+caption: Work moves from queue A to queue B.
+description: Queue A validates each item, then sends accepted work to queue B.
+annotations: []
+"""
+    )
+    manifest = root / ".clean-docs.yml"
+    manifest.write_text(
+        manifest.read_text()
+        + """\
+  visuals:
+    - id: queue-flow
+      source: docs/visuals/queue-flow.yml
+      human_output: docs/generated/queue-flow.mdx
+      agent_output: .clean-docs/visuals/queue-flow.md
+"""
+    )
+    assert main(["--root", str(root), "project"]) == 0
+    base = _commit(root, "add visual")
+    record.write_text(
+        record.read_text().replace(
+            "sends accepted work", "sends validated work"
+        )
+    )
+    head = _commit(root, "clarify visual")
+
+    plan = build_impact_plan(
+        root, root / ".clean-docs.yml", base=base, head=head
+    )
+
+    assert {item.rule for item in plan.required} >= {"projection-refresh"}
+    assert {
+        edge.target
+        for edge in plan.edges
+        if edge.kind == "projects-to"
+        and edge.source == "artifact:docs/visuals/queue-flow.yml"
+    } == {
+        "projection:.clean-docs/visuals/queue-flow.md",
+        "projection:docs/generated/queue-flow.mdx",
+    }
+
+
 def test_plan_uses_merge_base_for_diverged_and_stacked_history(
     tmp_path: Path,
 ) -> None:

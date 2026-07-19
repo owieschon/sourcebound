@@ -106,10 +106,19 @@ class StaticDemoProjection:
 
 
 @dataclass(frozen=True)
+class VisualProjection:
+    id: str
+    source: Path
+    human_output: Path
+    agent_output: Path
+
+
+@dataclass(frozen=True)
 class ProjectionConfig:
     llms_txt: LlmsTxtProjection | None = None
     bundles: tuple[ContextBundleProjection, ...] = ()
     demo: StaticDemoProjection | None = None
+    visuals: tuple[VisualProjection, ...] = ()
 
 
 @dataclass(frozen=True)

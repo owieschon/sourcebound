@@ -20,6 +20,7 @@ from clean_docs.manifest import load_manifest
 from clean_docs.mdx import MdxParserError, parse_mdx
 from clean_docs.models import Manifest, SymbolBinding
 from clean_docs.projections import evaluate_projections
+from clean_docs.visuals import load_visual_record
 from clean_docs.snapshot import RepositorySnapshot
 
 
@@ -445,6 +446,18 @@ def _projection_inputs(manifest: Manifest) -> dict[str, tuple[str, ...]]:
         outputs[demo_projection.output.as_posix()] = (
             demo_projection.evidence.as_posix(),
         )
+    for visual_projection in manifest.projections.visuals:
+        record = load_visual_record(
+            manifest.path.parent / visual_projection.source,
+            visual_projection.id,
+        )
+        inputs = [visual_projection.source.as_posix()]
+        for source in (record.src, record.src_dark):
+            if source is not None and not source.lower().startswith("https://"):
+                inputs.append(source)
+        dependency_set = tuple(sorted(set(inputs)))
+        outputs[visual_projection.human_output.as_posix()] = dependency_set
+        outputs[visual_projection.agent_output.as_posix()] = dependency_set
     return outputs
 
 
@@ -857,13 +870,18 @@ def build_impact_plan(
         manifest_changed = manifest_relative.as_posix() in project_changed
         affected_projections: set[str] = set()
         for output, inputs in projection_inputs.items():
-            projection_triggering = sorted(set(inputs) & affected_docs)
+            projection_triggering = sorted(
+                set(inputs) & (affected_docs | set(project_changed))
+            )
             if projection_triggering or manifest_changed:
                 affected_projections.add(output)
                 for source in projection_triggering:
+                    source_kind = (
+                        "document" if source in affected_docs else "artifact"
+                    )
                     edges.add(
                         ImpactEdge(
-                            f"document:{source}",
+                            f"{source_kind}:{source}",
                             f"projection:{output}",
                             "projects-to",
                         )
