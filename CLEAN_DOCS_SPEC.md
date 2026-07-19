@@ -37,6 +37,7 @@ The table below is part of the shipped capability registry:
 | Repository catalog | Detected additions, removals, and replacements stay visible | Every cataloged item needs or has a reader-facing explanation |
 | Accepted static source claim | The documented count or identifier set matches its accepted source locator | A ranked candidate names the right semantic relationship |
 | Binding sensitivity receipt | One static check becomes stale after one independently frozen source fact changes | The document and source describe the same concept or that the relationship should be accepted |
+| Declared review contract | At two immutable refs, repository-declared source locators changed without every declared target locator changing | The target is stale, a co-change is semantically correct, or the locators describe the same concept |
 | Pull-request verdict | Static configured checks and changed-surface evidence produce the reported state at one pinned commit | Unbound prose, skipped processes, semantic relationships, or authored judgment are correct |
 | Packaged writing policy | Implemented deterministic rules pass | Motivation, pedagogy, personality, or usefulness pass judgment |
 | Authored purpose and scope | Declared markers and configured relationships remain intact | The repository chose the right goals, audience, or priority |
@@ -92,12 +93,31 @@ without resolving or executing imports. Valid MDX enters the checked document co
 or a missing Node.js 20 runtime appears in `unsupported_documents` and makes the impact `unknown`.
 The command's zero exit code means the receipt was built, not that the branch is ready to merge.
 
+Use `review_contracts` to declare exact source and documentation locators that deserve attention
+together. The contract is observe-only. clean-docs compares locator digests at two immutable refs;
+it does not infer relationships from filenames, imports, repository history, or prior co-change.
+A changed source with an unchanged target is `review-recommended`. A changed source whose every
+target also changed is `cochanged`. Both states are advisory. They cannot enter required coverage,
+change gate status, or authorize a write. A co-change records two changes, not completed review or
+semantic correctness. A missing co-change recommends review; it does not prove the target is stale.
+Review-contract graph edges record observation topology only. They do not make an artifact covered
+or change `coverage_complete`. The evaluator reads each path once per immutable ref and reuses
+syntax parses and locator digests within the run. Markdown section boundaries come from parsed
+Markdown and MDX headings, so headings inside comments, code, frontmatter, expressions, ESM blocks,
+and lowercase HTML flow blocks do not define sections. The
+[manifest reference](docs/REFERENCE.md#review-contracts) owns the fixed cardinality and input
+budgets. A manifest above a cardinality limit is invalid. A read, parse, or input-budget failure
+makes the affected observation `unknown`; it does not become gate authority.
+
 Use `verdict --base REF --head REF --format json` for one pull-request decision. It composes the
 audit, static binding, projection, accepted source-claim, changed-surface, impact, and inventory
 library results without executing repository commands or plugins. `ready` means ready only within
-the named `configured-contract-and-changed-surface` scope. `unknown` never exits zero. The receipt
-lists sparse coverage, skipped execution, unsupported documents, and four explicit non-claims, so
-a partial gate cannot present itself as corpus-wide proof. The
+the named `required-gates-and-changed-surface` scope. The `gate` axis controls the exit code through
+`ready`, `not_ready`, or `unknown`. The separate `observations` axis reports `clear`,
+`review-recommended`, or `unknown` and never controls the exit code. Top-level `state` and `ready`
+remain compatibility aliases for `gate`. A ready gate can therefore coexist with incomplete
+observations. The receipt lists sparse coverage, skipped execution, unsupported documents, and six
+explicit non-claims, so a partial gate cannot present itself as corpus-wide proof. The
 [CLI contract](docs/CLI.md#pull-request-verdicts) owns the schema and exit meanings.
 
 Use the [reusable gate](docs/SUPPORT.md#run-the-reusable-pull-request-gate) to carry that verdict
@@ -162,6 +182,11 @@ different authority. It supports `count` locators ending in `#count` and `identi
 ending in `#keys`. A ranked relationship remains advisory; a committed relationship becomes part
 of the configured contract.
 
+The optional `review_contracts` list is separate from bindings and accepted source claims. It
+records repository-declared source and target locators for advisory co-change evidence. It never
+creates repair or gate authority. The [review-contract reference](docs/REFERENCE.md#review-contracts)
+owns its locator rules, tautology guards, work limits, and state meanings.
+
 Current projections are `llms.txt`, exact-byte context bundles, and the static recorded demo.
 Provider context can also be compiled as a read-only, source-addressed
 `clean-docs.context-bundle.v1`. The request pins the repository commit and each source line range.
@@ -180,6 +205,11 @@ Static adapters parse Python, TypeScript, JavaScript, OpenAPI, JSON Schema, pack
 configuration schemas without importing repository modules. Immutable read-only snapshots preserve
 relative symlinks whose targets stay inside the snapshot and reject escaping links. A claim command
 or plugin runs only when the manifest declares its exact argument array.
+
+A project-scoped impact plan materializes only the selected repository subtree from each immutable
+ref, plus transitive repository-internal targets required by symlinks in that subtree. Absolute or
+escaping symlinks fail. Read the receipt's `project` field before reusing an `impact: none`
+conclusion: omitted sibling projects and materialized symlink targets are not covered surfaces.
 
 Declared processes receive a disposable repository copy, temporary directories, a minimal
 environment, a timeout, an I/O limit, symlink checks, and secret-output checks. These controls are
@@ -219,6 +249,7 @@ clean-docs does not:
 - decide that every detected symbol deserves reader documentation;
 - treat a ranked source-claim candidate as proof or rewrite unrelated prose after a source change;
 - treat mutation sensitivity as semantic correctness or relationship authority;
+- infer review relationships or treat source-target co-change as semantic correctness;
 - use model judgment as a required gate;
 - provide operating-system or network isolation;
 - maintain a hosted service, account system, or runtime dashboard;

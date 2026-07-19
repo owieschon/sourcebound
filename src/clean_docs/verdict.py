@@ -7,7 +7,7 @@ import json
 import subprocess
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Mapping
+from typing import Iterable, Mapping
 
 from clean_docs import __version__
 from clean_docs.errors import ConfigurationError
@@ -23,7 +23,9 @@ NON_CLAIMS = (
     "unbound prose is not certified",
     "judgment prose is not certified",
     "mutation sensitivity is not semantic correctness",
+    "review-contract co-change is not semantic correctness",
     "catalog coverage is not prose coverage",
+    "gate readiness is not observation completeness",
 )
 
 
@@ -96,12 +98,9 @@ class PullRequestVerdict:
         }
         mechanism_states = {
             mechanism: {
-                "total": sum(
-                    result.binding_type == mechanism for result in bindings
-                ),
+                "total": sum(result.binding_type == mechanism for result in bindings),
                 "current": sum(
-                    result.binding_type == mechanism
-                    and not result.changed
+                    result.binding_type == mechanism and not result.changed
                     for result in bindings
                 ),
                 "drifted": sum(
@@ -118,12 +117,38 @@ class PullRequestVerdict:
             }
             for mechanism in ("region", "command-pin", "symbol", "plugin")
         }
+        review_contract_states = {
+            state: sum(result.state == state for result in self.impact.review_contracts)
+            for state in (
+                "unaffected",
+                "review-recommended",
+                "cochanged",
+                "unknown",
+            )
+        }
+        observation_state = (
+            "unknown"
+            if review_contract_states["unknown"]
+            else "review-recommended"
+            if review_contract_states["review-recommended"]
+            else "clear"
+        )
         return {
             "schema": VERDICT_SCHEMA,
             "producer": {"name": "clean-docs", "version": __version__},
             "state": self.state,
             "ready": self.ok,
-            "scope": "configured-contract-and-changed-surface",
+            "gate": {
+                "state": self.state,
+                "ready": self.ok,
+            },
+            "observations": {
+                "state": observation_state,
+                "complete": review_contract_states["unknown"] == 0,
+                "total": len(self.impact.review_contracts),
+                "counts": review_contract_states,
+            },
+            "scope": "required-gates-and-changed-surface",
             "read_only": True,
             "refs": {
                 "requested_base": self.requested_base,
@@ -174,8 +199,7 @@ class PullRequestVerdict:
                         0
                         if source_claims is None
                         else sum(
-                            result.status == "drift"
-                            for result in source_claims.results
+                            result.status == "drift" for result in source_claims.results
                         )
                     ),
                     "missing": (
@@ -186,6 +210,11 @@ class PullRequestVerdict:
                     "total": len(projections),
                     "current": sum(not result.changed for result in projections),
                     "stale": sum(result.changed for result in projections),
+                },
+                "review-contract": {
+                    "total": len(self.impact.review_contracts),
+                    **review_contract_states,
+                    "semantic_correctness_checked": False,
                 },
             },
             "changed_surface": {
@@ -202,12 +231,8 @@ class PullRequestVerdict:
                     "unrelated": len(self.impact.unrelated),
                     "unknown": len(self.impact.unknown),
                 },
-                "artifacts": [
-                    asdict(artifact) for artifact in self.impact.artifacts
-                ],
-                "unsupported_documents": list(
-                    self.impact.unsupported_documents
-                ),
+                "artifacts": [asdict(artifact) for artifact in self.impact.artifacts],
+                "unsupported_documents": list(self.impact.unsupported_documents),
             },
             "coverage": {
                 "inventory_total": len(inventory.items),
@@ -219,6 +244,9 @@ class PullRequestVerdict:
             },
             "mutation_receipts": [
                 asdict(receipt) for receipt in self.mutation_receipts
+            ],
+            "review_contracts": [
+                result.as_dict() for result in self.impact.review_contracts
             ],
             "findings": [asdict(finding) for finding in self.findings],
             "non_claims": list(NON_CLAIMS),
@@ -240,27 +268,776 @@ def _digest(value: object) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
+def _object(
+    value: object,
+    where: str,
+    keys: frozenset[str],
+) -> dict[str, object]:
+    if not isinstance(value, dict):
+        raise ConfigurationError(f"{where} must be an object")
+    actual = frozenset(value)
+    if actual != keys:
+        raise ConfigurationError(f"{where} fields are invalid")
+    return value
+
+
+def _string(value: object, where: str) -> str:
+    if not isinstance(value, str) or not value:
+        raise ConfigurationError(f"{where} must be a non-empty string")
+    return value
+
+
+def _boolean(value: object, where: str) -> bool:
+    if not isinstance(value, bool):
+        raise ConfigurationError(f"{where} must be a boolean")
+    return value
+
+
+def _count(value: object, where: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ConfigurationError(f"{where} must be a non-negative integer")
+    return value
+
+
+def _strings(value: object, where: str) -> list[str]:
+    if not isinstance(value, (list, tuple)) or not all(
+        isinstance(item, str) for item in value
+    ):
+        raise ConfigurationError(f"{where} must be a list of strings")
+    return list(value)
+
+
+def _sha256_or_none(value: object, where: str) -> str | None:
+    if value is None:
+        return None
+    digest = _string(value, where)
+    if len(digest) != 64 or any(
+        character not in "0123456789abcdef" for character in digest
+    ):
+        raise ConfigurationError(f"{where} must be a lowercase SHA-256 digest")
+    return digest
+
+
+def _validate_count_group(
+    value: object,
+    where: str,
+    fields: tuple[str, ...],
+) -> dict[str, int]:
+    data = _object(value, where, frozenset(("total", *fields)))
+    counts = {
+        field: _count(data[field], f"{where}.{field}") for field in ("total", *fields)
+    }
+    if counts["total"] != sum(counts[field] for field in fields):
+        raise ConfigurationError(f"{where} counts do not sum to total")
+    return counts
+
+
+def _validate_locator_evidence(
+    value: object,
+    where: str,
+) -> tuple[str, str | None, str | None]:
+    data = _object(
+        value,
+        where,
+        frozenset(
+            {
+                "id",
+                "path",
+                "extractor",
+                "locator",
+                "base_digest",
+                "head_digest",
+                "state",
+            }
+        ),
+    )
+    _string(data["id"], f"{where}.id")
+    _string(data["path"], f"{where}.path")
+    extractor = data["extractor"]
+    if extractor not in {
+        "markdown-section",
+        "python-symbol",
+        "structured-data",
+    }:
+        raise ConfigurationError(f"{where}.extractor is invalid")
+    _string(data["locator"], f"{where}.locator")
+    base_digest = _sha256_or_none(data["base_digest"], f"{where}.base_digest")
+    head_digest = _sha256_or_none(data["head_digest"], f"{where}.head_digest")
+    state = data["state"]
+    if state not in {"added", "changed", "removed", "unchanged", "unknown"}:
+        raise ConfigurationError(f"{where}.state is invalid")
+    if state == "added" and not (base_digest is None and head_digest is not None):
+        raise ConfigurationError(f"{where} added state contradicts its digests")
+    if state == "removed" and not (base_digest is not None and head_digest is None):
+        raise ConfigurationError(f"{where} removed state contradicts its digests")
+    if state == "changed" and not (
+        base_digest is not None
+        and head_digest is not None
+        and base_digest != head_digest
+    ):
+        raise ConfigurationError(f"{where} changed state contradicts its digests")
+    if state == "unchanged" and not (
+        base_digest is not None and base_digest == head_digest
+    ):
+        raise ConfigurationError(f"{where} unchanged state contradicts its digests")
+    if state == "unknown" and base_digest is not None and head_digest is not None:
+        raise ConfigurationError(f"{where} unknown state contradicts its digests")
+    return state, base_digest, head_digest
+
+
+def _validate_review_contract(
+    value: object,
+    where: str,
+) -> str:
+    data = _object(
+        value,
+        where,
+        frozenset(
+            {
+                "id",
+                "mode",
+                "state",
+                "sources",
+                "targets",
+                "semantic_correctness_checked",
+            }
+        ),
+    )
+    _string(data["id"], f"{where}.id")
+    if data["mode"] != "observe":
+        raise ConfigurationError(f"{where}.mode must be observe")
+    if data["semantic_correctness_checked"] is not False:
+        raise ConfigurationError(f"{where}.semantic_correctness_checked must be false")
+    source_values = data["sources"]
+    target_values = data["targets"]
+    if not isinstance(source_values, list) or not source_values:
+        raise ConfigurationError(f"{where}.sources must be a non-empty list")
+    if not isinstance(target_values, list) or not target_values:
+        raise ConfigurationError(f"{where}.targets must be a non-empty list")
+    source_states = [
+        _validate_locator_evidence(item, f"{where}.sources[{index}]")[0]
+        for index, item in enumerate(source_values)
+    ]
+    target_results = [
+        _validate_locator_evidence(item, f"{where}.targets[{index}]")
+        for index, item in enumerate(target_values)
+    ]
+    target_states = [result[0] for result in target_results]
+    target_head_digests = [result[2] for result in target_results]
+    expected = (
+        "unknown"
+        if "unknown" in source_states + target_states
+        or any(digest is None for digest in target_head_digests)
+        else "unaffected"
+        if not any(state in {"added", "changed", "removed"} for state in source_states)
+        else "cochanged"
+        if all(state in {"added", "changed"} for state in target_states)
+        else "review-recommended"
+    )
+    state = data["state"]
+    if state != expected:
+        raise ConfigurationError(f"{where}.state contradicts locator evidence")
+    return expected
+
+
+def _derive_gate_state(
+    finding_levels: Iterable[str],
+    *,
+    coverage_complete: bool,
+    impact: str,
+) -> str:
+    levels = tuple(finding_levels)
+    if "error" in levels:
+        return "not_ready"
+    if not coverage_complete or impact == "unknown" or "warning" in levels:
+        return "unknown"
+    return "ready"
+
+
+def _validate_findings(value: object) -> tuple[str, ...]:
+    if not isinstance(value, list):
+        raise ConfigurationError("verdict findings must be a list")
+    levels: list[str] = []
+    for finding in value:
+        finding_data = _object(
+            finding,
+            "verdict finding",
+            frozenset({"id", "rule", "level", "path", "message", "repair"}),
+        )
+        for field in ("id", "rule", "path", "message", "repair"):
+            _string(finding_data[field], f"verdict finding {field}")
+        if finding_data["level"] not in {"error", "warning", "note"}:
+            raise ConfigurationError("verdict finding level is invalid")
+        levels.append(finding_data["level"])
+    return tuple(levels)
+
+
+def _validate_legacy_verdict_payload(payload: Mapping[str, object]) -> None:
+    allowed = (
+        frozenset({"schema", "state", "ready", "findings", "digest"}),
+        frozenset({"schema", "producer", "state", "ready", "findings", "digest"}),
+    )
+    if frozenset(payload) not in allowed:
+        raise ConfigurationError("legacy verdict fields are invalid")
+    state = payload["state"]
+    if state not in {"ready", "not_ready", "unknown"}:
+        raise ConfigurationError("legacy verdict state is invalid")
+    ready = _boolean(payload["ready"], "legacy verdict.ready")
+    if ready != (state == "ready"):
+        raise ConfigurationError("legacy verdict ready contradicts state")
+    if "producer" in payload:
+        producer = _object(
+            payload["producer"],
+            "legacy verdict.producer",
+            frozenset({"name", "version"}),
+        )
+        if producer["name"] != "clean-docs":
+            raise ConfigurationError("legacy verdict.producer.name must be clean-docs")
+        _string(producer["version"], "legacy verdict.producer.version")
+    findings = payload["findings"]
+    if not isinstance(findings, list):
+        raise ConfigurationError("legacy verdict findings must be a list")
+    if findings:
+        _validate_findings(findings)
+
+
 def validate_verdict_payload(payload: Mapping[str, object]) -> None:
     """Reject a serialized verdict that cannot be the output of this schema."""
     if payload.get("schema") != VERDICT_SCHEMA:
         raise ConfigurationError(f"verdict schema must be {VERDICT_SCHEMA}")
-    if payload.get("state") not in {"ready", "not_ready", "unknown"}:
-        raise ConfigurationError("verdict state is invalid")
     digest = payload.get("digest")
-    if not isinstance(digest, str):
+    if _sha256_or_none(digest, "verdict digest") is None:
         raise ConfigurationError("verdict digest is missing")
     unsigned = {key: value for key, value in payload.items() if key != "digest"}
     if _digest(unsigned) != digest:
         raise ConfigurationError("verdict digest does not match its payload")
-    findings = payload.get("findings")
-    if not isinstance(findings, list):
-        raise ConfigurationError("verdict findings must be a list")
-    for finding in findings:
-        if not isinstance(finding, dict):
-            raise ConfigurationError("verdict finding must be an object")
-        required = ("id", "rule", "level", "path", "message", "repair")
-        if any(not isinstance(finding.get(field), str) for field in required):
-            raise ConfigurationError("verdict finding fields are invalid")
+    if "gate" not in payload:
+        _validate_legacy_verdict_payload(payload)
+        return
+
+    data = _object(
+        dict(payload),
+        "verdict",
+        frozenset(
+            {
+                "schema",
+                "producer",
+                "state",
+                "ready",
+                "gate",
+                "observations",
+                "scope",
+                "read_only",
+                "refs",
+                "inputs",
+                "execution",
+                "audit",
+                "mechanisms",
+                "changed_surface",
+                "coverage",
+                "mutation_receipts",
+                "review_contracts",
+                "findings",
+                "non_claims",
+                "digest",
+            }
+        ),
+    )
+    producer = _object(
+        data["producer"],
+        "verdict.producer",
+        frozenset({"name", "version"}),
+    )
+    if producer["name"] != "clean-docs":
+        raise ConfigurationError("verdict.producer.name must be clean-docs")
+    _string(producer["version"], "verdict.producer.version")
+
+    states = {"ready", "not_ready", "unknown"}
+    state = data["state"]
+    if state not in states:
+        raise ConfigurationError("verdict state is invalid")
+    ready = _boolean(data["ready"], "verdict.ready")
+    if ready != (state == "ready"):
+        raise ConfigurationError("verdict ready contradicts state")
+    gate = _object(
+        data["gate"],
+        "verdict.gate",
+        frozenset({"state", "ready"}),
+    )
+    if gate["state"] not in states:
+        raise ConfigurationError("verdict.gate.state is invalid")
+    gate_ready = _boolean(gate["ready"], "verdict.gate.ready")
+    if gate["state"] != state or gate_ready != ready:
+        raise ConfigurationError("legacy verdict aliases must match gate")
+
+    if data["scope"] != "required-gates-and-changed-surface":
+        raise ConfigurationError("verdict scope is invalid")
+    if data["read_only"] is not True:
+        raise ConfigurationError("verdict read_only must be true")
+
+    refs = _object(
+        data["refs"],
+        "verdict.refs",
+        frozenset({"requested_base", "merge_base", "head"}),
+    )
+    for field in ("requested_base", "merge_base", "head"):
+        _string(refs[field], f"verdict.refs.{field}")
+
+    inputs = _object(
+        data["inputs"],
+        "verdict.inputs",
+        frozenset({"manifest", "manifest_sha256", "impact_plan_sha256"}),
+    )
+    _string(inputs["manifest"], "verdict.inputs.manifest")
+    if (
+        _sha256_or_none(
+            inputs["manifest_sha256"],
+            "verdict.inputs.manifest_sha256",
+        )
+        is None
+    ):
+        raise ConfigurationError("verdict.inputs.manifest_sha256 is missing")
+    if (
+        _sha256_or_none(
+            inputs["impact_plan_sha256"],
+            "verdict.inputs.impact_plan_sha256",
+        )
+        is None
+    ):
+        raise ConfigurationError("verdict.inputs.impact_plan_sha256 is missing")
+
+    execution = _object(
+        data["execution"],
+        "verdict.execution",
+        frozenset(
+            {
+                "mode",
+                "repository_commands",
+                "plugins",
+                "skipped_binding_ids",
+                "skipped_command_ids",
+                "skipped_plugin_ids",
+            }
+        ),
+    )
+    if execution["mode"] != ExecutionPolicy.STATIC_ONLY.value:
+        raise ConfigurationError("verdict.execution.mode is invalid")
+    if execution["repository_commands"] != "skipped":
+        raise ConfigurationError(
+            "verdict.execution.repository_commands must be skipped"
+        )
+    if execution["plugins"] != "skipped":
+        raise ConfigurationError("verdict.execution.plugins must be skipped")
+    for field in (
+        "skipped_binding_ids",
+        "skipped_command_ids",
+        "skipped_plugin_ids",
+    ):
+        values = _strings(execution[field], f"verdict.execution.{field}")
+        if values != sorted(set(values)):
+            raise ConfigurationError(
+                f"verdict.execution.{field} must be sorted and unique"
+            )
+
+    audit = _object(
+        data["audit"],
+        "verdict.audit",
+        frozenset(
+            {
+                "ok",
+                "active_documents",
+                "findings",
+                "baselined",
+                "stale_baseline",
+                "baseline_current",
+                "unsupported_documents",
+            }
+        ),
+    )
+    audit_ok = _boolean(audit["ok"], "verdict.audit.ok")
+    audit_findings = _count(audit["findings"], "verdict.audit.findings")
+    stale_baseline = _count(
+        audit["stale_baseline"],
+        "verdict.audit.stale_baseline",
+    )
+    _count(audit["active_documents"], "verdict.audit.active_documents")
+    _count(audit["baselined"], "verdict.audit.baselined")
+    baseline_current = _boolean(
+        audit["baseline_current"],
+        "verdict.audit.baseline_current",
+    )
+    _strings(
+        audit["unsupported_documents"],
+        "verdict.audit.unsupported_documents",
+    )
+    if baseline_current != (stale_baseline == 0):
+        raise ConfigurationError(
+            "verdict.audit.baseline_current contradicts stale_baseline"
+        )
+    if audit_ok != (audit_findings == 0 and stale_baseline == 0):
+        raise ConfigurationError("verdict.audit.ok contradicts audit counts")
+
+    mechanisms = _object(
+        data["mechanisms"],
+        "verdict.mechanisms",
+        frozenset(
+            {
+                "region",
+                "command-pin",
+                "symbol",
+                "plugin",
+                "source-claim",
+                "projection",
+                "review-contract",
+            }
+        ),
+    )
+    for mechanism in ("region", "command-pin", "symbol", "plugin"):
+        _validate_count_group(
+            mechanisms[mechanism],
+            f"verdict.mechanisms.{mechanism}",
+            ("current", "drifted", "skipped"),
+        )
+    source_claim = _object(
+        mechanisms["source-claim"],
+        "verdict.mechanisms.source-claim",
+        frozenset({"total", "current", "drifted", "missing"}),
+    )
+    source_claim_counts = {
+        field: _count(
+            source_claim[field],
+            f"verdict.mechanisms.source-claim.{field}",
+        )
+        for field in ("total", "current", "drifted", "missing")
+    }
+    if source_claim_counts["total"] != (
+        source_claim_counts["current"] + source_claim_counts["drifted"]
+    ):
+        raise ConfigurationError(
+            "verdict.mechanisms.source-claim counts do not sum to total"
+        )
+    _validate_count_group(
+        mechanisms["projection"],
+        "verdict.mechanisms.projection",
+        ("current", "stale"),
+    )
+
+    review_mechanism = _object(
+        mechanisms["review-contract"],
+        "verdict.mechanisms.review-contract",
+        frozenset(
+            {
+                "total",
+                "unaffected",
+                "review-recommended",
+                "cochanged",
+                "unknown",
+                "semantic_correctness_checked",
+            }
+        ),
+    )
+    if review_mechanism["semantic_correctness_checked"] is not False:
+        raise ConfigurationError(
+            "verdict.mechanisms.review-contract semantic check must be false"
+        )
+    review_counts = {
+        field: _count(
+            review_mechanism[field],
+            f"verdict.mechanisms.review-contract.{field}",
+        )
+        for field in (
+            "total",
+            "unaffected",
+            "review-recommended",
+            "cochanged",
+            "unknown",
+        )
+    }
+    if review_counts["total"] != sum(
+        review_counts[field]
+        for field in (
+            "unaffected",
+            "review-recommended",
+            "cochanged",
+            "unknown",
+        )
+    ):
+        raise ConfigurationError(
+            "verdict.mechanisms.review-contract counts do not sum to total"
+        )
+
+    changed = _object(
+        data["changed_surface"],
+        "verdict.changed_surface",
+        frozenset(
+            {
+                "files",
+                "required",
+                "gaps",
+                "ignored",
+                "unknown",
+                "coverage_complete",
+                "impact",
+                "impact_findings",
+                "artifacts",
+                "unsupported_documents",
+            }
+        ),
+    )
+    _strings(changed["files"], "verdict.changed_surface.files")
+    for field in ("required", "gaps", "ignored", "unknown"):
+        _count(changed[field], f"verdict.changed_surface.{field}")
+    coverage_complete = _boolean(
+        changed["coverage_complete"],
+        "verdict.changed_surface.coverage_complete",
+    )
+    if changed["impact"] not in {"none", "recommended", "required", "unknown"}:
+        raise ConfigurationError("verdict.changed_surface.impact is invalid")
+    impact_counts_data = _object(
+        changed["impact_findings"],
+        "verdict.changed_surface.impact_findings",
+        frozenset({"required", "recommended", "unrelated", "unknown"}),
+    )
+    impact_counts = {
+        field: _count(
+            impact_counts_data[field],
+            f"verdict.changed_surface.impact_findings.{field}",
+        )
+        for field in ("required", "recommended", "unrelated", "unknown")
+    }
+    expected_impact = (
+        "unknown"
+        if impact_counts["unknown"]
+        else "required"
+        if impact_counts["required"]
+        else "recommended"
+        if impact_counts["recommended"]
+        else "none"
+    )
+    if changed["impact"] != expected_impact:
+        raise ConfigurationError(
+            "verdict.changed_surface.impact contradicts finding counts"
+        )
+    if changed["unknown"] != impact_counts["unknown"]:
+        raise ConfigurationError("verdict.changed_surface unknown counts disagree")
+    if coverage_complete != (impact_counts["unknown"] == 0):
+        raise ConfigurationError(
+            "verdict.changed_surface coverage contradicts unknown count"
+        )
+    artifacts = changed["artifacts"]
+    if not isinstance(artifacts, list):
+        raise ConfigurationError("verdict.changed_surface.artifacts must be a list")
+    for index, artifact_value in enumerate(artifacts):
+        artifact = _object(
+            artifact_value,
+            f"verdict.changed_surface.artifacts[{index}]",
+            frozenset(
+                {
+                    "path",
+                    "change",
+                    "base_blob",
+                    "head_blob",
+                    "adapter",
+                    "decision",
+                    "may_expose_public_surface",
+                    "coverage",
+                    "graph_roots",
+                }
+            ),
+        )
+        _string(artifact["path"], f"verdict artifact {index}.path")
+        if artifact["change"] not in {"added", "modified", "removed"}:
+            raise ConfigurationError(f"verdict artifact {index}.change is invalid")
+        for field in ("base_blob", "head_blob"):
+            if artifact[field] is not None:
+                _string(artifact[field], f"verdict artifact {index}.{field}")
+        _string(artifact["adapter"], f"verdict artifact {index}.adapter")
+        _string(artifact["decision"], f"verdict artifact {index}.decision")
+        _boolean(
+            artifact["may_expose_public_surface"],
+            f"verdict artifact {index}.may_expose_public_surface",
+        )
+        if artifact["coverage"] not in {
+            "adapter-covered",
+            "document-direct",
+            "generated",
+            "graph-covered",
+            "unknown",
+            "unrelated-covered",
+        }:
+            raise ConfigurationError(f"verdict artifact {index}.coverage is invalid")
+        _strings(artifact["graph_roots"], f"verdict artifact {index}.graph_roots")
+    _strings(
+        changed["unsupported_documents"],
+        "verdict.changed_surface.unsupported_documents",
+    )
+
+    coverage = _object(
+        data["coverage"],
+        "verdict.coverage",
+        frozenset(
+            {
+                "inventory_total",
+                "directly_bound",
+                "catalog_only",
+                "ignored",
+                "unsupported_or_unknown",
+                "unbound_prose_checked",
+            }
+        ),
+    )
+    coverage_counts = {
+        field: _count(coverage[field], f"verdict.coverage.{field}")
+        for field in (
+            "inventory_total",
+            "directly_bound",
+            "catalog_only",
+            "ignored",
+            "unsupported_or_unknown",
+        )
+    }
+    if coverage_counts["inventory_total"] != sum(
+        coverage_counts[field]
+        for field in (
+            "directly_bound",
+            "catalog_only",
+            "ignored",
+            "unsupported_or_unknown",
+        )
+    ):
+        raise ConfigurationError("verdict coverage counts do not sum to total")
+    if coverage["unbound_prose_checked"] is not False:
+        raise ConfigurationError("verdict.coverage.unbound_prose_checked must be false")
+
+    review_contracts = data["review_contracts"]
+    if not isinstance(review_contracts, list):
+        raise ConfigurationError("verdict.review_contracts must be a list")
+    calculated_review_counts = {
+        "unaffected": 0,
+        "review-recommended": 0,
+        "cochanged": 0,
+        "unknown": 0,
+    }
+    for index, contract in enumerate(review_contracts):
+        contract_state = _validate_review_contract(
+            contract,
+            f"verdict.review_contracts[{index}]",
+        )
+        calculated_review_counts[contract_state] += 1
+    if len(review_contracts) != review_counts["total"] or any(
+        calculated_review_counts[field] != review_counts[field]
+        for field in calculated_review_counts
+    ):
+        raise ConfigurationError(
+            "verdict review-contract mechanism counts disagree with evidence"
+        )
+
+    observations = _object(
+        data["observations"],
+        "verdict.observations",
+        frozenset({"state", "complete", "total", "counts"}),
+    )
+    observation_counts_data = _object(
+        observations["counts"],
+        "verdict.observations.counts",
+        frozenset(calculated_review_counts),
+    )
+    observation_counts = {
+        field: _count(
+            observation_counts_data[field],
+            f"verdict.observations.counts.{field}",
+        )
+        for field in calculated_review_counts
+    }
+    observation_total = _count(
+        observations["total"],
+        "verdict.observations.total",
+    )
+    if observation_counts != calculated_review_counts or observation_total != len(
+        review_contracts
+    ):
+        raise ConfigurationError(
+            "verdict observations disagree with review-contract evidence"
+        )
+    expected_observation_state = (
+        "unknown"
+        if observation_counts["unknown"]
+        else "review-recommended"
+        if observation_counts["review-recommended"]
+        else "clear"
+    )
+    if observations["state"] != expected_observation_state:
+        raise ConfigurationError("verdict observation state contradicts its counts")
+    observation_complete = _boolean(
+        observations["complete"],
+        "verdict.observations.complete",
+    )
+    if observation_complete != (observation_counts["unknown"] == 0):
+        raise ConfigurationError(
+            "verdict observation completeness contradicts unknown count"
+        )
+
+    mutation_receipts = data["mutation_receipts"]
+    if not isinstance(mutation_receipts, list):
+        raise ConfigurationError("verdict.mutation_receipts must be a list")
+    for index, receipt_value in enumerate(mutation_receipts):
+        receipt = _object(
+            receipt_value,
+            f"verdict.mutation_receipts[{index}]",
+            frozenset(
+                {
+                    "sha256",
+                    "state",
+                    "relationship_id",
+                    "plan_sha256",
+                    "semantic_relationship_authorized",
+                }
+            ),
+        )
+        _sha256_or_none(
+            receipt["sha256"],
+            f"verdict.mutation_receipts[{index}].sha256",
+        )
+        if receipt["state"] not in {
+            "sensitive",
+            "insensitive",
+            "invalid",
+            "unsupported",
+        }:
+            raise ConfigurationError(
+                f"verdict.mutation_receipts[{index}].state is invalid"
+            )
+        _string(
+            receipt["relationship_id"],
+            f"verdict.mutation_receipts[{index}].relationship_id",
+        )
+        plan_digest = _sha256_or_none(
+            receipt["plan_sha256"],
+            f"verdict.mutation_receipts[{index}].plan_sha256",
+        )
+        if receipt["state"] in {"sensitive", "insensitive"} and plan_digest is None:
+            raise ConfigurationError(
+                f"verdict.mutation_receipts[{index}] requires a plan digest"
+            )
+        if receipt["semantic_relationship_authorized"] is not False:
+            raise ConfigurationError(
+                f"verdict.mutation_receipts[{index}] cannot authorize semantics"
+            )
+
+    finding_levels = _validate_findings(data["findings"])
+    expected_gate_state = _derive_gate_state(
+        finding_levels,
+        coverage_complete=coverage_complete,
+        impact=changed["impact"],
+    )
+    if state != expected_gate_state:
+        raise ConfigurationError(
+            "verdict gate state contradicts validated evidence"
+        )
+
+    non_claims = _strings(data["non_claims"], "verdict.non_claims")
+    if tuple(non_claims) != NON_CLAIMS:
+        raise ConfigurationError("verdict non_claims are invalid")
 
 
 def _git(root: Path, *args: str) -> bytes:
@@ -301,16 +1078,12 @@ def _mutation_summary(path: Path, head: str) -> MutationReceiptSummary:
         raise ConfigurationError("mutation receipt must not be a symbolic link")
     receipt, raw = load_json_object(path, "mutation receipt")
     if receipt.get("schema") != RECEIPT_SCHEMA:
-        raise ConfigurationError(
-            f"mutation receipt schema must be {RECEIPT_SCHEMA}"
-        )
+        raise ConfigurationError(f"mutation receipt schema must be {RECEIPT_SCHEMA}")
     repository = receipt.get("repository")
     inputs = receipt.get("inputs")
     if not isinstance(repository, dict) or repository.get("commit") != head:
         raise ConfigurationError("mutation receipt commit does not match verdict head")
-    if not isinstance(inputs, dict) or not isinstance(
-        inputs.get("relationship"), dict
-    ):
+    if not isinstance(inputs, dict) or not isinstance(inputs.get("relationship"), dict):
         raise ConfigurationError("mutation receipt has no relationship identity")
     relationship_id = inputs["relationship"].get("id")
     if not isinstance(relationship_id, str) or not relationship_id:
@@ -423,11 +1196,7 @@ def _collect_findings(
             )
     assert evidence.changed is not None
     for changed_finding in evidence.changed.required:
-        level = (
-            "warning"
-            if changed_finding.rule == "execution-skipped"
-            else "error"
-        )
+        level = "warning" if changed_finding.rule == "execution-skipped" else "error"
         findings.append(
             _finding(
                 changed_finding.rule,
@@ -452,16 +1221,39 @@ def _collect_findings(
             _finding(
                 impact_unknown.rule,
                 "warning",
-                (
-                    impact_unknown.paths[0]
-                    if impact_unknown.paths
-                    else impact.manifest
-                ),
+                (impact_unknown.paths[0] if impact_unknown.paths else impact.manifest),
                 impact_unknown.message,
                 "resolve the unsupported surface or declare its disposition, "
                 "then rerun clean-docs plan",
             )
         )
+    for contract in impact.review_contracts:
+        targets = contract.targets or contract.sources
+        path = targets[0].path if targets else impact.manifest
+        if contract.state == "review-recommended":
+            findings.append(
+                _finding(
+                    "review-contract-review-recommended",
+                    "note",
+                    path,
+                    f"review contract {contract.contract_id} observed source "
+                    "change without substantive target change",
+                    "review the configured target against the source evidence; "
+                    "update it only if the documented guidance changed",
+                )
+            )
+        elif contract.state == "unknown":
+            findings.append(
+                _finding(
+                    "review-contract-unknown",
+                    "note",
+                    path,
+                    f"review contract {contract.contract_id} could not resolve "
+                    "every configured locator",
+                    "repair the unresolved review-contract locator, then rerun "
+                    "clean-docs verdict",
+                )
+            )
     unique = {finding.id: finding for finding in findings}
     return tuple(
         sorted(
@@ -510,13 +1302,11 @@ def build_pr_verdict(
         use_cache=False,
     )
     findings = _collect_findings(evidence, impact)
-    errors = any(finding.level == "error" for finding in findings)
-    unknown = (
-        not impact.coverage_complete
-        or impact.impact == "unknown"
-        or any(finding.level == "warning" for finding in findings)
+    state = _derive_gate_state(
+        (finding.level for finding in findings),
+        coverage_complete=impact.coverage_complete,
+        impact=impact.impact,
     )
-    state = "not_ready" if errors else "unknown" if unknown else "ready"
     try:
         manifest_relative = manifest_path.resolve().relative_to(root).as_posix()
     except ValueError as exc:
@@ -551,11 +1341,7 @@ def render_verdict_payload_sarif(payload: Mapping[str, object]) -> str:
     if not isinstance(version, str):
         raise ConfigurationError("verdict producer version is invalid")
     rules = sorted(
-        {
-            str(finding["rule"])
-            for finding in findings
-            if isinstance(finding, dict)
-        }
+        {str(finding["rule"]) for finding in findings if isinstance(finding, dict)}
     )
     sarif = {
         "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
@@ -569,9 +1355,7 @@ def render_verdict_payload_sarif(payload: Mapping[str, object]) -> str:
                         "rules": [
                             {
                                 "id": rule,
-                                "shortDescription": {
-                                    "text": rule.replace("-", " ")
-                                },
+                                "shortDescription": {"text": rule.replace("-", " ")},
                             }
                             for rule in rules
                         ],
@@ -590,15 +1374,11 @@ def render_verdict_payload_sarif(payload: Mapping[str, object]) -> str:
                                 f"{finding['message']}. Repair: {finding['repair']}"
                             )
                         },
-                        "partialFingerprints": {
-                            "cleanDocsFindingId": finding["id"]
-                        },
+                        "partialFingerprints": {"cleanDocsFindingId": finding["id"]},
                         "locations": [
                             {
                                 "physicalLocation": {
-                                    "artifactLocation": {
-                                        "uri": finding["path"]
-                                    }
+                                    "artifactLocation": {"uri": finding["path"]}
                                 }
                             }
                         ],

@@ -114,6 +114,67 @@ tasks:
     return root
 
 
+def _review_contract_repository(
+    tmp_path: Path,
+    *,
+    project: Path = Path("."),
+) -> tuple[Path, Path]:
+    root = tmp_path / "review-repository"
+    project_root = root if project == Path(".") else root / project
+    (project_root / "src").mkdir(parents=True)
+    (project_root / "docs").mkdir()
+    subprocess.run(["git", "init", "-q", "-b", "main", str(root)], check=True)
+    (project_root / "src/stable.py").write_text(
+        "def stable_api():\n    return 'stable'\n"
+    )
+    (project_root / "src/delivery.py").write_text(
+        "PAGE_LENGTH = 8000\n"
+        "UNRELATED_LIMIT = 10\n\n"
+        "class Delivery:\n"
+        "    def page(self):\n"
+        "        return PAGE_LENGTH\n\n"
+        "    def unrelated(self):\n"
+        "        return UNRELATED_LIMIT\n"
+    )
+    (project_root / "README.md").write_text(
+        "# Fixture\n\n## API\n\n`stable_api` is the supported entry point.\n"
+    )
+    (project_root / "docs/delivery.md").write_text(
+        "# Delivery\n\n"
+        "## Fetching pages\n\n"
+        "Fetch the next page from the returned offset.\n"
+    )
+    (project_root / ".clean-docs.yml").write_text(
+        """\
+version: 1
+bindings:
+  - id: stable-api
+    type: symbol
+    doc: README.md
+    anchor: api
+    source: {path: src/stable.py, symbol: stable_api}
+review_contracts:
+  - id: delivery-paging
+    mode: observe
+    sources:
+      - id: page-length
+        path: src/delivery.py
+        extractor: python-symbol
+        locator: PAGE_LENGTH
+      - id: page-method
+        path: src/delivery.py
+        extractor: python-symbol
+        locator: Delivery.page
+    targets:
+      - id: fetching-pages
+        path: docs/delivery.md
+        extractor: markdown-section
+        locator: "#fetching-pages"
+"""
+    )
+    return root, project_root
+
+
 def test_python_interface_fingerprints_request_stable_empty_ast_fields(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -154,9 +215,13 @@ def test_impact_plan_materializes_each_immutable_revision_once(
     original = RepositorySnapshot.materialized_root
 
     @contextmanager
-    def counted(snapshot: RepositorySnapshot) -> Iterator[Path]:
+    def counted(
+        snapshot: RepositorySnapshot,
+        *,
+        paths: tuple[Path, ...] = (),
+    ) -> Iterator[Path]:
         counts[snapshot.label] += 1
-        with original(snapshot) as materialized:
+        with original(snapshot, paths=paths) as materialized:
             yield materialized
 
     monkeypatch.setattr(RepositorySnapshot, "materialized_root", counted)
@@ -220,6 +285,228 @@ def test_private_refactor_produces_coverage_complete_stable_no_impact(
     }
     assert payload["digest"] == first.digest
     assert payload["no_impact"] is True
+
+
+def test_review_contract_recommends_review_for_selected_source_change(
+    tmp_path: Path,
+) -> None:
+    root, project_root = _review_contract_repository(tmp_path)
+    base = _commit(root, "base")
+    source = project_root / "src/delivery.py"
+    source.write_text(
+        source.read_text().replace(
+            "return PAGE_LENGTH",
+            "return PAGE_LENGTH // 2",
+        )
+    )
+    head = _commit(root, "change selected source")
+
+    plan = build_impact_plan(
+        root,
+        project_root / ".clean-docs.yml",
+        base=base,
+        head=head,
+    )
+
+    result = plan.review_contracts[0]
+    payload_result = plan.as_dict()["review_contracts"][0]
+    assert result.state == "review-recommended"
+    assert result.semantic_correctness_checked is False
+    assert payload_result["id"] == "delivery-paging"
+    assert payload_result["semantic_correctness_checked"] is False
+    assert {item.id: item.state for item in result.sources} == {
+        "page-length": "unchanged",
+        "page-method": "changed",
+    }
+    assert result.targets[0].state == "unchanged"
+    assert plan.impact == "recommended"
+    assert plan.coverage_complete
+    assert plan.required == ()
+    assert plan.unknown == ()
+    assert {item.rule for item in plan.recommended} == {"review-contract"}
+    source_artifact = next(
+        artifact
+        for artifact in plan.artifacts
+        if artifact.path == "src/delivery.py"
+    )
+    assert source_artifact.coverage == "adapter-covered"
+    assert source_artifact.graph_roots == ()
+    assert {
+        (edge.source, edge.target, edge.kind)
+        for edge in plan.edges
+        if "review-contract:delivery-paging" in {edge.source, edge.target}
+    } == {
+        (
+            "artifact:src/delivery.py",
+            "review-contract:delivery-paging",
+            "affects",
+        ),
+        (
+            "review-contract:delivery-paging",
+            "artifact:docs/delivery.md",
+            "requests-review",
+        ),
+    }
+
+
+def test_review_contract_records_relevant_target_cochange_without_claiming_truth(
+    tmp_path: Path,
+) -> None:
+    root, project_root = _review_contract_repository(tmp_path)
+    base = _commit(root, "base")
+    source = project_root / "src/delivery.py"
+    source.write_text(
+        source.read_text().replace(
+            "return PAGE_LENGTH",
+            "return PAGE_LENGTH // 2",
+        )
+    )
+    target = project_root / "docs/delivery.md"
+    target.write_text(
+        target.read_text().replace(
+            "returned offset",
+            "returned continuation offset",
+        )
+    )
+    head = _commit(root, "change source and target")
+
+    plan = build_impact_plan(
+        root,
+        project_root / ".clean-docs.yml",
+        base=base,
+        head=head,
+    )
+
+    result = plan.review_contracts[0]
+    assert result.state == "cochanged"
+    assert result.semantic_correctness_checked is False
+    assert result.targets[0].state == "changed"
+    assert not any(
+        finding.rule == "review-contract"
+        for finding in plan.recommended
+    )
+    assert plan.impact == "none"
+    assert plan.coverage_complete
+
+
+@pytest.mark.parametrize(
+    ("before", "after"),
+    [
+        ("return UNRELATED_LIMIT", "return UNRELATED_LIMIT + 1"),
+        ("UNRELATED_LIMIT = 10", "UNRELATED_LIMIT = 11"),
+    ],
+)
+def test_review_contract_ignores_unselected_source_changes(
+    tmp_path: Path,
+    before: str,
+    after: str,
+) -> None:
+    root, project_root = _review_contract_repository(tmp_path)
+    base = _commit(root, "base")
+    source = project_root / "src/delivery.py"
+    source.write_text(source.read_text().replace(before, after))
+    head = _commit(root, "change unrelated source")
+
+    plan = build_impact_plan(
+        root,
+        project_root / ".clean-docs.yml",
+        base=base,
+        head=head,
+    )
+
+    assert plan.review_contracts[0].state == "unaffected"
+    assert not any(
+        finding.rule == "review-contract"
+        for finding in plan.recommended
+    )
+    assert plan.impact == "none"
+    assert plan.coverage_complete
+    artifact = next(
+        item for item in plan.artifacts if item.path == "src/delivery.py"
+    )
+    assert artifact.coverage == "adapter-covered"
+    assert "review-contract:delivery-paging" not in artifact.graph_roots
+
+
+def test_unknown_review_contract_is_advisory_only(tmp_path: Path) -> None:
+    root, project_root = _review_contract_repository(tmp_path)
+    base = _commit(root, "base")
+    source = project_root / "src/delivery.py"
+    source.write_text(
+        source.read_text().replace(
+            "return PAGE_LENGTH",
+            "return PAGE_LENGTH // 2",
+        )
+    )
+    (project_root / "docs/delivery.md").write_text("# Delivery\n")
+    head = _commit(root, "remove declared target")
+
+    plan = build_impact_plan(
+        root,
+        project_root / ".clean-docs.yml",
+        base=base,
+        head=head,
+    )
+
+    assert plan.review_contracts[0].state == "unknown"
+    assert plan.impact == "recommended"
+    assert plan.coverage_complete
+    assert plan.required == ()
+    assert plan.unknown == ()
+    finding = next(
+        item for item in plan.recommended if item.rule == "review-contract"
+    )
+    assert finding.classification == "recommended"
+    assert finding.obligations == ("review-declared-targets",)
+
+
+def test_review_contract_keeps_result_paths_project_relative(
+    tmp_path: Path,
+) -> None:
+    project = Path("packages/widget")
+    root, project_root = _review_contract_repository(
+        tmp_path,
+        project=project,
+    )
+    base = _commit(root, "base")
+    source = project_root / "src/delivery.py"
+    source.write_text(
+        source.read_text().replace(
+            "return PAGE_LENGTH",
+            "return PAGE_LENGTH // 2",
+        )
+    )
+    head = _commit(root, "change selected project source")
+
+    plan = build_impact_plan(
+        root,
+        project_root / ".clean-docs.yml",
+        base=base,
+        head=head,
+        project=project,
+    )
+
+    result = plan.review_contracts[0]
+    assert {item.path for item in result.sources} == {"src/delivery.py"}
+    assert {item.path for item in result.targets} == {"docs/delivery.md"}
+    assert {item.path for item in plan.artifacts} == {
+        "packages/widget/src/delivery.py"
+    }
+    finding = next(
+        item for item in plan.recommended if item.rule == "review-contract"
+    )
+    assert set(finding.paths) == {
+        "packages/widget/src/delivery.py",
+        "packages/widget/docs/delivery.md",
+    }
+    assert (
+        "artifact:packages/widget/src/delivery.py",
+        "review-contract:delivery-paging",
+        "affects",
+    ) in {
+        (edge.source, edge.target, edge.kind)
+        for edge in plan.edges
+    }
 
 
 def test_public_implementation_refactor_does_not_become_interface_work(

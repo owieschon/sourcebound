@@ -114,6 +114,22 @@ class VisualProjection:
 
 
 @dataclass(frozen=True)
+class ReviewLocator:
+    id: str
+    path: Path
+    extractor: str
+    locator: str
+
+
+@dataclass(frozen=True)
+class ReviewContract:
+    id: str
+    mode: str
+    sources: tuple[ReviewLocator, ...]
+    targets: tuple[ReviewLocator, ...]
+
+
+@dataclass(frozen=True)
 class ProjectionConfig:
     llms_txt: LlmsTxtProjection | None = None
     bundles: tuple[ContextBundleProjection, ...] = ()
@@ -130,6 +146,7 @@ class Manifest:
     plugins: tuple[PluginSpec, ...] = ()
     projections: ProjectionConfig | None = None
     source_claim_checks: tuple[SourceClaimCheck, ...] = ()
+    review_contracts: tuple[ReviewContract, ...] = ()
     deprecations: tuple[str, ...] = ()
 
 
