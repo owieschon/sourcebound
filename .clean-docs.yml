@@ -171,6 +171,23 @@ source_claim_checks:
     subject: types
     source: src/clean_docs/manifest.py
     locator: MANIFEST_REFERENCE#count
+review_contracts:
+  - id: immutable-snapshot-boundary
+    mode: observe
+    sources:
+      - id: snapshot-materialization
+        path: src/clean_docs/snapshot.py
+        extractor: python-symbol
+        locator: RepositorySnapshot.materialized_root
+      - id: snapshot-symlink-closure
+        path: src/clean_docs/snapshot.py
+        extractor: python-symbol
+        locator: RepositorySnapshot._include_symlink_targets
+    targets:
+      - id: snapshot-product-contract
+        path: CLEAN_DOCS_SPEC.md
+        extractor: markdown-section
+        locator: "#evidence-and-execution"
 projections:
   llms_txt:
     output: llms.txt

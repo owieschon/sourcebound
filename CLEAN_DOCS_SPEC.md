@@ -92,6 +92,14 @@ without resolving or executing imports. Valid MDX enters the checked document co
 or a missing Node.js 20 runtime appears in `unsupported_documents` and makes the impact `unknown`.
 The command's zero exit code means the receipt was built, not that the branch is ready to merge.
 
+Use `review_contracts` to declare exact source and documentation locators that deserve attention
+together. The contract is observe-only. clean-docs compares locator digests at two immutable refs;
+it does not infer relationships from filenames, imports, repository history, or prior co-change.
+A changed source with an unchanged target is `review-recommended`. A changed source whose every
+target also changed is `cochanged`. Both states are advisory. They cannot enter required coverage,
+change gate status, or authorize a write. A co-change records two changes, not completed review or
+semantic correctness. A missing co-change recommends review; it does not prove the target is stale.
+
 Use `verdict --base REF --head REF --format json` for one pull-request decision. It composes the
 audit, static binding, projection, accepted source-claim, changed-surface, impact, and inventory
 library results without executing repository commands or plugins. `ready` means ready only within
@@ -162,6 +170,10 @@ different authority. It supports `count` locators ending in `#count` and `identi
 ending in `#keys`. A ranked relationship remains advisory; a committed relationship becomes part
 of the configured contract.
 
+The optional `review_contracts` list is separate from bindings and accepted source claims. It
+records repository-declared source and target locators for advisory co-change evidence. It never
+creates repair or gate authority.
+
 Current projections are `llms.txt`, exact-byte context bundles, and the static recorded demo.
 Provider context can also be compiled as a read-only, source-addressed
 `clean-docs.context-bundle.v1`. The request pins the repository commit and each source line range.
@@ -180,6 +192,11 @@ Static adapters parse Python, TypeScript, JavaScript, OpenAPI, JSON Schema, pack
 configuration schemas without importing repository modules. Immutable read-only snapshots preserve
 relative symlinks whose targets stay inside the snapshot and reject escaping links. A claim command
 or plugin runs only when the manifest declares its exact argument array.
+
+A project-scoped impact plan materializes only the selected repository subtree from each immutable
+ref, plus transitive repository-internal targets required by symlinks in that subtree. Absolute or
+escaping symlinks fail. Read the receipt's `project` field before reusing an `impact: none`
+conclusion: omitted sibling projects and materialized symlink targets are not covered surfaces.
 
 Declared processes receive a disposable repository copy, temporary directories, a minimal
 environment, a timeout, an I/O limit, symlink checks, and secret-output checks. These controls are
@@ -219,6 +236,7 @@ clean-docs does not:
 - decide that every detected symbol deserves reader documentation;
 - treat a ranked source-claim candidate as proof or rewrite unrelated prose after a source change;
 - treat mutation sensitivity as semantic correctness or relationship authority;
+- infer review relationships or treat source-target co-change as semantic correctness;
 - use model judgment as a required gate;
 - provide operating-system or network isolation;
 - maintain a hosted service, account system, or runtime dashboard;

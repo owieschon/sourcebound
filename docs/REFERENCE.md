@@ -93,6 +93,48 @@ Keep the README focused on the point, first action, proof, and routing. Put proc
 
 Repositories do not configure a standard path. clean-docs bundles the policy pack compiled from [`STANDARD.md`](../STANDARD.md), and CI fails when the authored standard and compiled pack differ.
 
+## Review contracts
+
+`review_contracts` declare observe-only relationships between exact source and documentation
+locators. They are not bindings and cannot create repair or gate authority:
+
+```yaml
+review_contracts:
+  - id: delivery-limit-guidance
+    mode: observe
+    sources:
+      - id: page-limit
+        path: src/delivery.py
+        extractor: python-symbol
+        locator: Delivery.PAGE_LIMIT
+    targets:
+      - id: page-limit-guidance
+        path: docs/delivery.md
+        extractor: markdown-section
+        locator: "#page-limits"
+```
+
+Each locator chooses one supported extractor and locator shape:
+
+| extractor | locator | change evidence |
+| --- | --- | --- |
+| `python-symbol` | Dotted Python identifier | Normalized syntax. Comments, docstrings, formatting, and source positions do not count. |
+| `markdown-section` | `#fragment-anchor` | Normalized text tokens under the selected heading. |
+| `structured-data` | JSON Pointer | Canonical JSON for the selected JSON, YAML, or TOML value. |
+
+The comparison of two immutable refs produces one state:
+
+| state | meaning |
+| --- | --- |
+| `unaffected` | No declared source locator changed. |
+| `cochanged` | A source changed and every declared target changed. |
+| `review-recommended` | A source changed and at least one declared target did not. |
+| `unknown` | A locator is missing or cannot be resolved. |
+
+Every state remains advisory in `mode: observe`. `cochanged` records two changes, not review
+completion or semantic correctness. `unknown` exposes broken observation without changing the
+gate. Source and target relationships are repository-declared; clean-docs does not infer them.
+
 ## Source claim checks
 
 The boundary is narrow. Two prose shapes are in scope: numeric collection counts and identifier
