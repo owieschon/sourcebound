@@ -20,6 +20,7 @@ from clean_docs.extractors import (
 )
 from clean_docs.extractors.inventory import _extract_repository_overview_legacy
 from clean_docs.manifest import load_manifest
+from clean_docs.inventory import InventoryItem
 from clean_docs.models import (
     Binding,
     BindingResult,
@@ -120,6 +121,7 @@ def evaluate(
     ref: str | None = None,
     binding_id: str | None = None,
     execution_policy: ExecutionPolicy = ExecutionPolicy.TRUSTED,
+    inventory_items: tuple[InventoryItem, ...] | None = None,
 ) -> list[BindingResult]:
     manifest = load_manifest(manifest_path)
     snapshot = RepositorySnapshot(root=root, ref=ref)
@@ -189,7 +191,14 @@ def evaluate(
                 "repository-overview": extract_repository_overview,
                 "structured-data": extract_structured,
             }
-            evidence = extractors[binding.extractor](snapshot, binding)
+            if binding.extractor == "repository-overview":
+                evidence = extract_repository_overview(
+                    snapshot,
+                    binding,
+                    inventory_items=inventory_items,
+                )
+            else:
+                evidence = extractors[binding.extractor](snapshot, binding)
         if binding.renderer.startswith("plugin:"):
             renderer_id = binding.renderer.removeprefix("plugin:")
             renderer_plugin = next(
@@ -211,7 +220,9 @@ def evaluate(
         expected = replace_region(observed, binding.region, rendered)
         if observed != expected and binding.extractor == "repository-overview":
             legacy_evidence = _extract_repository_overview_legacy(
-                snapshot, binding
+                snapshot,
+                binding,
+                inventory_items=inventory_items,
             )
             legacy_rendered = render(legacy_evidence, binding)
             legacy_expected = replace_region(
