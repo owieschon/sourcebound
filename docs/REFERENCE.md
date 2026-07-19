@@ -50,6 +50,12 @@ Mark the generated destination:
 
 The source assignment may be a list of dictionaries or a dictionary whose values are records. Constructor calls are read as keyword records. clean-docs reads the syntax tree; the [security model](SECURITY_MODEL.md) owns the execution boundary.
 
+### Path glob bindings
+
+The `path` extractor requires at least one matching file. A zero-match glob exits `3`, names the
+binding and glob, and leaves the document unchanged. This prevents a removed directory from
+rendering an empty list that looks current.
+
 ### Legacy command pins
 
 Manifest `type: claim` is the compatibility spelling for a command pin. It checks that an
