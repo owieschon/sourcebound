@@ -10,6 +10,7 @@ from clean_docs.capabilities import CLI_REFERENCE
 from clean_docs.cli import _parser, _validate_arguments
 from clean_docs.engine import evaluate
 from clean_docs.manifest import MANIFEST_REFERENCE, load_manifest
+from clean_docs.projections import evaluate_projections
 
 
 ROOT = Path(__file__).parents[1]
@@ -39,6 +40,20 @@ def test_cli_and_manifest_registries_drive_the_parser_and_self_manifest() -> Non
         "cli-reference",
         "manifest-reference",
     }
+
+
+def test_repository_dogfoods_the_source_bound_visual_projection() -> None:
+    manifest = load_manifest(ROOT / ".clean-docs.yml")
+    assert [item.id for item in manifest.projections.visuals] == ["source-bound-flow"]
+    assert [
+        item.doc for item in evaluate_projections(ROOT, manifest)
+    ] == [
+        ".clean-docs/context/contributor.md",
+        ".clean-docs/visuals/source-bound-flow.md",
+        "docs/demo/index.html",
+        "docs/generated/source-bound-flow.md",
+        "llms.txt",
+    ]
 
 
 def test_cli_reference_examples_parse() -> None:

@@ -1,0 +1,29 @@
+schema: clean-docs.visual.v1
+id: source-bound-flow
+kind: diagram
+src: docs/assets/clean-docs-social.svg
+width: 1280
+height: 640
+alt: Three connected cards show repository sources, source bindings, and a deterministic check.
+caption: clean-docs keeps source facts, prose bindings, and verification connected.
+description: |
+  The flow starts with repository sources, where code and structured files own facts.
+  Source bindings connect those facts to specific documentation regions, command output,
+  or symbols. A deterministic check then detects drift before merge and can repair,
+  reject, or project the declared documentation surface.
+annotations:
+  - id: source
+    x: 17
+    y: 66
+    title: Repository sources
+    description: Code and structured repository files own the facts that documentation may claim.
+  - id: bind
+    x: 49
+    y: 66
+    title: Source bindings
+    description: A declared relationship connects a source fact to its documentation owner.
+  - id: prove
+    x: 80
+    y: 66
+    title: Deterministic check
+    description: Verification detects drift before merge and can repair, reject, or project declared outputs.

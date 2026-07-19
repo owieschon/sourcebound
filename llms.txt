@@ -15,7 +15,7 @@
 - [docs/FEEDBACK.md](docs/FEEDBACK.md): declared canonical context; sha256: 0a1ef2b1a53e1749355e25cc1c7c47c796fe18f17ba8616c1ab2f13a44bf6891
 - [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md): bindings: improvement-candidate-guide; sha256: 574e4eb31acf07cbce3f55291c2da8aae5fc734625e032ddf3aafcd593d359c6
 - [docs/INSTALL.md](docs/INSTALL.md): declared canonical context; sha256: eb672f96492df6086317218bc22fae0ae5b4c80363bbe5aa30df260ffe31266c
-- [docs/REFERENCE.md](docs/REFERENCE.md): bindings: binding-sensitivity-reference, manifest-reference, supported-bindings; sha256: 2bde0ddc1672b364df1f5d53a9dbf504f7da52b48e4e4df48bf5cbf656593000
+- [docs/REFERENCE.md](docs/REFERENCE.md): bindings: binding-sensitivity-reference, manifest-reference, supported-bindings; sha256: 34d1cb6c1e4505b9f9ae75f7d67575bbdc5c650397bdb26da71da3a1cadc14be
 - [docs/RELEASES.md](docs/RELEASES.md): bindings: release-guide; sha256: cc40c87393dd1784fcca7d1034ac8fd5925a7570011791a51df2853aa8be241b
 - [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md): bindings: security-model; sha256: 3434e548f279e863f04534b80f35d4f3b9a3d330f49315d365eee79d8babf6f0
 - [docs/SUPPORT.md](docs/SUPPORT.md): bindings: support-guide; sha256: 0d254610380bd7f4070a1edca3bdae1d017c2ff0976e7827794ff2ddd7b8ab7c
