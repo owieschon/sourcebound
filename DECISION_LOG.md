@@ -514,3 +514,15 @@ the compatibility default. The deadline participates in provider identity. Pre-i
 state it and the prompt byte count before execution. A timeout remains a failed provider attempt,
 never a content-quality result. Reversible: existing fixtures retain their prior deadline; callers
 can remove an explicit value to return to it without changing scorer semantics.
+
+## 48. Treat mutation-red as dependency evidence, not semantic authority (2026-07-19)
+
+Context: a frozen private discrimination test made both correct source relationships red after an
+independent static mutation. It also made two wrong, shape-compatible relationships
+red. Chose a narrow read-only sensitivity primitive. The provider proposal and scorer-controlled
+fact stay in separate, digested inputs; clean-docs reads committed blobs, generates one syntax-safe
+mutation in a disposable copy, and reports `sensitive`, `insensitive`, `invalid`, or `unsupported`.
+Every receipt sets `semantic_relationship_authorized` to false. The `mutation-red` scorer calls the
+same code; a red result cannot accept the link. Reversible: removing the command and scorer leaves
+configured source-claim enforcement unchanged; no manifest or published gate depends on this
+additive receipt.

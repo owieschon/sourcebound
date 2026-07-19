@@ -24,6 +24,7 @@ from clean_docs.execution import resolve_argv
 from clean_docs.manifest import load_manifest
 from clean_docs.models import CommandSpec, Manifest
 from clean_docs.regions import atomic_write
+from clean_docs.sensitivity import evaluate_binding_sensitivity, load_json_object
 
 
 TASK_KEYS = {"id", "audience", "prompt", "context", "model", "scorer"}
@@ -35,6 +36,13 @@ SCORER_KEYS = {
     "structured-output": {"type", "expected"},
     "configuration": {"type", "repository"},
     "cited-limit": {"type", "answer", "citation", "forbidden"},
+    "mutation-red": {
+        "type",
+        "repository",
+        "fact",
+        "fact_sha256",
+        "expected_state",
+    },
 }
 COMMAND_EXPECTATION_KEYS = {
     "ref", "documented_as", "exit_code", "stdout_contains", "stderr_contains"
@@ -392,7 +400,8 @@ def _scorer(raw: Any, where: str) -> dict[str, Any]:
     kind = data.get("type")
     if kind not in SCORER_KEYS:
         raise ConfigurationError(
-            f"{where}.type must be command, configuration, structured-output, or cited-limit"
+            f"{where}.type must be command, configuration, structured-output, "
+            "cited-limit, or mutation-red"
         )
     unknown = sorted(set(data) - SCORER_KEYS[kind])
     if unknown:
@@ -425,6 +434,27 @@ def _scorer(raw: Any, where: str) -> dict[str, Any]:
             if not isinstance(data.get(field), str) or not data[field]:
                 raise ConfigurationError(f"{where}.{field} must be non-empty")
         _strings(data.get("forbidden", []), f"{where}.forbidden")
+    elif kind == "mutation-red":
+        _relative(data.get("repository"), f"{where}.repository")
+        _relative(data.get("fact"), f"{where}.fact")
+        fact_sha256 = data.get("fact_sha256")
+        if (
+            not isinstance(fact_sha256, str)
+            or not re.fullmatch(r"[0-9a-f]{64}", fact_sha256)
+        ):
+            raise ConfigurationError(
+                f"{where}.fact_sha256 must be a lowercase SHA-256 digest"
+            )
+        if data.get("expected_state") not in {
+            "sensitive",
+            "insensitive",
+            "invalid",
+            "unsupported",
+        }:
+            raise ConfigurationError(
+                f"{where}.expected_state must be sensitive, insensitive, "
+                "invalid, or unsupported"
+            )
     return data
 
 
@@ -600,6 +630,52 @@ def _cited_limit_score(
     return True, "response states and cites the canonical limitation"
 
 
+def _mutation_red_score(
+    root: Path,
+    response: str,
+    scorer: dict[str, Any],
+    *,
+    excluded_worktree_path: Path | None,
+) -> tuple[bool, str]:
+    try:
+        proposal = json.loads(response)
+    except json.JSONDecodeError:
+        return False, "response is not a valid binding proposal JSON object"
+    target = root / _relative(scorer["repository"], "mutation-red repository")
+    if not target.is_dir():
+        raise ConfigurationError(
+            f"mutation-red repository does not exist: {target}"
+        )
+    fact_path = root / _relative(scorer["fact"], "mutation-red fact")
+    fact, fact_bytes = load_json_object(fact_path, "mutation-red fact")
+    receipt = evaluate_binding_sensitivity(
+        target,
+        proposal,
+        fact,
+        proposal_bytes=response.encode(),
+        fact_bytes=fact_bytes,
+        expected_fact_file_sha256=scorer["fact_sha256"],
+        excluded_worktree_path=(
+            excluded_worktree_path if target.resolve() == root.resolve() else None
+        ),
+    )
+    receipt_digest = hashlib.sha256(
+        json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    expected = scorer["expected_state"]
+    if receipt["state"] != expected:
+        return (
+            False,
+            f"sensitivity state {receipt['state']} did not match {expected}; "
+            f"receipt sha256={receipt_digest}",
+        )
+    return (
+        True,
+        f"sensitivity state {expected} matched; semantic relationship remains "
+        f"unauthorized; receipt sha256={receipt_digest}",
+    )
+
+
 def _provider(
     root: Path, task: EvaluationTask, mode: str
 ) -> ResponseProvider:
@@ -726,6 +802,13 @@ def run_evaluation(
                 ok, detail = _structured_score(response, task.scorer)
             elif scorer_type == "configuration":
                 ok, detail = _configuration_score(root, response, task.scorer)
+            elif scorer_type == "mutation-red":
+                ok, detail = _mutation_red_score(
+                    root,
+                    response,
+                    task.scorer,
+                    excluded_worktree_path=record_dir if mode == "live" else None,
+                )
             else:
                 assert scorer_type == "cited-limit"
                 ok, detail = _cited_limit_score(root, task, response, task.scorer)

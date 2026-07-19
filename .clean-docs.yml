@@ -72,6 +72,13 @@ bindings:
       symbol: EVALUATION_SCORERS
     renderer: markdown-table
     columns: [scorer, input, passes when]
+  - id: binding-sensitivity-reference
+    type: symbol
+    doc: docs/REFERENCE.md
+    anchor: binding-sensitivity-inputs
+    source:
+      path: src/clean_docs/sensitivity.py
+      symbol: evaluate_binding_sensitivity
   - id: release-guide
     type: symbol
     doc: docs/RELEASES.md

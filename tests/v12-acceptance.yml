@@ -39,3 +39,11 @@ scenarios:
     test: tests/test_source_claims.py::test_mapping_fact_uses_effective_python_keys_once
   - id: bounded-candidate-ranking
     test: tests/test_source_claims.py::test_candidate_rank_requires_ownership_and_precedes_drift_status
+  - id: independent-fact-sensitivity
+    test: tests/test_sensitivity.py::test_static_identifier_relationship_becomes_sensitive_without_execution
+  - id: wrong-fact-red-boundary
+    test: tests/test_sensitivity.py::test_wrong_semantic_relationship_can_be_sensitive_without_becoming_authorized
+  - id: ambiguous-mutation-unsupported
+    test: tests/test_sensitivity.py::test_ambiguous_duplicate_mapping_key_is_unsupported
+  - id: shared-evaluation-primitive
+    test: tests/test_sensitivity.py::test_evaluation_mutation_red_scorer_reuses_the_sensitivity_primitive

@@ -416,6 +416,11 @@ def _source_facts(path: str, text: str) -> list[SourceFact]:
     return facts
 
 
+def extract_source_facts(path: str, text: str) -> tuple[SourceFact, ...]:
+    """Read supported facts from Python text without importing or executing it."""
+    return tuple(_source_facts(path, text))
+
+
 def _count_claims(path: str, lines: list[str]) -> list[DocumentClaim]:
     claims: list[DocumentClaim] = []
     anchor = ""
