@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+import clean_docs.improvements as improvements
 from clean_docs.cli import main
 from clean_docs.errors import ConfigurationError, PolicyError
 from clean_docs.improvements import (
@@ -447,6 +448,23 @@ def test_repository_evidence_is_grounded_at_the_pinned_commit(tmp_path: Path) ->
     assert missing_locator.candidates[0].evidence[0]["grounding"]["state"] == "unknown"
 
 
+def test_grounding_changes_set_digest_without_reidentifying_candidates(tmp_path: Path) -> None:
+    root = tmp_path / "repository"
+    commit = _repository(root)
+    payload = _payload()
+    payload["repository_commit"] = commit
+    source = tmp_path / "review.json"
+    source.write_text(json.dumps(payload))
+
+    ungrounded = load_review_candidates(source)
+    grounded = load_review_candidates(source, root=root)
+
+    assert ungrounded.digest != grounded.digest
+    assert [candidate.id for candidate in ungrounded.candidates] == [
+        candidate.id for candidate in grounded.candidates
+    ]
+
+
 def test_repository_evidence_rejects_abbreviated_or_unavailable_commits(tmp_path: Path) -> None:
     root = tmp_path / "repository"
     commit = _repository(root)
@@ -709,6 +727,32 @@ def test_lifecycle_rejects_invalid_or_stale_transitions(tmp_path: Path) -> None:
     changed_candidates = compile_improvement_candidates(changed_payload)
     with pytest.raises(PolicyError, match="stale"):
         load_candidate_lifecycle(path, changed_candidates)
+
+
+def test_lifecycle_git_timeout_remains_unknown(tmp_path: Path, monkeypatch) -> None:
+    candidates = compile_improvement_candidates(_payload())
+    initial = initialize_candidate_lifecycle(candidates)
+
+    def timeout(*args, **kwargs):
+        raise subprocess.TimeoutExpired("git", 10)
+
+    monkeypatch.setattr(improvements.subprocess, "run", timeout)
+    transitioned = transition_candidate_lifecycle(
+        initial,
+        root=tmp_path,
+        observation_id="unreachable-task-page",
+        to_state="reproduced",
+        evidence=LifecycleEvidence(
+            kind="test-receipt",
+            reference="tests/test_navigation.py",
+            detail="The fixture reproduces the missing route.",
+        ),
+    )
+
+    resolution = transitioned.candidates[0].history[0].resolution
+    assert resolution is not None
+    assert resolution.state == "unknown"
+    assert resolution.reason == "review-commit-unavailable"
 
 
 def test_cli_initializes_transitions_and_checks_lifecycle(tmp_path: Path, capsys) -> None:
