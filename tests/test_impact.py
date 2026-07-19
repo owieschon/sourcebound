@@ -329,8 +329,8 @@ def test_review_contract_recommends_review_for_selected_source_change(
         for artifact in plan.artifacts
         if artifact.path == "src/delivery.py"
     )
-    assert source_artifact.coverage == "graph-covered"
-    assert source_artifact.graph_roots == ("review-contract:delivery-paging",)
+    assert source_artifact.coverage == "adapter-covered"
+    assert source_artifact.graph_roots == ()
     assert {
         (edge.source, edge.target, edge.kind)
         for edge in plan.edges
@@ -419,6 +419,8 @@ def test_review_contract_ignores_unselected_source_changes(
         finding.rule == "review-contract"
         for finding in plan.recommended
     )
+    assert plan.impact == "none"
+    assert plan.coverage_complete
     artifact = next(
         item for item in plan.artifacts if item.path == "src/delivery.py"
     )

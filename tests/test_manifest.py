@@ -210,6 +210,100 @@ def test_rejects_invalid_review_contracts(
         load_manifest(path)
 
 
+def test_rejects_review_contract_source_target_identity_with_different_ids(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / ".clean-docs.yml"
+    contract = VALID_REVIEW_CONTRACTS.replace(
+        "        path: docs/delivery.md\n"
+        "        extractor: markdown-section\n"
+        '        locator: "#reading-large-results"',
+        "        path: src/delivery.py\n"
+        "        extractor: python-symbol\n"
+        "        locator: Delivery.fetch_page",
+    )
+    path.write_text(VALID + contract)
+
+    with pytest.raises(
+        ConfigurationError,
+        match="source and target locators must not have the same",
+    ):
+        load_manifest(path)
+
+
+@pytest.mark.parametrize(
+    "projection",
+    [
+        """\
+projections:
+  llms_txt:
+    output: docs/generated.md
+""",
+        """\
+projections:
+  bundles:
+    - id: generated-context
+      output: docs/generated.md
+      include: [README.md]
+""",
+    ],
+)
+def test_rejects_generated_projection_as_review_target(
+    tmp_path: Path,
+    projection: str,
+) -> None:
+    path = tmp_path / ".clean-docs.yml"
+    contract = """\
+review_contracts:
+  - id: generated-target
+    mode: observe
+    sources:
+      - id: delivery-policy
+        path: src/delivery.py
+        extractor: python-symbol
+        locator: Delivery.fetch_page
+    targets:
+      - id: generated-document
+        path: docs/generated.md
+        extractor: markdown-section
+        locator: "#generated"
+"""
+    path.write_text(VALID + projection + contract)
+
+    with pytest.raises(
+        ConfigurationError,
+        match="cannot be generated projection output docs/generated.md",
+    ):
+        load_manifest(path)
+
+
+def test_allows_non_generated_python_review_target(tmp_path: Path) -> None:
+    path = tmp_path / ".clean-docs.yml"
+    path.write_text(
+        VALID
+        + """\
+review_contracts:
+  - id: agent-prompt
+    mode: observe
+    sources:
+      - id: delivery-policy
+        path: src/delivery.py
+        extractor: python-symbol
+        locator: Delivery.fetch_page
+    targets:
+      - id: prompt-builder
+        path: src/prompt.py
+        extractor: python-symbol
+        locator: build_prompt
+"""
+    )
+
+    target = load_manifest(path).review_contracts[0].targets[0]
+
+    assert target.path == Path("src/prompt.py")
+    assert target.locator == "build_prompt"
+
+
 def test_loads_json_pointer_binding(tmp_path: Path) -> None:
     path = tmp_path / ".clean-docs.yml"
     path.write_text(VALID.replace(
