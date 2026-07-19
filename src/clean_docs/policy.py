@@ -510,12 +510,21 @@ def check_prose(doc: str, text: str, pack: dict[str, Any]) -> list[PolicyFinding
     return findings
 
 
-def check_document(doc: str, text: str, pack: dict[str, Any]) -> list[PolicyFinding]:
+def check_document(
+    doc: str,
+    text: str,
+    pack: dict[str, Any],
+    *,
+    semantic_text: str | None = None,
+) -> list[PolicyFinding]:
+    from clean_docs.accessibility import check_accessibility
+
     return (
         _purpose_contract(doc, text, pack)
         + _preamble_contract(doc, text, pack)
         + check_prose(doc, text, pack)
         + _register_findings(doc, text, pack)
+        + check_accessibility(doc, semantic_text if semantic_text is not None else text, pack)
     )
 
 

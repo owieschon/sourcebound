@@ -862,7 +862,12 @@ def _scan_audit(root: Path, *, preview_policy: bool = False) -> AuditReport:
         for item in (
             ()
             if role_error or not evaluate_policy
-            else check_document(normalized, policy_text, pack)
+            else check_document(
+                normalized,
+                policy_text,
+                pack,
+                semantic_text=text,
+            )
         ):
             if not profile.applies(item.rule):
                 continue

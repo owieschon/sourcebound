@@ -29905,6 +29905,12 @@ function parseOne(source) {
     if (node2.type === "heading") {
       record.depth = node2.depth;
       record.text = plainText(node2);
+    } else if (node2.type === "code") {
+      record.language = node2.lang ?? null;
+      record.meta = node2.meta ?? null;
+    } else if (node2.type === "image") {
+      record.url = node2.url;
+      record.alt = node2.alt ?? null;
     } else if (node2.type === "link") {
       record.url = node2.url;
       links.push({
@@ -29927,7 +29933,7 @@ function parseOne(source) {
     if (node2.type === "code" || node2.type === "yaml" || node2.type === "mdxjsEsm" || node2.type === "mdxFlowExpression" || node2.type === "mdxTextExpression") {
       excluded.push([located.start.offset, located.end.offset]);
     }
-    if (node2.type === "heading" || node2.type === "link" || node2.type === "definition" || node2.type === "code" || node2.type === "yaml" || node2.type === "mdxjsEsm" || node2.type === "mdxFlowExpression" || node2.type === "mdxTextExpression" || node2.type === "mdxJsxFlowElement" || node2.type === "mdxJsxTextElement") {
+    if (node2.type === "heading" || node2.type === "image" || node2.type === "link" || node2.type === "definition" || node2.type === "code" || node2.type === "yaml" || node2.type === "mdxjsEsm" || node2.type === "mdxFlowExpression" || node2.type === "mdxTextExpression" || node2.type === "mdxJsxFlowElement" || node2.type === "mdxJsxTextElement") {
       nodes.push(record);
     }
     if (Array.isArray(node2.children)) {

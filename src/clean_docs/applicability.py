@@ -24,6 +24,9 @@ DocumentRole = Literal[
 
 ROLE_RULES: dict[DocumentRole, frozenset[str]] = {
     "overview": frozenset({
+        "code-block-language",
+        "diagram-text-equivalent",
+        "image-alternative",
         "purpose-contract",
         "purpose-template",
         "preamble-contract",
@@ -39,12 +42,18 @@ ROLE_RULES: dict[DocumentRole, frozenset[str]] = {
         "elaboration-depth",
     }),
     "component-overview": frozenset({
+        "code-block-language",
+        "diagram-text-equivalent",
+        "image-alternative",
         "prohibited-booster",
         "sentence-variance",
         "nominalization-density",
         "significance-narration",
     }),
     "tutorial": frozenset({
+        "code-block-language",
+        "diagram-text-equivalent",
+        "image-alternative",
         "purpose-contract",
         "purpose-template",
         "prohibited-booster",
@@ -56,6 +65,9 @@ ROLE_RULES: dict[DocumentRole, frozenset[str]] = {
         "elaboration-depth",
     }),
     "task": frozenset({
+        "code-block-language",
+        "diagram-text-equivalent",
+        "image-alternative",
         "purpose-contract",
         "purpose-template",
         "prohibited-booster",
@@ -66,6 +78,9 @@ ROLE_RULES: dict[DocumentRole, frozenset[str]] = {
         "section-length",
     }),
     "troubleshooting": frozenset({
+        "code-block-language",
+        "diagram-text-equivalent",
+        "image-alternative",
         "purpose-contract",
         "purpose-template",
         "prohibited-booster",
@@ -74,12 +89,18 @@ ROLE_RULES: dict[DocumentRole, frozenset[str]] = {
         "significance-narration",
     }),
     "architecture": frozenset({
+        "code-block-language",
+        "diagram-text-equivalent",
+        "image-alternative",
         "prohibited-booster",
         "sentence-variance",
         "nominalization-density",
         "significance-narration",
     }),
     "reference": frozenset({
+        "code-block-language",
+        "diagram-text-equivalent",
+        "image-alternative",
         "prohibited-booster",
         "nominalization-density",
         "significance-narration",
