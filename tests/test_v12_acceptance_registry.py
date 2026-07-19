@@ -23,4 +23,8 @@ def test_version_12a_registry_names_every_scenario() -> None:
         "scope-tension",
         "legacy-overview-compatibility",
         "cross-runtime-receipt-portability",
+        "bounded-context-authority",
+        "required-context-overflow",
+        "provider-failure-receipt",
+        "provider-write-conflict",
     ]

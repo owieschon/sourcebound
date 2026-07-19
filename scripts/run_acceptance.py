@@ -93,6 +93,10 @@ EXPECTED_IDS_BY_RELEASE = {
         "scope-tension",
         "legacy-overview-compatibility",
         "cross-runtime-receipt-portability",
+        "bounded-context-authority",
+        "required-context-overflow",
+        "provider-failure-receipt",
+        "provider-write-conflict",
     },
 }
 

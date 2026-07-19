@@ -25,3 +25,11 @@ scenarios:
     test: tests/test_inventory.py::test_repository_overview_accepts_legacy_receipts_until_surface_changes
   - id: cross-runtime-receipt-portability
     test: tests/test_impact.py::test_python_interface_fingerprints_request_stable_empty_ast_fields
+  - id: bounded-context-authority
+    test: tests/test_context.py::test_context_compiler_is_deterministic_budgeted_and_authority_scoped
+  - id: required-context-overflow
+    test: tests/test_context.py::test_required_context_over_budget_is_unknown_not_empty_success
+  - id: provider-failure-receipt
+    test: tests/test_evaluation.py::test_live_provider_failure_preserves_pre_invocation_receipt
+  - id: provider-write-conflict
+    test: tests/test_evaluation.py::test_live_provider_repository_write_becomes_conflict
