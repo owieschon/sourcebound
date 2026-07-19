@@ -89,7 +89,10 @@ Observe-only `review_contracts` appear in the plan's `review_contracts` evidence
 `findings.recommended`; it never enters `findings.required`. Each observation names the contract,
 source and target locator states and digests, and `semantic_correctness_checked: false`. The
 pull-request verdict preserves the same observations and reports their state counts under
-`mechanisms.review-contract`. These observations do not change the gate result.
+`mechanisms.review-contract`. Its `affects` and `requests-review` graph edges describe observation
+topology. They do not add artifact roots, make an artifact covered, change `coverage_complete`, or
+authorize repair. An observation can make the impact summary `recommended`; it does not change the
+gate result.
 
 Use `plan --project PATH` when a repository contains independently owned projects. The selected
 project scopes the manifest, changed paths, inventory, and static impact evidence. Immutable
@@ -128,11 +131,23 @@ entries, or change the worktree.
 - inventory totals split into direct bindings, catalog-only records, ignores, and unknowns;
 - every skipped binding, command, and plugin ID;
 - stable findings with a repair action; and
-- explicit non-claims for unbound prose, judgment prose, mutation semantics, and catalog prose.
+- six explicit non-claims covering unbound prose, judgment prose, mutation sensitivity,
+  review-contract co-change, catalog coverage, and observation completeness.
+
+The receipt separates the blocking decision from advisory review evidence:
+
+| axis | states | effect |
+| --- | --- | --- |
+| `gate` | `ready`, `not_ready`, `unknown` | Controls the command exit code. |
+| `observations` | `clear`, `review-recommended`, `unknown` | Reports review-contract evidence without changing the exit code. |
+
+Top-level `state` and `ready` are compatibility aliases for `gate.state` and `gate.ready`. A ready
+gate can coexist with `observations.complete: false`; gate readiness is not observation
+completeness.
 
 | `state` | Exit | Meaning |
 | --- | --- | --- |
-| `ready` | `0` | The branch passes within `configured-contract-and-changed-surface`. Read coverage, skips, and non-claims before reusing the result. |
+| `ready` | `0` | The branch passes within `required-gates-and-changed-surface`. Read coverage, skips, observations, and non-claims before reusing the result. |
 | `not_ready` | `1` | Deterministic drift or an enforced integrity defect blocks the branch. |
 | `unknown` | `1` | A plausible obligation lacks supported evidence, or affected declared execution was skipped. |
 | `invalid` | `2` or `3` | A ref, caller state, manifest, or supplied receipt failed validation (`2`), or static extraction failed (`3`). |

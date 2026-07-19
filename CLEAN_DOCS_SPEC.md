@@ -100,13 +100,24 @@ A changed source with an unchanged target is `review-recommended`. A changed sou
 target also changed is `cochanged`. Both states are advisory. They cannot enter required coverage,
 change gate status, or authorize a write. A co-change records two changes, not completed review or
 semantic correctness. A missing co-change recommends review; it does not prove the target is stale.
+Review-contract graph edges record observation topology only. They do not make an artifact covered
+or change `coverage_complete`. The evaluator reads each path once per immutable ref and reuses
+syntax parses and locator digests within the run. Markdown section boundaries come from parsed
+Markdown and MDX headings, so headings inside comments, code, frontmatter, expressions, ESM blocks,
+and lowercase HTML flow blocks do not define sections. The
+[manifest reference](docs/REFERENCE.md#review-contracts) owns the fixed cardinality and input
+budgets. A manifest above a cardinality limit is invalid. A read, parse, or input-budget failure
+makes the affected observation `unknown`; it does not become gate authority.
 
 Use `verdict --base REF --head REF --format json` for one pull-request decision. It composes the
 audit, static binding, projection, accepted source-claim, changed-surface, impact, and inventory
 library results without executing repository commands or plugins. `ready` means ready only within
-the named `configured-contract-and-changed-surface` scope. `unknown` never exits zero. The receipt
-lists sparse coverage, skipped execution, unsupported documents, and four explicit non-claims, so
-a partial gate cannot present itself as corpus-wide proof. The
+the named `required-gates-and-changed-surface` scope. The `gate` axis controls the exit code through
+`ready`, `not_ready`, or `unknown`. The separate `observations` axis reports `clear`,
+`review-recommended`, or `unknown` and never controls the exit code. Top-level `state` and `ready`
+remain compatibility aliases for `gate`. A ready gate can therefore coexist with incomplete
+observations. The receipt lists sparse coverage, skipped execution, unsupported documents, and six
+explicit non-claims, so a partial gate cannot present itself as corpus-wide proof. The
 [CLI contract](docs/CLI.md#pull-request-verdicts) owns the schema and exit meanings.
 
 Use the [reusable gate](docs/SUPPORT.md#run-the-reusable-pull-request-gate) to carry that verdict
@@ -173,7 +184,8 @@ of the configured contract.
 
 The optional `review_contracts` list is separate from bindings and accepted source claims. It
 records repository-declared source and target locators for advisory co-change evidence. It never
-creates repair or gate authority.
+creates repair or gate authority. The [review-contract reference](docs/REFERENCE.md#review-contracts)
+owns its locator rules, tautology guards, work limits, and state meanings.
 
 Current projections are `llms.txt`, exact-byte context bundles, and the static recorded demo.
 Provider context can also be compiled as a read-only, source-addressed

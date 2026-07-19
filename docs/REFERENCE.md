@@ -114,13 +114,49 @@ review_contracts:
         locator: "#page-limits"
 ```
 
+Every contract needs at least one source and one target. Locator IDs are unique within the
+contract. A side cannot repeat the same path, extractor, and locator under another ID. A source
+and target also cannot share that exact identity, because one locator change could otherwise satisfy
+both sides. Point each target at the canonical, non-generated documentation input instead.
+Configured projection outputs cannot be targets.
+
 Each locator chooses one supported extractor and locator shape:
 
 | extractor | locator | change evidence |
 | --- | --- | --- |
 | `python-symbol` | Dotted Python identifier | Normalized syntax. Comments, docstrings, formatting, and source positions do not count. |
-| `markdown-section` | `#fragment-anchor` | Normalized text tokens under the selected heading. |
+| `markdown-section` | `#fragment-anchor` | Normalized visible text tokens under the selected rendered heading. |
 | `structured-data` | JSON Pointer | Canonical JSON for the selected JSON, YAML, or TOML value. |
+
+Markdown section boundaries come from parsed Markdown and MDX heading nodes. A section ends at the
+next heading of the same or higher rank. Headings and text inside comments, fenced code,
+frontmatter, ESM blocks, MDX expressions, or lowercase HTML flow blocks do not define or alter the
+selected section. A parse failure, including a missing Node.js 20 runtime, leaves the locator
+unresolved.
+
+### Review work limits
+
+The limits bound manifest size and evaluation work:
+
+| input | maximum | enforcement |
+| --- | ---: | --- |
+| Contracts per manifest | 64 | Manifest validation |
+| Locators per contract, sources and targets combined | 32 | Manifest validation |
+| Locators across all contracts | 256 | Manifest validation |
+| Unique paths across all contracts | 128 | Manifest validation |
+| Bytes in one file at one ref | 1,000,000 | Locator resolution |
+| Bytes read across base and head | 16,000,000 | Locator resolution |
+| Nodes in one selected structured value | 50,000 | Locator resolution |
+
+Base and head are separate inputs to the total byte budget. A manifest above a cardinality limit is
+invalid. A file, aggregate-byte, parse, or structured-node overage makes the affected locator
+unresolved and the contract `unknown`. Because the only supported mode is `observe`, that outcome
+remains advisory.
+
+Within one evaluation, clean-docs reads each unique path once per immutable ref. It reuses the
+Python AST, structured-data parse, and batched Markdown or MDX parse for every locator on that
+path. It also reuses the digest for an identical ref, path, extractor, and locator. These caches
+bound repeated work; they do not persist across evaluations.
 
 The comparison of two immutable refs produces one state:
 
@@ -134,6 +170,10 @@ The comparison of two immutable refs produces one state:
 Every state remains advisory in `mode: observe`. `cochanged` records two changes, not review
 completion or semantic correctness. `unknown` exposes broken observation without changing the
 gate. Source and target relationships are repository-declared; clean-docs does not infer them.
+The impact graph preserves `affects` and `requests-review` edges for inspection, but those edges do
+not add artifact roots, make an artifact covered, change `coverage_complete`, or authorize repair.
+An unresolved or `review-recommended` contract can make the impact summary `recommended`; it
+cannot make a gate fail.
 
 ## Source claim checks
 
