@@ -2,7 +2,7 @@
 
 <!-- clean-docs:policy register-v2 -->
 <!-- clean-docs:purpose -->
-clean-docs is a source-bound documentation engine and CLI for maintainers who need code and prose to change together. It turns selected source facts into checked documentation, so stale claims fail in local workflows and CI.
+Sourcebound is a documentation engine and CLI for maintainers who need code and prose to change together. It binds selected claims to their defining sources, so drifted documentation fails locally and in CI instead of reaching readers.
 <!-- clean-docs:end purpose -->
 
 [![CI](https://github.com/owieschon/clean-docs/actions/workflows/ci.yml/badge.svg)](https://github.com/owieschon/clean-docs/actions/workflows/ci.yml) [![Release](https://img.shields.io/github/v/release/owieschon/clean-docs?display_name=tag&sort=semver)](https://github.com/owieschon/clean-docs/releases/latest) [![License: MIT](https://img.shields.io/badge/license-MIT-25225f.svg)](LICENSE)
