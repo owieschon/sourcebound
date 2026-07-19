@@ -79,8 +79,9 @@ clean-docs review candidates \
 The check exits `1` when an observation changed without regenerating its candidate set. With a
 ledger, it also rejects a missing, duplicate, or retargeted review event. The chained ledger keeps
 one candidate disposition for every observation; use `merged` or `superseded` only when it points
-to the candidate that now owns the work. The repository CI runs this denominator check after
-installing the current checkout.
+to the candidate that now owns the work. In CI, also pass the ledger from the protected base commit
+as `--prior-ledger`. A pull request can append events but cannot alter base-branch events. The first
+v2 record names the v1 head it replaces; every later record keeps the base ledger unchanged.
 
 ## Track candidate lifecycle
 

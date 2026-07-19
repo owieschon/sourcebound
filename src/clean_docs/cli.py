@@ -165,6 +165,11 @@ def _parser() -> argparse.ArgumentParser:
         type=Path,
         help="append-only review-event ledger that supplies the candidate denominator",
     )
+    review_candidates.add_argument(
+        "--prior-ledger",
+        type=Path,
+        help="immutable base ledger whose events the current ledger must preserve",
+    )
     review_candidates.add_argument("--out", type=Path)
     review_candidates.add_argument(
         "--check",
@@ -424,6 +429,13 @@ def _validate_arguments(args: argparse.Namespace) -> None:
         and args.out is None
     ):
         raise ConfigurationError("review candidates --check requires --out")
+    if (
+        args.command == "review"
+        and args.review_command == "candidates"
+        and args.prior_ledger is not None
+        and args.ledger is None
+    ):
+        raise ConfigurationError("review candidates --prior-ledger requires --ledger")
     if args.command != "check":
         return
     changed_only = (
@@ -547,7 +559,14 @@ def _main(argv: list[str] | None = None) -> int:
             if args.review_command == "candidates":
                 if args.ledger is not None:
                     ledger = args.ledger if args.ledger.is_absolute() else root / args.ledger
-                    validate_review_event_ledger(ledger, candidates)
+                    prior_ledger = (
+                        args.prior_ledger
+                        if args.prior_ledger is None or args.prior_ledger.is_absolute()
+                        else root / args.prior_ledger
+                    )
+                    validate_review_event_ledger(
+                        ledger, candidates, prior_path=prior_ledger
+                    )
                 rendered = json.dumps(
                     candidates.as_dict(),
                     indent=2,
