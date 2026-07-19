@@ -99,6 +99,64 @@ def test_selected_project_includes_internal_symlink_targets(
         assert not (snapshot / "large-sibling").exists()
 
 
+@pytest.mark.parametrize(
+    "link_target",
+    (
+        r"C:\outside",
+        r"\\server\share\outside",
+        r"..\..\..\outside",
+    ),
+)
+def test_snapshot_rejects_windows_shaped_symlink_targets(
+    tmp_path: Path,
+    link_target: str,
+) -> None:
+    root = tmp_path / "repository"
+    project = root / "apps/docs"
+    project.mkdir(parents=True)
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
+    (project / "escape").symlink_to(link_target)
+    ref = _commit(root)
+
+    with pytest.raises(ExtractionError, match="unsafe path"):
+        with RepositorySnapshot(root, ref).materialized_root():
+            pass
+
+
+def test_snapshot_rejects_windows_shaped_member_traversal(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "repository"
+    root.mkdir()
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
+    (root / r"docs\..\outside.md").write_text("# Outside\n")
+    ref = _commit(root)
+
+    with pytest.raises(ExtractionError, match="unsafe path"):
+        with RepositorySnapshot(root, ref).materialized_root():
+            pass
+
+
+def test_selected_project_rejects_symlink_to_repository_root(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "repository"
+    project = root / "apps/docs"
+    project.mkdir(parents=True)
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
+    (project / "repository-root").symlink_to("../..")
+    ref = _commit(root)
+
+    with pytest.raises(
+        ExtractionError,
+        match="selected snapshot symlink expands scope to repository root",
+    ):
+        with RepositorySnapshot(root, ref).materialized_root(
+            paths=(Path("apps/docs"),)
+        ):
+            pass
+
+
 def test_snapshot_rejects_selected_path_that_escapes_root(
     tmp_path: Path,
 ) -> None:
