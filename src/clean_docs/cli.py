@@ -537,7 +537,7 @@ def _main(argv: list[str] | None = None) -> int:
     if args.command == "review":
         try:
             source = args.input if args.input.is_absolute() else root / args.input
-            candidates = load_review_candidates(source)
+            candidates = load_review_candidates(source, root=root)
             if args.review_command == "candidates":
                 rendered = json.dumps(
                     candidates.as_dict(),

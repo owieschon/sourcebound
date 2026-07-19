@@ -24,7 +24,11 @@
           "kind": "receipt",
           "source": ".clean-docs/audit-baseline.json",
           "locator": "findings",
-          "detail": "The baseline records six nominalization-density and three sentence-variance findings in DECISION_LOG.md."
+          "detail": "The baseline records six nominalization-density and three sentence-variance findings in DECISION_LOG.md.",
+          "grounding": {
+            "state": "unverified",
+            "detail": "receipt evidence requires immutable bytes and execution context"
+          }
         }
       ],
       "tracks": [
@@ -63,7 +67,13 @@
           "kind": "repository",
           "source": "src/clean_docs/snapshot.py",
           "locator": "RepositorySnapshot.materialized_root",
-          "detail": "The snapshot materializer calls tarfile.extractall without an explicit filter; scripts/build_release.py and scripts/trusted_self_check.py have the same boundary."
+          "detail": "The snapshot materializer calls tarfile.extractall without an explicit filter; scripts/build_release.py and scripts/trusted_self_check.py have the same boundary.",
+          "grounding": {
+            "state": "unknown",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "51372bbbc1525f3f5f6e65c85a8c49555e036977df79fec0c2af39036d6114d4",
+            "detail": "locator is absent from the pinned source bytes"
+          }
         }
       ],
       "tracks": [
@@ -102,7 +112,12 @@
           "kind": "repository",
           "source": "src/clean_docs/sensitivity.py",
           "locator": "evaluate_binding_sensitivity",
-          "detail": "The evaluator records a current baseline and one selected mutation; test_wrong_semantic_relationship_can_be_sensitive_without_becoming_authorized shows that sensitivity alone does not establish the right relationship."
+          "detail": "The evaluator records a current baseline and one selected mutation; test_wrong_semantic_relationship_can_be_sensitive_without_becoming_authorized shows that sensitivity alone does not establish the right relationship.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "297dbc6c50c7d0b7ef7cfcc0d67d88e170e4c842ae90d7871ab29821e0c9e578"
+          }
         }
       ],
       "tracks": [
@@ -141,7 +156,13 @@
           "kind": "repository",
           "source": "src/clean_docs/improvements.py",
           "locator": "_string and compile_improvement_candidates",
-          "detail": "Summary and source URL fields are accepted as nonempty strings without sentence-count or URL-shape validation."
+          "detail": "Summary and source URL fields are accepted as nonempty strings without sentence-count or URL-shape validation.",
+          "grounding": {
+            "state": "unknown",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "6dbb552daebf1c9658b8f07166b9a3fab9617f793abdb49c1372f39f735d6614",
+            "detail": "locator is absent from the pinned source bytes"
+          }
         }
       ],
       "tracks": [
@@ -180,7 +201,13 @@
           "kind": "repository",
           "source": "src/clean_docs/improvements.py",
           "locator": "load_review_candidates and compile_improvement_candidates",
-          "detail": "The loader reads the complete input and the compiler iterates every observation, evidence item, URL, and unbounded string before rendering the candidate set."
+          "detail": "The loader reads the complete input and the compiler iterates every observation, evidence item, URL, and unbounded string before rendering the candidate set.",
+          "grounding": {
+            "state": "unknown",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "6dbb552daebf1c9658b8f07166b9a3fab9617f793abdb49c1372f39f735d6614",
+            "detail": "locator is absent from the pinned source bytes"
+          }
         }
       ],
       "tracks": [
@@ -219,7 +246,13 @@
           "kind": "repository",
           "source": "tests/test_improvements.py",
           "locator": "test_compiles_stable_dual_track_candidates_without_authority and test_cli_requires_explicit_internal_output_for_check",
-          "detail": "The tests assert ID length and a direct outside path but do not cover identity mutation, symlink escape, or check-mode nonmutation."
+          "detail": "The tests assert ID length and a direct outside path but do not cover identity mutation, symlink escape, or check-mode nonmutation.",
+          "grounding": {
+            "state": "unknown",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "88091a306cf48b1baa8c9a5f1e1b94fe6b6a8ce94cf2e600b0a47e592c38fe88",
+            "detail": "locator is absent from the pinned source bytes"
+          }
         }
       ],
       "tracks": [
@@ -258,7 +291,13 @@
           "kind": "repository",
           "source": ".github/workflows/ci.yml",
           "locator": "review candidates --check",
-          "detail": "CI compares the observation input with its generated output but has no independent append-only issue denominator."
+          "detail": "CI compares the observation input with its generated output but has no independent append-only issue denominator.",
+          "grounding": {
+            "state": "unknown",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "b42d135036ea3d93bd49e1f80cb8e3bb34860bdd43f176b190aea72f6adb9f38",
+            "detail": "locator is absent from the pinned source bytes"
+          }
         }
       ],
       "tracks": [
@@ -297,7 +336,12 @@
           "kind": "repository",
           "source": "tests/test_manifest.py",
           "locator": "test_rejects_generated_projection_as_review_target",
-          "detail": "The current regression rejects configured projection outputs as review targets, preserving a canonical authored target boundary."
+          "detail": "The current regression rejects configured projection outputs as review targets, preserving a canonical authored target boundary.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "54ea1732e572ab86307667e532d5b60f9f4a474f356334e43800de149724ae62"
+          }
         }
       ],
       "tracks": [
@@ -336,7 +380,12 @@
           "kind": "repository",
           "source": ".github/workflows/release.yml",
           "locator": "Publish release assets",
-          "detail": "The release publishes the Python distribution and attestations, not generated context packages."
+          "detail": "The release publishes the Python distribution and attestations, not generated context packages.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "28e6e8501142f92840825fbd7ea61d4ef643b439783dda0ef9980f0dc8b542b9"
+          }
         }
       ],
       "tracks": [
@@ -375,7 +424,12 @@
           "kind": "repository",
           "source": "src/clean_docs/verdict.py",
           "locator": "build_pr_verdict",
-          "detail": "The pull-request verdict binds one repository manifest and changed surface; it is not a schema for an assessment overlay applied to another repository."
+          "detail": "The pull-request verdict binds one repository manifest and changed surface; it is not a schema for an assessment overlay applied to another repository.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "2bccb2181c030c47b3eb81919f9b522dba69ff4c3b8676318fdddd9cbc140549"
+          }
         }
       ],
       "tracks": [
@@ -414,7 +468,12 @@
           "kind": "repository",
           "source": "tests/test_verdict.py",
           "locator": "test_verdict_validation_rejects_resigned_gate_promotion",
-          "detail": "The regression from commit f1ae97e rejects a not-ready verdict promoted to ready and re-signed with an internally consistent outer digest."
+          "detail": "The regression from commit f1ae97e rejects a not-ready verdict promoted to ready and re-signed with an internally consistent outer digest.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "6af5ce620a5bff393dd66160e55a7186a34dcca73786f20ceb5d85223c32eb2b"
+          }
         }
       ],
       "tracks": [
@@ -453,13 +512,22 @@
           "kind": "receipt",
           "source": "clean-docs verify",
           "locator": "coverage",
-          "detail": "A verify run at the pinned repository state reports 642 surfaces: 9 directly bound and 633 cataloged."
+          "detail": "A verify run at the pinned repository state reports 642 surfaces: 9 directly bound and 633 cataloged.",
+          "grounding": {
+            "state": "unverified",
+            "detail": "receipt evidence requires immutable bytes and execution context"
+          }
         },
         {
           "kind": "repository",
           "source": "README.md",
           "locator": "Current boundaries",
-          "detail": "The overview correctly says catalog coverage does not validate prose."
+          "detail": "The overview correctly says catalog coverage does not validate prose.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "fca24117801839154e7c26346af3bdd29f179f73a85558132bf51d6c2f77c9ef"
+          }
         }
       ],
       "tracks": [
@@ -498,7 +566,12 @@
           "kind": "repository",
           "source": "src/clean_docs/context.py",
           "locator": "_source_text",
-          "detail": "The context compiler reads committed paths from one local Git repository."
+          "detail": "The context compiler reads committed paths from one local Git repository.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "c1bd9b50c0728058a70ccdd1392503e1b2f141d4d1f6b4ca59511cc8e4f4259c"
+          }
         }
       ],
       "tracks": [
@@ -537,7 +610,13 @@
           "kind": "repository",
           "source": ".clean-docs/improvement-candidates.json",
           "locator": "review source metadata",
-          "detail": "The pinned candidate set contains comparison-specific source metadata that a later final-tree cleanup cannot remove from existing commit objects."
+          "detail": "The pinned candidate set contains comparison-specific source metadata that a later final-tree cleanup cannot remove from existing commit objects.",
+          "grounding": {
+            "state": "unknown",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "1214a2b995415844cb3f634b3cff3e85b25ed73cdb4489d664e4208b7cb1a76a",
+            "detail": "locator is absent from the pinned source bytes"
+          }
         }
       ],
       "tracks": [
@@ -576,7 +655,13 @@
           "kind": "repository",
           "source": ".clean-docs/improvement-candidates.json",
           "locator": "direct-coverage-gap evidence",
-          "detail": "The pinned candidate stores live verification counts but no receipt digest, producer version, command parameters, or execution ref."
+          "detail": "The pinned candidate stores live verification counts but no receipt digest, producer version, command parameters, or execution ref.",
+          "grounding": {
+            "state": "unknown",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "1214a2b995415844cb3f634b3cff3e85b25ed73cdb4489d664e4208b7cb1a76a",
+            "detail": "locator is absent from the pinned source bytes"
+          }
         }
       ],
       "tracks": [
@@ -615,7 +700,13 @@
           "kind": "repository",
           "source": "src/clean_docs/improvements.py",
           "locator": "_lifecycle_evidence and transition_candidate_lifecycle",
-          "detail": "The lifecycle validates evidence kind and nonempty reference shape but does not resolve the referenced commit, issue, decision, or test receipt."
+          "detail": "The lifecycle validates evidence kind and nonempty reference shape but does not resolve the referenced commit, issue, decision, or test receipt.",
+          "grounding": {
+            "state": "unknown",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "6dbb552daebf1c9658b8f07166b9a3fab9617f793abdb49c1372f39f735d6614",
+            "detail": "locator is absent from the pinned source bytes"
+          }
         }
       ],
       "tracks": [
@@ -654,7 +745,12 @@
           "kind": "repository",
           "source": "src/clean_docs/review_contracts.py",
           "locator": "ReviewLocatorEvidence",
-          "detail": "Locator evidence records base_digest, head_digest, and one aggregate state; distinct missing and unresolved causes are not retained in the receipt."
+          "detail": "Locator evidence records base_digest, head_digest, and one aggregate state; distinct missing and unresolved causes are not retained in the receipt.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "35dcc0a345cd868dc37c068f04204710ededc73a338c64b507e16befe05ced06"
+          }
         }
       ],
       "tracks": [
@@ -693,7 +789,12 @@
           "kind": "repository",
           "source": "tests/test_review_contracts.py",
           "locator": "test_fenced_heading_before_real_target_does_not_hide_real_change",
-          "detail": "The syntax-aware regressions from commit e5bbb1c cover fences, comments, expressions, HTML flow blocks, ambiguous headings, and batched parsing."
+          "detail": "The syntax-aware regressions from commit e5bbb1c cover fences, comments, expressions, HTML flow blocks, ambiguous headings, and batched parsing.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "0cc294a298eb5084e712ab0504a7ca00efc7f99b778a2eb5a02ceafa39c942b1"
+          }
         }
       ],
       "tracks": [
@@ -732,13 +833,24 @@
           "kind": "repository",
           "source": "README.md",
           "locator": "If you need to routing table",
-          "detail": "The routing table links the evaluation and release guides at the pinned commit."
+          "detail": "The routing table links the evaluation and release guides at the pinned commit.",
+          "grounding": {
+            "state": "unknown",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "fca24117801839154e7c26346af3bdd29f179f73a85558132bf51d6c2f77c9ef",
+            "detail": "locator is absent from the pinned source bytes"
+          }
         },
         {
           "kind": "repository",
           "source": "STANDARD.md",
           "locator": "Give the corpus a navigation contract",
-          "detail": "The standard says navigation must expose stable reader-intent paths."
+          "detail": "The standard says navigation must expose stable reader-intent paths.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "ad8d962766edbe05585d934be6378a9e737ce3bb1934508f1d44ad53e824f3d2"
+          }
         }
       ],
       "tracks": [
@@ -777,7 +889,12 @@
           "kind": "repository",
           "source": "tests/test_verdict.py",
           "locator": "test_verdict_validation_rejects_resigned_semantic_tampering",
-          "detail": "The regression from commit 9d98f4b rejects re-signed nested evidence that contradicts the verdict's semantic and count invariants."
+          "detail": "The regression from commit 9d98f4b rejects re-signed nested evidence that contradicts the verdict's semantic and count invariants.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "6af5ce620a5bff393dd66160e55a7186a34dcca73786f20ceb5d85223c32eb2b"
+          }
         }
       ],
       "tracks": [
@@ -816,13 +933,24 @@
           "kind": "repository",
           "source": "README.md",
           "locator": "first screen",
-          "detail": "Source-bound, bounded, deterministic, authority, receipt, projection, and surface appear before the full repair example."
+          "detail": "Source-bound, bounded, deterministic, authority, receipt, projection, and surface appear before the full repair example.",
+          "grounding": {
+            "state": "unknown",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "fca24117801839154e7c26346af3bdd29f179f73a85558132bf51d6c2f77c9ef",
+            "detail": "locator is absent from the pinned source bytes"
+          }
         },
         {
           "kind": "repository",
           "source": "STANDARD.md",
           "locator": "How to explain something technical simply",
-          "detail": "The standard requires new terms to be grounded on first use and checked by a blind read."
+          "detail": "The standard requires new terms to be grounded on first use and checked by a blind read.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "ad8d962766edbe05585d934be6378a9e737ce3bb1934508f1d44ad53e824f3d2"
+          }
         }
       ],
       "tracks": [
@@ -861,7 +989,13 @@
           "kind": "repository",
           "source": "src/clean_docs/improvements.py",
           "locator": "load_review_candidates and compile_improvement_candidates",
-          "detail": "The compiler validates evidence field shape and regenerates deterministic bytes but does not resolve repository paths or locators against repository_commit."
+          "detail": "The compiler validates evidence field shape and regenerates deterministic bytes but does not resolve repository paths or locators against repository_commit.",
+          "grounding": {
+            "state": "unknown",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "6dbb552daebf1c9658b8f07166b9a3fab9617f793abdb49c1372f39f735d6614",
+            "detail": "locator is absent from the pinned source bytes"
+          }
         }
       ],
       "tracks": [
@@ -900,13 +1034,23 @@
           "kind": "repository",
           "source": "src/clean_docs/emit/stepwise.py",
           "locator": "emit_stepwise_skill",
-          "detail": "The emitter writes a fixed local directory containing one clean-docs workflow."
+          "detail": "The emitter writes a fixed local directory containing one clean-docs workflow.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "d7277e98c112a88ba48ef5d09e3ac97fd7ecf174fcfb78d7ac938753f5803abd"
+          }
         },
         {
           "kind": "repository",
           "source": "llms.txt",
           "locator": "Canonical documentation",
-          "detail": "The projection is an index with content digests rather than an archive manifest."
+          "detail": "The projection is an index with content digests rather than an archive manifest.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "217222b1b171c4acb534dd0e5c5fd4a418deffeef347b9e0833186b48f11822a"
+          }
         }
       ],
       "tracks": [
@@ -945,7 +1089,12 @@
           "kind": "repository",
           "source": "src/clean_docs/residue.py",
           "locator": "load_residue_config",
-          "detail": "The public rule schema accepts plain token_sha256 values and compares them with unsalted token digests."
+          "detail": "The public rule schema accepts plain token_sha256 values and compares them with unsalted token digests.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "3a8972a6d58eda3ff50d18e78adfb0a85f1850264a35c2aced3cd917185e1f34"
+          }
         }
       ],
       "tracks": [
@@ -984,7 +1133,12 @@
           "kind": "repository",
           "source": "docs/learn/tutorial-catch-a-lying-doc.md",
           "locator": "Build the fixture",
-          "detail": "The tutorial creates a disposable Python literal and one generated table."
+          "detail": "The tutorial creates a disposable Python literal and one generated table.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "acaf1e3d666bad5d8467125e4165567487b79a60849d02656a057c81969d13dc"
+          }
         }
       ],
       "tracks": [
@@ -1023,7 +1177,12 @@
           "kind": "repository",
           "source": "src/clean_docs/changed.py",
           "locator": "_check_changed_details",
-          "detail": "The head snapshot uses RepositorySnapshot.materialized_root without a selected-project path before the project subtree is chosen."
+          "detail": "The head snapshot uses RepositorySnapshot.materialized_root without a selected-project path before the project subtree is chosen.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "7d7c715b6a6808eea6e42eebeaf444265d7dfdedcc6983f5806dcfd0b44148b6"
+          }
         }
       ],
       "tracks": [
@@ -1062,7 +1221,12 @@
           "kind": "repository",
           "source": "docs/EVALUATION.md",
           "locator": "Limits",
-          "detail": "Evaluation replays local responses and compiles lexical repository context."
+          "detail": "Evaluation replays local responses and compiles lexical repository context.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "d4364212c28b5f8b9bc715e54a3b55152ad5ec09ef96d69d0802ea9b048c518c"
+          }
         }
       ],
       "tracks": [
@@ -1101,13 +1265,22 @@
           "kind": "repository",
           "source": "tests/test_reader_trial.py",
           "locator": "test_later_release_does_not_reuse_version_10_reader_evidence",
-          "detail": "Version 1.2 reports not-attested and does not reuse the earlier trial."
+          "detail": "Version 1.2 reports not-attested and does not reuse the earlier trial.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "1af96c22438ac57a17ff93efef9ade1c66f265e88f4fdb890e6ef617008eca56"
+          }
         },
         {
           "kind": "receipt",
           "source": "verify_release_reader_trial",
           "locator": "current repository",
-          "detail": "The current result is required false and status not-attested."
+          "detail": "The current result is required false and status not-attested.",
+          "grounding": {
+            "state": "unverified",
+            "detail": "receipt evidence requires immutable bytes and execution context"
+          }
         }
       ],
       "tracks": [
@@ -1146,7 +1319,13 @@
           "kind": "repository",
           "source": ".clean-docs-residue.yml",
           "locator": "project-context-c reason",
-          "detail": "The pinned configuration stores a private workflow label in plaintext while the ordinary residue scan reports no finding."
+          "detail": "The pinned configuration stores a private workflow label in plaintext while the ordinary residue scan reports no finding.",
+          "grounding": {
+            "state": "unknown",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "a6ee6867dd8c02d038f0c5b7437d9d2c2b83f7be887d001fe13fbf99a97ffbf4",
+            "detail": "locator is absent from the pinned source bytes"
+          }
         }
       ],
       "tracks": [
@@ -1185,7 +1364,12 @@
           "kind": "repository",
           "source": "src/clean_docs/impact.py",
           "locator": "build_impact_plan",
-          "detail": "Impact planning evaluates review contracts loaded from the selected head manifest and does not receipt base-to-head contract definition changes."
+          "detail": "Impact planning evaluates review contracts loaded from the selected head manifest and does not receipt base-to-head contract definition changes.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "e2abf961801fc3bf77746f2badb5370442b2c71621bdf65413a3b5069fd1a083"
+          }
         }
       ],
       "tracks": [
@@ -1224,7 +1408,12 @@
           "kind": "repository",
           "source": "tests/test_manifest.py",
           "locator": "test_rejects_review_contract_source_target_identity_with_different_ids",
-          "detail": "The regression rejects source-target identity intersections even when IDs differ; commit 9d71886 also keeps review-contract graph roots out of artifact coverage."
+          "detail": "The regression rejects source-target identity intersections even when IDs differ; commit 9d71886 also keeps review-contract graph roots out of artifact coverage.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "54ea1732e572ab86307667e532d5b60f9f4a474f356334e43800de149724ae62"
+          }
         }
       ],
       "tracks": [
@@ -1263,7 +1452,12 @@
           "kind": "repository",
           "source": "tests/test_review_contracts.py",
           "locator": "test_repeated_locators_read_each_ref_path_once",
-          "detail": "Commit 5c5a05b adds per-ref reuse plus oversized-file, aggregate-byte, structured-node, YAML-alias, and manifest-cardinality regression coverage."
+          "detail": "Commit 5c5a05b adds per-ref reuse plus oversized-file, aggregate-byte, structured-node, YAML-alias, and manifest-cardinality regression coverage.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "0cc294a298eb5084e712ab0504a7ca00efc7f99b778a2eb5a02ceafa39c942b1"
+          }
         }
       ],
       "tracks": [
@@ -1302,7 +1496,12 @@
           "kind": "repository",
           "source": "tests/test_snapshot.py",
           "locator": "test_snapshot_rejects_windows_shaped_symlink_targets",
-          "detail": "Commit 0110b90 adds drive, UNC, backslash-traversal, archive-member, repository-root expansion, escaping-link, and valid-link controls."
+          "detail": "Commit 0110b90 adds drive, UNC, backslash-traversal, archive-member, repository-root expansion, escaping-link, and valid-link controls.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "82b478fdf1ed4f4b2c11086826626ed5cfdec683bf2557c341966fdb474653c9"
+          }
         }
       ],
       "tracks": [
@@ -1341,7 +1540,12 @@
           "kind": "repository",
           "source": "tests/test_audit.py",
           "locator": "test_unregistered_documents_preview_compatible_policy_without_gating_it",
-          "detail": "The regression keeps compatible findings advisory before registration, while the report still exposes an affirmative audit result."
+          "detail": "The regression keeps compatible findings advisory before registration, while the report still exposes an affirmative audit result.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "8dbeec61f58da4ff5b0012572f9ed5d46a00d7c03d95178423d070c53e251505"
+          }
         }
       ],
       "tracks": [
@@ -1380,7 +1584,12 @@
           "kind": "repository",
           "source": "tests/test_verdict.py",
           "locator": "test_review_contract_advisory_preserves_ready_verdict_and_receipts",
-          "detail": "The regression from commit 9d98f4b keeps the gate ready while reporting a non-clear observation axis and semantic_correctness_checked false."
+          "detail": "The regression from commit 9d98f4b keeps the gate ready while reporting a non-clear observation axis and semantic_correctness_checked false.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "6af5ce620a5bff393dd66160e55a7186a34dcca73786f20ceb5d85223c32eb2b"
+          }
         }
       ],
       "tracks": [
@@ -1419,7 +1628,12 @@
           "kind": "repository",
           "source": "tests/test_manifest.py",
           "locator": "test_rejects_generated_projection_as_review_target",
-          "detail": "Commit dda6329 adds both human and agent visual outputs to the generated-target regression matrix."
+          "detail": "Commit dda6329 adds both human and agent visual outputs to the generated-target regression matrix.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "54ea1732e572ab86307667e532d5b60f9f4a474f356334e43800de149724ae62"
+          }
         }
       ],
       "tracks": [
@@ -1458,7 +1672,12 @@
           "kind": "repository",
           "source": "src/clean_docs/impact.py",
           "locator": "_workflow_events",
-          "detail": "Static workflow evidence compares job definitions only when the workflow file changes; it does not evaluate whether another changed path causes a substantive job to run."
+          "detail": "Static workflow evidence compares job definitions only when the workflow file changes; it does not evaluate whether another changed path causes a substantive job to run.",
+          "grounding": {
+            "state": "grounded",
+            "commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
+            "content_sha256": "e2abf961801fc3bf77746f2badb5370442b2c71621bdf65413a3b5069fd1a083"
+          }
         }
       ],
       "tracks": [
@@ -1489,5 +1708,5 @@
       "change_authority": false
     }
   ],
-  "digest": "01d881fc9bce533de25c0e1c23d60ce106cb1d0f4c5952b0045a68b38dcdce8b"
+  "digest": "405174fabe26d2b58094fca6da19a3d7928a80487e47132e2bb931f47f850f5f"
 }

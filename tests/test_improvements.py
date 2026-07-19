@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -60,6 +61,22 @@ def _payload() -> dict[str, object]:
             }
         ],
     }
+
+
+def _repository(root: Path) -> str:
+    root.mkdir()
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
+    subprocess.run(["git", "-C", str(root), "config", "user.email", "tests@example.com"], check=True)
+    subprocess.run(["git", "-C", str(root), "config", "user.name", "Tests"], check=True)
+    (root / "README.md").write_text("# Docs\n\nrouting table\n")
+    subprocess.run(["git", "-C", str(root), "add", "README.md"], check=True)
+    subprocess.run(["git", "-C", str(root), "commit", "-qm", "seed"], check=True)
+    return subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "HEAD"],
+        text=True,
+        capture_output=True,
+        check=True,
+    ).stdout.strip()
 
 
 def test_compiles_stable_dual_track_candidates_without_authority() -> None:
@@ -129,6 +146,53 @@ def test_loaded_source_digest_binds_exact_review_bytes(tmp_path: Path) -> None:
     assert first.candidates == second.candidates
     assert first.source_sha256 != second.source_sha256
     assert first.digest != second.digest
+
+
+def test_repository_evidence_is_grounded_at_the_pinned_commit(tmp_path: Path) -> None:
+    root = tmp_path / "repository"
+    commit = _repository(root)
+    payload = _payload()
+    payload["repository_commit"] = commit
+    source = tmp_path / "review.json"
+    source.write_text(json.dumps(payload))
+
+    ungrounded = load_review_candidates(source)
+    assert "grounding" not in ungrounded.candidates[0].evidence[0]
+
+    grounded = load_review_candidates(source, root=root)
+    evidence = grounded.candidates[0].evidence[0]
+    assert evidence["grounding"]["state"] == "grounded"
+    assert evidence["grounding"]["commit"] == commit
+
+    payload["observations"][0]["evidence"][0]["source"] = "MOVED.md"
+    source.write_text(json.dumps(payload))
+    moved = load_review_candidates(source, root=root)
+    assert moved.candidates[0].evidence[0]["grounding"]["state"] == "unknown"
+
+    payload["observations"][0]["evidence"][0]["source"] = "README.md"
+    payload["observations"][0]["evidence"][0]["locator"] = "missing locator"
+    source.write_text(json.dumps(payload))
+    missing_locator = load_review_candidates(source, root=root)
+    assert missing_locator.candidates[0].evidence[0]["grounding"]["state"] == "unknown"
+
+
+def test_repository_evidence_rejects_abbreviated_or_unavailable_commits(tmp_path: Path) -> None:
+    root = tmp_path / "repository"
+    commit = _repository(root)
+    payload = _payload()
+    payload["repository_commit"] = commit[:12]
+    source = tmp_path / "review.json"
+    source.write_text(json.dumps(payload))
+    with pytest.raises(ConfigurationError, match="full lowercase SHA-1"):
+        load_review_candidates(source, root=root)
+
+    payload["repository_commit"] = "a" * 40
+    source.write_text(json.dumps(payload))
+    unavailable = load_review_candidates(source, root=root)
+    assert unavailable.candidates[0].evidence[0]["grounding"]["state"] == "unknown"
+
+    no_repository = load_review_candidates(source, root=tmp_path / "not-a-repository")
+    assert no_repository.candidates[0].evidence[0]["grounding"]["state"] == "unknown"
 
 
 def test_cli_writes_and_checks_candidate_set(tmp_path: Path, capsys) -> None:

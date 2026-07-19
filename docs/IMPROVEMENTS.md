@@ -12,8 +12,9 @@ authorized change.
 
 The output indexes proposed work: every candidate has a content-derived ID, evidence fields, two
 proposed tests, and explicit `gate_authority: false` and `change_authority: false` fields.
-Compilation validates shape. `--check` validates projection freshness. Neither mode resolves an
-evidence locator, judges whether a proposed test is adequate, or proves that the observation set is
+Compilation validates shape and, when run in a repository, resolves repository evidence at the
+pinned review commit. `--check` validates projection freshness. Neither mode validates external or
+receipt evidence, judges whether a proposed test is adequate, or proves that the observation set is
 complete.
 
 ## Review observations
@@ -54,6 +55,10 @@ The command writes candidate content only to the explicit output path. It create
 directories and replaces the file atomically. It rejects missing evidence, a missing documentation
 or product track, unsupported test kinds, duplicate observation IDs, and output paths outside the
 repository.
+
+When the command runs in a repository, it opens each cited file at the pinned review commit and
+searches the locator. The output marks the citation `grounded` or `unknown`; remote sources and
+command receipts remain `unverified` until immutable records bind them.
 
 Check that the committed candidate set still matches its observations:
 
