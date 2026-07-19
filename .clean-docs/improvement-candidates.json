@@ -1,13 +1,12 @@
 {
   "schema": "clean-docs.improvement-candidates.v1",
   "review": {
-    "id": "wizard-docs-context-mill",
-    "repository_commit": "ea9cb998baf568356a02d6d3c002a00e57f83c10",
+    "id": "repository-review",
+    "repository_commit": "09e6551b89f43d6896ec44d823966d4491d06ab6",
     "source_urls": [
-      "https://posthog.com/handbook/wizard-and-docs",
-      "https://posthog.com/handbook/wizard-and-docs/context-mill"
+      "https://github.com/owieschon/clean-docs"
     ],
-    "source_sha256": "61dbdd545780ae28563b66f51451a618a7d4f5ac4b0d1262acf2039e56fc4299"
+    "source_sha256": "de61b0af7482e9945e9a69455db34641c0b659b99816c800643683a1ac8a54e4"
   },
   "authority": {
     "state": "assessment",
@@ -17,7 +16,7 @@
   },
   "candidates": [
     {
-      "id": "55a8491fffcf0ed969cfd481626684c7a73c8385a7804af3a052a4b455d3a26a",
+      "id": "bd9642d87d1c56dca2773c4fc43941bba1cf92ad6cd134901e7b7751d7f85865",
       "observation_id": "accepted-writing-debt",
       "summary": "Nine registered writing findings remain accepted in the documentation baseline.",
       "evidence": [
@@ -56,7 +55,280 @@
       "change_authority": false
     },
     {
-      "id": "9a6b784edfd7e8287e3634808c39594065b0e89383765b4b5121b0e95f4b886d",
+      "id": "5438d0001170037ebec0a4642d7504bc08e99d075d195868fbe93bed6b899aa4",
+      "observation_id": "archive-extraction-policy",
+      "summary": "Archive extraction behavior is implicit across supported runtimes and can change under a newer standard-library default.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": "src/clean_docs/snapshot.py",
+          "locator": "RepositorySnapshot.materialized_root",
+          "detail": "The snapshot materializer calls tarfile.extractall without an explicit filter; scripts/build_release.py and scripts/trusted_self_check.py have the same boundary."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "State one archive member, link, mode, and runtime-compatibility policy for snapshot, release, and verification paths.",
+          "test": {
+            "kind": "static-analysis",
+            "setup": "Inventory every archive extraction site and the published security guarantees.",
+            "action": "Compare each site with the same explicit extraction policy.",
+            "passes_when": "Every site documents the same accepted members, rejected escapes, preserved metadata, and supported runtime behavior."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Apply an explicit extraction policy at every archive boundary.",
+          "test": {
+            "kind": "integration",
+            "setup": "Build valid, absolute-path, parent-traversal, and escaping-link archives.",
+            "action": "Exercise snapshot, release, and trusted-verification extraction on every supported Python version.",
+            "passes_when": "Valid source bytes and required modes survive, malicious members fail closed, and no runtime-default warning remains."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "d82348ce8bb0724c4f4f04ecb7b51faacef4b3684160f705ea182fac0f9a6085",
+      "observation_id": "binding-specificity-control",
+      "summary": "A relevant mutation can turn an overbroad check red without proving that its declared locator is specific.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": "src/clean_docs/sensitivity.py",
+          "locator": "evaluate_binding_sensitivity",
+          "detail": "The evaluator records a current baseline and one selected mutation; test_wrong_semantic_relationship_can_be_sensitive_without_becoming_authorized shows that sensitivity alone does not establish the right relationship."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "Distinguish mutation sensitivity from relationship specificity and show the unrelated-control requirement.",
+          "test": {
+            "kind": "reader-task",
+            "setup": "Give a reader one relevant-red receipt and the binding-sensitivity reference.",
+            "action": "Ask what additional evidence is needed before calling the detector specific.",
+            "passes_when": "The reader requires a same-extractor unrelated mutation that stays green and does not claim semantic authorization."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Add an unrelated same-extractor control mutation and validate all three states in one sensitivity receipt.",
+          "test": {
+            "kind": "fixture",
+            "setup": "Create one specific detector and one overbroad detector over the same source file.",
+            "action": "Run baseline, relevant, and unrelated mutations against both detectors.",
+            "passes_when": "Only the specific detector is current at baseline, red for the relevant mutation, and green for the unrelated mutation."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "7637397869b82d3bf9fcc1935f2e5679fc7912d97a53a310821871278568ea80",
+      "observation_id": "candidate-authoring-conventions",
+      "summary": "The candidate guide describes summary and source conventions that the schema does not enforce.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": "src/clean_docs/improvements.py",
+          "locator": "_string and compile_improvement_candidates",
+          "detail": "Summary and source URL fields are accepted as nonempty strings without sentence-count or URL-shape validation."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "Label unenforced authoring conventions separately from schema requirements.",
+          "test": {
+            "kind": "static-analysis",
+            "setup": "List every candidate-guide requirement and authoring convention.",
+            "action": "Compare each statement with the schema validator and emitted receipt.",
+            "passes_when": "Every requirement has an enforcement site and every unenforced convention is labeled advisory."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Either validate candidate authoring conventions or receipt them as advisory quality signals.",
+          "test": {
+            "kind": "fixture",
+            "setup": "Create valid and invalid source strings plus single-sentence and multi-sentence summaries.",
+            "action": "Compile each observation under the declared schema contract.",
+            "passes_when": "Behavior matches the published requirement or advisory status without granting gate authority."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "5a2a3c60418024da735ec96129243a77e23359abd23d5c383f38a514a326eb05",
+      "observation_id": "candidate-compilation-limits",
+      "summary": "Review-candidate compilation has no fixed bounds for source bytes, counts, field lengths, or rendered output.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": "src/clean_docs/improvements.py",
+          "locator": "load_review_candidates and compile_improvement_candidates",
+          "detail": "The loader reads the complete input and the compiler iterates every observation, evidence item, URL, and unbounded string before rendering the candidate set."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "Publish fixed source-byte, observation, evidence, URL, field-length, and rendered-byte limits with their failure semantics.",
+          "test": {
+            "kind": "static-analysis",
+            "setup": "Read the compiler limit constants and every enforcement site.",
+            "action": "Compare each value and failure phase with the canonical reference.",
+            "passes_when": "Every work dimension has one exact published limit and the docs state that an overage writes no candidate output."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Bound candidate compilation before allocation or rendering and keep writes atomic.",
+          "test": {
+            "kind": "fixture",
+            "setup": "Build below-limit, at-limit, and above-limit inputs for bytes, observations, evidence, URLs, strings, and rendered output.",
+            "action": "Compile each input to an existing sentinel output path.",
+            "passes_when": "Below and at-limit inputs succeed deterministically, every overage fails before replacement, and no partial output is written."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "aef15afcc7c4e8c93515a5b8af30d9bfe634c954d0943964caa7345bdf188eef",
+      "observation_id": "candidate-compiler-boundary-tests",
+      "summary": "Candidate compiler tests do not pin content-sensitive identities or every output-path boundary.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": "tests/test_improvements.py",
+          "locator": "test_compiles_stable_dual_track_candidates_without_authority and test_cli_requires_explicit_internal_output_for_check",
+          "detail": "The tests assert ID length and a direct outside path but do not cover identity mutation, symlink escape, or check-mode nonmutation."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "Publish the candidate identity inputs and exact check-mode write boundary.",
+          "test": {
+            "kind": "static-analysis",
+            "setup": "Map every documented identity and output-boundary claim to a regression test.",
+            "action": "Compare the map with the compiler test suite.",
+            "passes_when": "Content sensitivity, stable semantic input, path containment, and check-mode nonmutation each have a named test."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Harden candidate identity and output containment with adversarial fixtures.",
+          "test": {
+            "kind": "fixture",
+            "setup": "Create content mutations, stable inputs, leaf and parent symlinks, missing output, stale output, and empty evidence.",
+            "action": "Compile or check each case against a sentinel outside the repository.",
+            "passes_when": "Identity changes only with candidate content, escapes fail, check mode never writes, and missing evidence matches the documented error."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "e238f319f78b8bcdc79ce0e218cf94382beb20e2276829bc1c1c58320e1ce625",
+      "observation_id": "candidate-observation-denominator",
+      "summary": "Projection freshness cannot prove that every discovered issue remains represented.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": ".github/workflows/ci.yml",
+          "locator": "review candidates --check",
+          "detail": "CI compares the observation input with its generated output but has no independent append-only issue denominator."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "Distinguish projection freshness from issue completeness and name the independent denominator.",
+          "test": {
+            "kind": "reader-task",
+            "setup": "Show one current candidate set produced after silently deleting an observation.",
+            "action": "Ask whether the freshness check proves every discovered issue is present.",
+            "passes_when": "The reader rejects the completeness claim and identifies the independent ledger needed to prove it."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Bind every review event to an append-only candidate disposition.",
+          "test": {
+            "kind": "integration",
+            "setup": "Create recorded review events with active, merged, and superseded dispositions.",
+            "action": "Delete, duplicate, retarget, and legitimately close individual candidate records.",
+            "passes_when": "Missing and duplicate events fail, while explicit merged and superseded history remains verifiable."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "a7406c10985383895fc437818ea93bc2fa8bdbe80fe9366dd998d8974e75e15c",
+      "observation_id": "canonical-target-denominator",
+      "summary": "Generated documentation copies can inflate coverage and prescribe duplicate edits when counted as independent authored targets.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": "tests/test_manifest.py",
+          "locator": "test_rejects_generated_projection_as_review_target",
+          "detail": "The current regression rejects configured projection outputs as review targets, preserving a canonical authored target boundary."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "Show how canonical documentation, authored procedures, and generated projections contribute different evidence.",
+          "test": {
+            "kind": "static-analysis",
+            "setup": "Declare one canonical target, one authored procedure, and one generated copy of the same fact.",
+            "action": "Apply the documented coverage-denominator rules.",
+            "passes_when": "The canonical fact is counted once and projection drift remains a separate obligation."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Preserve generated-target guards and report projection drift without allowing generated bytes to satisfy authored review obligations.",
+          "test": {
+            "kind": "fixture",
+            "setup": "Create one canonical document and two generated projections of it.",
+            "action": "Attempt to use each generated output as an authored review target.",
+            "passes_when": "Both attempts fail, while the canonical target and its projection checks remain valid."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "c5ea6fb750626b7b4fa20e8b926bb6b05286514e7feba1cfdc01a6b40225a663",
       "observation_id": "context-package-delivery",
       "summary": "Generated context stays local instead of being published through a versioned consumer manifest.",
       "evidence": [
@@ -65,12 +337,6 @@
           "source": ".github/workflows/release.yml",
           "locator": "Publish release assets",
           "detail": "The release publishes the Python distribution and attestations, not generated context packages."
-        },
-        {
-          "kind": "external",
-          "source": "https://posthog.com/handbook/wizard-and-docs/context-mill",
-          "locator": "Context delivery",
-          "detail": "The comparison system publishes a versioned manifest for agents and MCP servers."
         }
       ],
       "tracks": [
@@ -101,7 +367,85 @@
       "change_authority": false
     },
     {
-      "id": "34621882519847c982dbfa29bc81b2243f4eb942ceb5b1ac743e9c12ec01d216",
+      "id": "b01eb2959e278844c50fa5025fb005a4ef6fe12b84e3e987a59ea91d20611b16",
+      "observation_id": "cross-repository-evaluation-receipt",
+      "summary": "Read-only cross-repository evaluations lack a denominator-complete receipt distinct from a repository-authorized pull-request verdict.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": "src/clean_docs/verdict.py",
+          "locator": "build_pr_verdict",
+          "detail": "The pull-request verdict binds one repository manifest and changed surface; it is not a schema for an assessment overlay applied to another repository."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "Define the evidence and authority boundary for a read-only cross-repository evaluation packet.",
+          "test": {
+            "kind": "static-analysis",
+            "setup": "Prepare a packet with bound, unbound, skipped, and non-factual changed prose units.",
+            "action": "Compare the packet with the documented denominator and authority fields.",
+            "passes_when": "Every changed prose unit has one disposition and the packet states that the reviewed repository did not authorize it."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Add a digest-bound evaluation receipt for cross-repository assessment overlays.",
+          "test": {
+            "kind": "integration",
+            "setup": "Freeze two full repository SHAs and a complete changed-prose denominator.",
+            "action": "Build the receipt, then remove, duplicate, and swap one evidence item.",
+            "passes_when": "The intact packet is reproducible and each incomplete or mismatched packet is rejected."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "08cc4cdbb978686ff2aa07bfe81b130a752b442f47cc97c5139ffd27837b6312",
+      "observation_id": "derived-verdict-state",
+      "summary": "A verdict digest must bind a gate state derived from evidence rather than legitimize a promoted state.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": "tests/test_verdict.py",
+          "locator": "test_verdict_validation_rejects_resigned_gate_promotion",
+          "detail": "The regression from commit f1ae97e rejects a not-ready verdict promoted to ready and re-signed with an internally consistent outer digest."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "Keep the receipt contract explicit that gate state is derived from validated findings, coverage, and impact evidence.",
+          "test": {
+            "kind": "reader-task",
+            "setup": "Give a reader one valid failing verdict and one re-signed copy whose gate was promoted.",
+            "action": "Ask whether either digest authorizes the declared state.",
+            "passes_when": "The reader rejects the promoted copy and identifies evidence derivation, not digest presence, as the authority boundary."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Preserve evidence-derived gate validation for current receipts and exact compatibility for supported legacy receipts.",
+          "test": {
+            "kind": "fixture",
+            "setup": "Build not-ready, unknown, ready, and exact legacy verdicts.",
+            "action": "Promote and re-sign failing current verdicts, then validate every case.",
+            "passes_when": "Promoted receipts fail, valid derived states pass, and only the declared legacy shapes retain compatibility."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "1557a31489e1e0ccf5ec60c062885aacaef9a41682b58fba218938e1c538b667",
       "observation_id": "direct-coverage-gap",
       "summary": "Repository-wide catalog coverage is complete while direct source coverage remains incomplete.",
       "evidence": [
@@ -109,7 +453,7 @@
           "kind": "receipt",
           "source": "clean-docs verify",
           "locator": "coverage",
-          "detail": "The audited receipt reports 8 bound and 580 cataloged surfaces with direct_coverage_complete false."
+          "detail": "A verify run at the pinned repository state reports 642 surfaces: 9 directly bound and 633 cataloged."
         },
         {
           "kind": "repository",
@@ -146,7 +490,7 @@
       "change_authority": false
     },
     {
-      "id": "e43a36635f308b636096312741adfa68cc04bb1f271d57aa73244d81e79b849f",
+      "id": "c6eeab5ac6c670da8eb28e0499b34982e808640fa0b78a2c157a635190e4d93a",
       "observation_id": "first-party-source-breadth",
       "summary": "Context sourcing is repository-local and lacks first-party pinned URL or multi-repository inputs.",
       "evidence": [
@@ -155,12 +499,6 @@
           "source": "src/clean_docs/context.py",
           "locator": "_source_text",
           "detail": "The context compiler reads committed paths from one local Git repository."
-        },
-        {
-          "kind": "external",
-          "source": "https://posthog.com/handbook/wizard-and-docs/context-mill",
-          "locator": "Context sourcing",
-          "detail": "The comparison system gathers documentation, prompts, and working examples from multiple sources."
         }
       ],
       "tracks": [
@@ -191,15 +529,210 @@
       "change_authority": false
     },
     {
-      "id": "fba09f0bc089e85f77236aa40b615d484e554727654e60ba974237967db1d2b0",
+      "id": "050796ab08659b8b322198a8596ad19bc1c9d0bf69c3639208fd9f2705f2c105",
+      "observation_id": "historical-residue-exposure",
+      "summary": "A clean final tree can leave removed private context visible in reachable history and deletion diffs.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": ".clean-docs/improvement-candidates.json",
+          "locator": "review source metadata",
+          "detail": "The pinned candidate set contains comparison-specific source metadata that a later final-tree cleanup cannot remove from existing commit objects."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "Separate current-tree, added-line, deletion-only, and reachable-history residue results with their remediation costs.",
+          "test": {
+            "kind": "static-analysis",
+            "setup": "Create examples for a clean addition, a deletion-only cleanup, a reachable old blob, and an authorized full purge.",
+            "action": "Compare each state with the published residue axes and remediation guidance.",
+            "passes_when": "Readers can distinguish new exposure from historical cleanup and see the tag, signature, fork, and pinned-reference costs of rewriting history."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Receipt final-tree, patch-addition, deletion-only, and reachable-history residue as separate assessment axes.",
+          "test": {
+            "kind": "fixture",
+            "setup": "Create repositories with clean additions, deletion-only restricted text, reachable old blobs, and rewritten history.",
+            "action": "Run the bounded residue assessment on each repository.",
+            "passes_when": "Each axis reports its own evidence without calling deletion-only cleanup a new addition or rewriting history without explicit authority."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "521dc3fddfc504465bf7b7d028a7869c867d151dc2625e91e05e02fda5975ae4",
+      "observation_id": "immutable-receipt-evidence",
+      "summary": "A receipt label without immutable bytes or execution context can drift while its candidate stays current.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": ".clean-docs/improvement-candidates.json",
+          "locator": "direct-coverage-gap evidence",
+          "detail": "The pinned candidate stores live verification counts but no receipt digest, producer version, command parameters, or execution ref."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "Define the immutable fields required before an observation may call a command result receipt evidence.",
+          "test": {
+            "kind": "static-analysis",
+            "setup": "Create examples with a complete receipt and with each provenance field missing.",
+            "action": "Compare them with the published receipt-evidence contract.",
+            "passes_when": "Only digest-bound bytes with producer version, repository ref, and command parameters qualify."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Resolve receipt evidence by digest and execution context instead of a moving command label.",
+          "test": {
+            "kind": "fixture",
+            "setup": "Create valid, changed-count, swapped-receipt, wrong-ref, and unavailable-receipt cases.",
+            "action": "Compile and recheck the review after each evidence change.",
+            "passes_when": "Only the matching immutable receipt resolves and every unavailable or mismatched case stays unknown."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "09622e01dc95e49e9081571767b58b4a9451111c0589a38ebf90161c5c0b049f",
+      "observation_id": "lifecycle-reference-resolution",
+      "summary": "A state-compatible evidence kind can carry a nonexistent reference and still advance a candidate lifecycle.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": "src/clean_docs/improvements.py",
+          "locator": "_lifecycle_evidence and transition_candidate_lifecycle",
+          "detail": "The lifecycle validates evidence kind and nonempty reference shape but does not resolve the referenced commit, issue, decision, or test receipt."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "State which lifecycle evidence fields are shape-checked, resolved, unavailable, or outside provider authority.",
+          "test": {
+            "kind": "static-analysis",
+            "setup": "Create examples for each evidence kind with valid, missing, and unavailable references.",
+            "action": "Compare the examples with the lifecycle reference contract.",
+            "passes_when": "The guide never equates a typed reference string with resolved evidence."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Resolve lifecycle references through repository and configured provider boundaries before advancing state.",
+          "test": {
+            "kind": "fixture",
+            "setup": "Create nonexistent, swapped, wrong-repository, valid, and offline-provider references for every lifecycle evidence kind.",
+            "action": "Attempt the corresponding state transition.",
+            "passes_when": "Only resolved evidence advances state, unavailable providers yield unknown, and lifecycle authority remains assessment-only."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "ca12dd593952304ad32ab884c9f994fad512644420b8a5626c80410d82a83fb0",
+      "observation_id": "locator-resolution-reasons",
+      "summary": "An unknown locator does not yet state whether the path, locator, syntax, value, or work budget failed.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": "src/clean_docs/review_contracts.py",
+          "locator": "ReviewLocatorEvidence",
+          "detail": "Locator evidence records base_digest, head_digest, and one aggregate state; distinct missing and unresolved causes are not retained in the receipt."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "Publish a stable locator-resolution reason registry with one reviewer action per reason and no raw parser output.",
+          "test": {
+            "kind": "static-analysis",
+            "setup": "Prepare one receipt example for every documented resolution reason.",
+            "action": "Validate each example against the reason registry and reviewer action.",
+            "passes_when": "Every unknown is actionable without exposing unstable exception text or parser internals."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Emit bounded base and head resolution states with stable reason codes.",
+          "test": {
+            "kind": "fixture",
+            "setup": "Create missing-path, missing-locator, ambiguity, syntax, structured-parse, unsupported-value, and budget-rejection cases.",
+            "action": "Evaluate each locator at base and head.",
+            "passes_when": "Every case returns its stable reason, preserves advisory unknown semantics, and omits raw parser data."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "2f8a85526e15606c905ce993145ee94796920ab298abdd3521001c2fe7c549bc",
+      "observation_id": "markdown-locator-syntax",
+      "summary": "Markdown review locators need rendered document syntax instead of raw heading-shaped lines.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": "tests/test_review_contracts.py",
+          "locator": "test_fenced_heading_before_real_target_does_not_hide_real_change",
+          "detail": "The syntax-aware regressions from commit e5bbb1c cover fences, comments, expressions, HTML flow blocks, ambiguous headings, and batched parsing."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "Keep the locator reference explicit about rendered headings, ignored syntax regions, ambiguity, and parser failure.",
+          "test": {
+            "kind": "static-analysis",
+            "setup": "Compare the reference with the Markdown and MDX syntax regression matrix.",
+            "action": "Map every documented boundary to a positive or negative fixture.",
+            "passes_when": "Real headings, masked syntax, duplicate anchors, and parser failures each have one stated outcome and one fixture."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Preserve syntax-aware section resolution and batched parsing.",
+          "test": {
+            "kind": "fixture",
+            "setup": "Place heading-shaped text in a real section, fence, comment, HTML block, and MDX expression.",
+            "action": "Change each location independently and evaluate the same locator.",
+            "passes_when": "Only rendered section content changes its digest, while ambiguity or parse failure resolves unknown."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "247965fdd35111e18287923360ccebf0d97353933a9be2a72bc0110c69b9a0af",
       "observation_id": "navigation-reachability",
-      "summary": "Reader-relevant evaluation and release guides have no incoming route from the documentation hub.",
+      "summary": "The documentation hub routes current guides, but no bounded check preserves reachability as the corpus changes.",
       "evidence": [
         {
           "kind": "repository",
           "source": "README.md",
           "locator": "If you need to routing table",
-          "detail": "The routing table does not link docs/EVALUATION.md or docs/RELEASES.md."
+          "detail": "The routing table links the evaluation and release guides at the pinned commit."
         },
         {
           "kind": "repository",
@@ -211,7 +744,7 @@
       "tracks": [
         {
           "target": "documentation",
-          "proposed_change": "Add task-oriented routes for evaluating documentation and producing grounded release notes.",
+          "proposed_change": "Preserve task-oriented routes for evaluating documentation and producing grounded release notes.",
           "test": {
             "kind": "static-analysis",
             "setup": "Treat the README as the documentation hub and exclude declared internal evidence records.",
@@ -236,7 +769,46 @@
       "change_authority": false
     },
     {
-      "id": "975e7c6a41a4ca4295df4e37f7eb866ce610b4890eab42ea48614a5d1df46bdc",
+      "id": "286c8c30decd06aa209cf1fee7dd3b8f4fcd1e7f877c7095d1e7f95def610d03",
+      "observation_id": "nested-verdict-validation",
+      "summary": "A recomputed receipt digest must not make malformed nested verdict evidence reusable.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": "tests/test_verdict.py",
+          "locator": "test_verdict_validation_rejects_resigned_semantic_tampering",
+          "detail": "The regression from commit 9d98f4b rejects re-signed nested evidence that contradicts the verdict's semantic and count invariants."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "Keep the verdict reference explicit about validated nested fields, cross-field invariants, and exact legacy shapes.",
+          "test": {
+            "kind": "static-analysis",
+            "setup": "Compare the documented receipt schema with validator fixtures for current and legacy payloads.",
+            "action": "Map every consumer-relevant nested field to a validation assertion.",
+            "passes_when": "No required nested field relies on digest validation alone and every additive field has an explicit accepted or rejected outcome."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Preserve strict nested verdict validation and exact compatibility handling.",
+          "test": {
+            "kind": "fixture",
+            "setup": "Start with valid current and legacy verdicts.",
+            "action": "Tamper with nested types, states, counts, digests, and semantic flags, then recompute the outer digest.",
+            "passes_when": "Every contradictory current payload fails and the two supported legacy shapes still pass."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "5a5effc23cf80159b20c7eddaa9adc46f1d414486f6094c1f52bb8d717c56017",
       "observation_id": "novice-terminology-load",
       "summary": "The first reader screen introduces many clean-docs terms before grounding them in one concrete example.",
       "evidence": [
@@ -281,7 +853,46 @@
       "change_authority": false
     },
     {
-      "id": "f0727414d89aa6fe507092a7d310189d560f1cb38538b9f91924995230d09861",
+      "id": "1a0bac6a2d8e572f4185ddf575a211a8f0af646ce33c880f9a5cdffbe8bda8c2",
+      "observation_id": "pinned-evidence-resolution",
+      "summary": "A current candidate projection can cite repository evidence that does not exist at its pinned commit.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": "src/clean_docs/improvements.py",
+          "locator": "load_review_candidates and compile_improvement_candidates",
+          "detail": "The compiler validates evidence field shape and regenerates deterministic bytes but does not resolve repository paths or locators against repository_commit."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "State that candidate checking proves projection freshness, then distinguish resolved, unresolved, and unsupported evidence.",
+          "test": {
+            "kind": "reader-task",
+            "setup": "Give a reader one current candidate file whose repository evidence path is absent at the pinned commit.",
+            "action": "Ask what the current result proves about the evidence.",
+            "passes_when": "The reader identifies byte freshness without claiming that the cited path or locator was resolved."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Resolve repository evidence against the full pinned commit and receipt unsupported locator semantics as unknown.",
+          "test": {
+            "kind": "fixture",
+            "setup": "Create valid-path, missing-path, moved-path, abbreviated-commit, missing-commit, and unavailable-repository cases.",
+            "action": "Compile and check candidates for each pinned repository state.",
+            "passes_when": "Only evidence present at the full commit is resolved, unsupported locators stay explicit, and byte equality alone never labels evidence grounded."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "fe842b1a4df4988b3845eaeb1887d99969aa27b779c5a1150b1d6bdaafa33444",
       "observation_id": "portable-context-package",
       "summary": "Context projections lack a general self-contained archive and distribution manifest.",
       "evidence": [
@@ -326,7 +937,46 @@
       "change_authority": false
     },
     {
-      "id": "0117bd3a322fe99ea1cacb6d2a7b98bb967c345148b123ddbcfa4ad5c011046f",
+      "id": "af8c1ce10dbcd35d80038563b7e5d1f9c9aa9ef0a8da86b601abe60cb47cbd0e",
+      "observation_id": "privacy-safe-residue-rules",
+      "summary": "Unsalted hashes hide sensitive wording from casual reading but remain recoverable when the input has low entropy.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": "src/clean_docs/residue.py",
+          "locator": "load_residue_config",
+          "detail": "The public rule schema accepts plain token_sha256 values and compares them with unsalted token digests."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "Explain the privacy limit of unsalted residue hashes and provide a migration path for protected rule material.",
+          "test": {
+            "kind": "reader-task",
+            "setup": "Give an operator the current rule schema and a short dictionary of likely private terms.",
+            "action": "Ask whether the published digest conceals term identity and where protected policy should live instead.",
+            "passes_when": "The operator identifies dictionary recovery and selects the documented privacy-safe boundary."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Reject publishable low-entropy token digests and support deterministic matching through protected local policy or keyed identifiers.",
+          "test": {
+            "kind": "fixture",
+            "setup": "Create raw, unsalted, keyed, and protected-local residue rules over a small candidate dictionary.",
+            "action": "Run configuration validation, matching, migration, and public-artifact scans.",
+            "passes_when": "Recoverable publishable rules fail, authorized deterministic matching works, and existing optional-field compatibility has a documented migration."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "c4745f8d77d8e1a25d00fb55c61c07c22376822d1c6de534e8865319684c4f2f",
       "observation_id": "production-shaped-adoption-examples",
       "summary": "The main learning path proves the mechanism with a toy repository but not a production-shaped adoption.",
       "evidence": [
@@ -335,12 +985,6 @@
           "source": "docs/learn/tutorial-catch-a-lying-doc.md",
           "locator": "Build the fixture",
           "detail": "The tutorial creates a disposable Python literal and one generated table."
-        },
-        {
-          "kind": "external",
-          "source": "https://posthog.com/handbook/wizard-and-docs",
-          "locator": "Be practical, not just technical",
-          "detail": "The comparison standard favors runnable examples inside realistic application context."
         }
       ],
       "tracks": [
@@ -371,7 +1015,46 @@
       "change_authority": false
     },
     {
-      "id": "ea7a679fb139dee100e8b64ceb6581e3f269942052743520a657a12f12b73881",
+      "id": "b5617720f8a9972b796ea6e3da3a17c6861ee599bac99273c1059553a9db005a",
+      "observation_id": "project-scoped-changed-checks",
+      "summary": "Project-scoped changed checks and trusted discoverers can still materialize or inspect the full repository.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": "src/clean_docs/changed.py",
+          "locator": "_check_changed_details",
+          "detail": "The head snapshot uses RepositorySnapshot.materialized_root without a selected-project path before the project subtree is chosen."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "Document which commands and plugin interfaces honor project scope and which require explicit full-repository access.",
+          "test": {
+            "kind": "static-analysis",
+            "setup": "List each changed-check and discoverer entry point with its snapshot scope.",
+            "action": "Compare the list with the published project-scoping contract.",
+            "passes_when": "Every entry point names selected-project, dependency-closure, or explicit full-repository scope."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Use one scoped snapshot contract for changed checks and trusted discovery while retaining an explicit full-repository mode.",
+          "test": {
+            "kind": "integration",
+            "setup": "Create a large repository with one selected project, an internal symlink dependency, and unrelated sibling trees.",
+            "action": "Run project-scoped changed analysis and trusted discovery.",
+            "passes_when": "The project and required dependency are present, unrelated trees are absent, and explicit full-repository mode still works."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "c20ac8f6c0c7375e2912fc0e75c70d0945231645bb76f3714812d58ff732f50d",
       "observation_id": "published-package-evaluation",
       "summary": "Evaluation covers local projections but not an externally downloaded context package through a consumer.",
       "evidence": [
@@ -380,12 +1063,6 @@
           "source": "docs/EVALUATION.md",
           "locator": "Limits",
           "detail": "Evaluation replays local responses and compiles lexical repository context."
-        },
-        {
-          "kind": "external",
-          "source": "https://posthog.com/handbook/wizard-and-docs/context-mill",
-          "locator": "Context delivery",
-          "detail": "The comparison lifecycle ends with agent and MCP consumption of a released package."
         }
       ],
       "tracks": [
@@ -416,7 +1093,7 @@
       "change_authority": false
     },
     {
-      "id": "9d3316ea761a234c5cd78461f1ac456ceba1961cb5ae7693ee27b9001c62f2b4",
+      "id": "9a4011c2ddebb8884e8b1de489e222e024ffffb0a017db1e9700d61195c5620f",
       "observation_id": "release-reader-attestation",
       "summary": "The current release is not attested by a fresh independent reader trial.",
       "evidence": [
@@ -459,7 +1136,358 @@
       "authority": "assessment",
       "gate_authority": false,
       "change_authority": false
+    },
+    {
+      "id": "42b18b42256ac657c1f70439d0d3d7e4764939d9de810beec220a125dd150f33",
+      "observation_id": "residue-policy-self-scan",
+      "summary": "A tracked residue-policy reason can repeat the private context that the policy excludes.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": ".clean-docs-residue.yml",
+          "locator": "project-context-c reason",
+          "detail": "The pinned configuration stores a private workflow label in plaintext while the ordinary residue scan reports no finding."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "Require neutral rule metadata and state whether the residue policy scans itself.",
+          "test": {
+            "kind": "static-analysis",
+            "setup": "Add one neutral reason and one reason containing a configured restricted term.",
+            "action": "Compare both policy files with the published self-scan boundary.",
+            "passes_when": "The neutral reason passes and the restricted policy metadata has a redacted finding."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Scan residue-policy metadata without interpreting token digests as plaintext.",
+          "test": {
+            "kind": "fixture",
+            "setup": "Place a restricted term in a rule reason, pattern, and label alongside ordinary technical wording.",
+            "action": "Run the residue scanner on each tracked policy.",
+            "passes_when": "Restricted metadata fails with redacted diagnostics and ordinary technical uses remain allowed."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "df286538ee1e7c0e1433134f0382341f372943553fe18842f20fe8e76c290ff1",
+      "observation_id": "review-contract-history",
+      "summary": "Deleting or retargeting a review contract at head can erase the relationship that existed at base.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": "src/clean_docs/impact.py",
+          "locator": "build_impact_plan",
+          "detail": "Impact planning evaluates review contracts loaded from the selected head manifest and does not receipt base-to-head contract definition changes."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "Define added, removed, retargeted, and unchanged review-contract lifecycle states as advisory observations.",
+          "test": {
+            "kind": "static-analysis",
+            "setup": "Create state-table examples for every base-to-head contract transition.",
+            "action": "Compare each example with the published lifecycle and authority boundary.",
+            "passes_when": "Every transition remains visible without inferring semantics, repair authority, or gate authority."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Compare review-contract identities and locator definitions across immutable base and head manifests.",
+          "test": {
+            "kind": "fixture",
+            "setup": "Create delete-and-change, retarget-and-change, add, and unchanged contract histories.",
+            "action": "Build an impact plan for each base and head pair.",
+            "passes_when": "Every lifecycle change is explicit, the prior relationship cannot disappear silently, and observe mode stays nonblocking."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "3e97fa947520697d52df88757c0b4ff9b2f3edfb3e82a610e3aacbfc81e6b069",
+      "observation_id": "review-contract-tautology-guard",
+      "summary": "A review contract must not satisfy both sides with one locator or let observation edges become accepted coverage.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": "tests/test_manifest.py",
+          "locator": "test_rejects_review_contract_source_target_identity_with_different_ids",
+          "detail": "The regression rejects source-target identity intersections even when IDs differ; commit 9d71886 also keeps review-contract graph roots out of artifact coverage."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "Keep the reference explicit that co-change is not semantic correctness and observation topology is not coverage.",
+          "test": {
+            "kind": "reader-task",
+            "setup": "Show a cochanged contract, a generated target, and an otherwise uncovered source.",
+            "action": "Ask what each result proves and whether any result grants repair or coverage authority.",
+            "passes_when": "The reader rejects semantic, repair, and coverage claims while retaining the advisory observation."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Preserve identity-intersection, generated-target, and coverage-isolation guards.",
+          "test": {
+            "kind": "fixture",
+            "setup": "Create same-locator, generated-target, relevant-source, and unrelated-source contracts.",
+            "action": "Validate manifests and build impact plans for each case.",
+            "passes_when": "Tautologies fail, relevant changes recommend review, unrelated changes remain unaffected, and coverage totals do not change."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "f189e68921def19bc7ee1c3f79f4563fdb6743db71e77517a6c7bd07bb1cac2c",
+      "observation_id": "review-contract-work-bounds",
+      "summary": "Review-contract cardinality, bytes, nodes, reads, and parses need fixed work limits.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": "tests/test_review_contracts.py",
+          "locator": "test_repeated_locators_read_each_ref_path_once",
+          "detail": "Commit 5c5a05b adds per-ref reuse plus oversized-file, aggregate-byte, structured-node, YAML-alias, and manifest-cardinality regression coverage."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "Keep every numeric review limit, per-ref reuse rule, and unknown-on-runtime-limit behavior in the canonical reference.",
+          "test": {
+            "kind": "static-analysis",
+            "setup": "Read limits from review_limits.py and collect the manifest and evaluator enforcement sites.",
+            "action": "Compare the constants, enforcement phase, and failure state with the reference table.",
+            "passes_when": "Every value matches and validation failures remain distinct from advisory runtime unknowns."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Preserve bounded, deduplicated review evaluation across all supported extractors.",
+          "test": {
+            "kind": "fixture",
+            "setup": "Build below-limit, at-limit, and above-limit manifests with repeated locators, large files, and expanded structured values.",
+            "action": "Validate and evaluate each fixture while counting reads and parses.",
+            "passes_when": "Allowed work stays bounded and reusable, cardinality overages fail validation, and runtime overages resolve unknown without partial authority."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "b4272929743909a7b2e21ff7ed9009dc02bae3128317bb0fad4b5a5e99a0df4a",
+      "observation_id": "snapshot-path-boundaries",
+      "summary": "Scoped snapshots need the same traversal and scope-expansion rules under POSIX and Windows path models.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": "tests/test_snapshot.py",
+          "locator": "test_snapshot_rejects_windows_shaped_symlink_targets",
+          "detail": "Commit 0110b90 adds drive, UNC, backslash-traversal, archive-member, repository-root expansion, escaping-link, and valid-link controls."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "Keep cross-platform archive-member, link-target, and repository-root expansion rules in the security model.",
+          "test": {
+            "kind": "static-analysis",
+            "setup": "List the POSIX and Windows-shaped path fixtures and the valid internal-link control.",
+            "action": "Compare each fixture with one documented acceptance or rejection rule.",
+            "passes_when": "Every path shape has an explicit outcome and selected-project scope cannot expand silently."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Preserve cross-platform snapshot validation and explicit scope boundaries.",
+          "test": {
+            "kind": "fixture",
+            "setup": "Create drive-qualified, UNC, backslash-traversal, root-expanding, escaping, and valid internal paths.",
+            "action": "Materialize scoped snapshots from each archive or symlink shape.",
+            "passes_when": "Unsafe or scope-expanding forms fail before extraction and the valid internal dependency remains available."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "96773859d1cf70de2a0e4aa10708f09b89f05838926461601642e48c684fa457",
+      "observation_id": "unconfigured-assessment-state",
+      "summary": "An unconfigured assessment can report an affirmative result that machine consumers may mistake for enforced success.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": "tests/test_audit.py",
+          "locator": "test_unregistered_documents_preview_compatible_policy_without_gating_it",
+          "detail": "The regression keeps compatible findings advisory before registration, while the report still exposes an affirmative audit result."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "Name the unconfigured assessment state separately from a passed configured gate in every machine-output example.",
+          "test": {
+            "kind": "reader-task",
+            "setup": "Give a reader one unconfigured assessment receipt and one configured passing receipt.",
+            "action": "Ask which repository accepted enforcement and which result can block a change.",
+            "passes_when": "The reader distinguishes assessment from enforced success without relying on surrounding prose."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Expose a typed assessed-unconfigured state and a ranked changed-surface summary without turning the full inventory into blockers.",
+          "test": {
+            "kind": "fixture",
+            "setup": "Create an untouched repository with one relevant changed surface and many unrelated catalog entries.",
+            "action": "Run assessment before and after repository configuration.",
+            "passes_when": "The first result cannot be read as enforced success, the changed unknown is visible, and the configured result preserves normal gate semantics."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "a3dda0fa13542877d915b29613023dfed483e6a54d13e669c5a442f8200694c9",
+      "observation_id": "verdict-observation-axis",
+      "summary": "Required-gate readiness and advisory observation health need separate typed states.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": "tests/test_verdict.py",
+          "locator": "test_review_contract_advisory_preserves_ready_verdict_and_receipts",
+          "detail": "The regression from commit 9d98f4b keeps the gate ready while reporting a non-clear observation axis and semantic_correctness_checked false."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "Keep gate state, observation state, completeness, compatibility aliases, and non-claims in one receipt lookup table.",
+          "test": {
+            "kind": "reader-task",
+            "setup": "Give a reader ready verdicts with clear, review-recommended, and unknown observations.",
+            "action": "Ask which result controls the exit code and which results require review.",
+            "passes_when": "The reader treats the gate and observation axes independently and never reads ready as overall completion."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Preserve nonblocking observation states and validate every gate-observation cross-field invariant.",
+          "test": {
+            "kind": "fixture",
+            "setup": "Build ready verdicts with clear, recommended, and unresolved review contracts.",
+            "action": "Validate each receipt, then re-sign contradictory axis values.",
+            "passes_when": "Valid advisory combinations pass without changing exit behavior and every contradictory receipt fails."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "6ba5478e8775bd8865def73151ed0401f6627762205d6f3b7a07cc017b2450a1",
+      "observation_id": "visual-generated-targets",
+      "summary": "Every generated visual output must remain ineligible as a review-contract target.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": "tests/test_manifest.py",
+          "locator": "test_rejects_generated_projection_as_review_target",
+          "detail": "Commit dda6329 adds both human and agent visual outputs to the generated-target regression matrix."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "List both visual output classes as generated projections that cannot satisfy authored review obligations.",
+          "test": {
+            "kind": "static-analysis",
+            "setup": "Collect every configured projection output class from the manifest reference.",
+            "action": "Compare the list with the generated-target restriction.",
+            "passes_when": "Human visual, agent visual, index, bundle, and demo outputs are all covered, with a canonical non-generated target shown instead."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Preserve generated-target guards for both visual projections.",
+          "test": {
+            "kind": "fixture",
+            "setup": "Configure human and agent visual outputs plus one ordinary canonical document.",
+            "action": "Use each path as a review-contract target.",
+            "passes_when": "Both visual targets fail validation and the canonical document remains valid."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
+    },
+    {
+      "id": "6d4163edae4ea6c23789edcab4f630b1ae5f54406bda335142b006a6ffd5618e",
+      "observation_id": "workflow-path-filter-observation",
+      "summary": "A successful workflow can hide a skipped substantive job when changed paths fall outside that job's filter.",
+      "evidence": [
+        {
+          "kind": "repository",
+          "source": "src/clean_docs/impact.py",
+          "locator": "_workflow_events",
+          "detail": "Static workflow evidence compares job definitions only when the workflow file changes; it does not evaluate whether another changed path causes a substantive job to run."
+        }
+      ],
+      "tracks": [
+        {
+          "target": "documentation",
+          "proposed_change": "Explain the difference between workflow success, job execution, and unknown run evidence.",
+          "test": {
+            "kind": "reader-task",
+            "setup": "Show a successful workflow whose documentation check was skipped by a path filter.",
+            "action": "Ask the reader whether the documentation behavior was verified.",
+            "passes_when": "The reader answers no and identifies job execution evidence as the missing receipt."
+          }
+        },
+        {
+          "target": "product",
+          "proposed_change": "Add bounded static path-filter analysis with optional run receipts that remain unknown when host data is unavailable.",
+          "test": {
+            "kind": "fixture",
+            "setup": "Create a workflow with one substantive job and a filter that omits a relevant changed path.",
+            "action": "Assess the workflow with executed, skipped, and unavailable run evidence.",
+            "passes_when": "The states remain distinct, the omitted path is named, and the static core does not require a hosting API."
+          }
+        }
+      ],
+      "state": "proposed",
+      "authority": "assessment",
+      "gate_authority": false,
+      "change_authority": false
     }
   ],
-  "digest": "b0ac6e159dac74637df1c89e4303ba5830387a3c588aab117a528011cae32b5d"
+  "digest": "01d881fc9bce533de25c0e1c23d60ce106cb1d0f4c5952b0045a68b38dcdce8b"
 }
