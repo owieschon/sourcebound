@@ -21,12 +21,193 @@ bindings:
     columns: [name, tier]
 """
 
+VALID_REVIEW_CONTRACTS = """\
+review_contracts:
+  - id: delivery-guidance
+    mode: observe
+    sources:
+      - id: page-policy
+        path: src/delivery.py
+        extractor: python-symbol
+        locator: Delivery.fetch_page
+    targets:
+      - id: reader-instructions
+        path: docs/delivery.md
+        extractor: markdown-section
+        locator: "#reading-large-results"
+      - id: tool-description
+        path: config/delivery.yaml
+        extractor: structured-data
+        locator: /tools/fetch/description
+"""
+
 
 def test_loads_strict_region_binding(tmp_path: Path) -> None:
     path = tmp_path / ".clean-docs.yml"
     path.write_text(VALID)
     manifest = load_manifest(path)
     assert manifest.bindings[0].source.symbol == "ACTIONS"
+
+
+def test_manifest_defaults_to_no_review_contracts(tmp_path: Path) -> None:
+    path = tmp_path / ".clean-docs.yml"
+    path.write_text(VALID)
+
+    assert load_manifest(path).review_contracts == ()
+
+
+def test_loads_observe_review_contract(tmp_path: Path) -> None:
+    path = tmp_path / ".clean-docs.yml"
+    path.write_text(VALID + VALID_REVIEW_CONTRACTS)
+
+    contract = load_manifest(path).review_contracts[0]
+
+    assert contract.id == "delivery-guidance"
+    assert contract.mode == "observe"
+    assert contract.sources[0].id == "page-policy"
+    assert contract.sources[0].path == Path("src/delivery.py")
+    assert contract.sources[0].extractor == "python-symbol"
+    assert contract.sources[0].locator == "Delivery.fetch_page"
+    assert tuple(locator.id for locator in contract.targets) == (
+        "reader-instructions",
+        "tool-description",
+    )
+
+
+@pytest.mark.parametrize(
+    ("review_contracts", "message"),
+    [
+        ("review_contracts: {}", "review_contracts must be a list"),
+        ("review_contracts:", "review_contracts must be a list"),
+        (
+            VALID_REVIEW_CONTRACTS.replace(
+                "    mode: observe",
+                "    mode: observe\n    unknown: true",
+            ),
+            "unknown key",
+        ),
+        (
+            VALID_REVIEW_CONTRACTS.replace(
+                "  - id: delivery-guidance",
+                "  - id: ''",
+            ),
+            r"review_contracts\[0\]\.id must be one non-empty line",
+        ),
+        (
+            VALID_REVIEW_CONTRACTS
+            + VALID_REVIEW_CONTRACTS.removeprefix("review_contracts:\n"),
+            "duplicate review contract id",
+        ),
+        (
+            VALID_REVIEW_CONTRACTS.replace("mode: observe", "mode: enforce"),
+            "mode must be observe",
+        ),
+        (
+            VALID_REVIEW_CONTRACTS.replace(
+                "    sources:\n"
+                "      - id: page-policy\n"
+                "        path: src/delivery.py\n"
+                "        extractor: python-symbol\n"
+                    "        locator: Delivery.fetch_page\n",
+                "    sources: []\n",
+            ),
+            "sources must be a non-empty list",
+        ),
+        (
+            VALID_REVIEW_CONTRACTS.replace(
+                "    targets:\n"
+                "      - id: reader-instructions\n"
+                "        path: docs/delivery.md\n"
+                "        extractor: markdown-section\n"
+                '        locator: "#reading-large-results"\n'
+                "      - id: tool-description\n"
+                "        path: config/delivery.yaml\n"
+                "        extractor: structured-data\n"
+                "        locator: /tools/fetch/description\n",
+                "    targets: []\n",
+            ),
+            "targets must be a non-empty list",
+        ),
+        (
+            VALID_REVIEW_CONTRACTS.replace(
+                    "        locator: Delivery.fetch_page",
+                    "        locator: Delivery.fetch_page\n        unknown: true",
+            ),
+            "unknown key",
+        ),
+        (
+            VALID_REVIEW_CONTRACTS.replace(
+                "      - id: reader-instructions",
+                "      - id: page-policy",
+            ),
+            "duplicate review locator id",
+        ),
+        (
+            VALID_REVIEW_CONTRACTS.replace(
+                "        path: src/delivery.py",
+                "        path: ../delivery.py",
+            ),
+            "stay inside",
+        ),
+        (
+            VALID_REVIEW_CONTRACTS.replace(
+                "        extractor: python-symbol",
+                "        extractor: python-literal",
+            ),
+            "extractor must be one of",
+        ),
+        (
+            VALID_REVIEW_CONTRACTS.replace(
+                "        path: src/delivery.py",
+                "        path: src/delivery.ts",
+            ),
+            "path must end with",
+        ),
+        (
+            VALID_REVIEW_CONTRACTS.replace(
+                    "        locator: Delivery.fetch_page",
+                    "        locator: Delivery/fetch_page",
+            ),
+            "dotted Python identifier",
+        ),
+        (
+            VALID_REVIEW_CONTRACTS.replace(
+                '        locator: "#reading-large-results"',
+                "        locator: reading-large-results",
+            ),
+            "#fragment anchor",
+        ),
+        (
+            VALID_REVIEW_CONTRACTS.replace(
+                '        locator: "#reading-large-results"',
+                '        locator: "##reading-large-results"',
+            ),
+            "#fragment anchor",
+        ),
+        (
+            VALID_REVIEW_CONTRACTS.replace(
+                "        locator: /tools/fetch/description",
+                "        locator: tools.fetch.description",
+            ),
+            "JSON Pointer starting with /",
+        ),
+        (
+            VALID_REVIEW_CONTRACTS.replace(
+                "        locator: /tools/fetch/description",
+                "        locator: /tools/~2fetch/description",
+            ),
+            "JSON Pointer starting with /",
+        ),
+    ],
+)
+def test_rejects_invalid_review_contracts(
+    tmp_path: Path, review_contracts: str, message: str
+) -> None:
+    path = tmp_path / ".clean-docs.yml"
+    path.write_text(VALID + review_contracts)
+
+    with pytest.raises(ConfigurationError, match=message):
+        load_manifest(path)
 
 
 def test_loads_json_pointer_binding(tmp_path: Path) -> None:
