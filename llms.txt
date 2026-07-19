@@ -1,30 +1,30 @@
-# clean-docs documentation
+# Sourcebound documentation
 
 > Canonical product documentation with source-bound facts and content digests.
 
 ## Canonical documentation
 
-- [CLEAN_DOCS_SPEC.md](CLEAN_DOCS_SPEC.md): bindings: assurance-boundaries; sha256: da7c843534972b4fa5ec12a82257e4887971c811e14bd3ef8b2e73d7d8fa45bf
-- [README.md](README.md): bindings: product-overview; sha256: fca24117801839154e7c26346af3bdd29f179f73a85558132bf51d6c2f77c9ef
-- [SECURITY.md](SECURITY.md): declared canonical context; sha256: 5a10b7b08e5b26a5302e0f775320a59b8bd200da7fa858fc890342d7db0dd270
-- [STANDARD.md](STANDARD.md): declared canonical context; sha256: ed382a09f6af450218940d8d59d2a32e1e0aea8c9fe5803b502d26e338a62d82
-- [docs/BEHAVIOR_SIGNALS.md](docs/BEHAVIOR_SIGNALS.md): declared canonical context; sha256: 90ecbf48a9a2b85a583babcfb7a7d3d110b5cc5277758da3ecf022f1d184f572
-- [docs/CLI.md](docs/CLI.md): bindings: cli-reference, verdict-reference; sha256: 6c553b2bc07bdb2188245243c44d2372702f013dcac5cf1ac2ecc4872756ace6
-- [docs/EVALUATION.md](docs/EVALUATION.md): bindings: evaluation-scorers; sha256: 9023127c402fa6106d16e102727ed06804f8eee90aabea16a3527f7d0ae5d721
-- [docs/EXTENSIONS.md](docs/EXTENSIONS.md): bindings: extension-guide, migration-guide; sha256: 81eb19b309a3d7a73b0fca7640b18add365dd556ea8572577e8fcce5e83084ae
-- [docs/FEEDBACK.md](docs/FEEDBACK.md): declared canonical context; sha256: 2ecd270cbe2a249afb0d8caa08372caa1a0a4ef9e87c302a592236c37e739168
-- [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md): bindings: improvement-candidate-guide; sha256: a6864a5417f90e02f63f1e41cbac619440db2ada8ef7d5b4d1dc17986bc6c6ed
-- [docs/INSTALL.md](docs/INSTALL.md): declared canonical context; sha256: eb672f96492df6086317218bc22fae0ae5b4c80363bbe5aa30df260ffe31266c
-- [docs/LIFECYCLE_EVIDENCE.md](docs/LIFECYCLE_EVIDENCE.md): declared canonical context; sha256: 783054aa8bea4abc1f76d50d95d740970edda071f4ac796c57f50f494ffa7659
-- [docs/REFERENCE.md](docs/REFERENCE.md): bindings: binding-sensitivity-reference, manifest-reference, supported-bindings; sha256: 643257d679069f738de434d6ec10f55e62cd1304bc05bed0318837aad793a7e3
-- [docs/RELEASES.md](docs/RELEASES.md): bindings: release-guide; sha256: cc40c87393dd1784fcca7d1034ac8fd5925a7570011791a51df2853aa8be241b
-- [docs/REVIEW_LEDGER.md](docs/REVIEW_LEDGER.md): declared canonical context; sha256: 1ee07da028f24e234cc811bb16df14f0d8ee558f8391e17a35aa3977955ceed6
-- [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md): bindings: security-model; sha256: 74cbe8147924bcd0d1d229b1d28fc17fa1234f04bb44ef9520218ced7b6c6d23
-- [docs/SUPPORT.md](docs/SUPPORT.md): bindings: support-guide; sha256: 01fd67c5ee7ad0b6ccc7320ee3ce5b73767267539f7287e501b690aa35f478cb
-- [docs/SURFACE.md](docs/SURFACE.md): bindings: repository-surface; sha256: f5be770828ef6ffe64d43d7c3a3b22f5f41ebcca178fcce9ebdfb2b4c0d110db
-- [docs/learn/deep-dive-the-deterministic-seam.md](docs/learn/deep-dive-the-deterministic-seam.md): bindings: deterministic-seam-evidence, deterministic-seam-gate, deterministic-seam-phrasing; sha256: be392a4b5c484e2c88d8df783679ba49fe4a4db62e89d844c7f04cf82a547969
-- [docs/learn/index.md](docs/learn/index.md): declared canonical context; sha256: 1348b79a6842d8e479502560fa4aa481322abcc1863fb0e8c9c94365efa93932
-- [docs/learn/postmortem-the-readme-that-lied.md](docs/learn/postmortem-the-readme-that-lied.md): bindings: postmortem-examples, postmortem-measurements; sha256: ec7c89febc6de52884bc6bdf4955ebea1e261d8fd94b1ccacf1386b812597f98
-- [docs/learn/tutorial-catch-a-lying-doc.md](docs/learn/tutorial-catch-a-lying-doc.md): bindings: tutorial-outcomes; sha256: acaf1e3d666bad5d8467125e4165567487b79a60849d02656a057c81969d13dc
-- [skill/SKILL.md](skill/SKILL.md): declared canonical context; sha256: 1b370c1254ba46599641a215c59fff19418d4d16667bc34050a9cbfea3ad4537
-- [skills/clean-docs-verify/SKILL.md](skills/clean-docs-verify/SKILL.md): declared canonical context; sha256: 5c1f98c369fdb84b3c6be2cc0b5ed1e157e52c541f49e56af2e766795fb675d8
+- [README.md](README.md): bindings: product-overview; sha256: d943d7a09a22e2a67c94b370b9a92bc000de02d0e460cb6bcf6cb31022a3534c
+- [SECURITY.md](SECURITY.md): declared canonical context; sha256: bbf72331f43440b96cda99f0fbc09c9eb6a95ecd0941fee7ee4089cc5d592b40
+- [SOURCEBOUND_SPEC.md](SOURCEBOUND_SPEC.md): bindings: assurance-boundaries; sha256: 40899a1ddaf5a1ba471207a06aa5722700df8c3017a075c3e95399784951a482
+- [STANDARD.md](STANDARD.md): declared canonical context; sha256: 86eb173495677069224628217adc075374ad4ab8526bf05e3e392072f4891185
+- [docs/BEHAVIOR_SIGNALS.md](docs/BEHAVIOR_SIGNALS.md): declared canonical context; sha256: e5af8e029ed00191e5fe6460fbaa3dafb88605d475260fbe700192c76b4c97c2
+- [docs/CLI.md](docs/CLI.md): bindings: cli-reference, verdict-reference; sha256: ba9489dc2cf2ca3906fbdd96dde5c5cd7a160554fab9000bb03717121667b7ba
+- [docs/EVALUATION.md](docs/EVALUATION.md): bindings: evaluation-scorers; sha256: 04c286cce68c5d4110d9ddf34ddbba7b6009189cb6b47659a06f8e46bf443ff0
+- [docs/EXTENSIONS.md](docs/EXTENSIONS.md): bindings: extension-guide, migration-guide; sha256: cf335f74506cf2708307f6dd714dbbd89eed3880393e18f0f0d12943158521e6
+- [docs/FEEDBACK.md](docs/FEEDBACK.md): declared canonical context; sha256: 3e41fa226cb201048255405a4e056c5de855d56f371a942d944fd289b5847163
+- [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md): bindings: improvement-candidate-guide; sha256: 4c81bb9c3f80010f0a13c0145201f536376b907e9a200da417752d6cdaefa125
+- [docs/INSTALL.md](docs/INSTALL.md): declared canonical context; sha256: c85bb1c64af5600452ff3c160949111b3f741c05ccc8aa5b737191a8ef74e516
+- [docs/LIFECYCLE_EVIDENCE.md](docs/LIFECYCLE_EVIDENCE.md): declared canonical context; sha256: c43eab4d65a2388ab464df82b5b8ceaf09b72dadc870575791a4ec9f31e90ae8
+- [docs/REFERENCE.md](docs/REFERENCE.md): bindings: binding-sensitivity-reference, manifest-reference, supported-bindings; sha256: deac0b04cf89550483d975709e860cf886e4c091551745131005b2a12973bfaf
+- [docs/RELEASES.md](docs/RELEASES.md): bindings: release-guide; sha256: e8a62cf85ea473ebdac2185c0600319371b95539e11350b0e7036a6d40de21be
+- [docs/REVIEW_LEDGER.md](docs/REVIEW_LEDGER.md): declared canonical context; sha256: d18275427b92a6a7ea4c3a75ef1f34b01b8e633e21494fc56b223b085bff9690
+- [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md): bindings: security-model; sha256: 3865422d3fe05b1f97cf68e89eaf4bd2cb662c1b7514d0dbcc64e04fc5755403
+- [docs/SUPPORT.md](docs/SUPPORT.md): bindings: support-guide; sha256: cac6334e2c7645898b783ccdd72cc62ea1f140141dac0eec2dcf3954e430959d
+- [docs/SURFACE.md](docs/SURFACE.md): bindings: repository-surface; sha256: f036d84607e9c0deda2d776fe30b8fe02986da34106bdd505e6e0a46741c3a4d
+- [docs/learn/deep-dive-the-deterministic-seam.md](docs/learn/deep-dive-the-deterministic-seam.md): bindings: deterministic-seam-evidence, deterministic-seam-gate, deterministic-seam-phrasing; sha256: 74af96910950aa29130fbbaabc8340089c15fef6bb1aecaf1b0348977119975c
+- [docs/learn/index.md](docs/learn/index.md): declared canonical context; sha256: abd813774363fc58aa0b86a65ed7aa29b44d99b6bb3c0d263197a4f71e93096f
+- [docs/learn/postmortem-the-readme-that-lied.md](docs/learn/postmortem-the-readme-that-lied.md): bindings: postmortem-examples, postmortem-measurements; sha256: 360caf0dcd92bec01e008bc8c3b1ae631bbcb1dfb98684d1a5a1b63aca272341
+- [docs/learn/tutorial-catch-a-lying-doc.md](docs/learn/tutorial-catch-a-lying-doc.md): bindings: tutorial-outcomes; sha256: 63e186394f16bcba07bb84bbd3b8c391e324f12f4a0b12d3952bff6457f917b8
+- [skill/SKILL.md](skill/SKILL.md): declared canonical context; sha256: 2bdbad462bd43a3741ccf3445368dd2ac50dabfc71b78ec4ef2fa11cca0beb11
+- [skills/sourcebound-verify/SKILL.md](skills/sourcebound-verify/SKILL.md): declared canonical context; sha256: 1cbf8f8d417297475be37a6c49795343724386e52bfc13ff2694d02be426b77b

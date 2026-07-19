@@ -146,9 +146,9 @@ def test_product_overview_does_not_duplicate_release_version() -> None:
 
 
 def test_product_overview_explains_why_source_binding_is_needed() -> None:
-    assert PRODUCT_OVERVIEW.startswith("Documentation often stays plausible")
-    assert "prose alone cannot fail when the source moved" in PRODUCT_OVERVIEW
-    assert "checks or repairs declared regions" in PRODUCT_OVERVIEW
+    assert PRODUCT_OVERVIEW.startswith("A stale sentence does not fail loudly")
+    assert "reviewers have no mechanical way to identify the false claim" in PRODUCT_OVERVIEW
+    assert "Sourcebound gives each protected fact a source" in PRODUCT_OVERVIEW
     assert "authored judgment still owns motivation" in PRODUCT_OVERVIEW
 
 

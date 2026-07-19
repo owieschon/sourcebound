@@ -21,7 +21,7 @@ def test_public_first_screen_defines_the_product_and_routes_to_learning() -> Non
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     purpose = readme.index("<!-- sourcebound:purpose -->")
     badges = readme.index("[![CI]")
-    start = readme.index("**[Install Sourcebound and catch your first stale claim]")
+    start = readme.index("**[Install the stable release and catch your first stale claim]")
     detail = readme.index("## Why Sourcebound exists")
 
     assert purpose < badges < start < detail

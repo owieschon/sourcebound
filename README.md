@@ -28,7 +28,7 @@ Before adoption, `audit` reports bounded repository-neutral advisories. A manife
 ## Why Sourcebound exists
 
 <!-- sourcebound:begin product-overview -->
-A stale sentence does not fail loudly. It keeps a straight face after the code has moved on, and reviewers have no mechanical way to identify the false claim. sourcebound gives each protected fact a source, then checks that relationship again in CI.
+A stale sentence does not fail loudly. It keeps a straight face after the code has moved on, and reviewers have no mechanical way to identify the false claim. Sourcebound gives each protected fact a source, then checks that relationship again in CI.
 
 Declared sources own the protected facts. A packaged policy enforces the deterministic form floor; authored judgment still owns motivation, pedagogy, and voice. Static adapters read common code and schema formats, while declared commands run under explicit process controls. The engine can repair bound regions, rank static count and column candidates, enforce accepted source-claim relationships, and project canonical text and visual records into purpose-built human and agent surfaces with local receipts.
 <!-- sourcebound:end product-overview -->

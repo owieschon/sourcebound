@@ -759,7 +759,7 @@ def test_workflow_path_filter_is_unknown_without_a_run_receipt(tmp_path: Path) -
     guide.write_text("# Guide\n\nChanged procedure.\n")
     head = _commit(root, "change documentation procedure")
 
-    plan = build_impact_plan(root, root / ".clean-docs.yml", base=base, head=head)
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
 
     finding = next(
         item for item in plan.unknown if item.rule == "ci-path-filter-unverified"
