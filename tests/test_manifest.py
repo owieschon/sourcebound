@@ -1,9 +1,16 @@
 from pathlib import Path
 
 import pytest
+import yaml
 
 from clean_docs.errors import ConfigurationError
 from clean_docs.manifest import load_manifest
+from clean_docs.review_limits import (
+    MAX_REVIEW_CONTRACTS,
+    MAX_REVIEW_LOCATORS,
+    MAX_REVIEW_LOCATORS_PER_CONTRACT,
+    MAX_REVIEW_UNIQUE_PATHS,
+)
 
 
 VALID = """\
@@ -302,6 +309,107 @@ review_contracts:
 
     assert target.path == Path("src/prompt.py")
     assert target.locator == "build_prompt"
+
+
+def _review_contract(
+    contract_index: int,
+    source_count: int,
+    target_count: int,
+    *,
+    unique_paths: bool = False,
+) -> dict[str, object]:
+    def locator(group: str, index: int, extractor: str) -> dict[str, str]:
+        extension = "py" if extractor == "python-symbol" else "md"
+        path_index = f"-{contract_index}-{index}" if unique_paths else ""
+        return {
+            "id": f"{group}-{index}",
+            "path": f"{group}{path_index}.{extension}",
+            "extractor": extractor,
+            "locator": (
+                f"symbol_{contract_index}_{index}"
+                if extractor == "python-symbol"
+                else f"#section-{contract_index}-{index}"
+            ),
+        }
+
+    return {
+        "id": f"contract-{contract_index}",
+        "mode": "observe",
+        "sources": [
+            locator("source", index, "python-symbol")
+            for index in range(source_count)
+        ],
+        "targets": [
+            locator("target", index, "markdown-section")
+            for index in range(target_count)
+        ],
+    }
+
+
+@pytest.mark.parametrize(
+    ("contracts", "message"),
+    [
+        (
+            [_review_contract(index, 1, 1) for index in range(MAX_REVIEW_CONTRACTS + 1)],
+            f"at most {MAX_REVIEW_CONTRACTS} contracts",
+        ),
+        (
+            [
+                _review_contract(
+                    0,
+                    1,
+                    MAX_REVIEW_LOCATORS_PER_CONTRACT,
+                )
+            ],
+            f"at most {MAX_REVIEW_LOCATORS_PER_CONTRACT} locators",
+        ),
+        (
+            [
+                _review_contract(index, 1, 31)
+                for index in range(MAX_REVIEW_LOCATORS // 32 + 1)
+            ],
+            f"at most {MAX_REVIEW_LOCATORS} locators",
+        ),
+        (
+            [
+                _review_contract(index, 15, 15, unique_paths=True)
+                for index in range(MAX_REVIEW_UNIQUE_PATHS // 30 + 1)
+            ],
+            f"at most {MAX_REVIEW_UNIQUE_PATHS} unique paths",
+        ),
+    ],
+)
+def test_bounds_review_contract_manifest_work(
+    tmp_path: Path,
+    contracts: list[dict[str, object]],
+    message: str,
+) -> None:
+    path = tmp_path / ".clean-docs.yml"
+    path.write_text(
+        VALID + yaml.safe_dump({"review_contracts": contracts}, sort_keys=False)
+    )
+
+    with pytest.raises(ConfigurationError, match=message):
+        load_manifest(path)
+
+
+def test_rejects_repeated_review_locator_identity(tmp_path: Path) -> None:
+    path = tmp_path / ".clean-docs.yml"
+    contract = _review_contract(0, 1, 1)
+    targets = contract["targets"]
+    assert isinstance(targets, list)
+    first_target = targets[0]
+    assert isinstance(first_target, dict)
+    repeated = dict(first_target)
+    repeated["id"] = "second-id"
+    targets.append(repeated)
+    path.write_text(
+        VALID
+        + yaml.safe_dump({"review_contracts": [contract]}, sort_keys=False)
+    )
+
+    with pytest.raises(ConfigurationError, match="must not repeat"):
+        load_manifest(path)
 
 
 def test_loads_json_pointer_binding(tmp_path: Path) -> None:
