@@ -310,16 +310,16 @@ def test_removed_source_recommends_review(tmp_path: Path) -> None:
     root = _repository(tmp_path)
     _write(
         root,
-        "src/skills.py",
+        "src/delivery.py",
         "def fetch_page():\n    return {'body_next_offset': 8000}\n",
     )
     _write(
         root,
-        "docs/skills.md",
-        "# Skills\n\n## Fetching pages\n\nContinue from `body_next_offset`.\n",
+        "docs/delivery.md",
+        "# Delivery\n\n## Fetching pages\n\nContinue from `body_next_offset`.\n",
     )
     base = _commit(root, "baseline")
-    _write(root, "src/skills.py", "def fetch_all():\n    return 'complete'\n")
+    _write(root, "src/delivery.py", "def fetch_all():\n    return 'complete'\n")
     head = _commit(root, "remove pagination behavior")
     contract = ReviewContract(
         id="pagination-removal",
@@ -327,7 +327,7 @@ def test_removed_source_recommends_review(tmp_path: Path) -> None:
         sources=(
             ReviewLocator(
                 id="fetch-page",
-                path=Path("src/skills.py"),
+                path=Path("src/delivery.py"),
                 extractor="python-symbol",
                 locator="fetch_page",
             ),
@@ -335,7 +335,7 @@ def test_removed_source_recommends_review(tmp_path: Path) -> None:
         targets=(
             ReviewLocator(
                 id="fetching-pages",
-                path=Path("docs/skills.md"),
+                path=Path("docs/delivery.md"),
                 extractor="markdown-section",
                 locator="#fetching-pages",
             ),
@@ -351,15 +351,15 @@ def test_removed_source_recommends_review(tmp_path: Path) -> None:
 
 def test_missing_head_target_is_unknown(tmp_path: Path) -> None:
     root = _repository(tmp_path)
-    _write(root, "src/skills.py", "PAGE_LENGTH = 8000\n")
+    _write(root, "src/delivery.py", "PAGE_LENGTH = 8000\n")
     _write(
         root,
-        "docs/skills.md",
-        "# Skills\n\n## Fetching pages\n\nPages contain 8000 characters.\n",
+        "docs/delivery.md",
+        "# Delivery\n\n## Fetching pages\n\nPages contain 8000 characters.\n",
     )
     base = _commit(root, "baseline")
-    _write(root, "src/skills.py", "PAGE_LENGTH = 4000\n")
-    _write(root, "docs/skills.md", "# Skills\n")
+    _write(root, "src/delivery.py", "PAGE_LENGTH = 4000\n")
+    _write(root, "docs/delivery.md", "# Delivery\n")
     head = _commit(root, "remove page instructions")
     contract = ReviewContract(
         id="missing-head-target",
@@ -367,7 +367,7 @@ def test_missing_head_target_is_unknown(tmp_path: Path) -> None:
         sources=(
             ReviewLocator(
                 id="page-length",
-                path=Path("src/skills.py"),
+                path=Path("src/delivery.py"),
                 extractor="python-symbol",
                 locator="PAGE_LENGTH",
             ),
@@ -375,7 +375,7 @@ def test_missing_head_target_is_unknown(tmp_path: Path) -> None:
         targets=(
             ReviewLocator(
                 id="fetching-pages",
-                path=Path("docs/skills.md"),
+                path=Path("docs/delivery.md"),
                 extractor="markdown-section",
                 locator="#fetching-pages",
             ),
