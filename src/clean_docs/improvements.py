@@ -1056,7 +1056,7 @@ def load_candidate_lifecycle(
 def transition_candidate_lifecycle(
     lifecycle: CandidateLifecycleSet,
     *,
-    root: Path,
+    root: Path | None = None,
     observation_id: str,
     to_state: str,
     evidence: LifecycleEvidence,
@@ -1085,10 +1085,14 @@ def transition_candidate_lifecycle(
             raise ConfigurationError(
                 f"evidence kind {evidence.kind} cannot support transition to {to_state}"
             )
-        resolution = _resolve_lifecycle_evidence(
-            evidence,
-            root=root,
-            repository_commit=lifecycle.repository_commit,
+        resolution = (
+            _resolve_lifecycle_evidence(
+                evidence,
+                root=root,
+                repository_commit=lifecycle.repository_commit,
+            )
+            if root is not None
+            else _unknown_resolution("repository-root-unavailable")
         )
         records.append(
             CandidateLifecycle(
