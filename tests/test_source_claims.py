@@ -300,6 +300,24 @@ Column | Type
     }
 
 
+def test_mapping_fact_uses_effective_python_keys_once() -> None:
+    facts = claim_module._source_facts(
+        "catalog.py",
+        (
+            "FIELDS = {'id': 'first', 'id': 'replacement', 'name': 'visible'}\n"
+            "FLAGS = {'ready', 'ready', 'blocked'}\n"
+        ),
+    )
+
+    keys = next(fact for fact in facts if fact.locator == "FIELDS#keys")
+    count = next(fact for fact in facts if fact.locator == "FIELDS#count")
+    set_count = next(fact for fact in facts if fact.locator == "FLAGS#count")
+
+    assert keys.value == ("id", "name")
+    assert count.value == 2
+    assert set_count.value == 2
+
+
 def test_enforcement_reads_only_accepted_relationship_paths(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
