@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -24,6 +25,7 @@ from clean_docs.models import (
     SourceClaimCheck,
     SymbolBinding,
     StaticDemoProjection,
+    VisualProjection,
 )
 
 ROOT_KEYS = {
@@ -50,10 +52,11 @@ EXECUTION_KEYS = {"commands", "allowed_commands"}
 COMMAND_KEYS = {"argv", "timeout_seconds"}
 LEGACY_COMMAND_KEYS = COMMAND_KEYS | {"network"}
 ASSERTION_KEYS = {"json_path", "operator", "expected"}
-PROJECTION_KEYS = {"llms_txt", "bundles", "demo"}
+PROJECTION_KEYS = {"llms_txt", "bundles", "demo", "visuals"}
 LLMS_TXT_KEYS = {"output", "title", "summary", "include"}
 BUNDLE_KEYS = {"id", "output", "include"}
 DEMO_KEYS = {"output", "evidence"}
+VISUAL_KEYS = {"id", "source", "human_output", "agent_output"}
 PLUGIN_KEYS = {"id", "api_version", "interfaces", "argv", "timeout_seconds"}
 SOURCE_CLAIM_CHECK_KEYS = {
     "id",
@@ -192,12 +195,64 @@ def _load_projections(raw: Any, bound_docs: set[Path]) -> ProjectionConfig | Non
             raise ConfigurationError("projections.demo.output must be an HTML file")
         if output in outputs:
             raise ConfigurationError(f"duplicate projection output: {output}")
+        outputs.add(output)
         demo = StaticDemoProjection(output, evidence)
-    if llms_txt is None and not bundles and demo is None:
-        raise ConfigurationError(
-            "projections must configure llms_txt, a bundle, or a demo"
+    visuals: list[VisualProjection] = []
+    raw_visuals = data.get("visuals", [])
+    if not isinstance(raw_visuals, list):
+        raise ConfigurationError("projections.visuals must be a list")
+    visual_ids: set[str] = set()
+    for index, raw_visual in enumerate(raw_visuals):
+        where = f"projections.visuals[{index}]"
+        item = _mapping(raw_visual, where)
+        _reject_unknown(item, VISUAL_KEYS, where)
+        visual_id = item.get("id")
+        if (
+            not isinstance(visual_id, str)
+            or re.fullmatch(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*", visual_id) is None
+        ):
+            raise ConfigurationError(f"{where}.id must be a kebab-case identifier")
+        if visual_id in visual_ids:
+            raise ConfigurationError(f"duplicate visual projection id: {visual_id}")
+        visual_ids.add(visual_id)
+        source = _relative_path(item.get("source"), f"{where}.source")
+        if source.suffix.lower() not in {".json", ".yaml", ".yml"}:
+            raise ConfigurationError(f"{where}.source must be JSON or YAML")
+        human_output = _relative_path(
+            item.get("human_output"), f"{where}.human_output"
         )
-    return ProjectionConfig(llms_txt=llms_txt, bundles=tuple(bundles), demo=demo)
+        if human_output.suffix.lower() not in {".md", ".mdx"}:
+            raise ConfigurationError(f"{where}.human_output must be Markdown or MDX")
+        agent_output = _relative_path(
+            item.get("agent_output"), f"{where}.agent_output"
+        )
+        if agent_output.suffix.lower() != ".md":
+            raise ConfigurationError(f"{where}.agent_output must be Markdown")
+        if human_output == agent_output:
+            raise ConfigurationError(f"{where} outputs must be distinct")
+        for output in (human_output, agent_output):
+            if output in outputs:
+                raise ConfigurationError(f"duplicate projection output: {output}")
+            if output in bound_docs:
+                raise ConfigurationError(
+                    f"{where} output cannot replace a bound document: {output}"
+                )
+            if output == source:
+                raise ConfigurationError(f"{where}.source cannot also be an output")
+            outputs.add(output)
+        visuals.append(
+            VisualProjection(visual_id, source, human_output, agent_output)
+        )
+    if llms_txt is None and not bundles and demo is None and not visuals:
+        raise ConfigurationError(
+            "projections must configure llms_txt, a bundle, a demo, or visuals"
+        )
+    return ProjectionConfig(
+        llms_txt=llms_txt,
+        bundles=tuple(bundles),
+        demo=demo,
+        visuals=tuple(visuals),
+    )
 
 
 def load_manifest(path: Path) -> Manifest:

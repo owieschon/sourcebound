@@ -8,7 +8,8 @@ PRODUCT_OVERVIEW = (
     "floor; authored judgment still owns motivation, pedagogy, and voice. Static adapters read "
     "common code and schema formats, while declared commands run under explicit process controls. "
     "The engine can repair bound regions, rank static count and column candidates, enforce accepted "
-    "source-claim relationships, and publish context such as `llms.txt` with local receipts."
+    "source-claim relationships, and project canonical text and visual records into purpose-built "
+    "human and agent surfaces with local receipts."
 )
 
 ASSURANCE_BOUNDARIES = (
