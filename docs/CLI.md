@@ -20,6 +20,8 @@ The table is generated from the command registry used by the parser:
 | audit | Assess documentation and enforce adopted scopes | with --update-baseline | clean-docs audit --format json |
 | inventory | List detected repository surfaces and coverage | no | clean-docs inventory --format json |
 | claims | Rank and verify static count and column claims | no | clean-docs claims --format json |
+| binding | Inspect one proposed source relationship | no | clean-docs binding --help |
+| binding sensitivity | Test whether one static check depends on a frozen source fact | no | clean-docs binding sensitivity --help |
 | context | Compile provider-neutral evidence packets | no | clean-docs context --help |
 | context compile | Compile a bounded source-addressed context bundle | no | clean-docs context compile --request context-request.json |
 | init | Write a source-bound documentation baseline | yes | clean-docs init --no-model |

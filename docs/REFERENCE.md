@@ -119,6 +119,49 @@ changed. Updating unrelated code does not create documentation work. Discovery d
 prose; update the documented value or the accepted relationship, then run `claims` and `check`
 again.
 
+## Binding sensitivity inputs
+
+Use this receipt when you need to know whether one proposed identifier-set check actually depends
+on one independently selected source fact. It is a dependency test, not a semantic verdict.
+
+The command keeps the provider proposal and the scorer-controlled fact in separate files:
+
+```bash
+FACT_SHA256="$(shasum -a 256 mutation-target.json | awk '{print $1}')"
+clean-docs binding sensitivity \
+  --proposal proposal.json \
+  --fact mutation-target.json \
+  --fact-sha256 "$FACT_SHA256" \
+  --format json
+```
+
+`clean-docs.binding-proposal.v1` contains a full `repository_commit` and one `relationship` with
+`id`, `kind`, `doc`, `anchor`, `subject`, `source`, and `locator`.
+`clean-docs.mutation-target.v1` binds the same commit, source, locator, and kind to one `member`, the
+baseline `value_sha256`, and either `configured-source-claim` or `frozen-evaluation-fact` as its
+selection basis. The basis is provenance, not semantic authority. The `--fact-sha256` argument pins
+the complete target file before execution.
+
+The first release supports Python `identifier-set` facts backed by a direct static mapping or a
+mapping-valued constructor keyword. It reads committed UTF-8 blobs with Git, parses syntax without
+importing the module, and applies one deterministic key rename in a disposable directory. Duplicate
+keys, dynamic mappings, command pins, plugins, path globs, and any target that needs code execution
+return `unsupported`.
+
+`clean-docs.binding-sensitivity.v1` reports one state:
+
+| state | meaning |
+| --- | --- |
+| `sensitive` | The relationship was current, then became stale after the frozen fact changed. |
+| `insensitive` | The relationship stayed current after a supported fact change. |
+| `invalid` | The baseline, commit, frozen fact, or caller state did not satisfy the preconditions. |
+| `unsupported` | No safe first-party mutation exists for the selected static shape. |
+
+Sensitive exits `0`, insensitive exits `1`, invalid exits `2`, and unsupported exits `3`. Every
+receipt sets `semantic_relationship_authorized` to false. Even a semantically wrong table can go
+red when its identifier shape matches the selected source; only an independent semantic scorer can
+authorize that relationship.
+
 ## Manifest versions
 
 Version 2 removes the `network` key from allowed commands because clean-docs does not provide an
