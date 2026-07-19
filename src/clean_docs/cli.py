@@ -62,6 +62,7 @@ from clean_docs.release import (
     validate_release_narrative,
 )
 from clean_docs.regions import atomic_write
+from clean_docs.review_ledger import validate_review_event_ledger
 from clean_docs.residue import LOCAL_CONFIG_NAME, load_local_residue_rules
 from clean_docs.sensitivity import (
     decode_json_object,
@@ -159,6 +160,11 @@ def _parser() -> argparse.ArgumentParser:
         help=_command_help("review candidates"),
     )
     review_candidates.add_argument("--input", type=Path, required=True)
+    review_candidates.add_argument(
+        "--ledger",
+        type=Path,
+        help="append-only review-event ledger that supplies the candidate denominator",
+    )
     review_candidates.add_argument("--out", type=Path)
     review_candidates.add_argument(
         "--check",
@@ -539,6 +545,9 @@ def _main(argv: list[str] | None = None) -> int:
             source = args.input if args.input.is_absolute() else root / args.input
             candidates = load_review_candidates(source, root=root)
             if args.review_command == "candidates":
+                if args.ledger is not None:
+                    ledger = args.ledger if args.ledger.is_absolute() else root / args.ledger
+                    validate_review_event_ledger(ledger, candidates)
                 rendered = json.dumps(
                     candidates.as_dict(),
                     indent=2,

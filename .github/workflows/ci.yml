@@ -49,6 +49,7 @@ jobs:
       - run: >-
           clean-docs --root . review candidates
           --input .clean-docs/reviews/repository-review.json
+          --ledger .clean-docs/reviews/repository-events.json
           --out .clean-docs/improvement-candidates.json
           --check
           --format text
