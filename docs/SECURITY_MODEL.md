@@ -86,6 +86,10 @@ ignored `.clean-docs-residue.local.yml` with mode `0600` on POSIX. Add plaintext
 `clean-docs residue status` reports whether matching is active without printing rule values or
 digests. CI has no local policy and reports inactive matching honestly.
 
+The residue scanner also checks tracked policy labels, patterns, and reasons against active
+restricted terms. It does not interpret a digest as text and returns a redacted finding when policy
+metadata repeats restricted context.
+
 ## Adversarial checks
 
 Required CI covers prompt injection, escaping symlinks, shell metacharacters, secret output, oversized output, hanging processes, extension identity collisions, and attempts to change files through relative paths. Each test asserts the exit contract and verifies that no caller-owned file changed.
