@@ -5,23 +5,24 @@
 ## Canonical documentation
 
 - [CLEAN_DOCS_SPEC.md](CLEAN_DOCS_SPEC.md): bindings: assurance-boundaries; sha256: b7f65311b689cc4869a9825ace004dbe3f6127d19cc59acb6c68a1514f8c95f8
-- [README.md](README.md): bindings: product-overview; sha256: d0f30db31eb9d2af0b600d6add2a697089fa6c37070275b2961e018295880c14
+- [README.md](README.md): bindings: product-overview; sha256: fca24117801839154e7c26346af3bdd29f179f73a85558132bf51d6c2f77c9ef
 - [SECURITY.md](SECURITY.md): declared canonical context; sha256: 5a10b7b08e5b26a5302e0f775320a59b8bd200da7fa858fc890342d7db0dd270
-- [STANDARD.md](STANDARD.md): declared canonical context; sha256: 9193ab2f84587aafc05c275cbe10bc268a0c2b0f6102c2b6f3d6fa07bec8daeb
+- [STANDARD.md](STANDARD.md): declared canonical context; sha256: ad8d962766edbe05585d934be6378a9e737ce3bb1934508f1d44ad53e824f3d2
 - [docs/BEHAVIOR_SIGNALS.md](docs/BEHAVIOR_SIGNALS.md): declared canonical context; sha256: dbcc582397402dcc80ccd59942c8d8180dfe8b8fb3c497e8c8967d4fd9daa4fc
-- [docs/CLI.md](docs/CLI.md): bindings: cli-reference, verdict-reference; sha256: ccbab1fe018d562c34875ff43b1e96f557976deca308d094fd0f64deb56f9eba
+- [docs/CLI.md](docs/CLI.md): bindings: cli-reference, verdict-reference; sha256: 03411fbdb0450ceb68a27abe4905f70079a91150bc1005f9bb3bd8f11bb47da8
 - [docs/EVALUATION.md](docs/EVALUATION.md): bindings: evaluation-scorers; sha256: d4364212c28b5f8b9bc715e54a3b55152ad5ec09ef96d69d0802ea9b048c518c
 - [docs/EXTENSIONS.md](docs/EXTENSIONS.md): bindings: extension-guide, migration-guide; sha256: 81eb19b309a3d7a73b0fca7640b18add365dd556ea8572577e8fcce5e83084ae
 - [docs/FEEDBACK.md](docs/FEEDBACK.md): declared canonical context; sha256: 0a1ef2b1a53e1749355e25cc1c7c47c796fe18f17ba8616c1ab2f13a44bf6891
+- [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md): bindings: improvement-candidate-guide; sha256: 574e4eb31acf07cbce3f55291c2da8aae5fc734625e032ddf3aafcd593d359c6
 - [docs/INSTALL.md](docs/INSTALL.md): declared canonical context; sha256: eb672f96492df6086317218bc22fae0ae5b4c80363bbe5aa30df260ffe31266c
 - [docs/REFERENCE.md](docs/REFERENCE.md): bindings: binding-sensitivity-reference, manifest-reference, supported-bindings; sha256: 2bde0ddc1672b364df1f5d53a9dbf504f7da52b48e4e4df48bf5cbf656593000
 - [docs/RELEASES.md](docs/RELEASES.md): bindings: release-guide; sha256: cc40c87393dd1784fcca7d1034ac8fd5925a7570011791a51df2853aa8be241b
 - [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md): bindings: security-model; sha256: 3434e548f279e863f04534b80f35d4f3b9a3d330f49315d365eee79d8babf6f0
 - [docs/SUPPORT.md](docs/SUPPORT.md): bindings: support-guide; sha256: 0d254610380bd7f4070a1edca3bdae1d017c2ff0976e7827794ff2ddd7b8ab7c
-- [docs/SURFACE.md](docs/SURFACE.md): bindings: repository-surface; sha256: eb0467b399fc5a4d285584394b8c87bdd4ba9082ef2d48cf243d1533393e762a
+- [docs/SURFACE.md](docs/SURFACE.md): bindings: repository-surface; sha256: 4fdc5aa6c14d63ba4a629ddb98d8fafb95127510db5fd6b4063f74aa548de6b9
 - [docs/learn/deep-dive-the-deterministic-seam.md](docs/learn/deep-dive-the-deterministic-seam.md): bindings: deterministic-seam-evidence, deterministic-seam-gate, deterministic-seam-phrasing; sha256: be392a4b5c484e2c88d8df783679ba49fe4a4db62e89d844c7f04cf82a547969
 - [docs/learn/index.md](docs/learn/index.md): declared canonical context; sha256: 1348b79a6842d8e479502560fa4aa481322abcc1863fb0e8c9c94365efa93932
 - [docs/learn/postmortem-the-readme-that-lied.md](docs/learn/postmortem-the-readme-that-lied.md): bindings: postmortem-examples, postmortem-measurements; sha256: ec7c89febc6de52884bc6bdf4955ebea1e261d8fd94b1ccacf1386b812597f98
 - [docs/learn/tutorial-catch-a-lying-doc.md](docs/learn/tutorial-catch-a-lying-doc.md): bindings: tutorial-outcomes; sha256: acaf1e3d666bad5d8467125e4165567487b79a60849d02656a057c81969d13dc
-- [skill/SKILL.md](skill/SKILL.md): declared canonical context; sha256: 77f0b257236a184c5b202e8327c27785f3ab4abe9c1ae9c3c082f8fa06428da9
+- [skill/SKILL.md](skill/SKILL.md): declared canonical context; sha256: c7cb6e08d91e419f63ad8e21447364631c7a5471b78c717e0dcf6a94060c219e
 - [skills/clean-docs-verify/SKILL.md](skills/clean-docs-verify/SKILL.md): declared canonical context; sha256: 5c1f98c369fdb84b3c6be2cc0b5ed1e157e52c541f49e56af2e766795fb675d8

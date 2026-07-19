@@ -1,13 +1,13 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `a8761533ad05c6e9ddd229ddcb0e39f740f279fb7d2925f8a30c8af266607990`
+- Corpus sha256: `108e146655ca5b59c40c3fac2fde503289afdd36c656daff1b79b98c13b09ecb`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `d0f30db31eb9d2af0b600d6add2a697089fa6c37070275b2961e018295880c14`
+- Content sha256: `fca24117801839154e7c26346af3bdd29f179f73a85558132bf51d6c2f77c9ef`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
@@ -30,8 +30,10 @@ Before adoption, `audit` reports bounded repository-neutral advisories. A manife
 | Try the repair loop | [Runnable tutorial](docs/learn/tutorial-catch-a-lying-doc.md) | A failed drift check and a repaired page |
 | Choose a command | [CLI reference](docs/CLI.md) | The command and its write boundary |
 | Configure a binding | [Manifest reference](docs/REFERENCE.md) | A source-bound fact with the right depth |
-| Investigate an unbound count or column claim | [Source claim checks](docs/REFERENCE.md#source-claim-checks) | A ranked candidate or accepted deterministic relationship |
 | Review a pull request | [Coverage-stating verdict](docs/CLI.md#pull-request-verdicts) | One pinned state with gaps, skips, and non-claims visible |
+| Turn a review issue into tests | [Improvement candidates](docs/IMPROVEMENTS.md) | Separate documentation and product tests without gate authority |
+| Evaluate human or agent tasks | [Evaluation guide](docs/EVALUATION.md) | A replayable result bound to its context and scorer |
+| Build grounded release notes | [Release guide](docs/RELEASES.md) | A factual delta with source evidence |
 | Measure recurring operational problems | [Opt-in feedback loop](docs/FEEDBACK.md) | Bounded envelopes and a receipted improvement case |
 | Understand trust boundaries | [Security model](docs/SECURITY_MODEL.md) | The process and host guarantees |
 

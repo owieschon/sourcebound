@@ -24,6 +24,8 @@ The table is generated from the command registry used by the parser:
 | binding sensitivity | Test whether one static check depends on a frozen source fact | no | clean-docs binding sensitivity --help |
 | context | Compile provider-neutral evidence packets | no | clean-docs context --help |
 | context compile | Compile a bounded source-addressed context bundle | no | clean-docs context compile --request context-request.json |
+| review | Turn review observations into testable improvement candidates | with --out | clean-docs review --help |
+| review candidates | Compile documentation and product test candidates from one review | with --out | clean-docs review candidates --input review-observations.json |
 | init | Write a source-bound documentation baseline | yes | clean-docs init --no-model |
 | explain | Explain a finding or coverage state | no | clean-docs explain purpose-contract --format json |
 | doctor | Check repository and integration readiness | with --bundle | clean-docs doctor --bundle doctor.json |

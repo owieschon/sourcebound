@@ -104,6 +104,8 @@ CLI_REFERENCE = (
     },
     {"command": "context", "job": "Compile provider-neutral evidence packets", "writes": "no", "example": "clean-docs context --help"},
     {"command": "context compile", "job": "Compile a bounded source-addressed context bundle", "writes": "no", "example": "clean-docs context compile --request context-request.json"},
+    {"command": "review", "job": "Turn review observations into testable improvement candidates", "writes": "with --out", "example": "clean-docs review --help"},
+    {"command": "review candidates", "job": "Compile documentation and product test candidates from one review", "writes": "with --out", "example": "clean-docs review candidates --input review-observations.json"},
     {"command": "init", "job": "Write a source-bound documentation baseline", "writes": "yes", "example": "clean-docs init --no-model"},
     {"command": "explain", "job": "Explain a finding or coverage state", "writes": "no", "example": "clean-docs explain purpose-contract --format json"},
     {"command": "doctor", "job": "Check repository and integration readiness", "writes": "with --bundle", "example": "clean-docs doctor --bundle doctor.json"},

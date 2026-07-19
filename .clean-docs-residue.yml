@@ -4,6 +4,10 @@ exclude:
     reason: Frozen Version 0 provenance fixtures stay outside the active product surface.
   - pattern: .clean-docs/reader-trials*/**
     reason: Versioned content-addressed reader evidence preserves observed commands and paths verbatim.
+  - pattern: .clean-docs/reviews/**
+    reason: Governed review evidence preserves external source terms and locators verbatim.
+  - pattern: .clean-docs/improvement-candidates.json
+    reason: Generated review candidates preserve their governed external evidence verbatim.
   - pattern: docs/adapters/connected-event.md
     reason: The reference connected adapter names the external transport it implements.
 rules:

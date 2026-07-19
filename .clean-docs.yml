@@ -72,6 +72,13 @@ bindings:
       symbol: EVALUATION_SCORERS
     renderer: markdown-table
     columns: [scorer, input, passes when]
+  - id: improvement-candidate-guide
+    type: symbol
+    doc: docs/IMPROVEMENTS.md
+    anchor: review-observations
+    source:
+      path: src/clean_docs/improvements.py
+      symbol: compile_improvement_candidates
   - id: binding-sensitivity-reference
     type: symbol
     doc: docs/REFERENCE.md
@@ -180,6 +187,7 @@ projections:
       - docs/FEEDBACK.md
       - docs/EXTENSIONS.md
       - docs/INSTALL.md
+      - docs/IMPROVEMENTS.md
       - docs/RELEASES.md
       - docs/REFERENCE.md
       - docs/SECURITY_MODEL.md

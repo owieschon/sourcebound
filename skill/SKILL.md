@@ -50,3 +50,17 @@ python3 scripts/trusted_self_check.py
 
 Use `--format json` when another tool needs structured findings. A drift or audit finding
 exits `1`; malformed configuration exits `2`; extraction failures exit `3`.
+
+## Preserve review issues as candidates
+
+When a review finds a problem that the current audit does not express, record it once as
+`clean-docs.review-observations.v1`, then compile its documentation and product test tracks:
+
+```bash
+clean-docs review candidates \
+  --input .clean-docs/reviews/REVIEW.json \
+  --out .clean-docs/improvement-candidates.json
+```
+
+Do not implement a candidate until its observation is reproduced and its proposed test has a
+fixture and assertion. Candidate output has neither change nor gate authority.

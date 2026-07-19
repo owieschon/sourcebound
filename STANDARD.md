@@ -561,6 +561,12 @@ unhelpful-page feedback, missing search results, and tasks an agent cannot compl
 material. Record the evidence outside the reader-facing page. Repair the canonical source, regenerate
 its projections, and rerun the failed task.
 
+A qualitative review issue becomes two test candidates before it becomes work: one candidate names
+the documentation change and how a reader or checker would prove it, while the other names the
+product mechanism and its regression fixture. Keep both assessment-only until the observation is
+reproduced. A documentation caveat cannot close a missing mechanism, and a proposed lint rule cannot
+turn an editorial opinion into gate authority.
+
 ### What only judgment can check (the honest seam)
 
 `clean-docs audit` sees document roles, names, structure, lengths, links, token overlap, registered

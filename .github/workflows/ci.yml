@@ -47,6 +47,12 @@ jobs:
       - run: clean-docs --root . emit llms-txt --out /tmp/clean-docs-llms.txt
       - run: clean-docs --root . project --check
       - run: >-
+          clean-docs --root . review candidates
+          --input .clean-docs/reviews/wizard-docs-context-mill.json
+          --out .clean-docs/improvement-candidates.json
+          --check
+          --format text
+      - run: >-
           clean-docs --root . verdict
           --base "${{ github.event.pull_request.base.sha || github.event.before || github.sha }}"
           --head HEAD

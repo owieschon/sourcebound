@@ -36,6 +36,10 @@ from clean_docs.feedback import (
     transition_improvement_case,
 )
 from clean_docs.impact import build_impact_plan, render_impact_plan
+from clean_docs.improvements import (
+    load_review_candidates,
+    write_improvement_candidates,
+)
 from clean_docs.inventory import scan_inventory
 from clean_docs.plugins import scan_extended_inventory
 from clean_docs.manifest import load_manifest
@@ -136,6 +140,24 @@ def _parser() -> argparse.ArgumentParser:
     )
     context_compile.add_argument("--request", type=Path, required=True)
     context_compile.add_argument("--format", choices=("text", "json"), default="json")
+    review_parser = sub.add_parser("review", help=_command_help("review"))
+    review_sub = review_parser.add_subparsers(dest="review_command", required=True)
+    review_candidates = review_sub.add_parser(
+        "candidates",
+        help=_command_help("review candidates"),
+    )
+    review_candidates.add_argument("--input", type=Path, required=True)
+    review_candidates.add_argument("--out", type=Path)
+    review_candidates.add_argument(
+        "--check",
+        action="store_true",
+        help="exit 1 instead of rewriting a stale --out candidate set",
+    )
+    review_candidates.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="json",
+    )
     init_parser = sub.add_parser("init", help=_command_help("init"))
     model_mode = init_parser.add_mutually_exclusive_group()
     model_mode.add_argument(
@@ -332,6 +354,13 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def _validate_arguments(args: argparse.Namespace) -> None:
+    if (
+        args.command == "review"
+        and args.review_command == "candidates"
+        and args.check
+        and args.out is None
+    ):
+        raise ConfigurationError("review candidates --check requires --out")
     if args.command != "check":
         return
     changed_only = (
@@ -432,6 +461,60 @@ def _main(argv: list[str] | None = None) -> int:
         print(f"clean-docs: {exc}", file=sys.stderr)
         return exc.exit_code
     root = args.root.resolve()
+    if args.command == "review":
+        try:
+            source = args.input if args.input.is_absolute() else root / args.input
+            candidates = load_review_candidates(source)
+            rendered = json.dumps(
+                candidates.as_dict(),
+                indent=2,
+                ensure_ascii=False,
+            ) + "\n"
+            if args.out is None:
+                print(rendered, end="")
+                return 0
+            output = args.out if args.out.is_absolute() else root / args.out
+            try:
+                relative_output = output.resolve().relative_to(root)
+            except ValueError as exc:
+                raise ConfigurationError(
+                    "review candidates --out must stay inside the repository"
+                ) from exc
+            if args.check:
+                try:
+                    observed = output.read_text(encoding="utf-8")
+                except FileNotFoundError:
+                    observed = ""
+                except OSError as exc:
+                    raise ConfigurationError(
+                        f"cannot read improvement candidates {output}: {exc}"
+                    ) from exc
+                current = observed == rendered
+                if args.format == "json":
+                    print(json.dumps({
+                        "schema": "clean-docs.improvement-candidate-check.v1",
+                        "ok": current,
+                        "output": relative_output.as_posix(),
+                        "candidate_digest": candidates.digest,
+                    }, indent=2))
+                else:
+                    print(
+                        f"[{'current' if current else 'drift'}] "
+                        f"{relative_output.as_posix()}"
+                    )
+                return 0 if current else 1
+            write_improvement_candidates(candidates, output)
+            if args.format == "json":
+                print(rendered, end="")
+            else:
+                print(
+                    f"[written] {relative_output.as_posix()}: "
+                    f"{len(candidates.candidates)} candidate(s)"
+                )
+            return 0
+        except CleanDocsError as exc:
+            print(f"clean-docs: {exc}", file=sys.stderr)
+            return exc.exit_code
     if args.command == "feedback":
         try:
             if args.feedback_command == "enable":
