@@ -13,7 +13,8 @@ from clean_docs.errors import ConfigurationError, PolicyError
 from clean_docs.improvements import ImprovementCandidateSet
 
 
-REVIEW_EVENT_LEDGER_SCHEMA = "clean-docs.review-event-ledger.v1"
+REVIEW_EVENT_LEDGER_SCHEMA = "clean-docs.review-event-ledger.v2"
+_LEGACY_REVIEW_EVENT_LEDGER_SCHEMA = "clean-docs.review-event-ledger.v1"
 _SHA256 = re.compile(r"[0-9a-f]{64}")
 _IDENTIFIER = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 
@@ -115,19 +116,41 @@ def _event(value: Any, index: int) -> ReviewEvent:
     return event
 
 
-def validate_review_event_ledger(path: Path, candidates: ImprovementCandidateSet) -> str:
-    """Require every immutable review event to retain one current disposition."""
+@dataclass(frozen=True)
+class ReviewEventLedger:
+    schema: str
+    review_id: str
+    events: tuple[ReviewEvent, ...]
+    head_digest: str
+    migration_base_head_digest: str | None
+
+
+def _load_review_event_ledger(path: Path) -> ReviewEventLedger:
+    """Load one internally consistent ledger without assigning candidate authority."""
     try:
         raw = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise ConfigurationError(f"cannot read review event ledger {path}: {exc}") from exc
     root = _object(raw, "review event ledger")
-    if set(root) != {"schema", "review_id", "events", "head_digest"}:
+    schema = _string(root.get("schema"), "review event ledger.schema")
+    if schema == REVIEW_EVENT_LEDGER_SCHEMA:
+        expected_keys = {
+            "schema",
+            "review_id",
+            "events",
+            "head_digest",
+            "migration_base_head_digest",
+        }
+    elif schema == _LEGACY_REVIEW_EVENT_LEDGER_SCHEMA:
+        expected_keys = {"schema", "review_id", "events", "head_digest"}
+    else:
+        raise ConfigurationError(
+            "review event ledger schema must be "
+            f"{REVIEW_EVENT_LEDGER_SCHEMA} or {_LEGACY_REVIEW_EVENT_LEDGER_SCHEMA}"
+        )
+    if set(root) != expected_keys:
         raise ConfigurationError("review event ledger has an invalid shape")
-    if root["schema"] != REVIEW_EVENT_LEDGER_SCHEMA:
-        raise ConfigurationError(f"review event ledger schema must be {REVIEW_EVENT_LEDGER_SCHEMA}")
-    if _identifier(root["review_id"], "review event ledger.review_id") != candidates.review_id:
-        raise PolicyError("review event ledger belongs to another review")
+    review_id = _identifier(root["review_id"], "review event ledger.review_id")
     if not isinstance(root["events"], list) or not root["events"]:
         raise ConfigurationError("review event ledger.events must be a non-empty list")
     events = tuple(_event(item, index) for index, item in enumerate(root["events"]))
@@ -146,6 +169,52 @@ def validate_review_event_ledger(path: Path, candidates: ImprovementCandidateSet
         by_observation[event.observation_id] = event
     if root["head_digest"] != previous:
         raise ConfigurationError("review event ledger.head_digest does not match the event chain")
+    assert previous is not None
+    migration_base_head_digest = root.get("migration_base_head_digest")
+    if migration_base_head_digest is not None:
+        migration_base_head_digest = _string(
+            migration_base_head_digest,
+            "review event ledger.migration_base_head_digest",
+        )
+        if not _SHA256.fullmatch(migration_base_head_digest):
+            raise ConfigurationError(
+                "review event ledger.migration_base_head_digest must be a SHA-256"
+            )
+    return ReviewEventLedger(
+        schema=schema,
+        review_id=review_id,
+        events=events,
+        head_digest=previous,
+        migration_base_head_digest=migration_base_head_digest,
+    )
+
+
+def validate_review_event_ledger(
+    path: Path,
+    candidates: ImprovementCandidateSet,
+    *,
+    prior_path: Path | None = None,
+) -> str:
+    """Require one current disposition and preserve the base ledger as a prefix."""
+    ledger = _load_review_event_ledger(path)
+    if ledger.review_id != candidates.review_id:
+        raise PolicyError("review event ledger belongs to another review")
+    if prior_path is not None:
+        prior = _load_review_event_ledger(prior_path)
+        if prior.review_id != ledger.review_id:
+            raise PolicyError("prior review event ledger belongs to another review")
+        if prior.schema == REVIEW_EVENT_LEDGER_SCHEMA and ledger.schema != prior.schema:
+            raise PolicyError("review event ledger cannot downgrade from the anchored schema")
+        if ledger.schema == REVIEW_EVENT_LEDGER_SCHEMA and prior.schema == _LEGACY_REVIEW_EVENT_LEDGER_SCHEMA:
+            if ledger.migration_base_head_digest != prior.head_digest:
+                raise PolicyError("review event ledger migration does not bind the legacy head")
+        else:
+            if ledger.events[: len(prior.events)] != prior.events:
+                raise PolicyError("review event ledger rewrites the immutable base history")
+            if ledger.migration_base_head_digest != prior.migration_base_head_digest:
+                raise PolicyError("review event ledger rewrites its migration anchor")
+    events = ledger.events
+    by_observation = {event.observation_id: event for event in events}
     candidate_ids = {candidate.observation_id: candidate.id for candidate in candidates.candidates}
     for observation_id, candidate_id in candidate_ids.items():
         ledger_event = by_observation.get(observation_id)

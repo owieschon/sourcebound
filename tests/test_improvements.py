@@ -122,7 +122,13 @@ def _ledger_event(
     return {**payload, "digest": digest}
 
 
-def _ledger(candidates, events: list[dict[str, object]] | None = None) -> dict[str, object]:
+def _ledger(
+    candidates,
+    events: list[dict[str, object]] | None = None,
+    *,
+    schema: str = REVIEW_EVENT_LEDGER_SCHEMA,
+    migration_base_head_digest: str | None = None,
+) -> dict[str, object]:
     if events is None:
         events = []
         previous_digest = None
@@ -135,12 +141,17 @@ def _ledger(candidates, events: list[dict[str, object]] | None = None) -> dict[s
             )
             events.append(event)
             previous_digest = event["digest"]
-    return {
-        "schema": REVIEW_EVENT_LEDGER_SCHEMA,
+    root = {
+        "schema": schema,
         "review_id": candidates.review_id,
         "events": events,
         "head_digest": events[-1]["digest"],
     }
+    if schema == REVIEW_EVENT_LEDGER_SCHEMA:
+        root["migration_base_head_digest"] = (
+            migration_base_head_digest or "a" * 64
+        )
+    return root
 
 
 def test_compiles_stable_dual_track_candidates_without_authority() -> None:
@@ -226,6 +237,105 @@ def test_review_event_ledger_keeps_explicit_merged_history(tmp_path: Path) -> No
     ledger_path = tmp_path / "events.json"
     ledger_path.write_text(json.dumps(_ledger(candidates, [first, second])))
     assert validate_review_event_ledger(ledger_path, candidates) == second["digest"]
+
+
+def test_review_event_ledger_requires_the_base_history_as_an_exact_prefix(
+    tmp_path: Path,
+) -> None:
+    payload = _payload()
+    payload["observations"].append(deepcopy(payload["observations"][0]))
+    payload["observations"][1]["id"] = "second-task-page"
+    candidates = compile_improvement_candidates(payload)
+    base_path = tmp_path / "base.json"
+    base_path.write_text(json.dumps(_ledger(candidates)))
+
+    rewritten_payload = deepcopy(payload)
+    rewritten_payload["observations"] = rewritten_payload["observations"][:1]
+    rewritten_candidates = compile_improvement_candidates(rewritten_payload)
+    rewritten_path = tmp_path / "rewritten.json"
+    rewritten_path.write_text(json.dumps(_ledger(rewritten_candidates)))
+
+    with pytest.raises(PolicyError, match="rewrites the immutable base history"):
+        validate_review_event_ledger(
+            rewritten_path, rewritten_candidates, prior_path=base_path
+        )
+
+    appended = _ledger(candidates)
+    candidate = candidates.candidates[0]
+    previous = appended["events"][-1]["digest"]
+    appended["events"].append(
+        _ledger_event(
+            event_id="event-merged-observation",
+            observation_id="merged-observation",
+            candidate_id=None,
+            disposition="merged",
+            successor=candidate.observation_id,
+            previous_digest=previous,
+        )
+    )
+    appended["head_digest"] = appended["events"][-1]["digest"]
+    appended_path = tmp_path / "appended.json"
+    appended_path.write_text(json.dumps(appended))
+    assert validate_review_event_ledger(
+        appended_path, candidates, prior_path=base_path
+    ) == appended["head_digest"]
+
+
+def test_review_event_ledger_allows_one_explicit_legacy_migration_only(
+    tmp_path: Path,
+) -> None:
+    legacy_schema = "clean-docs.review-event-ledger.v1"
+    payload = _payload()
+    payload["observations"].append(deepcopy(payload["observations"][0]))
+    payload["observations"][1]["id"] = "second-task-page"
+    candidates = compile_improvement_candidates(payload)
+    legacy = _ledger(candidates, schema=legacy_schema)
+    legacy_path = tmp_path / "legacy.json"
+    legacy_path.write_text(json.dumps(legacy))
+
+    rewritten_payload = deepcopy(payload)
+    rewritten_payload["observations"] = rewritten_payload["observations"][:1]
+    rewritten_candidates = compile_improvement_candidates(rewritten_payload)
+    migrated = _ledger(
+        rewritten_candidates,
+        migration_base_head_digest=legacy["head_digest"],
+    )
+    migrated_path = tmp_path / "migrated.json"
+    migrated_path.write_text(json.dumps(migrated))
+    assert validate_review_event_ledger(
+        migrated_path, rewritten_candidates, prior_path=legacy_path
+    ) == migrated["head_digest"]
+
+    rewritten_again_path = tmp_path / "rewritten-again.json"
+    rewritten_again_path.write_text(json.dumps(_ledger(candidates)))
+    with pytest.raises(PolicyError, match="rewrites the immutable base history"):
+        validate_review_event_ledger(
+            rewritten_again_path, candidates, prior_path=migrated_path
+        )
+
+    migrated["migration_base_head_digest"] = "f" * 64
+    migrated_path.write_text(json.dumps(migrated))
+    with pytest.raises(PolicyError, match="migration does not bind"):
+        validate_review_event_ledger(
+            migrated_path, rewritten_candidates, prior_path=legacy_path
+        )
+
+    stable_path = tmp_path / "stable.json"
+    stable_path.write_text(json.dumps(_ledger(candidates)))
+    downgraded_path = tmp_path / "downgraded.json"
+    downgraded_path.write_text(json.dumps(_ledger(candidates, schema=legacy_schema)))
+    with pytest.raises(PolicyError, match="cannot downgrade"):
+        validate_review_event_ledger(
+            downgraded_path, candidates, prior_path=stable_path
+        )
+
+    changed_anchor = _ledger(candidates, migration_base_head_digest="b" * 64)
+    changed_anchor_path = tmp_path / "changed-anchor.json"
+    changed_anchor_path.write_text(json.dumps(changed_anchor))
+    with pytest.raises(PolicyError, match="rewrites its migration anchor"):
+        validate_review_event_ledger(
+            changed_anchor_path, candidates, prior_path=stable_path
+        )
 
 
 @pytest.mark.parametrize(

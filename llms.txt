@@ -13,13 +13,13 @@
 - [docs/EVALUATION.md](docs/EVALUATION.md): bindings: evaluation-scorers; sha256: d4364212c28b5f8b9bc715e54a3b55152ad5ec09ef96d69d0802ea9b048c518c
 - [docs/EXTENSIONS.md](docs/EXTENSIONS.md): bindings: extension-guide, migration-guide; sha256: 81eb19b309a3d7a73b0fca7640b18add365dd556ea8572577e8fcce5e83084ae
 - [docs/FEEDBACK.md](docs/FEEDBACK.md): declared canonical context; sha256: 0a1ef2b1a53e1749355e25cc1c7c47c796fe18f17ba8616c1ab2f13a44bf6891
-- [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md): bindings: improvement-candidate-guide; sha256: dcfe8a75e30f3c966bd46f7bfe074844bf8152a03948bd127559fd27840ac3c4
+- [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md): bindings: improvement-candidate-guide; sha256: f980247483ec9ecf24cea9b241bf6e2df9277e83c97563ad134200302f0fe263
 - [docs/INSTALL.md](docs/INSTALL.md): declared canonical context; sha256: eb672f96492df6086317218bc22fae0ae5b4c80363bbe5aa30df260ffe31266c
 - [docs/REFERENCE.md](docs/REFERENCE.md): bindings: binding-sensitivity-reference, manifest-reference, supported-bindings; sha256: 0146ea6ecdecef648058123408e01f384881b6857f9b72f80743c5b1978d7dfe
 - [docs/RELEASES.md](docs/RELEASES.md): bindings: release-guide; sha256: cc40c87393dd1784fcca7d1034ac8fd5925a7570011791a51df2853aa8be241b
 - [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md): bindings: security-model; sha256: 74cbe8147924bcd0d1d229b1d28fc17fa1234f04bb44ef9520218ced7b6c6d23
 - [docs/SUPPORT.md](docs/SUPPORT.md): bindings: support-guide; sha256: 0d254610380bd7f4070a1edca3bdae1d017c2ff0976e7827794ff2ddd7b8ab7c
-- [docs/SURFACE.md](docs/SURFACE.md): bindings: repository-surface; sha256: 4d2c5e3d31f638a5c385bb4925811addc500bfb748282afed314b21c0738a9a1
+- [docs/SURFACE.md](docs/SURFACE.md): bindings: repository-surface; sha256: a72ee8e56b099f7d6a44a062f91e79f73ff91987f3e4980215ee2c8ff6e0c4c7
 - [docs/learn/deep-dive-the-deterministic-seam.md](docs/learn/deep-dive-the-deterministic-seam.md): bindings: deterministic-seam-evidence, deterministic-seam-gate, deterministic-seam-phrasing; sha256: be392a4b5c484e2c88d8df783679ba49fe4a4db62e89d844c7f04cf82a547969
 - [docs/learn/index.md](docs/learn/index.md): declared canonical context; sha256: 1348b79a6842d8e479502560fa4aa481322abcc1863fb0e8c9c94365efa93932
 - [docs/learn/postmortem-the-readme-that-lied.md](docs/learn/postmortem-the-readme-that-lied.md): bindings: postmortem-examples, postmortem-measurements; sha256: ec7c89febc6de52884bc6bdf4955ebea1e261d8fd94b1ccacf1386b812597f98

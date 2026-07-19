@@ -46,13 +46,20 @@ jobs:
       - run: clean-docs --root /tmp/clean-docs-stepwise audit
       - run: clean-docs --root . emit llms-txt --out /tmp/clean-docs-llms.txt
       - run: clean-docs --root . project --check
-      - run: >-
-          clean-docs --root . review candidates
-          --input .clean-docs/reviews/repository-review.json
-          --ledger .clean-docs/reviews/repository-events.json
-          --out .clean-docs/improvement-candidates.json
-          --check
-          --format text
+      - run: |
+          base="${{ github.event.pull_request.base.sha || github.event.before || github.sha }}"
+          prior=()
+          if git cat-file -e "$base:.clean-docs/reviews/repository-events.json" 2>/dev/null; then
+            git show "$base:.clean-docs/reviews/repository-events.json" > /tmp/clean-docs-review-events-base.json
+            prior=(--prior-ledger /tmp/clean-docs-review-events-base.json)
+          fi
+          clean-docs --root . review candidates \
+            --input .clean-docs/reviews/repository-review.json \
+            --ledger .clean-docs/reviews/repository-events.json \
+            "${prior[@]}" \
+            --out .clean-docs/improvement-candidates.json \
+            --check \
+            --format text
       - run: >-
           clean-docs --root . review lifecycle check
           --input .clean-docs/reviews/repository-review.json
