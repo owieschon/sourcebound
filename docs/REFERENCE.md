@@ -121,3 +121,19 @@ Version 2 removes the `network` key from allowed commands because clean-docs doe
 operating-system network sandbox. Version 1 remains readable. If it contains `network: false`,
 clean-docs marks that field as deprecated; it neither blocks nor counts network traffic. Run
 `clean-docs migrate --write` to remove the field with a rollback backup.
+
+## Context request
+
+`clean-docs.context-request.v1` compiles a provider-neutral evidence packet from the current commit.
+The request contains a full `repository_commit`, positive `budget_bytes`, and one or more items.
+Each item names an `id`, `kind`, repository-relative `path`, `start_line`, `end_line`, `authority`,
+`relationship`, `reason`, numeric `rank`, and boolean `required` and `instruction` flags.
+
+Supported authorities, strongest first, are `accepted-policy`, `direct-evidence`, `generated`,
+`repository-doc`, and `hypothesis`. Instruction authority requires both `accepted-policy` and a
+`policy` or `instruction` kind. Other prose stays data.
+
+Required evidence is selected before optional context. Within each group, authority, rank, and item
+ID produce a stable order. An optional item that exceeds the byte budget is excluded with
+`budget-exhausted`. A required item that does not fit produces `required-over-budget` and makes the
+bundle `unknown`.

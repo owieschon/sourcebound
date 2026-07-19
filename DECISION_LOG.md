@@ -469,3 +469,16 @@ states: path globs with no matches now fail extraction, an opening frontmatter d
 close, placeholder links are exempt only in templates and agent procedures, and changed MDX is
 reported as unsupported unknown impact. Reversible: the version 1 reader remains available, but
 new baselines and impact receipts keep the stricter identities and boundaries.
+
+## 44. Persist provider intent before invocation and compile context by evidence (2026-07-19)
+
+Context: one feasibility run passed a 24 KB packet of mixed source and documentation excerpts to
+the existing command provider. It reached the 120-second boundary without a response. The runner
+had computed its pre-run worktree digest but planned to write the receipt only after completion, so
+the timeout discarded the value needed to reconcile the attempt. Chose two narrow primitives.
+Live evaluation now writes a content-addressed provider-run record before launch and preserves
+failure or worktree-conflict state. A separate model-free context compiler selects typed source
+ranges under an explicit byte budget, records exclusions, and grants instruction authority only to
+accepted policy. It uses no vector store or semantic retriever. Reversible: recorded evaluation and
+unbounded, manually prepared context remain readable; callers can ignore the new compiler and
+provider-run receipt without changing deterministic checks.

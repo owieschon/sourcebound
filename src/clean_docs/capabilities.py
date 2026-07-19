@@ -79,6 +79,8 @@ CLI_REFERENCE = (
     },
     {"command": "inventory", "job": "List detected repository surfaces and coverage", "writes": "no", "example": "clean-docs inventory --format json"},
     {"command": "claims", "job": "Rank and verify static count and column claims", "writes": "no", "example": "clean-docs claims --format json"},
+    {"command": "context", "job": "Compile provider-neutral evidence packets", "writes": "no", "example": "clean-docs context --help"},
+    {"command": "context compile", "job": "Compile a bounded source-addressed context bundle", "writes": "no", "example": "clean-docs context compile --request context-request.json"},
     {"command": "init", "job": "Write a source-bound documentation baseline", "writes": "yes", "example": "clean-docs init --no-model"},
     {"command": "explain", "job": "Explain a finding or coverage state", "writes": "no", "example": "clean-docs explain purpose-contract --format json"},
     {"command": "doctor", "job": "Check repository and integration readiness", "writes": "with --bundle", "example": "clean-docs doctor --bundle doctor.json"},

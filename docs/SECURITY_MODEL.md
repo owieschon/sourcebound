@@ -35,6 +35,11 @@ You can still use `audit`, `inventory`, static `init`, static bindings, projecti
 scoring, and release facts when no declared process is trusted. Those paths do not run repository
 code unless the manifest explicitly adds a command or plugin.
 
+Live evaluation is different: its explicit command provider is a process selected by the operator.
+clean-docs records repository bytes before launch and rejects an unexpected change afterward, but
+it does not sandbox the process or revoke host access. Use an execution environment that enforces
+the provider's filesystem and network boundary.
+
 For an untrusted pull request, run `plan`, `check`, and `verify` with `--no-exec`. clean-docs skips
 manifest commands and plugins, labels the missing assurance, and fails a changed-surface check when
 the pull request affects that skipped relationship. The reusable workflow fixes this policy for
