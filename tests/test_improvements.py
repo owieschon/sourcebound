@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import hashlib
+from copy import deepcopy
 import subprocess
 import hashlib
 from pathlib import Path
@@ -19,6 +21,7 @@ from clean_docs.improvements import (
     transition_candidate_lifecycle,
     write_candidate_lifecycle,
 )
+from clean_docs.review_ledger import REVIEW_EVENT_LEDGER_SCHEMA, validate_review_event_ledger
 
 
 def _test(kind: str = "fixture") -> dict[str, str]:
@@ -97,6 +100,50 @@ def _receipt_payload(root: Path) -> dict[str, object]:
     return payload
 
 
+def _ledger_event(
+    *,
+    event_id: str,
+    observation_id: str,
+    candidate_id: str | None,
+    disposition: str = "candidate",
+    successor: str | None = None,
+    previous_digest: str | None = None,
+) -> dict[str, object]:
+    payload = {
+        "id": event_id,
+        "observation_id": observation_id,
+        "disposition": disposition,
+        "candidate_id": candidate_id,
+        "successor": successor,
+        "previous_digest": previous_digest,
+    }
+    digest = hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    return {**payload, "digest": digest}
+
+
+def _ledger(candidates, events: list[dict[str, object]] | None = None) -> dict[str, object]:
+    if events is None:
+        events = []
+        previous_digest = None
+        for candidate in candidates.candidates:
+            event = _ledger_event(
+                event_id=f"event-{candidate.observation_id}",
+                observation_id=candidate.observation_id,
+                candidate_id=candidate.id,
+                previous_digest=previous_digest,
+            )
+            events.append(event)
+            previous_digest = event["digest"]
+    return {
+        "schema": REVIEW_EVENT_LEDGER_SCHEMA,
+        "review_id": candidates.review_id,
+        "events": events,
+        "head_digest": events[-1]["digest"],
+    }
+
+
 def test_compiles_stable_dual_track_candidates_without_authority() -> None:
     first = compile_improvement_candidates(_payload())
     second = compile_improvement_candidates(_payload())
@@ -122,6 +169,64 @@ def test_compiles_stable_dual_track_candidates_without_authority() -> None:
             "requesting an ordinary verified change."
         ),
     }
+
+
+def test_review_event_ledger_rejects_deleted_duplicate_or_retargeted_candidates(
+    tmp_path: Path,
+) -> None:
+    payload = _payload()
+    payload["observations"].append(deepcopy(payload["observations"][0]))
+    payload["observations"][1]["id"] = "second-task-page"
+    candidates = compile_improvement_candidates(payload)
+    ledger_path = tmp_path / "events.json"
+    ledger_path.write_text(json.dumps(_ledger(candidates)))
+    assert validate_review_event_ledger(ledger_path, candidates)
+
+    deleted_payload = deepcopy(payload)
+    deleted_payload["observations"] = deleted_payload["observations"][1:]
+    deleted = compile_improvement_candidates(deleted_payload)
+    with pytest.raises(PolicyError, match="silently removed"):
+        validate_review_event_ledger(ledger_path, deleted)
+
+    duplicate = _ledger(candidates)
+    duplicate["events"].append(duplicate["events"][0])
+    duplicate["head_digest"] = duplicate["events"][-1]["digest"]
+    ledger_path.write_text(json.dumps(duplicate))
+    with pytest.raises(ConfigurationError, match="duplicate review event id"):
+        validate_review_event_ledger(ledger_path, candidates)
+
+    single_candidates = compile_improvement_candidates(_payload())
+    retargeted = _ledger(single_candidates)
+    event = retargeted["events"][0]
+    assert isinstance(event, dict)
+    event["candidate_id"] = "f" * 64
+    event["digest"] = hashlib.sha256(
+        json.dumps(
+            {key: event[key] for key in event if key != "digest"},
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode()
+    ).hexdigest()
+    retargeted["head_digest"] = event["digest"]
+    ledger_path.write_text(json.dumps(retargeted))
+    with pytest.raises(PolicyError, match="retargets"):
+        validate_review_event_ledger(ledger_path, single_candidates)
+
+
+def test_review_event_ledger_keeps_explicit_merged_history(tmp_path: Path) -> None:
+    candidates = compile_improvement_candidates(_payload())
+    candidate = candidates.candidates[0]
+    first = _ledger_event(
+        event_id="event-merged", observation_id="merged-observation", candidate_id=None,
+        disposition="merged", successor=candidate.observation_id,
+    )
+    second = _ledger_event(
+        event_id="event-current", observation_id=candidate.observation_id,
+        candidate_id=candidate.id, previous_digest=first["digest"],
+    )
+    ledger_path = tmp_path / "events.json"
+    ledger_path.write_text(json.dumps(_ledger(candidates, [first, second])))
+    assert validate_review_event_ledger(ledger_path, candidates) == second["digest"]
 
 
 @pytest.mark.parametrize(

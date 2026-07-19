@@ -51,6 +51,7 @@ Compile the observations and write the deterministic candidate set:
 ```bash
 clean-docs review candidates \
   --input .clean-docs/reviews/repository-review.json \
+  --ledger .clean-docs/reviews/repository-events.json \
   --out .clean-docs/improvement-candidates.json \
   --format text
 ```
@@ -69,15 +70,16 @@ Check that the committed candidate set still matches its observations:
 ```bash
 clean-docs review candidates \
   --input .clean-docs/reviews/repository-review.json \
+  --ledger .clean-docs/reviews/repository-events.json \
   --out .clean-docs/improvement-candidates.json \
   --check \
   --format text
 ```
 
-The check exits `1` when an observation changed without regenerating its candidate set. It compares
-the input projection with the committed output; deleting an observation and regenerating produces a
-smaller current set. An independent issue or review ledger must prove the denominator until the
-product receipts observation history directly. The repository CI runs the freshness check after
+The check exits `1` when an observation changed without regenerating its candidate set. With a
+ledger, it also rejects a missing, duplicate, or retargeted review event. The chained ledger keeps
+one candidate disposition for every observation; use `merged` or `superseded` only when it points
+to the candidate that now owns the work. The repository CI runs this denominator check after
 installing the current checkout.
 
 ## Track candidate lifecycle
