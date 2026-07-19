@@ -31,8 +31,12 @@ def test_reader_install_and_repair_guidance_matches_candidate_artifacts() -> Non
     assert "\npython - <<'PY'" not in checksum_section
     assert "expected one wheel" in install
     assert "non-ignored untracked Markdown and MDX files enter the" in support
-    assert "`drive` repairs bound regions" in readme
-    assert "Run `project` afterward when a projection includes the repaired document" in readme
+    normalized_readme = " ".join(readme.split())
+    assert "run `check`, then use `drive` for a declared repair" in normalized_readme
+    assert (
+        "Run `project` when a declared projection depends on the repaired document"
+        in normalized_readme
+    )
 
 
 def _commit(root: Path, message: str) -> str:

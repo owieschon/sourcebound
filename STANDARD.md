@@ -28,7 +28,9 @@ clean-docs packages this file as its canonical default standard.
 | Choosing among options or comparing attributes | Table |
 | Looking up one fact by key | Registry or generated reference |
 | Following a sequence | Numbered steps |
-| Understanding flow, state, or relationships | Diagram plus text equivalent |
+| Comparing state transitions | State table or state model |
+| Tracing cross-actor timing, retries, or overlap | Sequence or event model with an accessible text projection |
+| Understanding spatial, cyclic, or branching topology | Structured graph; rendered diagram when it helps |
 | Avoiding a non-obvious trap | Semantic callout |
 | Doing the same task in one of several environments | Deep-linkable tabs |
 | Checking whether the task worked | Expected result or verification command |
@@ -155,10 +157,21 @@ Callout type is semantic, not decorative:
 - **Note** = a true-but-easily-missed clarification or a scope boundary.
 - **Tip** = optional power-user extra, often a `Tips:` bullet list.
 
-### Diagrams: make relationships and state visible
-Use a diagram for data flow, lifecycle, architecture, or decision branching when prose would force
-the reader to reconstruct the shape. It may be the primary explanation. Follow it with a text
-description that preserves the meaning for screen readers, search, and text-only tools.
+### Architecture: structured text first, diagrams only when topology earns them
+
+For documentation consumed by people and agents, one structured source owns the architecture. It
+may be a numbered contract, nested list, state table, or machine-readable graph, state, sequence, or
+event model. Record only the dimensions that change interpretation: applicable actors, inputs,
+transformations, branches, outputs, unknown states, and authority boundaries. Empty slots are not
+completeness.
+
+Render a diagram when spatial shape or timing lets readers see a relationship that another form
+would force them to reconstruct: fan-in or fan-out, cycles, retries, overlapping work, nesting, or
+a genuinely nonlinear branch. Rendered pixels are never the canonical source. Pair them with an
+accessible projection that preserves the applicable relationships on a narrow screen, through a
+screen reader, in search, and in a text-only context window. If the image merely puts boxes around
+an ordered list, delete it. Alt text identifies the image and its purpose; it does not carry the
+only complete explanation.
 
 ### Screenshots and video: teach recognition and interaction
 Use a screenshot when the reader must find, distinguish, or verify something visual. Crop unrelated
@@ -219,8 +232,8 @@ across the page.
 - **Keep the searchable noun in playful headings.** "Retries: when the queue refuses to take a
   hint" is findable. "Here we go again" is not.
 - **Let visuals carry character only when the motif explains the system.** A tether can represent a
-  source binding; a decorative mascot cannot. Preserve high contrast, useful alt text, and a complete
-  text equivalent.
+  source binding; a decorative mascot cannot. Preserve high contrast, useful alt text, and the
+  adjacent structured contract.
 
 Commands, configuration, error messages, repair steps, security and privacy boundaries,
 accessibility text, and API or option reference are literal zones. Do not put wit between a reader
@@ -468,7 +481,8 @@ The documentation corpus is a maintained teaching system, not a pile of readable
 meaning once, then project it for the audience's task. A human surface may use progressive
 disclosure, diagrams, and narrative. An agent surface may use stable identifiers, typed metadata,
 compact context bundles, and explicit relationships. Neither projection may invent a second source
-of truth.
+of truth. When both audiences need an architecture, its canonical source may be structured prose or
+a machine-readable model; a rendered image is one projection of it.
 
 Canonical content should carry the fields each projection needs: what it is, where it applies, who
 controls it, which release it describes, what must exist first, what it changes, how to check it,
@@ -630,7 +644,9 @@ Run this against any doc before shipping. Each line is a fail/pass check.
 - [ ] Code examples are realistic and sparse in comments; filenames, diffs, focus, or tabs expose
       placement and variants when needed.
 - [ ] Screenshots are cropped, scrubbed, annotated, captioned, and described; optional video has a
-      complete text path; diagrams have a text equivalent.
+      complete text path. Architecture has one structured source, records only applicable
+      dimensions, and remains usable without rendered pixels; a diagram appears only when topology
+      or temporal interaction adds information.
 - [ ] The page names its one governing constraint early.
 - [ ] No booster adjectives (`seamless`, `powerful`, `simply`, `comprehensive`, `leverage`, `utilize`). <!-- slop-ok: banned-word registry for the checklist -->
 - [ ] Every clause adds information; claims needing separate evidence are split; the system is named
