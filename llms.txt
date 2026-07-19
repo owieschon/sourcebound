@@ -9,7 +9,7 @@
 - [SECURITY.md](SECURITY.md): declared canonical context; sha256: 5a10b7b08e5b26a5302e0f775320a59b8bd200da7fa858fc890342d7db0dd270
 - [STANDARD.md](STANDARD.md): declared canonical context; sha256: ed382a09f6af450218940d8d59d2a32e1e0aea8c9fe5803b502d26e338a62d82
 - [docs/BEHAVIOR_SIGNALS.md](docs/BEHAVIOR_SIGNALS.md): declared canonical context; sha256: 90ecbf48a9a2b85a583babcfb7a7d3d110b5cc5277758da3ecf022f1d184f572
-- [docs/CLI.md](docs/CLI.md): bindings: cli-reference, verdict-reference; sha256: 41c9ebf1165407d6dcab92ee0c3e9aec358eb36255777db0ec67b3b63039bbea
+- [docs/CLI.md](docs/CLI.md): bindings: cli-reference, verdict-reference; sha256: 6c553b2bc07bdb2188245243c44d2372702f013dcac5cf1ac2ecc4872756ace6
 - [docs/EVALUATION.md](docs/EVALUATION.md): bindings: evaluation-scorers; sha256: 9023127c402fa6106d16e102727ed06804f8eee90aabea16a3527f7d0ae5d721
 - [docs/EXTENSIONS.md](docs/EXTENSIONS.md): bindings: extension-guide, migration-guide; sha256: 81eb19b309a3d7a73b0fca7640b18add365dd556ea8572577e8fcce5e83084ae
 - [docs/FEEDBACK.md](docs/FEEDBACK.md): declared canonical context; sha256: 2ecd270cbe2a249afb0d8caa08372caa1a0a4ef9e87c302a592236c37e739168

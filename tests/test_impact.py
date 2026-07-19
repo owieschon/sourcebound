@@ -737,6 +737,39 @@ def test_workflow_job_change_is_supported_advisory_impact(
     }
 
 
+def test_workflow_path_filter_is_unknown_without_a_run_receipt(tmp_path: Path) -> None:
+    root = _symbol_repository(tmp_path)
+    guide = root / "docs/guide.md"
+    guide.parent.mkdir()
+    guide.write_text("# Guide\n\nFirst version.\n")
+    workflow = root / ".github/workflows/specialized.yml"
+    workflow.parent.mkdir(parents=True)
+    workflow.write_text(
+        "name: Specialized\n"
+        "on:\n"
+        "  pull_request:\n"
+        "    paths: ['src/**']\n"
+        "jobs:\n"
+        "  contract:\n"
+        "    runs-on: ubuntu-latest\n"
+        "    steps:\n"
+        "      - run: python -m pytest tests/test_contract.py\n"
+    )
+    base = _commit(root, "add specialized workflow")
+    guide.write_text("# Guide\n\nChanged procedure.\n")
+    head = _commit(root, "change documentation procedure")
+
+    plan = build_impact_plan(root, root / ".clean-docs.yml", base=base, head=head)
+
+    finding = next(
+        item for item in plan.unknown if item.rule == "ci-path-filter-unverified"
+    )
+    assert plan.impact == "unknown"
+    assert finding.paths == (".github/workflows/specialized.yml", "docs/guide.md")
+    assert finding.obligations == ("verify-specialized-ci-run",)
+    assert "docs/guide.md" in finding.message
+
+
 def test_impact_reuses_changed_inventory_for_repository_overview(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
