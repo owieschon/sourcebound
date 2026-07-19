@@ -397,7 +397,7 @@ def test_independent_reader_release_requires_receipts_and_published_tasks_work(
     assert evaluation["ok"]
     assert evaluation["scores"] == {
         "human": {"passed": 1, "attempted": 1},
-        "agent": {"passed": 3, "attempted": 3},
+        "agent": {"passed": 4, "attempted": 4},
     }
 
     root = _source_repository(tmp_path)
