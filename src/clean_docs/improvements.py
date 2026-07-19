@@ -779,7 +779,7 @@ def _git_succeeds(root: Path, *args: str) -> bool:
             timeout=10,
             check=False,
         )
-    except OSError:
+    except (OSError, subprocess.TimeoutExpired):
         return False
     return proc.returncode == 0
 
