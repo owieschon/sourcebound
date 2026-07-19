@@ -44,6 +44,20 @@ clean-docs --version
 The install fails when the wheelhouse cannot satisfy a declared dependency. It does not fall back to
 a package index.
 
+## Parse MDX repositories
+
+Python-only repositories do not need Node.js. A repository with tracked `.mdx` documents needs
+Node.js 20 or newer for the bundled structural parser:
+
+```bash
+node --version
+clean-docs doctor
+```
+
+`doctor` reports `mdx-parser` as ready when the runtime and bundled parser are present. Without
+that runtime, Markdown remains available while every MDX document stays explicitly unsupported.
+clean-docs never downloads Node.js or parser packages during an audit.
+
 ## Upgrade, roll back, or remove the executable
 
 Install the newer wheel, then preview any requested manifest change before writing:

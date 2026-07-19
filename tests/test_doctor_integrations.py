@@ -66,6 +66,10 @@ def test_distribution_integrations_are_strict() -> None:
         step for step in steps if step["uses"].startswith("actions/setup-python@")
     )
     assert setup_python["with"] == {"python-version": "3.12"}
+    setup_node = next(
+        step for step in steps if step["uses"].startswith("actions/setup-node@")
+    )
+    assert setup_node["with"] == {"node-version": "24"}
     install = next(step for step in steps if step.get("name") == "Install pinned clean-docs")
     assert install["env"]["CLEAN_DOCS_PACKAGE_REF"] == "${{ inputs.package-ref }}"
     assert "full 40-character commit" in install["run"]

@@ -806,17 +806,114 @@ def test_frontmatter_requires_document_start_and_closing_delimiter(
     )
 
 
-def test_audit_discloses_mdx_without_claiming_to_check_it(tmp_path: Path) -> None:
+def test_audit_checks_structurally_valid_mdx_without_executing_templates(
+    tmp_path: Path,
+) -> None:
     root = _repo(tmp_path)
     (root / "README.md").write_text("# Project\n")
-    (root / "guide.mdx").write_text("# MDX guide\n\n<Component />\n")
+    (root / "guide.md").write_text("# Linked guide\n")
+    (root / "guide.mdx").write_text(
+        "---\n"
+        "title: MDX guide\n"
+        "---\n\n"
+        "import Escaping from '../../outside.js'\n\n"
+        "# MDX guide\n\n"
+        "<Callout tone=\"[not a link](missing-attribute.md)\">\n"
+        "Read [the guide](guide.md).\n"
+        "Read [the missing page](missing-real.md).\n"
+        "</Callout>\n\n"
+        "```md\n"
+        "[not a link](missing-fence.md)\n"
+        "```\n\n"
+        "{/* [not a link](missing-comment.md) */}\n"
+    )
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
 
     report = audit(root)
 
     assert report.ok
+    assert report.documents == ("README.md", "guide.md", "guide.mdx")
+    assert report.unsupported_documents == ()
+    mdx_link_findings = [
+        finding
+        for finding in (*report.findings, *report.advisories)
+        if finding.rule == "broken-local-link" and finding.path == "guide.mdx"
+    ]
+    assert [finding.detail for finding in mdx_link_findings] == [
+        "target does not exist: missing-real.md"
+    ]
+
+
+def test_audit_fails_closed_on_malformed_mdx(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    (root / ".clean-docs.yml").write_text("version: 1\nbindings: []\n")
+    (root / "README.md").write_text("# Project\n")
+    (root / "broken.mdx").write_text("# Broken\n\n<Callout>\n")
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    report = audit(root)
+
+    assert not report.ok
+    assert report.unsupported_documents == ("broken.mdx",)
+    assert any(
+        finding.rule == "unsupported-mdx"
+        and finding.path == "broken.mdx"
+        and "closing tag" in finding.detail
+        for finding in report.findings
+    )
+
+
+def test_audit_never_counts_mdx_as_checked_when_runtime_is_missing(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = _repo(tmp_path)
+    (root / ".clean-docs.yml").write_text("version: 1\nbindings: []\n")
+    (root / "README.md").write_text("# Project\n")
+    (root / "guide.mdx").write_text("# Guide\n\n<Component />\n")
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+    monkeypatch.setattr(
+        "clean_docs.audit.parser_availability",
+        lambda: (False, "Node.js executable not found"),
+    )
+
+    report = audit(root)
+
     assert report.documents == ("README.md",)
     assert report.unsupported_documents == ("guide.mdx",)
+    assert any(
+        finding.rule == "unsupported-mdx"
+        and "Node.js executable not found" in finding.detail
+        for finding in report.findings
+    )
+
+
+def test_mdx_template_placeholder_is_advisory_not_a_broken_link(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    template = root / "templates/prompt.mdx"
+    template.parent.mkdir()
+    template.write_text(
+        "# Prompt template\n\n"
+        "{/* clean-docs:role template */}\n\n"
+        "Read [the generated destination]({docs_url}).\n"
+    )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    report = audit(root)
+
+    assert report.ok
+    assert any(
+        finding.rule == "placeholder-link"
+        and finding.path == "templates/prompt.mdx"
+        for finding in report.advisories
+    )
+    assert not any(
+        finding.rule == "broken-local-link"
+        and finding.path == "templates/prompt.mdx"
+        for finding in (*report.findings, *report.advisories)
+    )
 
 
 def test_agent_documentation_is_active_while_tool_context_stays_internal(

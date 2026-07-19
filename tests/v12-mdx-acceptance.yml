@@ -1,0 +1,29 @@
+version: 1
+release: "1.2-MDX"
+scenarios:
+  - id: semantic-structure-without-execution
+    test: tests/test_mdx.py::test_parser_returns_semantic_nodes_and_masks_non_prose
+  - id: mixed-validity-batch
+    test: tests/test_mdx.py::test_parser_batches_valid_and_invalid_documents_without_laundering
+  - id: utf8-source-locations
+    test: tests/test_mdx.py::test_parser_preserves_utf8_byte_locations
+  - id: mdx-safe-policy-controls
+    test: tests/test_mdx.py::test_policy_controls_have_an_mdx_safe_comment_form
+  - id: malformed-syntax-rejected
+    test: tests/test_mdx.py::test_parser_rejects_malformed_mdx
+  - id: real-link-only-audit
+    test: tests/test_audit.py::test_audit_checks_structurally_valid_mdx_without_executing_templates
+  - id: missing-runtime-unsupported
+    test: tests/test_audit.py::test_audit_never_counts_mdx_as_checked_when_runtime_is_missing
+  - id: malformed-audit-fails-closed
+    test: tests/test_audit.py::test_audit_fails_closed_on_malformed_mdx
+  - id: valid-impact-classification
+    test: tests/test_impact.py::test_valid_mdx_change_is_classified_as_a_direct_document_change
+  - id: malformed-impact-unknown
+    test: tests/test_impact.py::test_malformed_mdx_change_is_unknown_and_disclosed
+  - id: mdx-template-placeholder
+    test: tests/test_audit.py::test_mdx_template_placeholder_is_advisory_not_a_broken_link
+  - id: fork-static-verdict
+    test: tests/test_verdict.py::test_static_verdict_classifies_valid_mdx_without_repository_execution
+  - id: exact-region-preservation
+    test: tests/test_e2e_mdx_region.py::test_mdx_region_drifts_repairs_and_preserves_every_other_byte

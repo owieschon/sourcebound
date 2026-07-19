@@ -15,8 +15,24 @@ def markers(region: str) -> tuple[str, str]:
     )
 
 
+def mdx_markers(region: str) -> tuple[str, str]:
+    return (
+        f"{{/* clean-docs:begin {region} */}}",
+        f"{{/* clean-docs:end {region} */}}",
+    )
+
+
 def replace_region(document: str, region: str, generated: str) -> str:
-    begin, end = markers(region)
+    forms = [
+        candidate
+        for candidate in (markers(region), mdx_markers(region))
+        if candidate[0] in document or candidate[1] in document
+    ]
+    if len(forms) != 1:
+        raise RegionError(
+            f"region {region!r} must use exactly one Markdown or MDX marker form"
+        )
+    begin, end = forms[0]
     if document.count(begin) != 1 or document.count(end) != 1:
         raise RegionError(f"region {region!r} must have exactly one begin and one end marker")
     start = document.index(begin) + len(begin)
@@ -24,7 +40,15 @@ def replace_region(document: str, region: str, generated: str) -> str:
     if finish < start:
         raise RegionError(f"region {region!r} end marker precedes its begin marker")
     between = document[start:finish]
-    if "<!-- clean-docs:begin " in between or "<!-- clean-docs:end " in between:
+    if any(
+        marker in between
+        for marker in (
+            "<!-- clean-docs:begin ",
+            "<!-- clean-docs:end ",
+            "{/* clean-docs:begin ",
+            "{/* clean-docs:end ",
+        )
+    ):
         raise RegionError(f"region {region!r} contains nested clean-docs markers")
     return document[:start] + "\n" + generated.rstrip() + "\n" + document[finish:]
 

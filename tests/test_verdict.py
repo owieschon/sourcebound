@@ -262,6 +262,32 @@ def test_unsupported_public_change_is_unknown(tmp_path: Path) -> None:
     )
 
 
+def test_static_verdict_classifies_valid_mdx_without_repository_execution(
+    tmp_path: Path,
+) -> None:
+    root = _symbol_repository(tmp_path)
+    guide = root / "docs/guide.mdx"
+    guide.parent.mkdir()
+    guide.write_text("# Guide\n\n<Callout>Old guidance.</Callout>\n")
+    base = _commit(root, "base")
+    guide.write_text("# Guide\n\n<Callout>Current guidance.</Callout>\n")
+    head = _commit(root, "change MDX guidance")
+
+    verdict = build_pr_verdict(
+        root,
+        root / ".clean-docs.yml",
+        base=base,
+        head=head,
+    )
+    payload = verdict.as_dict()
+
+    assert verdict.state == "ready"
+    assert payload["execution"]["repository_commands"] == "skipped"
+    assert payload["changed_surface"]["unsupported_documents"] == []
+    assert payload["changed_surface"]["artifacts"][0]["adapter"] == "mdx-static"
+    assert payload["changed_surface"]["artifacts"][0]["coverage"] == "document-direct"
+
+
 def test_bound_region_drift_is_not_ready(tmp_path: Path) -> None:
     root = _region_repository(tmp_path)
     base = _commit(root, "base")

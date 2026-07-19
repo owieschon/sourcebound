@@ -17,6 +17,12 @@ from clean_docs.applicability import (
 )
 from clean_docs.corpus import _git_visible_markdown, _is_document_candidate, scan_corpus
 from clean_docs.errors import ConfigurationError
+from clean_docs.mdx import (
+    MdxDocument,
+    MdxParserError,
+    parse_mdx_documents,
+    parser_availability,
+)
 from clean_docs.policy import REGISTER_PROFILE, check_document
 from clean_docs.regions import atomic_write
 from clean_docs.residue import scan_residue
@@ -143,8 +149,13 @@ def _section_anchor(root: Path | None, finding: AuditFinding) -> str:
     if root is None:
         return "__document__"
     try:
-        lines = (root / finding.path).read_text(encoding="utf-8").splitlines()
-    except OSError:
+        text = (root / finding.path).read_text(encoding="utf-8")
+        if Path(finding.path).suffix.lower() == ".mdx":
+            text = parse_mdx_documents({finding.path: text})[0][
+                finding.path
+            ].policy_text(text)
+        lines = text.splitlines()
+    except (OSError, MdxParserError, KeyError):
         return "__document__"
     anchor = "__document__"
     for line in lines[: finding.line]:
@@ -377,7 +388,8 @@ def _tracked_markdown(root: Path) -> list[Path]:
         ]
     return sorted(
         relative
-        for path in root.rglob("*.md")
+        for pattern in ("*.md", "*.mdx")
+        for path in root.rglob(pattern)
         if _is_document_candidate(
             relative := path.relative_to(root),
             fallback=True,
@@ -415,10 +427,6 @@ def _repository_entries(root: Path) -> set[str]:
         for path in root.rglob("*")
         if path.is_file()
     }
-
-
-def _unsupported_mdx(entries: set[str]) -> tuple[str, ...]:
-    return tuple(sorted(path for path in entries if path.lower().endswith(".mdx")))
 
 
 def _hidden_document(relative: Path) -> bool:
@@ -762,7 +770,33 @@ def _scan_audit(root: Path, *, preview_policy: bool = False) -> AuditReport:
     repository_integrity_enforced = (root / ".clean-docs.yml").is_file()
     pack = load_default_pack()
     repository_entries = _repository_entries(root)
-    unsupported = _unsupported_mdx(repository_entries)
+    tracked_documents = _tracked_markdown(root)
+    mdx_sources: dict[str, str] = {}
+    mdx_failures: dict[str, str] = {}
+    parsed_mdx: dict[str, MdxDocument] = {}
+    for relative in tracked_documents:
+        if relative.suffix.lower() != ".mdx":
+            continue
+        normalized = relative.as_posix()
+        try:
+            mdx_sources[normalized] = (root / relative).read_text(encoding="utf-8")
+        except (OSError, UnicodeError) as exc:
+            mdx_failures[normalized] = f"cannot read MDX: {exc}"
+    if mdx_sources:
+        available, detail = parser_availability()
+        if not available:
+            mdx_failures.update(
+                (path, detail) for path in mdx_sources
+            )
+        else:
+            try:
+                parsed_mdx, parser_failures = parse_mdx_documents(mdx_sources)
+            except MdxParserError as exc:
+                parser_failures = {
+                    path: str(exc) for path in mdx_sources
+                }
+            mdx_failures.update(parser_failures)
+    unsupported: set[str] = set()
     section_limit = int(pack["policy"]["section_max_lines"])
     active: list[str] = []
     ignored: list[str] = []
@@ -771,22 +805,41 @@ def _scan_audit(root: Path, *, preview_policy: bool = False) -> AuditReport:
     invalid_roles: set[str] = set()
     findings: list[AuditFinding] = []
     advisories: list[AuditFinding] = []
-    for relative in _tracked_markdown(root):
+    for relative in tracked_documents:
         normalized = relative.as_posix()
         if "archive" in relative.parts or _hidden_document(relative):
             ignored.append(normalized)
             continue
-        active.append(normalized)
         path = root / relative
         try:
-            text = path.read_text(encoding="utf-8")
-        except OSError as exc:
+            text = (
+                mdx_sources[normalized]
+                if relative.suffix.lower() == ".mdx"
+                else path.read_text(encoding="utf-8")
+            )
+        except (OSError, UnicodeError) as exc:
             candidate = AuditFinding("unreadable-document", normalized, 1, str(exc))
             (findings if repository_integrity_enforced else advisories).append(candidate)
             continue
+        mdx_document = parsed_mdx.get(normalized)
+        if relative.suffix.lower() == ".mdx" and mdx_document is None:
+            unsupported.add(normalized)
+            candidate = AuditFinding(
+                "unsupported-mdx",
+                normalized,
+                1,
+                mdx_failures.get(normalized, "MDX parser did not return a result"),
+            )
+            (findings if repository_integrity_enforced else advisories).append(candidate)
+            continue
+        active.append(normalized)
         lines = text.splitlines()
-        active_texts[normalized] = text
-        profile = classify_document(relative, text)
+        policy_text = (
+            mdx_document.policy_text(text) if mdx_document is not None else text
+        )
+        policy_lines = policy_text.splitlines()
+        active_texts[normalized] = policy_text
+        profile = classify_document(relative, policy_text)
         profiles[normalized] = profile
         role_error = role_override_error(text)
         structure_error = frontmatter_error(text)
@@ -802,11 +855,10 @@ def _scan_audit(root: Path, *, preview_policy: bool = False) -> AuditReport:
                 1,
                 role_error or structure_error or "invalid document structure",
             ))
-        allowances = _allowances(lines)
+        allowances = _allowances(policy_lines)
         evaluate_policy = profile.registered or preview_policy
-        policy_text = text
         if preview_policy and not profile.registered:
-            policy_text = f"{text.rstrip()}\n\n{REGISTER_PROFILE}\n"
+            policy_text = f"{policy_text.rstrip()}\n\n{REGISTER_PROFILE}\n"
         for item in (
             ()
             if role_error or not evaluate_policy
@@ -827,7 +879,7 @@ def _scan_audit(root: Path, *, preview_policy: bool = False) -> AuditReport:
                 if page_type == "readme"
                 else int(pack["policy"]["guide_max_lines"])
             )
-            for allowance_line, rule, reason in _allowance_records(lines):
+            for allowance_line, rule, reason in _allowance_records(policy_lines):
                 if rule in {"doc-length", "section-length"} and not re.search(
                     r"\b(?:cut|moved|split|linked|reference)\b", reason, re.I
                 ):
@@ -849,7 +901,9 @@ def _scan_audit(root: Path, *, preview_policy: bool = False) -> AuditReport:
                     f"{len(lines)} lines exceeds the {page_type} budget of {doc_limit}; move a second job behind a link",
                 )
                 advisories.append(candidate)
-            for title, section_line, count, section_allowances in _section_ranges(lines):
+            for title, section_line, count, section_allowances in _section_ranges(
+                policy_lines
+            ):
                 if count > section_limit and "section-length" not in section_allowances:
                     candidate = AuditFinding(
                         "section-length",
@@ -860,7 +914,7 @@ def _scan_audit(root: Path, *, preview_policy: bool = False) -> AuditReport:
                     advisories.append(candidate)
         for candidate in _section_depth_findings(
                 normalized,
-                lines,
+            policy_lines,
                 require_routes=bool(pack["policy"].get("require_readme_routes")),
                 require_depth_links=bool(pack["policy"].get("require_depth_links")),
         ):
@@ -870,7 +924,12 @@ def _scan_audit(root: Path, *, preview_policy: bool = False) -> AuditReport:
                 and profile.applies(candidate.rule)
             ):
                 (findings if profile.registered else advisories).append(candidate)
-        for line_number, target in _markdown_links(lines):
+        document_links = (
+            [(link.line, link.url) for link in mdx_document.links]
+            if mdx_document is not None
+            else _markdown_links(lines)
+        )
+        for line_number, target in document_links:
             if (
                 _placeholder_link_target(target)
                 and profile.role in {"agent-procedure", "template"}
@@ -916,6 +975,7 @@ def _scan_audit(root: Path, *, preview_policy: bool = False) -> AuditReport:
     for corpus_finding in scan_corpus(
         root,
         include_lengths=False,
+        prepared_documents=active_texts,
     ):
         corpus_rule = corpus_rule_names.get(corpus_finding.rule)
         if corpus_rule is None:
@@ -938,11 +998,10 @@ def _scan_audit(root: Path, *, preview_policy: bool = False) -> AuditReport:
                 other = profiles.get(counterpart.group(1))
                 if other is not None and other.role != corpus_profile.role:
                     continue
-        try:
-            text = (root / corpus_finding.doc).read_text(encoding="utf-8")
-        except OSError:
+        corpus_text = active_texts.get(corpus_finding.doc)
+        if corpus_text is None:
             continue
-        if corpus_rule in _allowances(text.splitlines()):
+        if corpus_rule in _allowances(corpus_text.splitlines()):
             continue
         candidate = AuditFinding(
             corpus_rule,
@@ -984,7 +1043,7 @@ def _scan_audit(root: Path, *, preview_policy: bool = False) -> AuditReport:
         tuple(active),
         tuple(ignored),
         tuple(findings),
-        unsupported_documents=unsupported,
+        unsupported_documents=tuple(sorted(unsupported)),
         advisories=bounded_advisories,
         advisory_totals=advisory_totals,
         document_profiles=tuple(

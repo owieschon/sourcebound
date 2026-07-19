@@ -82,10 +82,13 @@ matched entry and one stale entry. Version 1 baselines remain readable; the next
 Init does not archive or move existing documents from a filename or similarity heuristic.
 Ambiguous plans, package-owned evidence, compatibility aliases, prompt templates, and agent
 procedures keep their native form. Files named `*.fixture.md` are explicit test inputs rather than
-reader documentation. Git-tracked and non-ignored untracked Markdown files enter the corpus;
-`.agents` documentation is active, other hidden configuration trees stay out, and tracked MDX is
-disclosed as unsupported. A changed MDX file produces unknown impact until an adapter or manual
-review resolves it. `audit` fails when a new blocker appears. It also fails with `stale-baseline`
+reader documentation. Git-tracked and non-ignored untracked Markdown and MDX files enter the
+corpus; `.agents` documentation is active and other hidden configuration trees stay out. The
+first-party MDX adapter reads frontmatter, headings, links, ESM syntax, JSX structure, expressions,
+comments, and fenced code without resolving an import or executing a component. It audits real
+Markdown links while ignoring link-shaped text inside code, attributes, and expressions. Run
+`clean-docs doctor` to verify the required Node.js 20 runtime. A missing runtime or malformed MDX
+stays in `unsupported_documents` and cannot look checked. `audit` fails when a new blocker appears. It also fails with `stale-baseline`
 when a recorded blocker is resolved, because the baseline must shrink to match current debt.
 
 For an established README that has not adopted the policy profile, init writes detected source

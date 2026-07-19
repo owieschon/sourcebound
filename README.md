@@ -77,6 +77,7 @@ Repository sources become typed evidence. Bindings assign that evidence to gener
 
 - Catalog coverage detects source additions, removals, and replacements; it does not validate prose.
 - Source-claim discovery ranks static count and identifier-set candidates. A candidate remains advisory until the repository accepts its exact document and source relationship.
+- Tracked MDX is parsed structurally with the bundled first-party adapter when Node.js 20 or newer is available. Imports and components are never resolved or executed; malformed MDX stays visibly unsupported.
 - `drive` repairs bound regions. Run `project` afterward when a projection includes the repaired document.
 - Declared processes use time, I/O, and environment controls. The host owns network isolation; see the [security model](docs/SECURITY_MODEL.md).
 - Authored purpose and the manifest decide what matters. clean-docs does not infer product goals or certify judgment prose.

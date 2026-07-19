@@ -40,6 +40,37 @@ def test_composes_two_regions_without_touching_author_text() -> None:
     assert second.endswith("\nnew b\n<!-- clean-docs:end b -->\nending\n")
 
 
+def test_replaces_mdx_comment_region_without_touching_surrounding_bytes() -> None:
+    before = (
+        "# Guide\n\n"
+        "{/* clean-docs:begin commands */}\n"
+        "| old |\n"
+        "{/* clean-docs:end commands */}\n\n"
+        "<Callout>Author-owned text.</Callout>\n"
+    )
+
+    after = replace_region(before, "commands", "| new |")
+
+    assert after == (
+        "# Guide\n\n"
+        "{/* clean-docs:begin commands */}\n"
+        "| new |\n"
+        "{/* clean-docs:end commands */}\n\n"
+        "<Callout>Author-owned text.</Callout>\n"
+    )
+
+
+def test_rejects_mixed_markdown_and_mdx_marker_forms() -> None:
+    document = (
+        "<!-- clean-docs:begin x -->\n"
+        "old\n"
+        "{/* clean-docs:end x */}\n"
+    )
+
+    with pytest.raises(RegionError, match="exactly one Markdown or MDX marker form"):
+        replace_region(document, "x", "new")
+
+
 def test_atomic_write_preserves_destination_mode(tmp_path: Path) -> None:
     path = tmp_path / "doc.md"
     path.write_text("old")

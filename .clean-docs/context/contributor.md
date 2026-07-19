@@ -1,13 +1,13 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `6f17503e0cc05a789fd2f4197661e05ff40573a7a475839ff9d6b680c0224370`
+- Corpus sha256: `92e094730f3b39e352c9c736b7251808b5bbe6eba0ec0df390a650a963620e0a`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `0c3e4ec09dbf9e7ee15ec8a1955c6c3841a5af7a271aa19d0dfd5f3eefcb1654`
+- Content sha256: `f6c6c9a6aff9b22aac8f613d0e873f83544e0d517dfc2decfa62d6ee2fd859d8`
 
 <!-- clean-docs:canonical README.md begin -->
 # clean-docs
@@ -89,6 +89,7 @@ Repository sources become typed evidence. Bindings assign that evidence to gener
 
 - Catalog coverage detects source additions, removals, and replacements; it does not validate prose.
 - Source-claim discovery ranks static count and identifier-set candidates. A candidate remains advisory until the repository accepts its exact document and source relationship.
+- Tracked MDX is parsed structurally with the bundled first-party adapter when Node.js 20 or newer is available. Imports and components are never resolved or executed; malformed MDX stays visibly unsupported.
 - `drive` repairs bound regions. Run `project` afterward when a projection includes the repaired document.
 - Declared processes use time, I/O, and environment controls. The host owns network isolation; see the [security model](docs/SECURITY_MODEL.md).
 - Authored purpose and the manifest decide what matters. clean-docs does not infer product goals or certify judgment prose.

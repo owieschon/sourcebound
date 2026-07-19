@@ -120,6 +120,21 @@ EXPECTED_IDS_BY_RELEASE = {
         "read-only-skill-immutability",
         "installed-artifact-quickstart-contract",
     },
+    "1.2-MDX": {
+        "semantic-structure-without-execution",
+        "mixed-validity-batch",
+        "utf8-source-locations",
+        "mdx-safe-policy-controls",
+        "malformed-syntax-rejected",
+        "real-link-only-audit",
+        "missing-runtime-unsupported",
+        "malformed-audit-fails-closed",
+        "valid-impact-classification",
+        "malformed-impact-unknown",
+        "mdx-template-placeholder",
+        "fork-static-verdict",
+        "exact-region-preservation",
+    },
 }
 
 
