@@ -2,7 +2,7 @@
   "schema": "clean-docs.improvement-candidate-lifecycle.v1",
   "candidate_set": {
     "review_id": "repository-review",
-    "digest": "01d881fc9bce533de25c0e1c23d60ce106cb1d0f4c5952b0045a68b38dcdce8b"
+    "digest": "405174fabe26d2b58094fca6da19a3d7928a80487e47132e2bb931f47f850f5f"
   },
   "authority": {
     "state": "assessment",
@@ -234,5 +234,5 @@
       "history": []
     }
   ],
-  "digest": "c3a881fb7e81d0071dadd4fa4fb29f5f4b2bba11c410bb4048508d1532250c7c"
+  "digest": "8e52c0cdf1ade08bb08eb7bf9ea10f86bcd1c87aef74f1c3396b5fd7dacec711"
 }

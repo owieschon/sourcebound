@@ -9,8 +9,9 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-from clean_docs.errors import ConfigurationError, PolicyError
+from clean_docs.errors import ConfigurationError, ExtractionError, PolicyError
 from clean_docs.regions import atomic_write
+from clean_docs.snapshot import RepositorySnapshot
 
 
 OBSERVATIONS_SCHEMA = "clean-docs.review-observations.v1"
@@ -64,7 +65,7 @@ class ImprovementCandidate:
     id: str
     observation_id: str
     summary: str
-    evidence: tuple[dict[str, str], ...]
+    evidence: tuple[dict[str, Any], ...]
     tracks: tuple[CandidateTrack, ...]
     state: str = "proposed"
     authority: str = "assessment"
@@ -366,7 +367,119 @@ def compile_improvement_candidates(
     )
 
 
-def load_review_candidates(path: Path) -> ImprovementCandidateSet:
+def ground_review_candidates(
+    root: Path,
+    candidates: ImprovementCandidateSet,
+) -> ImprovementCandidateSet:
+    """Resolve repository evidence at the review's pinned commit.
+
+    Unknown evidence remains assessment-only. It never becomes a false grounded claim.
+    """
+    snapshot = RepositorySnapshot(root, candidates.repository_commit)
+    try:
+        resolved_commit = snapshot.label
+    except ExtractionError as exc:
+        resolved_commit = None
+        unavailable_detail = str(exc)
+    grounded_candidates = []
+    for candidate in candidates.candidates:
+        evidence = []
+        for item in candidate.evidence:
+            grounded_item = dict(item)
+            if item["kind"] == "repository":
+                if resolved_commit is None:
+                    grounding = {
+                        "state": "unknown",
+                        "detail": f"pinned commit is unavailable: {unavailable_detail}",
+                    }
+                else:
+                    try:
+                        source = Path(str(item["source"]))
+                        text = snapshot.read_text(source)
+                    except ExtractionError as exc:
+                        grounding = {
+                            "state": "unknown",
+                            "commit": resolved_commit,
+                            "detail": str(exc),
+                        }
+                    else:
+                        locator = str(item["locator"])
+                        if locator not in text:
+                            grounding = {
+                                "state": "unknown",
+                                "commit": resolved_commit,
+                                "content_sha256": hashlib.sha256(
+                                    text.encode("utf-8")
+                                ).hexdigest(),
+                                "detail": "locator is absent from the pinned source bytes",
+                            }
+                        else:
+                            grounding = {
+                                "state": "grounded",
+                                "commit": resolved_commit,
+                                "content_sha256": hashlib.sha256(
+                                    text.encode("utf-8")
+                                ).hexdigest(),
+                            }
+            else:
+                grounding = {
+                    "state": "unverified",
+                    "detail": (
+                        "external evidence requires an immutable retrieval receipt"
+                        if item["kind"] == "external"
+                        else "receipt evidence requires immutable bytes and execution context"
+                    ),
+                }
+            grounded_item["grounding"] = grounding
+            evidence.append(grounded_item)
+        grounded_candidates.append(
+            ImprovementCandidate(
+                id=candidate.id,
+                observation_id=candidate.observation_id,
+                summary=candidate.summary,
+                evidence=tuple(evidence),
+                tracks=candidate.tracks,
+            )
+        )
+    grounded_candidates_tuple = tuple(grounded_candidates)
+    unsigned = {
+        "review": {
+            "id": candidates.review_id,
+            "repository_commit": candidates.repository_commit,
+            "source_urls": list(candidates.source_urls),
+            "source_sha256": candidates.source_sha256,
+        },
+        "candidates": [
+            {
+                **asdict(candidate),
+                "evidence": list(candidate.evidence),
+                "tracks": [
+                    {
+                        "target": track.target,
+                        "proposed_change": track.proposed_change,
+                        "test": asdict(track.test),
+                    }
+                    for track in candidate.tracks
+                ],
+            }
+            for candidate in grounded_candidates_tuple
+        ],
+    }
+    return ImprovementCandidateSet(
+        review_id=candidates.review_id,
+        repository_commit=candidates.repository_commit,
+        source_urls=candidates.source_urls,
+        source_sha256=candidates.source_sha256,
+        candidates=grounded_candidates_tuple,
+        digest=_digest(unsigned),
+    )
+
+
+def load_review_candidates(
+    path: Path,
+    *,
+    root: Path | None = None,
+) -> ImprovementCandidateSet:
     """Load a review-observation file and compile its candidates."""
     try:
         source = path.read_bytes()
@@ -375,10 +488,11 @@ def load_review_candidates(path: Path) -> ImprovementCandidateSet:
         raise ConfigurationError(f"cannot read review observations {path}: {exc}") from exc
     if not isinstance(payload, dict):
         raise ConfigurationError("review observations must be an object")
-    return compile_improvement_candidates(
+    candidates = compile_improvement_candidates(
         payload,
         source_sha256=hashlib.sha256(source).hexdigest(),
     )
+    return ground_review_candidates(root, candidates) if root is not None else candidates
 
 
 def write_improvement_candidates(
