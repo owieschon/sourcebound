@@ -6,16 +6,28 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from clean_docs import __version__
-from clean_docs.audit import audit
+from clean_docs.audit import AuditReport, audit
 from clean_docs.changed import ChangedReport, check_changed
-from clean_docs.claims import scan_source_claims
+from clean_docs.claims import SourceClaimReport, scan_source_claims
 from clean_docs.engine import evaluate
 from clean_docs.errors import ConfigurationError
 from clean_docs.execution import ExecutionPolicy
 from clean_docs.manifest import load_manifest
-from clean_docs.inventory import scan_inventory
+from clean_docs.inventory import InventoryReport, scan_inventory
+from clean_docs.models import BindingResult, Manifest
 from clean_docs.projections import evaluate_projections
 from clean_docs.snapshot import RepositorySnapshot
+
+
+@dataclass(frozen=True)
+class RepositoryEvidence:
+    manifest: Manifest
+    audit: AuditReport
+    inventory: InventoryReport
+    bindings: tuple[BindingResult, ...]
+    projections: tuple[BindingResult, ...]
+    source_claims: SourceClaimReport | None
+    changed: ChangedReport | None
 
 
 @dataclass(frozen=True)
@@ -156,40 +168,29 @@ def build_outcome_receipt(
     head: str | None = None,
     project: Path = Path("."),
     execution_policy: ExecutionPolicy = ExecutionPolicy.TRUSTED,
+    use_cache: bool = True,
 ) -> OutcomeReceipt:
-    if (base is None) != (head is None):
-        raise ConfigurationError("verify requires both --base and --head")
+    evidence = collect_repository_evidence(
+        root,
+        manifest_path,
+        base=base,
+        head=head,
+        project=project,
+        execution_policy=execution_policy,
+        use_cache=use_cache,
+    )
     root = root.resolve()
-    manifest = load_manifest(manifest_path)
-    audit_report = audit(root)
-    inventory = scan_inventory(root)
+    inventory = evidence.inventory
+    audit_report = evidence.audit
+    bindings = evidence.bindings
+    projections = evidence.projections
+    source_claim_report = evidence.source_claims
+    changed = evidence.changed
+    manifest = evidence.manifest
     covered_items = sum(item.coverage == "bound" for item in inventory.items)
     cataloged_items = sum(item.coverage == "cataloged" for item in inventory.items)
     ignored_items = sum(item.coverage == "ignored" for item in inventory.items)
     standard_gaps = sum(item.coverage == "standard-gap" for item in inventory.items)
-    bindings = evaluate(root, manifest_path, execution_policy=execution_policy)
-    projections = (
-        evaluate_projections(root, manifest) if manifest.projections is not None else []
-    )
-    source_claim_report = (
-        scan_source_claims(
-            root,
-            manifest.source_claim_checks,
-            discover=False,
-        )
-        if manifest.source_claim_checks
-        else None
-    )
-    changed = None
-    if base is not None and head is not None:
-        changed = check_changed(
-            root,
-            manifest_path,
-            base=base,
-            head=head,
-            project=project,
-            execution_policy=execution_policy,
-        )
     return OutcomeReceipt(
         RepositorySnapshot(root).label,
         len(audit_report.documents),
@@ -228,5 +229,58 @@ def build_outcome_receipt(
         0 if source_claim_report is None else len(source_claim_report.missing),
         execution_policy.value,
         manifest.deprecations,
+        changed,
+    )
+
+
+def collect_repository_evidence(
+    root: Path,
+    manifest_path: Path,
+    *,
+    base: str | None = None,
+    head: str | None = None,
+    project: Path = Path("."),
+    execution_policy: ExecutionPolicy = ExecutionPolicy.TRUSTED,
+    use_cache: bool = True,
+) -> RepositoryEvidence:
+    if (base is None) != (head is None):
+        raise ConfigurationError("verify requires both --base and --head")
+    root = root.resolve()
+    manifest = load_manifest(manifest_path)
+    audit_report = audit(root)
+    inventory = scan_inventory(root)
+    bindings = tuple(evaluate(root, manifest_path, execution_policy=execution_policy))
+    projections = (
+        tuple(evaluate_projections(root, manifest))
+        if manifest.projections is not None
+        else ()
+    )
+    source_claim_report = (
+        scan_source_claims(
+            root,
+            manifest.source_claim_checks,
+            discover=False,
+        )
+        if manifest.source_claim_checks
+        else None
+    )
+    changed = None
+    if base is not None and head is not None:
+        changed = check_changed(
+            root,
+            manifest_path,
+            base=base,
+            head=head,
+            project=project,
+            execution_policy=execution_policy,
+            use_cache=use_cache,
+        )
+    return RepositoryEvidence(
+        manifest,
+        audit_report,
+        inventory,
+        bindings,
+        projections,
+        source_claim_report,
         changed,
     )

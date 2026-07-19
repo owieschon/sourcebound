@@ -43,6 +43,11 @@ from clean_docs.sensitivity import (
 )
 from clean_docs.standard import compile_standard, pack_matches_standard, write_pack
 from clean_docs.snapshot import RepositorySnapshot
+from clean_docs.verdict import (
+    VERDICT_SCHEMA,
+    build_pr_verdict,
+    render_verdict_sarif,
+)
 
 
 def _command_help(command: str) -> str:
@@ -180,6 +185,17 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="skip repository-declared commands and plugins",
     )
+    verdict = sub.add_parser("verdict", help=_command_help("verdict"))
+    verdict.add_argument("--base", required=True, help="target branch or base git ref")
+    verdict.add_argument("--head", required=True, help="checked-out change head git ref")
+    verdict.add_argument(
+        "--mutation-receipt",
+        type=Path,
+        action="append",
+        default=[],
+        help="optional binding-sensitivity receipt to summarize",
+    )
+    verdict.add_argument("--format", choices=("json", "sarif"), default="json")
     check = sub.add_parser("check", help=_command_help("check"))
     check.add_argument("--binding", help="evaluate one binding id")
     check.add_argument("--ref", help="read bound sources from an immutable git ref")
@@ -874,6 +890,47 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 sys.stdout.write(render_impact_plan(impact_plan))
             return 0
+        if args.command == "verdict":
+            mutation_receipts = tuple(
+                path if path.is_absolute() else root / path
+                for path in args.mutation_receipt
+            )
+            try:
+                pr_verdict = build_pr_verdict(
+                    root,
+                    manifest,
+                    base=args.base,
+                    head=args.head,
+                    mutation_receipt_paths=mutation_receipts,
+                )
+            except CleanDocsError as exc:
+                if args.format == "json":
+                    print(
+                        json.dumps(
+                            {
+                                "schema": VERDICT_SCHEMA,
+                                "state": "invalid",
+                                "ready": False,
+                                "error": {
+                                    "class": (
+                                        "configuration"
+                                        if isinstance(exc, ConfigurationError)
+                                        else "extraction"
+                                    ),
+                                    "detail": str(exc),
+                                },
+                            },
+                            indent=2,
+                        )
+                    )
+                else:
+                    print(f"clean-docs: {exc}", file=sys.stderr)
+                return exc.exit_code
+            if args.format == "sarif":
+                sys.stdout.write(render_verdict_sarif(pr_verdict))
+            else:
+                print(json.dumps(pr_verdict.as_dict(), indent=2))
+            return 0 if pr_verdict.ok else 1
         if args.command == "check" and args.changed:
             if args.binding or args.ref:
                 raise ConfigurationError(

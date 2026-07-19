@@ -32,6 +32,7 @@ The table is generated from the command registry used by the parser:
 | derive | Preview or write generated region changes | with --write | clean-docs derive --check |
 | drive | Repair bound regions after deterministic policy checks | yes | clean-docs drive |
 | plan | Build an immutable read-only documentation impact plan | no | clean-docs plan --base origin/main --head HEAD --format json |
+| verdict | Compose one coverage-stating static PR verdict | no | clean-docs verdict --base origin/main --head HEAD --format json |
 | check | Fail on binding drift or uncovered changed surface | no | clean-docs check --changed --base origin/main --head HEAD |
 | project | Regenerate configured documentation projections | unless --check | clean-docs project --check |
 | eval | Score human tasks and replayable agent round trips | with --history or live recording | clean-docs eval --fixtures .clean-docs/eval.yml |
@@ -72,6 +73,51 @@ A valid plan exits zero even when `impact` is `required` or `unknown`; the exit 
 was built, not that the branch is documentation-complete. Use `check --changed` for the existing
 blocking gate. A projection output is evidence of prior work, so changing only that generated file
 does not recursively make it an impact root.
+
+## Pull-request verdicts
+
+Use `verdict` when a pull-request runner or agent needs one decision instead of interpreting audit,
+binding, projection, and changed-surface outputs independently:
+
+```bash
+clean-docs verdict \
+  --base origin/main \
+  --head HEAD \
+  --format json > clean-docs-verdict.json
+```
+
+The caller worktree must be clean, and `--head` must resolve to the checked-out commit. The command
+uses static first-party adapters only. It does not run repository commands or plugins, write cache
+entries, or change the worktree.
+
+`clean-docs.pr-verdict.v1` is the canonical agent integration receipt. It includes:
+
+- producer version, requested base, merge base, and head commit;
+- manifest and impact-plan digests;
+- audit and accepted-baseline state;
+- separate region, command-pin, symbol, plugin, source-claim, and projection counts;
+- changed files, required work, gaps, ignores, unsupported documents, and impact state;
+- inventory totals split into direct bindings, catalog-only records, ignores, and unknowns;
+- every skipped binding, command, and plugin ID;
+- stable findings with a repair action; and
+- explicit non-claims for unbound prose, judgment prose, mutation semantics, and catalog prose.
+
+| `state` | Exit | Meaning |
+| --- | --- | --- |
+| `ready` | `0` | The branch passes within `configured-contract-and-changed-surface`. Read coverage, skips, and non-claims before reusing the result. |
+| `not_ready` | `1` | Deterministic drift or an enforced integrity defect blocks the branch. |
+| `unknown` | `1` | A plausible obligation lacks supported evidence, or affected declared execution was skipped. |
+| `invalid` | `2` or `3` | A ref, caller state, manifest, or supplied receipt failed validation (`2`), or static extraction failed (`3`). |
+
+`--format sarif` reports the same finding IDs and verdict digest as JSON. A valid verdict with no
+findings still emits a complete JSON receipt; SARIF remains an annotation projection of that
+receipt.
+
+Repeat `--mutation-receipt PATH` to summarize a
+`clean-docs.binding-sensitivity.v1` receipt. clean-docs checks its commit and mutation-plan digest
+before including its byte digest and state. The receipt cannot change the verdict and must keep
+`semantic_relationship_authorized` false. A `sensitive` result only shows that the check went stale
+after the frozen fact changed. It does not let clean-docs accept the relationship.
 
 ## Static-only pull-request checks
 

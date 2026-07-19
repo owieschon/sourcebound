@@ -37,6 +37,7 @@ The table below is part of the shipped capability registry:
 | Repository catalog | Detected additions, removals, and replacements stay visible | Every cataloged item needs or has a reader-facing explanation |
 | Accepted static source claim | The documented count or identifier set matches its accepted source locator | A ranked candidate names the right semantic relationship |
 | Binding sensitivity receipt | One static check becomes stale after one independently frozen source fact changes | The document and source describe the same concept or that the relationship should be accepted |
+| Pull-request verdict | Static configured checks and changed-surface evidence produce the reported state at one pinned commit | Unbound prose, skipped processes, semantic relationships, or authored judgment are correct |
 | Packaged writing policy | Implemented deterministic rules pass | Motivation, pedagogy, personality, or usefulness pass judgment |
 | Authored purpose and scope | Declared markers and configured relationships remain intact | The repository chose the right goals, audience, or priority |
 <!-- clean-docs:end assurance-boundaries -->
@@ -87,6 +88,14 @@ unsupported public candidates remain `unknown`. The receipt binds its producer v
 Git objects, manifest, graph, and findings. Unsupported MDX appears in
 `unsupported_documents` and makes the impact `unknown`; it never enters the checked Markdown count.
 The command's zero exit code means the receipt was built, not that the branch is ready to merge.
+
+Use `verdict --base REF --head REF --format json` for one pull-request decision. It composes the
+audit, static binding, projection, accepted source-claim, changed-surface, impact, and inventory
+library results without executing repository commands or plugins. `ready` means ready only within
+the named `configured-contract-and-changed-surface` scope. `unknown` never exits zero. The receipt
+lists sparse coverage, skipped execution, unsupported documents, and four explicit non-claims, so
+a partial gate cannot present itself as corpus-wide proof. The
+[CLI contract](docs/CLI.md#pull-request-verdicts) owns the schema and exit meanings.
 
 Use `claims` to inspect ranked static source-to-prose candidates. Candidate ranking is
 assessment-only. It requires a subject match plus ownership evidence from the document heading,
