@@ -43,6 +43,7 @@ class OutcomeReceipt:
     skipped_bindings: int
     regions: int
     command_pins: int
+    command_pins_with_prose: int
     symbols: int
     projections: int
     current_projections: int
@@ -92,7 +93,10 @@ class OutcomeReceipt:
                 "scope": "configured-contract",
                 "region_bytes_checked": self.regions > 0,
                 "command_pin_output_checked": self.command_pins > 0,
-                "command_pin_prose_checked": False,
+                "command_pin_prose_checked": (
+                    self.command_pins > 0
+                    and self.command_pins == self.command_pins_with_prose
+                ),
                 "symbol_existence_checked": self.symbols > 0,
                 "accepted_source_claim_prose_checked": self.source_claims > 0,
                 "cataloged_surfaces_check_prose": False,
@@ -208,6 +212,12 @@ def build_outcome_receipt(
         sum(
             item.binding_type == "command-pin"
             and item.state != "skipped-untrusted-execution"
+            for item in bindings
+        ),
+        sum(
+            item.binding_type == "command-pin"
+            and item.state != "skipped-untrusted-execution"
+            and item.prose_checked
             for item in bindings
         ),
         sum(item.binding_type == "symbol" for item in bindings),

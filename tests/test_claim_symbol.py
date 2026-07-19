@@ -50,6 +50,7 @@ bindings:
       json_path: $.collected
       operator: equals
       expected: 340
+      prose: 340 records.
   - id: sweep-symbol
     type: symbol
     doc: README.md
@@ -87,21 +88,27 @@ def test_claim_drift_is_read_only_and_reports_values(tmp_path: Path) -> None:
     assert (root / "README.md").read_text() == before
 
 
-def test_command_pin_does_not_claim_to_check_anchored_prose(tmp_path: Path) -> None:
+def test_command_pin_fails_when_anchored_prose_is_wrong(tmp_path: Path) -> None:
     root = _repo(tmp_path)
     readme = root / "README.md"
-    readme.write_text(readme.read_text().replace("340 records.", "999 records."))
+    readme.write_text(
+        readme.read_text().replace(
+            "340 records.",
+            "999 records.\n\n## Unrelated\n\n340 records.",
+        )
+    )
 
     checked = _run(root, "check", "--format", "json")
 
-    assert checked.returncode == 0
+    assert checked.returncode == 1
     result = json.loads(checked.stdout)["results"][0]
     assert result["mechanism"] == "command-pin"
-    assert result["status"] == "current"
+    assert result["status"] == "drift"
+    assert "anchored prose is missing '340 records.'" in result["diff"]
     assert result["assurance"] == {
         "command_output_checked": True,
         "anchor_exists": True,
-        "anchored_prose_checked": False,
+        "anchored_prose_checked": True,
     }
 
 

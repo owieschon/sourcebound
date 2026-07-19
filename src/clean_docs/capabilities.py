@@ -74,8 +74,8 @@ SUPPORTED_BINDINGS = {
     "command-pin": {
         "binding": "command pin (`type: claim`)",
         "source": "Allowlisted JSON command",
-        "output": "Configured assertion plus an existing document anchor",
-        "check": "Compare typed expected and observed values",
+        "output": "Configured assertion, with optional declared prose at a document anchor",
+        "check": "Compare typed expected and observed values; verify declared anchored prose",
     },
     "region": {
         "binding": "region",

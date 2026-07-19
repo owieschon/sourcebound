@@ -20,7 +20,7 @@ This table comes from the manifest validator:
 | binding | required | verifies |
 | --- | --- | --- |
 | region | id, type, doc, region, extractor, source, renderer | Generated content matches source evidence |
-| claim | id, type, doc, anchor, command, assertion | Command output matches the assertion; anchored prose is not inspected |
+| claim | id, type, doc, anchor, command, assertion | Command output; declared reader-facing prose when configured |
 | symbol | id, type, doc, anchor, source | A source path or Python symbol still exists |
 <!-- clean-docs:end manifest-reference -->
 
@@ -67,13 +67,23 @@ The `path` extractor requires at least one matching file. A zero-match glob exit
 binding and glob, and leaves the document unchanged. This prevents a removed directory from
 rendering an empty list that looks current.
 
-### Legacy command pins
+### Command pins
 
 Manifest `type: claim` is the compatibility spelling for a command pin. It checks that an
-allowlisted JSON command returns the configured expected value and that the document anchor exists.
-It does not read the prose under that anchor. Use a generated scalar region when clean-docs should
-own the bytes, or an accepted [source claim check](#source-claim-checks) for the bounded prose shapes
-that the static detector supports.
+allowlisted JSON command returns the configured expected value. Add `prose` to also verify that the
+text appears under the document anchor. `prose` must include the JSON representation of `expected`,
+so the value the reader sees is part of the same contract. A command pin without `prose` is a legacy
+output-only contract; its receipt reports that the anchored prose was not checked. Use a generated
+scalar region when clean-docs should own the bytes, or an accepted
+[source claim check](#source-claim-checks) for bounded prose shapes that static extraction supports.
+
+```yaml
+assertion:
+  json_path: $.collected
+  operator: equals
+  expected: 340
+  prose: 340 records.
+```
 
 ## Supported binding surface
 
@@ -82,7 +92,7 @@ This table comes from the public capability registry:
 <!-- clean-docs:begin supported-bindings -->
 | binding | source | output | check |
 | --- | --- | --- | --- |
-| command pin (`type: claim`) | Allowlisted JSON command | Configured assertion plus an existing document anchor | Compare typed expected and observed values |
+| command pin (`type: claim`) | Allowlisted JSON command | Configured assertion, with optional declared prose at a document anchor | Compare typed expected and observed values; verify declared anchored prose |
 | region | Static Python, structured data, text, or paths | Table, list, scalar, or fenced text | Re-render and compare |
 | symbol | Static path or Python symbol | Reference at a document anchor | Resolve the cited locator |
 <!-- clean-docs:end supported-bindings -->

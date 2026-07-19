@@ -34,6 +34,7 @@ class Assertion:
     path: str
     operator: str
     expected: Any
+    prose: str | None = None
 
 
 @dataclass(frozen=True)
@@ -177,3 +178,4 @@ class BindingResult:
     provenance: Provenance
     binding_type: str = "region"
     state: str | None = None
+    prose_checked: bool = False

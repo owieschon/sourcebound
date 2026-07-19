@@ -135,9 +135,9 @@ clean-docs verify --base origin/main --head HEAD --out .clean-docs/outcome.json
 The receipt counts current bindings, caught drift, coverage gaps, active and baselined hygiene findings, and projection state. `bound` means a source-specific binding covers the detected locator. `cataloged` means a repository-wide inventory binding tracks the surface but no source-specific documentation claim covers it. `coverage_complete` permits either form; `direct_coverage_complete` requires source-specific bindings or reasoned ignores for the whole detected surface.
 
 Read the receipt's `assurance` object before interpreting a green result. Its
-`command_pin_prose_checked`, `cataloged_surfaces_check_prose`, and
-`judgment_prose_certified` fields remain `false`: a passing command pin checks configured output,
-not the anchored sentence, and a passing configured contract does not certify unbound prose. The
+`cataloged_surfaces_check_prose` and `judgment_prose_certified` fields remain `false`: a passing
+configured contract does not certify unbound prose. `command_pin_prose_checked` is `true` only when
+every executed command pin declares and verifies text under its anchor. The
 receipt records an `execution` object with `network_isolation: not-provided` and
 `network_observation: not-instrumented`. clean-docs sends no feedback from this command, but an
 allowed command can use the host network when the runner permits it.

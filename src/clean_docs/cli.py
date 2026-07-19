@@ -508,7 +508,14 @@ def _json(results: list[BindingResult], *, repaired: bool = False) -> str:
                     "extractor": result.provenance.extractor,
                     "digest": result.provenance.digest,
                 },
-                "assurance": assurance[result.binding_type],
+                "assurance": {
+                    **assurance[result.binding_type],
+                    **(
+                        {"anchored_prose_checked": result.prose_checked}
+                        if result.binding_type == "command-pin"
+                        else {}
+                    ),
+                },
             }
             for result in results
         ],

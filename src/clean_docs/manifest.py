@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 from typing import Any
@@ -60,7 +61,7 @@ RENDERERS = {
 EXECUTION_KEYS = {"commands", "allowed_commands"}
 COMMAND_KEYS = {"argv", "timeout_seconds"}
 LEGACY_COMMAND_KEYS = COMMAND_KEYS | {"network"}
-ASSERTION_KEYS = {"json_path", "operator", "expected"}
+ASSERTION_KEYS = {"json_path", "operator", "expected", "prose"}
 PROJECTION_KEYS = {"llms_txt", "bundles", "demo", "visuals"}
 LLMS_TXT_KEYS = {"output", "title", "summary", "include"}
 BUNDLE_KEYS = {"id", "output", "include"}
@@ -94,7 +95,7 @@ MANIFEST_REFERENCE = (
     {
         "binding": "claim",
         "required": "id, type, doc, anchor, command, assertion",
-        "verifies": "Command output matches the assertion; anchored prose is not inspected",
+        "verifies": "Command output; declared reader-facing prose when configured",
     },
     {
         "binding": "symbol",
@@ -614,6 +615,14 @@ def load_manifest(path: Path) -> Manifest:
                 raise ConfigurationError(f"{where}.assertion.json_path must start with $.")
             if assertion_data.get("operator") != "equals":
                 raise ConfigurationError(f"{where}.assertion.operator must be equals")
+            prose = assertion_data.get("prose")
+            if prose is not None and (not isinstance(prose, str) or not prose.strip()):
+                raise ConfigurationError(f"{where}.assertion.prose must be non-empty when configured")
+            expected_text = json.dumps(assertion_data.get("expected"), sort_keys=True)
+            if prose is not None and expected_text not in prose:
+                raise ConfigurationError(
+                    f"{where}.assertion.prose must include the JSON representation of expected"
+                )
             anchor = data.get("anchor")
             if not isinstance(anchor, str) or not anchor:
                 raise ConfigurationError(f"{where}.anchor must be non-empty")
@@ -623,7 +632,12 @@ def load_manifest(path: Path) -> Manifest:
                 anchor=anchor,
                 extractor="command",
                 command=command_ref,
-                assertion=Assertion(json_path, "equals", assertion_data.get("expected")),
+                assertion=Assertion(
+                    json_path,
+                    "equals",
+                    assertion_data.get("expected"),
+                    prose,
+                ),
             ))
             continue
 

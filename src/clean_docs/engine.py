@@ -56,31 +56,55 @@ def _document(root: Path, binding: Binding) -> str:
 
 
 def _has_anchor(document: str, anchor: str) -> bool:
-    for line in document.splitlines():
+    return _anchored_section(document, anchor) is not None
+
+
+def _anchored_section(document: str, anchor: str) -> str | None:
+    lines = document.splitlines(keepends=True)
+    start: int | None = None
+    level = 0
+    for index, line in enumerate(lines):
         match = re.match(r"^#{1,6}\s+(.+?)\s*$", line)
         if match:
+            heading_level = len(line) - len(line.lstrip("#"))
+            if start is not None and heading_level <= level:
+                return "".join(lines[start:index])
             slug = re.sub(r"[^a-z0-9 -]", "", match.group(1).lower()).replace(" ", "-")
             if slug == anchor:
-                return True
-    return False
+                start = index + 1
+                level = heading_level
+    return None if start is None else "".join(lines[start:])
 
 
 def _claim_result(root: Path, snapshot: RepositorySnapshot, manifest: Manifest, binding: ClaimBinding) -> BindingResult:
     document = _document(root, binding)
-    if not _has_anchor(document, binding.anchor):
+    section = _anchored_section(document, binding.anchor)
+    if section is None:
         raise ConfigurationError(f"document anchor not found: {binding.doc}#{binding.anchor}")
     command = next(item for item in manifest.commands if item.id == binding.command)
     evidence = extract_command(snapshot, command, binding.assertion.path)
-    changed = evidence.value != binding.assertion.expected
+    prose_current = (
+        binding.assertion.prose is None
+        or binding.assertion.prose in section
+    )
+    changed = evidence.value != binding.assertion.expected or not prose_current
     expected = json.dumps(binding.assertion.expected, sort_keys=True)
     observed = json.dumps(evidence.value, sort_keys=True)
-    diff = "" if not changed else (
-        f"command pin {binding.doc}#{binding.anchor}: "
-        f"expected {expected}, observed {observed}\n"
-    )
+    diff_lines = []
+    if evidence.value != binding.assertion.expected:
+        diff_lines.append(
+            f"command pin {binding.doc}#{binding.anchor}: "
+            f"expected {expected}, observed {observed}"
+        )
+    if binding.assertion.prose is not None and not prose_current:
+        diff_lines.append(
+            f"command pin {binding.doc}#{binding.anchor}: "
+            f"anchored prose is missing {binding.assertion.prose!r}"
+        )
+    diff = "" if not diff_lines else "\n".join(diff_lines) + "\n"
     return BindingResult(
         binding.id, binding.doc.as_posix(), changed, expected, observed, diff,
-        evidence.provenance, "command-pin",
+        evidence.provenance, "command-pin", prose_checked=binding.assertion.prose is not None,
     )
 
 

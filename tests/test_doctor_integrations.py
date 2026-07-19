@@ -24,7 +24,7 @@ def test_doctor_reports_missing_command_executable(tmp_path: Path) -> None:
     root = tmp_path / "repo"
     root.mkdir()
     subprocess.run(["git", "init", "-q", str(root)], check=True)
-    (root / "README.md").write_text("# Repo\n")
+    (root / "README.md").write_text("# Repo\n\n1 command.\n")
     manifest = root / ".clean-docs.yml"
     manifest.write_text("""\
 version: 1
@@ -41,7 +41,7 @@ bindings:
     anchor: repo
     extractor: command
     command: missing
-    assertion: {json_path: $.count, operator: equals, expected: 1}
+    assertion: {json_path: $.count, operator: equals, expected: 1, prose: 1 command.}
 """)
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
 
