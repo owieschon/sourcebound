@@ -83,6 +83,7 @@ class RepositorySnapshot:
                     f"snapshot path escapes repository: {path}"
                 )
             archive_paths.append(path.as_posix().strip("/"))
+        archive_paths = self._include_symlink_targets(archive_paths)
         with tempfile.TemporaryDirectory(prefix="clean-docs-snapshot-") as temporary:
             destination = Path(temporary)
             archive = destination / "snapshot.tar"
@@ -102,6 +103,66 @@ class RepositorySnapshot:
                 handle.extractall(destination)
             archive.unlink()
             yield destination
+
+    def _include_symlink_targets(self, paths: list[str]) -> list[str]:
+        if not paths:
+            return paths
+        selected = set(paths)
+        pending = list(paths)
+        while pending:
+            candidate = pending.pop()
+            entries = self._git(
+                "ls-tree",
+                "-r",
+                "-z",
+                self.label,
+                "--",
+                candidate,
+            ).stdout
+            for entry in entries.split("\0"):
+                if not entry:
+                    continue
+                header, separator, name = entry.partition("\t")
+                if not separator or not header.startswith("120000 "):
+                    continue
+                link = self._git(
+                    "show",
+                    f"{self.label}:{name}",
+                ).stdout.rstrip("\n")
+                link_path = PurePosixPath(link)
+                if link_path.is_absolute():
+                    raise ExtractionError(
+                        f"selected snapshot contains an absolute symlink: {name}"
+                    )
+                target = PurePosixPath(
+                    posixpath.normpath(
+                        (PurePosixPath(name).parent / link_path).as_posix()
+                    )
+                )
+                if target.is_absolute() or ".." in target.parts:
+                    raise ExtractionError(
+                        f"selected snapshot symlink escapes repository: {name}"
+                    )
+                target_name = target.as_posix()
+                if target_name == ".":
+                    return []
+                if any(
+                    target_name == selected_path
+                    or target_name.startswith(selected_path + "/")
+                    for selected_path in selected
+                ):
+                    continue
+                target_entry = self._git(
+                    "ls-tree",
+                    self.label,
+                    "--",
+                    target_name,
+                ).stdout
+                if not target_entry:
+                    continue
+                selected.add(target_name)
+                pending.append(target_name)
+        return sorted(selected)
 
     def _git(self, *args: str) -> subprocess.CompletedProcess[str]:
         try:
