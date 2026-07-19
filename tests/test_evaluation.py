@@ -279,6 +279,116 @@ def test_live_provider_is_explicit_and_records_model_specific_output(tmp_path: P
     assert json.loads((record_dir / "live-structured.txt").read_text()) == {
         "command": "clean-docs check"
     }
+    run_record = json.loads(
+        (record_dir / "live-structured.run.json").read_text()
+    )
+    assert run_record["schema"] == "clean-docs.provider-run.v1"
+    assert run_record["state"] == "completed"
+    assert run_record["repository"]["worktree_before_sha256"] == (
+        run_record["repository"]["worktree_after_sha256"]
+    )
+    assert run_record["response_sha256"]
+    assert run_record["error"] is None
+    assert len(run_record["provider"]["configuration_sha256"]) == 64
+
+
+def test_live_provider_failure_preserves_pre_invocation_receipt(
+    tmp_path: Path,
+) -> None:
+    root = _root(tmp_path)
+    fixture_path = root / ".clean-docs/live-failure.yml"
+    fixture_path.write_text(yaml.safe_dump({
+        "version": 1,
+        "tasks": [{
+            "id": "live-failure",
+            "audience": "agent",
+            "prompt": "Return the command.",
+            "context": [".clean-docs/context/contributor.md"],
+            "model": {
+                "adapter": "command",
+                "name": "failing-provider",
+                "argv": [sys.executable, "-c", "raise SystemExit(7)"],
+            },
+            "scorer": {
+                "type": "structured-output",
+                "expected": {"command": "clean-docs check"},
+            },
+        }],
+    }, sort_keys=False))
+    record_dir = root / ".clean-docs/live-failure-records"
+
+    with pytest.raises(ConfigurationError, match="exited 7"):
+        run_evaluation(
+            root,
+            root / ".clean-docs.yml",
+            fixture_path,
+            mode="live",
+            record_dir=record_dir,
+        )
+
+    run_record = json.loads(
+        (record_dir / "live-failure.run.json").read_text()
+    )
+    assert run_record["state"] == "failed"
+    assert run_record["inputs"]["prompt_sha256"]
+    assert run_record["repository"]["worktree_before_sha256"] == (
+        run_record["repository"]["worktree_after_sha256"]
+    )
+    assert run_record["error"]["type"] == "ConfigurationError"
+    assert "detail" not in run_record["error"]
+    assert not (record_dir / "live-failure.txt").exists()
+
+
+def test_live_provider_repository_write_becomes_conflict(
+    tmp_path: Path,
+) -> None:
+    root = _root(tmp_path)
+    fixture_path = root / ".clean-docs/live-conflict.yml"
+    fixture_path.write_text(yaml.safe_dump({
+        "version": 1,
+        "tasks": [{
+            "id": "live-conflict",
+            "audience": "agent",
+            "prompt": "Return the command.",
+            "context": [".clean-docs/context/contributor.md"],
+            "model": {
+                "adapter": "command",
+                "name": "writing-provider",
+                "argv": [
+                    sys.executable,
+                    "-c",
+                    (
+                        "from pathlib import Path; "
+                        "Path('provider-write.txt').write_text('changed'); "
+                        "print('{\"command\": \"clean-docs check\"}')"
+                    ),
+                ],
+            },
+            "scorer": {
+                "type": "structured-output",
+                "expected": {"command": "clean-docs check"},
+            },
+        }],
+    }, sort_keys=False))
+    record_dir = root / ".clean-docs/live-conflict-records"
+
+    with pytest.raises(ConfigurationError, match="changed repository bytes"):
+        run_evaluation(
+            root,
+            root / ".clean-docs.yml",
+            fixture_path,
+            mode="live",
+            record_dir=record_dir,
+        )
+
+    run_record = json.loads(
+        (record_dir / "live-conflict.run.json").read_text()
+    )
+    assert run_record["state"] == "conflict"
+    assert run_record["repository"]["worktree_before_sha256"] != (
+        run_record["repository"]["worktree_after_sha256"]
+    )
+    assert not (record_dir / "live-conflict.txt").exists()
 
 
 def test_fixture_schema_rejects_unknown_fields(tmp_path: Path) -> None:

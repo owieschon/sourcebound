@@ -117,6 +117,11 @@ ending in `#keys`. A ranked relationship remains advisory; a committed relations
 of the configured contract.
 
 Current projections are `llms.txt`, exact-byte context bundles, and the static recorded demo.
+Provider context can also be compiled as a read-only, source-addressed
+`clean-docs.context-bundle.v1`. The request pins the repository commit and each source line range.
+Selection is deterministic under a byte budget, and every exclusion carries a reason. Only accepted
+policy may grant instruction authority; repository prose remains evidence data.
+
 Plugins may add extractors, discoverers, renderers, and policy findings through process API version
 `1`; they cannot replace first-party evidence or set coverage state.
 
@@ -151,6 +156,11 @@ qualities.
 The optional phrasing path accepts recorded provider output that selects at most five known fact
 identifiers and allowlisted templates. Deterministic code renders the resulting sentences. Required
 checks, CI, and release extraction do not need a model.
+
+Live evaluation writes `clean-docs.provider-run.v1` before it invokes a command provider. The
+pre-invocation record binds the immutable commit when available, worktree bytes, corpus, prompt,
+scorer, and provider configuration. Completion adds the response and post-worktree digests. Failure keeps
+the input record, and an unexpected repository byte change becomes a conflict.
 
 ## Current non-goals
 

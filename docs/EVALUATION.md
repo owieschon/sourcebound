@@ -75,13 +75,42 @@ Live execution is explicit and must retain its response:
 clean-docs eval --mode live --record-dir .clean-docs/evaluation/live
 ```
 
-The task's command adapter receives a deterministic JSON prompt on standard input. Its result is labeled `model-specific-live`. Move an accepted response into a recorded fixture before relying on it in offline CI.
+The task's command adapter receives a deterministic JSON prompt on standard input. Before invoking
+it, clean-docs writes `<task>.run.json` with the repository, worktree, corpus, prompt, scorer, and
+provider-configuration digests. Completion adds the response digest. A provider error preserves the
+input receipt and records a hashed error identity without copying provider output or credentials
+into the record.
+If the provider changes repository bytes outside the record directory, the run becomes a conflict
+and evaluation stops.
+
+The result is labeled `model-specific-live`. Move an accepted response into a recorded fixture
+before relying on it in offline CI.
+
+## Compile bounded context
+
+Use `context compile` when a provider should receive selected source evidence instead of whole
+documents. The request pins the repository commit, byte budget, source path and line range, evidence
+authority, relationship, rank, and whether the item is required:
+
+```bash
+clean-docs context compile \
+  --request .clean-docs/context-request.json \
+  --format json
+```
+
+The `clean-docs.context-bundle.v1` result lists included and excluded items with reasons. Direct
+evidence outranks repository prose. An accepted policy can carry instruction authority; ordinary
+documentation remains data even when its text resembles a prompt. If required evidence does not
+fit, the bundle is `unknown` and the command exits `2`.
 
 ## Limits
 
 - Scorers are deterministic; live provider output is model-specific.
 - Replay proves the saved response against the named corpus digest, not current behavior of the named model.
 - Provider commands run only in live mode. The execution environment owns their network isolation.
+- Provider-run receipts detect repository byte changes; they do not sandbox the provider process.
+- Context compilation is lexical and source-addressed. It does not use semantic retrieval or a
+  vector index.
 - Configuration scoring writes the response only inside a temporary copy of the fixture repository.
 
 ## Next step

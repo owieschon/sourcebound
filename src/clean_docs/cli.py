@@ -13,6 +13,7 @@ from clean_docs.bootstrap import apply_bootstrap_plan, build_bootstrap_plan
 from clean_docs.capabilities import CLI_REFERENCE
 from clean_docs.changed import check_changed, render_sarif
 from clean_docs.claims import claim_binding_results, scan_source_claims
+from clean_docs.context import compile_context
 from clean_docs.doctor import build_diagnostic_bundle
 from clean_docs.emit import emit_llms_txt, emit_stepwise_skill
 from clean_docs.engine import drive, evaluate, write_results
@@ -67,6 +68,13 @@ def _parser() -> argparse.ArgumentParser:
     inventory_parser.add_argument("--format", choices=("text", "json"), default="text")
     claims_parser = sub.add_parser("claims", help=_command_help("claims"))
     claims_parser.add_argument("--format", choices=("text", "json"), default="text")
+    context_parser = sub.add_parser("context")
+    context_sub = context_parser.add_subparsers(dest="context_command", required=True)
+    context_compile = context_sub.add_parser(
+        "compile", help=_command_help("context compile")
+    )
+    context_compile.add_argument("--request", type=Path, required=True)
+    context_compile.add_argument("--format", choices=("text", "json"), default="json")
     init_parser = sub.add_parser("init", help=_command_help("init"))
     model_mode = init_parser.add_mutually_exclusive_group()
     model_mode.add_argument(
@@ -440,6 +448,33 @@ def main(argv: list[str] | None = None) -> int:
                 f"ranked candidate(s); {claim_report.authority}"
             )
         return 0 if claim_report.ok else 1
+    if args.command == "context":
+        request = args.request if args.request.is_absolute() else root / args.request
+        try:
+            context_bundle = compile_context(root, request)
+        except CleanDocsError as exc:
+            print(f"clean-docs: {exc}", file=sys.stderr)
+            return exc.exit_code
+        if args.format == "json":
+            print(json.dumps(context_bundle.as_dict(), indent=2))
+        else:
+            for context_item in context_bundle.items:
+                print(
+                    f"[included:{context_item.authority}] {context_item.id} "
+                    f"{context_item.path}#{context_item.locator}: "
+                    f"{context_item.inclusion_reason}"
+                )
+            for excluded_context in context_bundle.excluded:
+                print(
+                    f"[excluded:{excluded_context.reason}] "
+                    f"{excluded_context.id}: {excluded_context.path}"
+                )
+            print(
+                f"context: {context_bundle.status}; "
+                f"{context_bundle.used_bytes}/"
+                f"{context_bundle.budget_bytes} bytes"
+            )
+        return 0 if context_bundle.ok else 2
     if args.command == "release":
         try:
             release_report = build_release_report(root, args.from_ref, args.to_ref)

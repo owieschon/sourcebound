@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from datetime import datetime, timezone
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Protocol
@@ -45,6 +46,9 @@ class ResponseProvider(Protocol):
 
     @property
     def name(self) -> str: ...
+
+    @property
+    def configuration_sha256(self) -> str: ...
 
     def complete(self, prompt: str) -> str: ...
 
@@ -114,6 +118,10 @@ class RecordedResponseProvider:
     name: str
     adapter: str = "recorded"
 
+    @property
+    def configuration_sha256(self) -> str:
+        return hashlib.sha256(str(self.path).encode()).hexdigest()
+
     def complete(self, prompt: str) -> str:
         del prompt
         try:
@@ -128,6 +136,12 @@ class CommandResponseProvider:
     name: str
     root: Path
     adapter: str = "command"
+
+    @property
+    def configuration_sha256(self) -> str:
+        return hashlib.sha256(
+            json.dumps(self.argv, separators=(",", ":")).encode()
+        ).hexdigest()
 
     def complete(self, prompt: str) -> str:
         try:
@@ -164,6 +178,135 @@ def _command_environment() -> dict[str, str]:
     inherited_path = os.environ.get("PATH", "")
     path = executable_dir if not inherited_path else executable_dir + os.pathsep + inherited_path
     return {**os.environ, "NO_COLOR": "1", "PATH": path}
+
+
+def _utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _repository_state(root: Path, excluded: Path) -> tuple[str, str, int]:
+    commit_process = subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "HEAD"],
+        text=True,
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+    commit = (
+        commit_process.stdout.strip()
+        if commit_process.returncode == 0
+        else "unversioned"
+    )
+    try:
+        excluded_relative = excluded.resolve().relative_to(root)
+    except ValueError:
+        excluded_relative = None
+    digest = hashlib.sha256()
+    count = 0
+    candidates = sorted(
+        path
+        for path in root.rglob("*")
+        if ".git" not in path.relative_to(root).parts
+    )
+    for candidate in candidates:
+        relative_path = candidate.relative_to(root)
+        relative = relative_path.as_posix()
+        if (
+            excluded_relative is not None
+            and relative_path.is_relative_to(excluded_relative)
+        ):
+            continue
+        if candidate.is_symlink():
+            content = os.readlink(candidate).encode()
+        elif candidate.is_file():
+            content = candidate.read_bytes()
+        else:
+            continue
+        digest.update(relative.encode())
+        digest.update(b"\0")
+        digest.update(content)
+        digest.update(b"\0")
+        count += 1
+    return commit, digest.hexdigest(), count
+
+
+def _provider_run_record(
+    *,
+    task: EvaluationTask,
+    provider: ResponseProvider,
+    commit: str,
+    worktree_digest: str,
+    worktree_files: int,
+    corpus_digest: str,
+    prompt_digest: str,
+    scorer_digest: str,
+) -> dict[str, object]:
+    identity = {
+        "task": task.id,
+        "commit": commit,
+        "corpus_sha256": corpus_digest,
+        "prompt_sha256": prompt_digest,
+        "scorer_sha256": scorer_digest,
+        "provider": {
+            "adapter": provider.adapter,
+            "name": provider.name,
+            "configuration_sha256": provider.configuration_sha256,
+        },
+    }
+    run_id = hashlib.sha256(
+        json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    return {
+        "schema": "clean-docs.provider-run.v1",
+        "run_id": run_id,
+        "idempotency_id": run_id,
+        "task": task.id,
+        "state": "invoking",
+        "started_at": _utc_now(),
+        "completed_at": None,
+        "repository": {
+            "commit": commit,
+            "worktree_before_sha256": worktree_digest,
+            "worktree_after_sha256": None,
+            "files": worktree_files,
+        },
+        "inputs": {
+            "corpus_sha256": corpus_digest,
+            "prompt_sha256": prompt_digest,
+            "scorer_sha256": scorer_digest,
+        },
+        "provider": {
+            "adapter": provider.adapter,
+            "name": provider.name,
+            "configuration_sha256": provider.configuration_sha256,
+        },
+        "response_sha256": None,
+        "error": None,
+    }
+
+
+def _complete_provider_run(
+    record: dict[str, object],
+    *,
+    state: str,
+    after_digest: str,
+    response: str | None = None,
+    error: CleanDocsError | None = None,
+) -> dict[str, object]:
+    updated = json.loads(json.dumps(record))
+    updated["state"] = state
+    updated["completed_at"] = _utc_now()
+    repository = updated["repository"]
+    assert isinstance(repository, dict)
+    repository["worktree_after_sha256"] = after_digest
+    if response is not None:
+        updated["response_sha256"] = hashlib.sha256(response.encode()).hexdigest()
+    if error is not None:
+        updated["error"] = {
+            "type": type(error).__name__,
+            "detail_sha256": hashlib.sha256(str(error).encode()).hexdigest(),
+        }
+    return updated
 
 
 def _mapping(raw: Any, where: str) -> dict[str, Any]:
@@ -469,10 +612,79 @@ def run_evaluation(
             claim = "deterministic-command"
         else:
             provider = _provider(root, task, mode)
-            response = provider.complete(prompt)
             if mode == "live":
                 assert record_dir is not None
+                scorer_digest = hashlib.sha256(json.dumps(
+                    task.scorer, sort_keys=True, separators=(",", ":")
+                ).encode()).hexdigest()
+                commit, before_digest, worktree_files = _repository_state(
+                    root, record_dir
+                )
+                run_path = record_dir / f"{task.id}.run.json"
+                run_record = _provider_run_record(
+                    task=task,
+                    provider=provider,
+                    commit=commit,
+                    worktree_digest=before_digest,
+                    worktree_files=worktree_files,
+                    corpus_digest=corpus_digest,
+                    prompt_digest=prompt_digest,
+                    scorer_digest=scorer_digest,
+                )
+                atomic_write(
+                    run_path,
+                    json.dumps(run_record, indent=2, sort_keys=True) + "\n",
+                )
+                try:
+                    response = provider.complete(prompt)
+                except CleanDocsError as exc:
+                    _commit, after_digest, _files = _repository_state(
+                        root, record_dir
+                    )
+                    state = (
+                        "conflict"
+                        if after_digest != before_digest
+                        else "failed"
+                    )
+                    failed = _complete_provider_run(
+                        run_record,
+                        state=state,
+                        after_digest=after_digest,
+                        error=exc,
+                    )
+                    atomic_write(
+                        run_path,
+                        json.dumps(failed, indent=2, sort_keys=True) + "\n",
+                    )
+                    raise
+                _commit, after_digest, _files = _repository_state(root, record_dir)
+                if after_digest != before_digest:
+                    conflict = _complete_provider_run(
+                        run_record,
+                        state="conflict",
+                        after_digest=after_digest,
+                        response=response,
+                    )
+                    atomic_write(
+                        run_path,
+                        json.dumps(conflict, indent=2, sort_keys=True) + "\n",
+                    )
+                    raise ConfigurationError(
+                        f"provider changed repository bytes for task {task.id}"
+                    )
                 atomic_write(record_dir / f"{task.id}.txt", response)
+                completed = _complete_provider_run(
+                    run_record,
+                    state="completed",
+                    after_digest=after_digest,
+                    response=response,
+                )
+                atomic_write(
+                    run_path,
+                    json.dumps(completed, indent=2, sort_keys=True) + "\n",
+                )
+            else:
+                response = provider.complete(prompt)
             scorer_type = task.scorer["type"]
             if scorer_type == "structured-output":
                 ok, detail = _structured_score(response, task.scorer)
