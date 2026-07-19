@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "clean-docs"
-version = "1.2.0rc11"
+version = "1.2.0rc12"
 description = "Keep repository documentation bound to its sources."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -29,7 +29,7 @@ clean-docs = "clean_docs.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-clean_docs = ["standards/*.json", "standards/*.md"]
+clean_docs = ["adapters/*.json", "adapters/*.mjs", "standards/*.json", "standards/*.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

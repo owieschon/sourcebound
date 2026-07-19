@@ -105,9 +105,14 @@ ROLE_DESCRIPTIONS: dict[DocumentRole, str] = {
     "template": "runtime prompt or generated-content input",
 }
 ROLE_OVERRIDE = re.compile(
-    r"<!--\s*clean-docs:role\s+([a-z][a-z-]+)\s*-->"
+    r"(?:<!--|\{/\*)\s*clean-docs:role\s+([a-z][a-z-]+)\s*(?:-->|\*/\})"
 )
-ROLE_MARKER = re.compile(r"<!--\s*clean-docs:role\b.*?-->")
+ROLE_MARKER = re.compile(
+    r"(?:<!--|\{/\*)\s*clean-docs:role\b.*?(?:-->|\*/\})"
+)
+REGISTER_MARKER = re.compile(
+    r"(?:<!--|\{/\*)\s*clean-docs:policy\s+register-v2\s*(?:-->|\*/\})"
+)
 
 _TEMPLATE_PARTS = frozenset({"prompts", "prompt", "templates", "template"})
 _EVIDENCE_NAME = re.compile(
@@ -187,7 +192,7 @@ def classify_document(relative: Path, text: str) -> DocumentProfile:
         ),
         "",
     )
-    registered = REGISTER_PROFILE in text
+    registered = REGISTER_PROFILE in text or REGISTER_MARKER.search(text) is not None
     if match := ROLE_OVERRIDE.search(text):
         requested = match.group(1)
         if requested in ROLE_RULES:

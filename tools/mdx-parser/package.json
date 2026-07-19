@@ -1,0 +1,18 @@
+{
+  "name": "clean-docs-mdx-parser-build",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "esbuild src/parser.mjs --bundle --platform=node --format=esm --target=node20 --outfile=../../src/clean_docs/adapters/mdx_parser.mjs --legal-comments=eof"
+  },
+  "dependencies": {
+    "@mdx-js/mdx": "3.1.1",
+    "remark-frontmatter": "5.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.1"
+  }
+}

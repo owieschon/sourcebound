@@ -59,8 +59,9 @@ clean-docs plan --base origin/main --head HEAD --format json
 The JSON records the clean-docs producer version and every changed path with its base and head blob,
 adapter decision, coverage state, and graph roots. Its digest binds that producer and those inputs
 to the resulting findings. `clean-docs.impact-plan.v2` also lists
-`unsupported_documents`. A changed MDX file enters that list and makes coverage unknown; MDX does
-not enter the checked Markdown document count.
+`unsupported_documents`. Structurally valid MDX uses the `mdx-static` adapter and counts as a direct
+document change. Malformed MDX or a missing Node.js 20 runtime uses `mdx-static:failed`, enters the
+unsupported list, and makes coverage unknown.
 
 | `impact` | Meaning |
 | --- | --- |

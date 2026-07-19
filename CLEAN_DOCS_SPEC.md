@@ -48,7 +48,7 @@ surface. A catalog entry is a change detector, not a prose claim.
 
 ## Operator workflows
 
-Use `audit` before a manifest exists. It classifies each Markdown document by its job, applies
+Use `audit` before a manifest exists. It classifies each Markdown or structurally valid MDX document by its job, applies
 mechanically provable integrity defects, and previews only the page-shape and register rules that
 fit that job. An untouched repository is assessment-only: integrity and compatible policy
 candidates cannot become blockers. The default assessment reports mechanically witnessed
@@ -85,8 +85,10 @@ Use `plan --base REF --head REF` to produce a read-only impact receipt before re
 uses the merge base, classifies every changed artifact, and traverses only affected accepted
 bindings, projections, and evaluations. `impact: none` requires complete adapter coverage;
 unsupported public candidates remain `unknown`. The receipt binds its producer version, immutable
-Git objects, manifest, graph, and findings. Unsupported MDX appears in
-`unsupported_documents` and makes the impact `unknown`; it never enters the checked Markdown count.
+Git objects, manifest, graph, and findings. The first-party MDX adapter parses source positions,
+frontmatter, Markdown nodes, ESM syntax, JSX structure, expressions, comments, and fenced code
+without resolving or executing imports. Valid MDX enters the checked document count. Malformed MDX
+or a missing Node.js 20 runtime appears in `unsupported_documents` and makes the impact `unknown`.
 The command's zero exit code means the receipt was built, not that the branch is ready to merge.
 
 Use `verdict --base REF --head REF --format json` for one pull-request decision. It composes the

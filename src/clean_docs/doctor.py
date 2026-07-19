@@ -11,6 +11,7 @@ from clean_docs.audit import audit
 from clean_docs.errors import CleanDocsError, ConfigurationError
 from clean_docs.execution import resolve_argv
 from clean_docs.manifest import load_manifest
+from clean_docs.mdx import parser_availability
 from clean_docs.standard import load_default_pack
 
 
@@ -114,6 +115,24 @@ def diagnose(root: Path, manifest_path: Path) -> tuple[DoctorCheck, ...]:
             f"{len(report.baselined_findings)} baselined; {len(report.stale_baseline)} stale; "
             f"{len(report.unsupported_documents)} unsupported",
         ))
+        mdx_documents = tuple(
+            path
+            for path in (*report.documents, *report.unsupported_documents)
+            if path.lower().endswith(".mdx")
+        )
+        parser_ok, parser_detail = parser_availability()
+        checks.append(
+            DoctorCheck(
+                "mdx-parser",
+                parser_ok if mdx_documents else True,
+                (
+                    f"{parser_detail}; {len(mdx_documents)} tracked MDX document(s), "
+                    f"{len(report.unsupported_documents)} unsupported"
+                    if mdx_documents
+                    else "not required: no tracked MDX documents"
+                ),
+            )
+        )
     except CleanDocsError as exc:
         checks.append(DoctorCheck("documentation-audit", False, str(exc)))
     try:

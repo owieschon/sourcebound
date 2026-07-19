@@ -14,12 +14,18 @@ tests do not claim.
 
 | Tier | Input | clean-docs behavior |
 | --- | --- | --- |
-| Static repository data | Source, manifests, Markdown, schemas, and package metadata | Parse without importing repository modules or evaluating source expressions |
+| Static repository data | Source, manifests, Markdown, MDX, schemas, and package metadata | Parse without importing repository modules or evaluating source expressions |
 | Declared command | One exact `argv` array named under `execution.allowed_commands` | Run without a shell in a disposable repository copy |
 | Declared plugin | One exact `argv` array with API version and interfaces | Exchange versioned JSON in a disposable repository copy |
 | Optional phrasing response | Recorded JSON selected by the caller | Validate against deterministic facts before any prose is accepted |
 
 Repository text cannot turn static inventory into process execution. A command or plugin runs only after the manifest names its argument array and compatible interface.
+
+The MDX adapter is a bundled, pinned parser running in a temporary directory with a reduced
+environment. It parses the document to a source-positioned syntax tree. It does not compile or
+evaluate the document, resolve ESM imports, load JSX components, or invoke repository package
+scripts. Node.js is an implementation runtime for this first-party parser, not a repository-declared
+process.
 
 ## Process controls
 

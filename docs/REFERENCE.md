@@ -48,6 +48,17 @@ Mark the generated destination:
 <!-- clean-docs:end actions -->
 ```
 
+Inside an `.mdx` document, use MDX comment expressions so the file remains valid MDX:
+
+```mdx
+{/* clean-docs:begin actions */}
+{/* clean-docs:end actions */}
+```
+
+MDX policy, role, purpose, allowance, and region controls use the same
+`{/* clean-docs:... */}` form. clean-docs normalizes those standalone controls for policy
+evaluation; it does not evaluate any other expression.
+
 The source assignment may be a list of dictionaries or a dictionary whose values are records. Constructor calls are read as keyword records. clean-docs reads the syntax tree; the [security model](SECURITY_MODEL.md) owns the execution boundary.
 
 ### Path glob bindings

@@ -30,7 +30,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
+      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version: "24"
       - run: python -m pip install ".[dev]"
+      - run: python scripts/build_mdx_adapter.py
       - run: python -m pytest
       - run: python -m mypy src/clean_docs
       - run: python -m ruff check src tests
@@ -85,6 +89,9 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
+      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version: "24"
       - run: >-
           python -m pip install
           "build==1.2.2.post1" "PyYAML==6.0.3" "setuptools==75.8.0" "wheel==0.45.1"
@@ -328,6 +335,36 @@ jobs:
         with:
           name: clean-docs-v1.2a-acceptance-${{ matrix.os }}-${{ github.sha }}
           path: clean-docs-v12-acceptance.json
+          if-no-files-found: error
+
+  acceptance-v1-2-mdx:
+    needs: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version: "24"
+      - run: python -m pip install ".[dev]"
+      - run: python scripts/build_mdx_adapter.py
+      - run: >-
+          python scripts/run_acceptance.py
+          --registry tests/v12-mdx-acceptance.yml
+          --out clean-docs-v12-mdx-acceptance.json
+      - if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: clean-docs-v1.2-mdx-acceptance-${{ matrix.os }}-${{ github.sha }}
+          path: clean-docs-v12-mdx-acceptance.json
           if-no-files-found: error
 
   performance-v1-0:

@@ -215,7 +215,7 @@ def test_private_refactor_produces_coverage_complete_stable_no_impact(
     assert payload["schema"] == "clean-docs.impact-plan.v2"
     assert payload["producer"] == {
         "name": "clean-docs",
-            "version": "1.2.0rc11",
+        "version": "1.2.0rc12",
     }
     assert payload["digest"] == first.digest
     assert payload["no_impact"] is True
@@ -305,7 +305,7 @@ def test_internal_unsupported_script_does_not_expand_the_plan(
     }
 
 
-def test_unsupported_mdx_change_is_unknown_and_disclosed(
+def test_valid_mdx_change_is_classified_as_a_direct_document_change(
     tmp_path: Path,
 ) -> None:
     root = _symbol_repository(tmp_path)
@@ -321,11 +321,34 @@ def test_unsupported_mdx_change_is_unknown_and_disclosed(
     )
     payload = plan.as_dict()
 
+    assert plan.impact == "none"
+    assert plan.coverage_complete
+    assert plan.unsupported_documents == ()
+    assert payload["unsupported_documents"] == []
+    assert plan.artifacts[0].adapter == "mdx-static"
+    assert plan.artifacts[0].coverage == "document-direct"
+    assert {item.rule for item in plan.unrelated} == {
+        "direct-document-change"
+    }
+
+
+def test_malformed_mdx_change_is_unknown_and_disclosed(tmp_path: Path) -> None:
+    root = _symbol_repository(tmp_path)
+    mdx = root / "docs/guide.mdx"
+    mdx.parent.mkdir()
+    mdx.write_text("# Guide\n\n<Callout>Old behavior</Callout>\n")
+    base = _commit(root, "base")
+    mdx.write_text("# Guide\n\n<Callout>New behavior\n")
+    head = _commit(root, "break MDX")
+
+    plan = build_impact_plan(
+        root, root / ".clean-docs.yml", base=base, head=head
+    )
+
     assert plan.impact == "unknown"
     assert not plan.coverage_complete
     assert plan.unsupported_documents == ("docs/guide.mdx",)
-    assert payload["unsupported_documents"] == ["docs/guide.mdx"]
-    assert plan.artifacts[0].adapter == "mdx-unsupported"
+    assert plan.artifacts[0].adapter == "mdx-static:failed"
     assert plan.artifacts[0].coverage == "unknown"
     assert {item.rule for item in plan.unknown} == {
         "unsupported-document-format"

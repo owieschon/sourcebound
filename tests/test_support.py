@@ -30,7 +30,7 @@ def test_reader_install_and_repair_guidance_matches_candidate_artifacts() -> Non
     assert "python3 - <<'PY'" in checksum_section
     assert "\npython - <<'PY'" not in checksum_section
     assert "expected one wheel" in install
-    assert "non-ignored untracked Markdown files enter the corpus" in support
+    assert "non-ignored untracked Markdown and MDX files enter the" in support
     assert "`drive` repairs bound regions" in readme
     assert "Run `project` afterward when a projection includes the repaired document" in readme
 

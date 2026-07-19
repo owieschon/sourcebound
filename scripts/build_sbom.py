@@ -28,6 +28,16 @@ def render_sbom(wheel: Path, source_date_epoch: int) -> str:
         if len(metadata_names) != 1:
             raise ValueError("wheel must contain one dist-info/METADATA file")
         metadata = Parser().parsestr(archive.read(metadata_names[0]).decode("utf-8"))
+        mdx_manifest_names = [
+            name
+            for name in archive.namelist()
+            if name.endswith("clean_docs/adapters/mdx_dependencies.json")
+        ]
+        if len(mdx_manifest_names) != 1:
+            raise ValueError("wheel must contain one MDX dependency manifest")
+        mdx_manifest = json.loads(
+            archive.read(mdx_manifest_names[0]).decode("utf-8")
+        )
     name = metadata.get("Name")
     version = metadata.get("Version")
     if not name or not version:
@@ -76,6 +86,58 @@ def render_sbom(wheel: Path, source_date_epoch: int) -> str:
                 "licenseConcluded": "NOASSERTION",
                 "licenseDeclared": "NOASSERTION",
                 "copyrightText": "NOASSERTION",
+            }
+        )
+        relationships.append(
+            {
+                "spdxElementId": root_id,
+                "relationshipType": "DEPENDS_ON",
+                "relatedSpdxElement": dependency_id,
+            }
+        )
+    if (
+        not isinstance(mdx_manifest, dict)
+        or mdx_manifest.get("schema") != "clean-docs.mdx-dependencies.v1"
+        or not isinstance(mdx_manifest.get("packages"), list)
+    ):
+        raise ValueError("wheel MDX dependency manifest has an unsupported schema")
+    seen_mdx: set[tuple[str, str, str]] = set()
+    for package in mdx_manifest["packages"]:
+        if not isinstance(package, dict) or not all(
+            isinstance(package.get(field), str)
+            for field in ("name", "version", "integrity", "license")
+        ):
+            raise ValueError("wheel MDX dependency manifest has an invalid package")
+        identity = (
+            package["name"],
+            package["version"],
+            package["integrity"],
+        )
+        if identity in seen_mdx:
+            continue
+        seen_mdx.add(identity)
+        dependency_id = _identifier(
+            f"npm-{package['name']}-{package['version']}"
+        )
+        packages.append(
+            {
+                "SPDXID": dependency_id,
+                "name": package["name"],
+                "versionInfo": package["version"],
+                "downloadLocation": "NOASSERTION",
+                "filesAnalyzed": False,
+                "licenseConcluded": package["license"],
+                "licenseDeclared": package["license"],
+                "copyrightText": "NOASSERTION",
+                "externalRefs": [
+                    {
+                        "referenceCategory": "PACKAGE-MANAGER",
+                        "referenceType": "purl",
+                        "referenceLocator": (
+                            f"pkg:npm/{package['name']}@{package['version']}"
+                        ),
+                    }
+                ],
             }
         )
         relationships.append(
