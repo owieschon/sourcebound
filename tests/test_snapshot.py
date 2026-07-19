@@ -77,6 +77,28 @@ def test_snapshot_materializes_only_selected_project(tmp_path: Path) -> None:
         assert not (snapshot / "large-sibling").exists()
 
 
+def test_selected_project_includes_internal_symlink_targets(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "repository"
+    project = root / "apps/docs"
+    shared = root / "shared"
+    project.mkdir(parents=True)
+    shared.mkdir()
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
+    (shared / "source.md").write_text("# Shared source\n")
+    (project / "source.md").symlink_to("../../shared/source.md")
+    ref = _commit(root)
+
+    with RepositorySnapshot(root, ref).materialized_root(
+        paths=(Path("apps/docs"),)
+    ) as snapshot:
+        linked = snapshot / "apps/docs/source.md"
+        assert linked.is_symlink()
+        assert linked.read_text() == "# Shared source\n"
+        assert not (snapshot / "large-sibling").exists()
+
+
 def test_snapshot_rejects_selected_path_that_escapes_root(
     tmp_path: Path,
 ) -> None:
