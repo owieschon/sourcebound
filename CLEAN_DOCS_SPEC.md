@@ -37,6 +37,7 @@ The table below is part of the shipped capability registry:
 | Repository catalog | Detected additions, removals, and replacements stay visible | Every cataloged item needs or has a reader-facing explanation |
 | Accepted static source claim | The documented count or identifier set matches its accepted source locator | A ranked candidate names the right semantic relationship |
 | Binding sensitivity receipt | One static check becomes stale after one independently frozen source fact changes | The document and source describe the same concept or that the relationship should be accepted |
+| Declared review contract | At two immutable refs, repository-declared source locators changed without every declared target locator changing | The target is stale, a co-change is semantically correct, or the locators describe the same concept |
 | Pull-request verdict | Static configured checks and changed-surface evidence produce the reported state at one pinned commit | Unbound prose, skipped processes, semantic relationships, or authored judgment are correct |
 | Packaged writing policy | Implemented deterministic rules pass | Motivation, pedagogy, personality, or usefulness pass judgment |
 | Authored purpose and scope | Declared markers and configured relationships remain intact | The repository chose the right goals, audience, or priority |
