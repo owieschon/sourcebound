@@ -886,11 +886,6 @@ def build_impact_plan(
                         "affects",
                     )
                 )
-                if (
-                    source_evidence.state in {"added", "changed", "removed"}
-                    and source_evidence.path in artifact_roots
-                ):
-                    artifact_roots[source_evidence.path].add(contract_root)
             for target_evidence in result.targets:
                 edges.add(
                     ImpactEdge(

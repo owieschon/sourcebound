@@ -226,6 +226,19 @@ def _load_review_contracts(raw: Any) -> tuple[ReviewContract, ...]:
                     )
                 locator_ids.add(locator.id)
             groups[group] = locators
+        source_identities = {
+            (locator.path, locator.extractor, locator.locator)
+            for locator in groups["sources"]
+        }
+        target_identities = {
+            (locator.path, locator.extractor, locator.locator)
+            for locator in groups["targets"]
+        }
+        if source_identities & target_identities:
+            raise ConfigurationError(
+                f"review contract {contract_id} source and target locators "
+                "must not have the same path, extractor, and locator"
+            )
         contracts.append(
             ReviewContract(
                 id=contract_id,
@@ -681,6 +694,20 @@ def load_manifest(path: Path) -> Manifest:
         root.get("projections"), {binding.doc for binding in bindings}
     )
     review_contracts = _load_review_contracts(root.get("review_contracts", []))
+    projection_outputs: set[Path] = set()
+    if projections is not None:
+        if projections.llms_txt is not None:
+            projection_outputs.add(projections.llms_txt.output)
+        projection_outputs.update(bundle.output for bundle in projections.bundles)
+        if projections.demo is not None:
+            projection_outputs.add(projections.demo.output)
+    for contract in review_contracts:
+        for target in contract.targets:
+            if target.path in projection_outputs:
+                raise ConfigurationError(
+                    f"review contract {contract.id} target {target.id} "
+                    f"cannot be generated projection output {target.path}"
+                )
     return Manifest(
         path=path,
         version=version,
