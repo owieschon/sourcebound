@@ -691,6 +691,8 @@ def _workflow_path_filters(raw: object) -> tuple[tuple[str, tuple[str, ...]], ..
         return ()
     filters: list[tuple[str, tuple[str, ...]]] = []
     for event, configuration in sorted(triggers.items(), key=lambda item: str(item[0])):
+        if str(event) not in {"pull_request", "pull_request_target"}:
+            continue
         if not isinstance(configuration, dict):
             continue
         paths = configuration.get("paths")
