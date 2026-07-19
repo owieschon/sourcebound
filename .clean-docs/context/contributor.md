@@ -1,7 +1,7 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `049764a53e80023ba9b3b4ea4a55fe9e50074504d947aba9a3944bb84c2dabcb`
+- Corpus sha256: `bc8cbaa900d7e690f786d923a8bbdd485a70fc5d43e2ec4a3ef6123649cca95f`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
@@ -105,7 +105,7 @@ Use the [learning path](docs/learn/index.md) for examples. The [product contract
 ## Canonical document: docs/EVALUATION.md
 
 - Source: [docs/EVALUATION.md](../../docs/EVALUATION.md)
-- Content sha256: `d4364212c28b5f8b9bc715e54a3b55152ad5ec09ef96d69d0802ea9b048c518c`
+- Content sha256: `9023127c402fa6106d16e102727ed06804f8eee90aabea16a3527f7d0ae5d721`
 
 <!-- clean-docs:canonical docs/EVALUATION.md begin -->
 # Evaluate documentation tasks
@@ -123,7 +123,9 @@ A passing run prints the attempted and passed counts for each audience. Those co
 for that run; a history file binds them to the corpus, prompt, response, model, and scorer digests.
 
 A passing evaluation is a receipt for one task, not a halo around the whole corpus. It records who
-attempted what, which context they saw, how the result was scored, and whether it passed.
+attempted what, which context they saw, how the result was scored, and whether it passed. Cover the
+reader jobs a consequential corpus promises. Test retrieval, action, verification, recovery from
+drift, and stating a documented limit instead of guessing past it.
 
 ## Prerequisites
 

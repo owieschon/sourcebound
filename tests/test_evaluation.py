@@ -83,6 +83,9 @@ def _root(tmp_path: Path) -> Path:
         "<!-- clean-docs:end fact -->\n"
     )
     (responses / "structured.json").write_text('{"command": "clean-docs check"}\n')
+    (responses / "recovery.json").write_text(
+        '{"steps": ["clean-docs check", "clean-docs drive", "clean-docs check"]}\n'
+    )
     (responses / "manifest.yml").write_text("""\
 version: 1
 bindings:
@@ -143,6 +146,27 @@ bindings:
                 },
             },
             {
+                "id": "recovery-procedure",
+                "audience": "agent",
+                "prompt": "Return the documented recovery sequence for source drift as JSON.",
+                "context": [".clean-docs/context/contributor.md"],
+                "model": {
+                    "adapter": "recorded",
+                    "name": "fixture-agent",
+                    "response": ".clean-docs/responses/recovery.json",
+                },
+                "scorer": {
+                    "type": "structured-output",
+                    "expected": {
+                        "steps": [
+                            "clean-docs check",
+                            "clean-docs drive",
+                            "clean-docs check",
+                        ],
+                    },
+                },
+            },
+            {
                 "id": "manifest-round-trip",
                 "audience": "agent",
                 "prompt": "Create a valid manifest binding for the fixture.",
@@ -177,7 +201,7 @@ bindings:
     return root
 
 
-def test_replay_scores_four_observable_task_types_and_writes_stable_history(
+def test_replay_scores_task_retrieval_action_recovery_and_abstention(
     tmp_path: Path,
 ) -> None:
     root = _root(tmp_path)
@@ -195,7 +219,7 @@ def test_replay_scores_four_observable_task_types_and_writes_stable_history(
     assert {result.claim for result in report.agent_tasks} == {"deterministic-replay"}
     assert report.as_dict()["scores"] == {
         "human": {"passed": 1, "attempted": 1},
-        "agent": {"passed": 3, "attempted": 3},
+        "agent": {"passed": 4, "attempted": 4},
     }
     assert report.hygiene_findings == ()
     assert all(len(result.corpus_sha256) == 64 for result in report.agent_tasks)
@@ -208,7 +232,7 @@ def test_replay_scores_four_observable_task_types_and_writes_stable_history(
     write_evaluation_history(history, report)
     assert history.read_bytes() == first
     records = json.loads(first)["records"]
-    assert len(records) == 4
+    assert len(records) == 5
     assert all({
         "corpus_sha256", "model", "prompt_sha256", "scorer", "scorer_sha256",
         "ok", "record_id"

@@ -51,6 +51,40 @@
     {
       "audience": "agent",
       "claim": "deterministic-replay",
+      "corpus_sha256": "074e26af3d7d273d3f2591bb259f5707d1730070f718cdfb732ca249967484ac",
+      "detail": "response states and cites the canonical limitation",
+      "id": "limitation-retrieval",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "aa0b22ba975b88693a1aa8914ae4d968938f52d30e2f912febeb4b22dba2c238",
+      "record_id": "2fadcafe59a9571174f60f04d38fb1ad12664175338c612bc830e773b2151ef3",
+      "response_sha256": "8539e3f8d84ecda0e005991cb389edc490849e3534d738da4239aa2b478f9c28",
+      "scorer": "cited-limit",
+      "scorer_sha256": "9974dbe9cf56b70974cbdcc3d0ec12a0ba9e67859f32d63d58c5071696a3eaf5"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
+      "corpus_sha256": "87b256c8e533e0c68b10e4f2cc29ddeed3b1821d03bc6b2942b5abaf5f23fec3",
+      "detail": "structured output matches exactly",
+      "id": "recovery-procedure",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "c39e76cac28d0f6c2766ff365862b96f9e56e77c9dfecc26db4e86786f6b8e37",
+      "record_id": "33f5d4e500b912169a9df4f7be77f3fd65fa45a38e2014c067704e4c7ecf5216",
+      "response_sha256": "c935f72b02f6ccf3f7566051fa9694cce07d9bb54fa6cb3f59a83856fc38d5fe",
+      "scorer": "structured-output",
+      "scorer_sha256": "08630735fa6aa1eba3a359414758c3f82e5d8a30c89fd23c1e7d78aea48d137a"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
       "corpus_sha256": "7bff1845122e2b5497d6de13008a6a3b2493d1a69f81cb713eb1ed0c3c054977",
       "detail": "structured output matches exactly",
       "id": "structured-command",
@@ -85,6 +119,40 @@
     {
       "audience": "agent",
       "claim": "deterministic-replay",
+      "corpus_sha256": "87b256c8e533e0c68b10e4f2cc29ddeed3b1821d03bc6b2942b5abaf5f23fec3",
+      "detail": "configuration passes schema validation and check",
+      "id": "manifest-round-trip",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "75938250c8910b4aee3685478a411e9dfc0aedd7c0e9f0f6b2187aa46940bb42",
+      "record_id": "5b04c4cfea59a6e205c65f22c9ecbc46dfe2a356caf4f38ce7144de29986ae7f",
+      "response_sha256": "419da826adecee1c63ef7edd7f2cc8734533db94f1803b769e1cc201bd7a9e6b",
+      "scorer": "configuration",
+      "scorer_sha256": "ff2c7701e55c68a09f63c7dd94d3e2b350c22d5c224e9bb77a26b01869420a79"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
+      "corpus_sha256": "074e26af3d7d273d3f2591bb259f5707d1730070f718cdfb732ca249967484ac",
+      "detail": "structured output matches exactly",
+      "id": "recovery-procedure",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "e10d887f4e80456a9818cdcbadd9e2d7366458e49c46c3da6b6a5d5919d7b3f6",
+      "record_id": "5fd604acc8035e5de87ba921e71620194a724fc480ca0797044067264aa2032b",
+      "response_sha256": "c935f72b02f6ccf3f7566051fa9694cce07d9bb54fa6cb3f59a83856fc38d5fe",
+      "scorer": "structured-output",
+      "scorer_sha256": "08630735fa6aa1eba3a359414758c3f82e5d8a30c89fd23c1e7d78aea48d137a"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
       "corpus_sha256": "a46547e7f2051ea4b801081d23fba38482a3b1459b7bd26c9df9c1bc8a9bbe8b",
       "detail": "structured output matches exactly",
       "id": "structured-command",
@@ -98,6 +166,20 @@
       "response_sha256": "e7f35caa3eb02a30de3263aabdfd78950084743b352aee6c9b83cdf6c80de1d3",
       "scorer": "structured-output",
       "scorer_sha256": "a568bd4db2835284cafe510465310b031b59201d10e97b4bc3d1cbd6e4004f1c"
+    },
+    {
+      "audience": "human",
+      "claim": "deterministic-command",
+      "corpus_sha256": "33d9db958cd679adf91dc9835c71ac7d6c65cb9632908f46838948445cae371e",
+      "detail": "1 documented command(s) matched expected output",
+      "id": "human-quickstart",
+      "model": null,
+      "ok": true,
+      "prompt_sha256": "755500ff249645aa47772713b8674ba49f68920e88b4c85b33658ae4b1b0f7de",
+      "record_id": "669abb94e0bbf2044a83cefda1e768a041ca44ce2f053033e83927fe68c8cc49",
+      "response_sha256": null,
+      "scorer": "command",
+      "scorer_sha256": "f2181116da95d6b96069b9665ef7b77072513d026dd4de66791779bdeb08828b"
     },
     {
       "audience": "agent",
@@ -129,6 +211,23 @@
       "ok": true,
       "prompt_sha256": "5dde656d76d1f317eadacf64068dd2109ffbda19a087f416e50cecd43bbce969",
       "record_id": "6de3d2658d30c13a7cab2614301917dc295c2f3fb3e2da9b9b1937196eff8ef2",
+      "response_sha256": "419da826adecee1c63ef7edd7f2cc8734533db94f1803b769e1cc201bd7a9e6b",
+      "scorer": "configuration",
+      "scorer_sha256": "ff2c7701e55c68a09f63c7dd94d3e2b350c22d5c224e9bb77a26b01869420a79"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
+      "corpus_sha256": "074e26af3d7d273d3f2591bb259f5707d1730070f718cdfb732ca249967484ac",
+      "detail": "configuration passes schema validation and check",
+      "id": "manifest-round-trip",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "61c236184aa0b296fe27f4f4f56c379682661e9e27171b6c64dfad5df3759a25",
+      "record_id": "7214b8b9e7307e0b0111da01f95378033584960d86efed4f3daed45e490b721d",
       "response_sha256": "419da826adecee1c63ef7edd7f2cc8734533db94f1803b769e1cc201bd7a9e6b",
       "scorer": "configuration",
       "scorer_sha256": "ff2c7701e55c68a09f63c7dd94d3e2b350c22d5c224e9bb77a26b01869420a79"
@@ -180,6 +279,40 @@
       "response_sha256": null,
       "scorer": "command",
       "scorer_sha256": "f2181116da95d6b96069b9665ef7b77072513d026dd4de66791779bdeb08828b"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
+      "corpus_sha256": "87b256c8e533e0c68b10e4f2cc29ddeed3b1821d03bc6b2942b5abaf5f23fec3",
+      "detail": "structured output matches exactly",
+      "id": "structured-command",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "9f3d7759d2f9b5f942111554aabd39c62e21ecfe807dfc66870301046d3674c0",
+      "record_id": "7944947c2e2d651b0b960451a911f7c70c476e7b00a64a19239af98e5ca37502",
+      "response_sha256": "e7f35caa3eb02a30de3263aabdfd78950084743b352aee6c9b83cdf6c80de1d3",
+      "scorer": "structured-output",
+      "scorer_sha256": "a568bd4db2835284cafe510465310b031b59201d10e97b4bc3d1cbd6e4004f1c"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
+      "corpus_sha256": "87b256c8e533e0c68b10e4f2cc29ddeed3b1821d03bc6b2942b5abaf5f23fec3",
+      "detail": "response states and cites the canonical limitation",
+      "id": "limitation-retrieval",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "28d902d5b799c2c57604729a77315ebf992ec0e6cf824c61ff2640145b61c14f",
+      "record_id": "7c10b3b639639ff80397e8a009f403080fa84b12974a12714b88168aee3d0782",
+      "response_sha256": "8539e3f8d84ecda0e005991cb389edc490849e3534d738da4239aa2b478f9c28",
+      "scorer": "cited-limit",
+      "scorer_sha256": "9974dbe9cf56b70974cbdcc3d0ec12a0ba9e67859f32d63d58c5071696a3eaf5"
     },
     {
       "audience": "human",
@@ -440,6 +573,23 @@
       "response_sha256": null,
       "scorer": "command",
       "scorer_sha256": "f2181116da95d6b96069b9665ef7b77072513d026dd4de66791779bdeb08828b"
+    },
+    {
+      "audience": "agent",
+      "claim": "deterministic-replay",
+      "corpus_sha256": "074e26af3d7d273d3f2591bb259f5707d1730070f718cdfb732ca249967484ac",
+      "detail": "structured output matches exactly",
+      "id": "structured-command",
+      "model": {
+        "adapter": "recorded",
+        "name": "recorded-fixture"
+      },
+      "ok": true,
+      "prompt_sha256": "75305e2059825fb6b2cf4d4d7e5f11275a6b5dfe6a013eed1fb7eb2ac520f86d",
+      "record_id": "d6e77588e57ac5bb8dafbd11f3477640d1e96072fef7f157ac15232c97b7403f",
+      "response_sha256": "e7f35caa3eb02a30de3263aabdfd78950084743b352aee6c9b83cdf6c80de1d3",
+      "scorer": "structured-output",
+      "scorer_sha256": "a568bd4db2835284cafe510465310b031b59201d10e97b4bc3d1cbd6e4004f1c"
     },
     {
       "audience": "human",
