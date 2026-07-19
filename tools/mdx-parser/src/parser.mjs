@@ -131,6 +131,12 @@ function parseOne(source) {
     if (node.type === 'heading') {
       record.depth = node.depth
       record.text = plainText(node)
+    } else if (node.type === 'code') {
+      record.language = node.lang ?? null
+      record.meta = node.meta ?? null
+    } else if (node.type === 'image') {
+      record.url = node.url
+      record.alt = node.alt ?? null
     } else if (node.type === 'link') {
       record.url = node.url
       links.push({
@@ -164,6 +170,7 @@ function parseOne(source) {
     }
     if (
       node.type === 'heading' ||
+      node.type === 'image' ||
       node.type === 'link' ||
       node.type === 'definition' ||
       node.type === 'code' ||

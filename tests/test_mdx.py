@@ -24,8 +24,9 @@ def test_parser_returns_semantic_nodes_and_masks_non_prose(tmp_path: Path) -> No
         "<Callout tone=\"[attribute](./missing-attribute.md)\">\n"
         "## Nested heading\n\n"
         "Read [details](./details.md).\n"
+        "![Queue state](./queue.png)\n\n"
         "</Callout>\n\n"
-        "```md\n"
+        "```md filename=guide.md\n"
         "## Fake heading\n"
         "[fake](./missing-fence.md)\n"
         "```\n\n"
@@ -42,6 +43,10 @@ def test_parser_returns_semantic_nodes_and_masks_non_prose(tmp_path: Path) -> No
         for node in parsed.nodes
         if node.type == "heading"
     ] == [(1, "Structural guide"), (2, "Nested heading")]
+    image = next(node for node in parsed.nodes if node.type == "image")
+    code = next(node for node in parsed.nodes if node.type == "code")
+    assert (image.alt, image.url) == ("Queue state", "./queue.png")
+    assert (code.language, code.meta) == ("md", "filename=guide.md")
     assert "missing-fence.md" not in parsed.masked_text
     assert "missing-comment.md" not in parsed.masked_text
     assert not side_effect.exists()

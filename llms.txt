@@ -7,7 +7,7 @@
 - [CLEAN_DOCS_SPEC.md](CLEAN_DOCS_SPEC.md): bindings: assurance-boundaries; sha256: b7f65311b689cc4869a9825ace004dbe3f6127d19cc59acb6c68a1514f8c95f8
 - [README.md](README.md): bindings: product-overview; sha256: bfb909516e8e4b06c4e25c18efd3591850201764add8f9362f1afeb8ef1adff7
 - [SECURITY.md](SECURITY.md): declared canonical context; sha256: 5a10b7b08e5b26a5302e0f775320a59b8bd200da7fa858fc890342d7db0dd270
-- [STANDARD.md](STANDARD.md): declared canonical context; sha256: 766796ec9cd1b4a1d8d89fdeedfc1285b546447f847d2122556f4217b6c3e44d
+- [STANDARD.md](STANDARD.md): declared canonical context; sha256: 9193ab2f84587aafc05c275cbe10bc268a0c2b0f6102c2b6f3d6fa07bec8daeb
 - [docs/BEHAVIOR_SIGNALS.md](docs/BEHAVIOR_SIGNALS.md): declared canonical context; sha256: dbcc582397402dcc80ccd59942c8d8180dfe8b8fb3c497e8c8967d4fd9daa4fc
 - [docs/CLI.md](docs/CLI.md): bindings: cli-reference, verdict-reference; sha256: ccbab1fe018d562c34875ff43b1e96f557976deca308d094fd0f64deb56f9eba
 - [docs/EVALUATION.md](docs/EVALUATION.md): bindings: evaluation-scorers; sha256: d4364212c28b5f8b9bc715e54a3b55152ad5ec09ef96d69d0802ea9b048c518c
@@ -18,7 +18,7 @@
 - [docs/RELEASES.md](docs/RELEASES.md): bindings: release-guide; sha256: cc40c87393dd1784fcca7d1034ac8fd5925a7570011791a51df2853aa8be241b
 - [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md): bindings: security-model; sha256: 3434e548f279e863f04534b80f35d4f3b9a3d330f49315d365eee79d8babf6f0
 - [docs/SUPPORT.md](docs/SUPPORT.md): bindings: support-guide; sha256: 0d254610380bd7f4070a1edca3bdae1d017c2ff0976e7827794ff2ddd7b8ab7c
-- [docs/SURFACE.md](docs/SURFACE.md): bindings: repository-surface; sha256: 59ea8b9f3558ce7a723130a13573a087c3bf8cd45555a57d5c6152c8eb54ed62
+- [docs/SURFACE.md](docs/SURFACE.md): bindings: repository-surface; sha256: e85bc95985af48a872e1ba4ed13e5f74189a8b0488a0ddad1f322b8b4e5b7cc8
 - [docs/learn/deep-dive-the-deterministic-seam.md](docs/learn/deep-dive-the-deterministic-seam.md): bindings: deterministic-seam-evidence, deterministic-seam-gate, deterministic-seam-phrasing; sha256: be392a4b5c484e2c88d8df783679ba49fe4a4db62e89d844c7f04cf82a547969
 - [docs/learn/index.md](docs/learn/index.md): declared canonical context; sha256: 1348b79a6842d8e479502560fa4aa481322abcc1863fb0e8c9c94365efa93932
 - [docs/learn/postmortem-the-readme-that-lied.md](docs/learn/postmortem-the-readme-that-lied.md): bindings: postmortem-examples, postmortem-measurements; sha256: ec7c89febc6de52884bc6bdf4955ebea1e261d8fd94b1ccacf1386b812597f98
