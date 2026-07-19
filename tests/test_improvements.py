@@ -4,7 +4,6 @@ import json
 import hashlib
 from copy import deepcopy
 import subprocess
-import hashlib
 from pathlib import Path
 
 import pytest
@@ -357,11 +356,13 @@ def test_receipt_evidence_rejects_mutated_or_incomplete_context(
 
 def test_missing_receipt_bytes_remain_unknown(tmp_path: Path) -> None:
     payload = _receipt_payload(tmp_path)
+    grounded = compile_improvement_candidates(payload, root=tmp_path)
     (tmp_path / "receipt.json").unlink()
 
     candidates = compile_improvement_candidates(payload, root=tmp_path)
 
     assert candidates.candidates[0].evidence[0]["receipt"]["state"] == "unknown"
+    assert candidates.candidates[0].id == grounded.candidates[0].id
 
 
 def test_cli_writes_and_checks_candidate_set(tmp_path: Path, capsys) -> None:

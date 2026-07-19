@@ -17,13 +17,13 @@ The catalog binding catches additions, removals, and replacements across the det
 <!-- clean-docs:begin repository-surface -->
 | surface | discovered | examples |
 | --- | ---: | --- |
-| api-symbol | 290 | `AcceptanceCase`, `Assertion`, `AuditFinding`, and 287 more |
+| api-symbol | 292 | `AcceptanceCase`, `Assertion`, `AuditFinding`, and 289 more |
 | cli-command | 42 | `audit`, `benchmark`, `binding`, and 39 more |
-| cli-option | 85 | `--accept-hygiene-baseline`, `--base`, `--binding`, and 82 more |
+| cli-option | 86 | `--accept-hygiene-baseline`, `--base`, `--binding`, and 83 more |
 | package | 2 | `clean-docs`, `clean-docs-mdx-parser-build` |
 | package-script | 1 | `build` |
 | runtime-constraint | 3 | `ES modules`, `Python >=3.10`, `node >=20` |
 | test-suite | 66 | `scripts/test_readme_quickstart.py`, `scripts/test_release_lifecycle.py`, `tests/test_accessibility.py`, and 63 more |
 
-<!-- clean-docs:inventory-sha256 d95229268f148d7d9fae158c52c5a575a5afc55de698f9c7e52d5f917566bed8 -->
+<!-- clean-docs:inventory-sha256 94e3f91e2d88f031bf6d0e19a225ce1ea6309d93089de8c9bef82825d8c0108e -->
 <!-- clean-docs:end repository-surface -->

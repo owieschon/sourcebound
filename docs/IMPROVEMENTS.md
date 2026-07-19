@@ -12,10 +12,10 @@ authorized change.
 
 The output indexes proposed work: every candidate has a content-derived ID, evidence fields, two
 proposed tests, and explicit `gate_authority: false` and `change_authority: false` fields.
-Compilation validates shape and, when run in a repository, resolves repository evidence at the
-pinned review commit. `--check` validates projection freshness. Neither mode validates external or
-receipt evidence, judges whether a proposed test is adequate, or proves that the observation set is
-complete.
+Compilation validates shape and immutable receipt contracts and, when run in a repository, resolves
+repository evidence at the pinned review commit. `--check` validates projection freshness. Neither
+mode validates external evidence, judges whether a proposed test is adequate, or proves that the
+observation set is complete.
 
 ## Review observations
 
@@ -62,8 +62,8 @@ or product track, unsupported test kinds, duplicate observation IDs, and output 
 repository.
 
 When the command runs in a repository, it opens each cited file at the pinned review commit and
-searches the locator. The output marks the citation `grounded` or `unknown`; remote sources and
-command receipts remain `unverified` until immutable records bind them.
+searches the locator. The output marks a repository citation `grounded` or `unknown`; receipt
+evidence reports whether its immutable bytes are available and match the recorded contract.
 
 Check that the committed candidate set still matches its observations:
 

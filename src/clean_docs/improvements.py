@@ -313,6 +313,22 @@ def _evidence(
     return tuple(normalized)
 
 
+def _candidate_identity_evidence(
+    evidence: tuple[dict[str, object], ...],
+) -> list[dict[str, object]]:
+    """Keep availability observations out of a candidate's stable identity."""
+    identity = []
+    for item in evidence:
+        normalized = dict(item)
+        receipt = normalized.get("receipt")
+        if isinstance(receipt, dict):
+            normalized["receipt"] = {
+                key: value for key, value in receipt.items() if key != "state"
+            }
+        identity.append(normalized)
+    return identity
+
+
 def compile_improvement_candidates(
     payload: dict[str, Any],
     *,
@@ -386,7 +402,7 @@ def compile_improvement_candidates(
             "review_id": review_id,
             "observation_id": observation_id,
             "summary": summary,
-            "evidence": list(evidence),
+            "evidence": _candidate_identity_evidence(evidence),
             "tracks": [
                 {
                     "target": track.target,
