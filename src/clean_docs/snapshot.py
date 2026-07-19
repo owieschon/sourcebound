@@ -1,31 +1,59 @@
 from __future__ import annotations
 
+import ntpath
 import posixpath
 import subprocess
 import tarfile
 import tempfile
 from contextlib import contextmanager
-from fnmatch import fnmatch
 from dataclasses import dataclass
-from pathlib import Path, PurePosixPath
 from collections.abc import Iterator
+from fnmatch import fnmatch
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from clean_docs.errors import ExtractionError
 
 
+def _archive_path_is_safe(value: str) -> bool:
+    posix_path = PurePosixPath(value)
+    windows_path = PureWindowsPath(value)
+    return not (
+        posix_path.is_absolute()
+        or windows_path.drive
+        or windows_path.root
+        or ".." in posix_path.parts
+        or ".." in windows_path.parts
+    )
+
+
+def _symlink_target_is_safe(member_name: str, link_name: str) -> bool:
+    posix_link = PurePosixPath(link_name)
+    windows_link = PureWindowsPath(link_name)
+    if (
+        posix_link.is_absolute()
+        or windows_link.drive
+        or windows_link.root
+        or ("\\" in link_name and ".." in windows_link.parts)
+    ):
+        return False
+
+    posix_target = posixpath.normpath(
+        (PurePosixPath(member_name).parent / posix_link).as_posix()
+    )
+    windows_target = ntpath.normpath(
+        str(PureWindowsPath(member_name).parent / windows_link)
+    )
+    return _archive_path_is_safe(posix_target) and _archive_path_is_safe(
+        windows_target
+    )
+
+
 def _member_is_safe(member: tarfile.TarInfo) -> bool:
-    path = PurePosixPath(member.name)
-    if path.is_absolute() or ".." in path.parts or member.islnk():
+    if not _archive_path_is_safe(member.name) or member.islnk():
         return False
     if not member.issym():
         return True
-    link = PurePosixPath(member.linkname)
-    if link.is_absolute():
-        return False
-    target = PurePosixPath(
-        posixpath.normpath((path.parent / link).as_posix())
-    )
-    return not target.is_absolute() and ".." not in target.parts
+    return _symlink_target_is_safe(member.name, member.linkname)
 
 
 @dataclass(frozen=True)
@@ -145,7 +173,10 @@ class RepositorySnapshot:
                     )
                 target_name = target.as_posix()
                 if target_name == ".":
-                    return []
+                    raise ExtractionError(
+                        "selected snapshot symlink expands scope to "
+                        f"repository root: {name}"
+                    )
                 if any(
                     target_name == selected_path
                     or target_name.startswith(selected_path + "/")
