@@ -228,6 +228,7 @@ projections:
       - docs/BEHAVIOR_SIGNALS.md
       - docs/FEEDBACK.md
       - docs/EXTENSIONS.md
+      - docs/ARCHITECTURE.md
       - docs/INSTALL.md
       - docs/IMPROVEMENTS.md
       - docs/LIFECYCLE_EVIDENCE.md

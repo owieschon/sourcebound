@@ -888,6 +888,29 @@ def test_audit_never_counts_mdx_as_checked_when_runtime_is_missing(
     )
 
 
+def test_audit_needs_no_node_for_markdown_only_repository(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def unexpected_mdx_runtime_check() -> tuple[bool, str]:
+        raise AssertionError("Markdown audit invoked the MDX adapter")
+
+    root = _repo(tmp_path)
+    (root / ".sourcebound.yml").write_text("version: 1\nbindings: []\n")
+    (root / "README.md").write_text("# Project\n")
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+    monkeypatch.setattr(
+        "clean_docs.audit.parser_availability",
+        unexpected_mdx_runtime_check,
+    )
+
+    report = audit(root)
+
+    assert report.ok
+    assert report.documents == ("README.md",)
+    assert report.unsupported_documents == ()
+
+
 def test_mdx_template_placeholder_is_advisory_not_a_broken_link(
     tmp_path: Path,
 ) -> None:

@@ -127,6 +127,10 @@ def test_release_workflow_attests_wheel_and_sbom() -> None:
     assert "python scripts/publish_release.py" in publisher["run"]
     assert "--source-digest \"$GITHUB_SHA\"" in publisher["run"]
     assert "gh release create" not in publisher["run"]
+    pypi = next(step for step in steps if step.get("name") == "Publish the attested wheel to PyPI")
+    assert pypi["if"] == "vars.PYPI_PUBLISH_ENABLED == 'true'"
+    assert pypi["uses"] == "pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247"
+    assert pypi["with"] == {"packages-dir": "dist/"}
     publication_upload = next(
         step for step in steps if step.get("name") == "Upload publication receipt"
     )
