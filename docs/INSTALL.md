@@ -29,6 +29,9 @@ sourcebound --version
 The version must match the wheel filename. A GitHub release contains the Sourcebound wheel, its SPDX
 file, checksums, and attestations. It does not contain dependency wheels.
 
+The supported executable is `sourcebound`. Install the current wheel when moving from an earlier
+package identity; do not preserve an unverified local alias as a CI contract.
+
 ## Install without package-index access
 
 Place the Sourcebound wheel and a compatible PyYAML wheel in a local `wheelhouse`, then prohibit index

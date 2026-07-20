@@ -188,6 +188,31 @@ review_contracts:
         path: SOURCEBOUND_SPEC.md
         extractor: markdown-section
         locator: "#evidence-and-execution"
+public_dispositions:
+  - base: 2dddc88e0f4d08a75c63ff7c080412976e580b21
+    kind: event
+    subject: d42fb3ef1f98bf03c1fbcf0cd8cf42c10ee3ac1aad299bc9323fda478c2c2351
+    documentation: docs/INSTALL.md
+    replacement: sourcebound
+    reason: The installation guide names the supported executable and upgrade path.
+  - base: 2dddc88e0f4d08a75c63ff7c080412976e580b21
+    kind: event
+    subject: 4457b7281d00ea8f49113cbfff347ef0787a6e434ebe4e8991bb6b3126c2bba2
+    documentation: docs/learn/tutorial-catch-a-lying-doc.md
+    replacement: sourcebound
+    reason: The tutorial names the supported executable used by its fixture workflow.
+  - base: 2dddc88e0f4d08a75c63ff7c080412976e580b21
+    kind: artifact
+    subject: 4524f5acc1257277eb32cf7f4cd16379cbeba5d322f75676949990a177adeb5f
+    documentation: docs/learn/deep-dive-the-deterministic-seam.md
+    replacement: docs/assets/sourcebound-social.svg
+    reason: The accessible projection names the maintained source for the social preview.
+  - base: 2dddc88e0f4d08a75c63ff7c080412976e580b21
+    kind: artifact
+    subject: d1a75b3b68503d3128b77830523a86efeb30cdeb769cc1909442ef83baf90d20
+    documentation: docs/learn/deep-dive-the-deterministic-seam.md
+    replacement: docs/assets/sourcebound-social.svg
+    reason: The accessible projection names the maintained source for the social preview.
 projections:
   llms_txt:
     output: llms.txt

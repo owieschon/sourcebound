@@ -273,6 +273,28 @@ operating-system network sandbox. Version 1 remains readable. If it contains `ne
 sourcebound marks that field as deprecated; it neither blocks nor counts network traffic. Run
 `sourcebound migrate --write` to remove the field with a rollback backup.
 
+## Record a historical public-surface change
+
+Use `public_dispositions` when a pull request retires a public command, option, or asset and its
+prior identifier must not become new reader-facing prose. Each record names the exact merge-base and
+event or artifact digest from `sourcebound plan`, points to the documentation that names the replacement, and
+states why that route is sufficient. It applies only to that one comparison. A later change produces
+a different finding digest and returns to normal review.
+
+```yaml
+public_dispositions:
+  - base: 0123456789abcdef0123456789abcdef01234567
+    kind: event
+    subject: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+    documentation: docs/INSTALL.md
+    replacement: sourcebound
+    reason: The installation guide names the supported executable and upgrade path.
+```
+
+Sourcebound checks that the named Markdown page exists and names the replacement. It cannot hide a
+current public change, vouch for replacement behavior, or carry across base revisions. The record
+states why a past public surface no longer has a source-to-document link at head.
+
 ## Structured visual projections
 
 A visual record owns the meaning shared by an annotated human image and its agent-readable text

@@ -65,6 +65,7 @@ SCRIPT_EXPORT = re.compile(
 
 @dataclass(frozen=True)
 class ImpactArtifact:
+    id: str
     path: str
     change: str
     base_blob: str | None
@@ -1203,6 +1204,7 @@ def build_impact_plan(
             decision = "adapter found no public contract delta"
         artifacts.append(
             ImpactArtifact(
+                id=_identifier("artifact", repository_path, base_blob, head_blob),
                 path=repository_path,
                 change=_change_kind(base_blob, head_blob),
                 base_blob=base_blob,
@@ -1224,6 +1226,7 @@ def build_impact_plan(
     recommended: list[ImpactFinding] = []
     unrelated: list[ImpactFinding] = []
     unknown: list[ImpactFinding] = []
+    disposition_subjects: dict[str, tuple[str, str]] = {}
 
     for result in review_contract_results:
         if result.state not in {"review-recommended", "unknown"}:
@@ -1345,16 +1348,16 @@ def build_impact_plan(
             )
             continue
         if event.coverage == "standard-gap":
-            unknown.append(
-                _finding(
-                    "unknown",
-                    "unsupported-public-contract",
-                    f"{event.kind} has no accepted documentation relationship",
-                    paths=(event.path,),
-                    roots=event.graph_roots,
-                    obligations=("declare-binding-or-reasoned-ignore",),
-                )
+            finding = _finding(
+                "unknown",
+                "unsupported-public-contract",
+                f"{event.kind} has no accepted documentation relationship",
+                paths=(event.path,),
+                roots=event.graph_roots,
+                obligations=("declare-binding-or-reasoned-ignore",),
             )
+            unknown.append(finding)
+            disposition_subjects[finding.id] = ("event", event.id)
             continue
         obligations = (
             ("review-reference", "review-migration")
@@ -1445,28 +1448,31 @@ def build_impact_plan(
             continue
         if artifact.coverage == "unknown":
             unsupported_document = artifact.adapter.startswith("mdx-static:failed")
-            unknown.append(
-                _finding(
-                    "unknown",
-                    (
-                        "unsupported-document-format"
-                        if unsupported_document
-                        else "unsupported-public-candidate"
-                    ),
-                    (
-                        f"{artifact.path} is an unsupported MDX document"
-                        if unsupported_document
-                        else f"{artifact.path} may expose a public surface, "
-                        "but no adapter can classify it"
-                    ),
-                    paths=(artifact.path,),
-                    roots=artifact.graph_roots,
-                    obligations=(
-                        ("add-mdx-adapter-or-review-manually",)
-                        if unsupported_document
-                        else ("add-adapter-or-declare-scope",)
-                    ),
-                )
+            finding = _finding(
+                "unknown",
+                (
+                    "unsupported-document-format"
+                    if unsupported_document
+                    else "unsupported-public-candidate"
+                ),
+                (
+                    f"{artifact.path} is an unsupported MDX document"
+                    if unsupported_document
+                    else f"{artifact.path} may expose a public surface, "
+                    "but no adapter can classify it"
+                ),
+                paths=(artifact.path,),
+                roots=artifact.graph_roots,
+                obligations=(
+                    ("add-mdx-adapter-or-review-manually",)
+                    if unsupported_document
+                    else ("add-adapter-or-declare-scope",)
+                ),
+            )
+            unknown.append(finding)
+            disposition_subjects[finding.id] = (
+                "artifact",
+                artifact.id,
             )
         elif artifact.coverage == "generated":
             unrelated.append(
@@ -1498,6 +1504,31 @@ def build_impact_plan(
                     roots=artifact.graph_roots,
                 )
             )
+
+    active_dispositions = {
+        (item.kind, item.subject): item
+        for item in manifest.public_dispositions
+        if item.base == changed.base
+    }
+    undisposed_unknown: list[ImpactFinding] = []
+    for finding in unknown:
+        subject = disposition_subjects.get(finding.id)
+        disposition = active_dispositions.get(subject) if subject is not None else None
+        if disposition is None:
+            undisposed_unknown.append(finding)
+            continue
+        unrelated.append(
+            _finding(
+                "unrelated",
+                "declared-public-disposition",
+                "a historical public-surface finding is documented in "
+                f"{disposition.documentation} and replaced by "
+                f"{disposition.replacement}: {disposition.reason}",
+                paths=tuple(sorted(set(finding.paths + (disposition.documentation.as_posix(),)))),
+                roots=finding.graph_roots,
+            )
+        )
+    unknown = undisposed_unknown
 
     def _normalized(items: list[ImpactFinding]) -> tuple[ImpactFinding, ...]:
         return tuple(sorted({item.id: item for item in items}.values(), key=lambda item: item.id))
