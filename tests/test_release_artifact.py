@@ -127,10 +127,18 @@ def test_release_workflow_attests_wheel_and_sbom() -> None:
     assert "python scripts/publish_release.py" in publisher["run"]
     assert "--source-digest \"$GITHUB_SHA\"" in publisher["run"]
     assert "gh release create" not in publisher["run"]
+    pypi_stage = next(step for step in steps if step.get("name") == "Stage the PyPI distribution")
+    assert pypi_stage["if"] == "vars.PYPI_PUBLISH_ENABLED == 'true'"
+    assert "find dist -maxdepth 1 -type f -name '*.whl'" in pypi_stage["run"]
+    assert 'if [[ "${#wheels[@]}" -ne 1 ]]' in pypi_stage["run"]
+    assert 'cp -f -- "${wheels[0]}" pypi-dist/' in pypi_stage["run"]
+    assert "spdx" not in pypi_stage["run"]
+    assert "SHA256SUMS" not in pypi_stage["run"]
+    assert "release.json" not in pypi_stage["run"]
     pypi = next(step for step in steps if step.get("name") == "Publish the attested wheel to PyPI")
     assert pypi["if"] == "vars.PYPI_PUBLISH_ENABLED == 'true'"
     assert pypi["uses"] == "pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247"
-    assert pypi["with"] == {"packages-dir": "dist/"}
+    assert pypi["with"] == {"packages-dir": "pypi-dist/"}
     publication_upload = next(
         step for step in steps if step.get("name") == "Upload publication receipt"
     )
