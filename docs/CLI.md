@@ -29,6 +29,8 @@ The table is generated from the command registry used by the parser:
 | context compile | Compile a bounded source-addressed context bundle | no | sourcebound context compile --request context-request.json |
 | review | Turn review observations into testable improvement candidates | with --out | sourcebound review --help |
 | review candidates | Compile documentation and product test candidates from one review | with --out | sourcebound review candidates --input review-observations.json |
+| review ledger | Initialize an append-only review denominator | with init | sourcebound review ledger --help |
+| review ledger init | Initialize a review ledger before it reaches a protected branch | yes | sourcebound review ledger init --input review.json --out events.json |
 | review lifecycle | Track assessment-only candidate status with typed evidence | with init or transition | sourcebound review lifecycle --help |
 | review lifecycle init | Initialize a lifecycle record for one candidate set | yes | sourcebound review lifecycle init --input review.json --out lifecycle.json |
 | review lifecycle transition | Apply one evidence-backed candidate transition | yes | sourcebound review lifecycle transition --help |

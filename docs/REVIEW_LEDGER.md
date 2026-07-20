@@ -9,6 +9,20 @@ gate or authorization to change the repository.
 
 **[Compile candidates first](IMPROVEMENTS.md#compile-candidates)**.
 
+## Initialize the denominator
+
+Create the ledger once, before it is protected on the default branch:
+
+```bash
+sourcebound review ledger init \
+  --input .sourcebound/reviews/repository-review.json \
+  --out .sourcebound/reviews/repository-events.json
+```
+
+Initialization writes one candidate event for each compiled observation. It refuses to replace an
+existing ledger. `--force` is only for a ledger that has not reached a protected branch; published
+history must be extended with a new observation and an explicit disposition instead.
+
 ## Check the current candidate set
 
 Pass the ledger when you compile, then use `--check` in CI:
@@ -29,7 +43,7 @@ the work. The ledger records the review denominator; it does not decide whether 
 ## Protect the base history
 
 In CI, provide the ledger from the protected base commit as `--prior-ledger`. A pull request may
-append events, but it cannot alter base-branch events. The first version 2 record binds the version
-1 head it replaces; later records preserve that anchor. Record a changed problem as a new review
-observation or an explicit `merged` or `superseded` event. Do not rewrite a prior candidate to make
-the check green.
+append events, but it cannot alter base-branch events. A version 2 ledger migrated from version 1
+binds the version 1 head it replaces; a fresh version 2 ledger has no migration anchor. Record a
+changed problem as a new review observation or an explicit `merged` or `superseded` event. Do not
+rewrite a prior candidate to make the check green.

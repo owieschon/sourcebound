@@ -279,6 +279,31 @@ def test_review_event_ledger_keeps_explicit_merged_history(tmp_path: Path) -> No
     assert validate_review_event_ledger(ledger_path, candidates) == second["digest"]
 
 
+def test_review_ledger_init_writes_a_current_fresh_denominator(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    repository = tmp_path / "repository"
+    commit = _repository(repository)
+    payload = _payload()
+    payload["repository_commit"] = commit
+    (repository / "review.json").write_text(json.dumps(payload))
+
+    assert main([
+        "--root", str(repository), "review", "ledger", "init",
+        "--input", "review.json", "--out", ".sourcebound/events.json", "--format", "text",
+    ]) == 0
+    assert "[written] .sourcebound/events.json: 1 event(s)" in capsys.readouterr().out
+
+    candidates = load_review_candidates(repository / "review.json", root=repository)
+    assert validate_review_event_ledger(repository / ".sourcebound/events.json", candidates)
+    assert main([
+        "--root", str(repository), "review", "ledger", "init",
+        "--input", "review.json", "--out", ".sourcebound/events.json",
+    ]) == 2
+    assert "refuses to replace" in capsys.readouterr().err
+
+
 def test_review_event_ledger_requires_the_base_history_as_an_exact_prefix(
     tmp_path: Path,
 ) -> None:
