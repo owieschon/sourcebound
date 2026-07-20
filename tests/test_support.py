@@ -26,10 +26,10 @@ def test_reader_install_and_repair_guidance_matches_candidate_artifacts() -> Non
         "./wheelhouse/sourcebound-*.whl"
     ) in install
     assert "The version must match the wheel filename" in install
-    checksum_section = install.split("## Verify release artifacts", 1)[1]
+    checksum_section = (PROJECT / "docs/VERIFY_RELEASE.md").read_text()
     assert "python3 - <<'PY'" in checksum_section
     assert "\npython - <<'PY'" not in checksum_section
-    assert "expected one wheel" in install
+    assert "expected one wheel" in checksum_section
     assert "non-ignored untracked Markdown and MDX files enter the" in support
     normalized_readme = " ".join(readme.split())
     assert "run `check`, then use `drive` for a declared repair" in normalized_readme

@@ -37,17 +37,17 @@ Human review can improve a sentence. It cannot make the sentence fail when its d
 
 ## Install in the repository you want to protect
 
-From that repository, download the latest stable wheel, install it in an isolated environment, and run the manifest-free audit:
+Install the stable CLI in an isolated environment, then run the manifest-free audit from the
+repository you want to protect:
 
 ```bash
-release_dir="$(mktemp -d)"
-gh release download --repo owieschon/sourcebound \
-  --pattern 'sourcebound-*-py3-none-any.whl' --dir "$release_dir"
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install "$release_dir"/sourcebound-*.whl
+pipx install sourcebound
 sourcebound audit
 ```
+
+Use `uv tool install sourcebound` instead when `uv` owns your command-line tools. The
+[installation guide](docs/INSTALL.md) covers offline wheelhouses, upgrades, and rollback. The
+[release verification guide](docs/VERIFY_RELEASE.md) checks published bytes and provenance.
 
 After reviewing the assessment, inspect the files that `init` proposes before accepting its gate:
 

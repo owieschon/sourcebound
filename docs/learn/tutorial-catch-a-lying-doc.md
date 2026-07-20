@@ -5,7 +5,7 @@
 This tutorial is for maintainers who want to see one source-bound fact fail and recover in a disposable repository. It turns an easy-to-miss command rename into a named check failure, a region-only repair, and a verified projection using an installed sourcebound release.
 <!-- sourcebound:end purpose -->
 
-**[Install the stable release](../INSTALL.md#install-the-latest-stable-release)**, then
+**[Install the stable release](../INSTALL.md#install-from-a-github-release)**, then
 build the disposable repository below.
 
 Success appears in the [outcome receipt](../SUPPORT.md#record-local-outcomes) after the last

@@ -30,8 +30,7 @@ def test_published_wheel_checksum_command_accepts_matching_artifact(tmp_path: Pa
     digest = hashlib.sha256(wheel.read_bytes()).hexdigest()
     (tmp_path / "SHA256SUMS").write_text(f"{digest}  {wheel.name}\n")
 
-    install = (ROOT / "docs/INSTALL.md").read_text()
-    section = install.split("## Verify release artifacts", maxsplit=1)[1]
+    section = (ROOT / "docs/VERIFY_RELEASE.md").read_text()
     match = re.search(r"```bash\npython3 - <<'PY'\n(.*?)\nPY\n", section, re.DOTALL)
     assert match is not None
 
@@ -69,9 +68,12 @@ def test_release_toolchain_and_ci_install_are_pinned() -> None:
         "setuptools==75.8.0",
         "wheel==0.45.1",
     ]
-    assert {"build==1.2.2.post1", "setuptools==75.8.0", "wheel==0.45.1"} <= set(
-        project["project"]["optional-dependencies"]["dev"]
-    )
+    assert {
+        "build==1.2.2.post1",
+        "pipx==1.8.0",
+        "setuptools==75.8.0",
+        "wheel==0.45.1",
+    } <= set(project["project"]["optional-dependencies"]["dev"])
     package = (ROOT / "src/clean_docs/__init__.py").read_text()
     assert '__version__ = "' not in package
     assert 'version("sourcebound")' in package
@@ -88,7 +90,9 @@ def test_release_toolchain_and_ci_install_are_pinned() -> None:
     quickstart_commands = [
         step["run"] for step in quickstart["steps"] if "run" in step
     ]
+    assert any('"pipx==1.8.0"' in command for command in quickstart_commands)
     assert any("pip download --only-binary=:all:" in command for command in quickstart_commands)
+    assert any('"pip==25.3"' in command for command in quickstart_commands)
     assert any("scripts/test_readme_quickstart.py" in command for command in quickstart_commands)
     quickstart_upload = next(
         step for step in quickstart["steps"] if step.get("uses") == UPLOAD_ARTIFACT
@@ -112,6 +116,7 @@ def test_release_workflow_attests_wheel_and_sbom() -> None:
     assert "python scripts/test_release_lifecycle.py --wheel dist/*.whl" in commands
     assert any("scripts/test_readme_quickstart.py" in command for command in commands)
     assert any("pip download --only-binary=:all:" in command for command in commands)
+    assert any('"pip==25.3"' in command for command in commands)
     attestations = [step for step in steps if str(step.get("uses", "")).startswith("actions/attest@")]
     assert len(attestations) == 2
     assert attestations[0]["with"] == {"subject-path": "dist/*.whl"}
@@ -128,7 +133,7 @@ def test_release_workflow_attests_wheel_and_sbom() -> None:
     assert "--source-digest \"$GITHUB_SHA\"" in publisher["run"]
     assert "gh release create" not in publisher["run"]
     pypi_stage = next(step for step in steps if step.get("name") == "Stage the PyPI distribution")
-    assert pypi_stage["if"] == "vars.PYPI_PUBLISH_ENABLED == 'true'"
+    assert "if" not in pypi_stage
     assert "find dist -maxdepth 1 -type f -name '*.whl'" in pypi_stage["run"]
     assert 'if [[ "${#wheels[@]}" -ne 1 ]]' in pypi_stage["run"]
     assert 'cp -f -- "${wheels[0]}" pypi-dist/' in pypi_stage["run"]
@@ -136,13 +141,30 @@ def test_release_workflow_attests_wheel_and_sbom() -> None:
     assert "SHA256SUMS" not in pypi_stage["run"]
     assert "release.json" not in pypi_stage["run"]
     pypi = next(step for step in steps if step.get("name") == "Publish the attested wheel to PyPI")
-    assert pypi["if"] == "vars.PYPI_PUBLISH_ENABLED == 'true'"
+    assert "if" not in pypi
     assert pypi["uses"] == "pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247"
-    assert pypi["with"] == {"packages-dir": "pypi-dist/"}
+    assert pypi["with"] == {
+        "packages-dir": "pypi-dist/",
+        "skip-existing": True,
+    }
+    verifier_install = next(
+        step for step in steps if step.get("name") == "Install publication verifiers"
+    )
+    assert verifier_install["if"] == "${{ always() && steps.publish-pypi.outcome != 'skipped' }}"
+    assert verifier_install["run"] == 'python -m pip install "pipx==1.8.0" "uv==0.8.22"'
+    verifier = next(
+        step for step in steps if step.get("name") == "Verify published bytes and installers"
+    )
+    assert verifier["if"] == "${{ always() && steps.publish-pypi.outcome != 'skipped' }}"
+    assert verifier["env"] == {"GH_TOKEN": "${{ github.token }}"}
+    assert "python scripts/verify_published_release.py" in verifier["run"]
+    assert "--out sourcebound-publication-verification.json" in verifier["run"]
     publication_upload = next(
         step for step in steps if step.get("name") == "Upload publication receipt"
     )
+    assert publication_upload["if"] == "always()"
     assert "release-publication.json" in publication_upload["with"]["path"]
+    assert "sourcebound-publication-verification.json" in publication_upload["with"]["path"]
     assert "sourcebound-quickstart.json" in publication_upload["with"]["path"]
     assert publication_upload["with"]["if-no-files-found"] == "error"
 

@@ -230,6 +230,7 @@ projections:
       - docs/EXTENSIONS.md
       - docs/ARCHITECTURE.md
       - docs/INSTALL.md
+      - docs/VERIFY_RELEASE.md
       - docs/IMPROVEMENTS.md
       - docs/LIFECYCLE_EVIDENCE.md
       - docs/REVIEW_LEDGER.md
