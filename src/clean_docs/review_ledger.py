@@ -11,6 +11,7 @@ from typing import Any
 
 from clean_docs.errors import ConfigurationError, PolicyError
 from clean_docs.improvements import ImprovementCandidateSet
+from clean_docs.regions import atomic_write
 
 
 REVIEW_EVENT_LEDGER_SCHEMA = "sourcebound.review-event-ledger.v2"
@@ -124,6 +125,26 @@ class ReviewEventLedger:
     head_digest: str
     migration_base_head_digest: str | None
 
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "schema": self.schema,
+            "review_id": self.review_id,
+            "events": [
+                {
+                    "id": event.id,
+                    "observation_id": event.observation_id,
+                    "disposition": event.disposition,
+                    "candidate_id": event.candidate_id,
+                    "successor": event.successor,
+                    "previous_digest": event.previous_digest,
+                    "digest": event.digest,
+                }
+                for event in self.events
+            ],
+            "head_digest": self.head_digest,
+            "migration_base_head_digest": self.migration_base_head_digest,
+        }
+
 
 def _load_review_event_ledger(path: Path) -> ReviewEventLedger:
     """Load one internally consistent ledger without assigning candidate authority."""
@@ -230,3 +251,47 @@ def validate_review_event_ledger(
             if successor is None or successor.disposition != "candidate":
                 raise PolicyError(f"review event {event.id} has no candidate successor")
     return events[-1].digest
+
+
+def initialize_review_event_ledger(
+    candidates: ImprovementCandidateSet,
+) -> ReviewEventLedger:
+    """Start a version 2 ledger from one compiled candidate denominator."""
+    events: list[ReviewEvent] = []
+    previous_digest: str | None = None
+    for candidate in candidates.candidates:
+        event = ReviewEvent(
+            id=f"event-{candidate.observation_id}",
+            observation_id=candidate.observation_id,
+            disposition="candidate",
+            candidate_id=candidate.id,
+            successor=None,
+            previous_digest=previous_digest,
+            digest="",
+        )
+        event = ReviewEvent(
+            id=event.id,
+            observation_id=event.observation_id,
+            disposition=event.disposition,
+            candidate_id=event.candidate_id,
+            successor=event.successor,
+            previous_digest=event.previous_digest,
+            digest=_event_digest(event),
+        )
+        events.append(event)
+        previous_digest = event.digest
+    if not events:
+        raise ConfigurationError("review event ledger requires at least one candidate")
+    return ReviewEventLedger(
+        schema=REVIEW_EVENT_LEDGER_SCHEMA,
+        review_id=candidates.review_id,
+        events=tuple(events),
+        head_digest=events[-1].digest,
+        migration_base_head_digest=None,
+    )
+
+
+def write_review_event_ledger(ledger: ReviewEventLedger, output: Path) -> Path:
+    """Write one initial review ledger atomically."""
+    atomic_write(output, json.dumps(ledger.as_dict(), indent=2, ensure_ascii=False) + "\n")
+    return output

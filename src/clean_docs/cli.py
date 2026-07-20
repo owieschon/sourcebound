@@ -71,6 +71,7 @@ from clean_docs.release import (
 )
 from clean_docs.regions import atomic_write
 from clean_docs.review_ledger import validate_review_event_ledger
+from clean_docs.review_ledger import initialize_review_event_ledger, write_review_event_ledger
 from clean_docs.residue import LOCAL_CONFIG_NAME, load_local_residue_rules
 from clean_docs.sensitivity import (
     decode_json_object,
@@ -189,6 +190,26 @@ def _parser() -> argparse.ArgumentParser:
         choices=("text", "json"),
         default="json",
     )
+    review_ledger = review_sub.add_parser(
+        "ledger",
+        help=_command_help("review ledger"),
+    )
+    review_ledger_sub = review_ledger.add_subparsers(
+        dest="review_ledger_command",
+        required=True,
+    )
+    ledger_init = review_ledger_sub.add_parser(
+        "init",
+        help=_command_help("review ledger init"),
+    )
+    ledger_init.add_argument("--input", type=Path, required=True)
+    ledger_init.add_argument("--out", type=Path, required=True)
+    ledger_init.add_argument(
+        "--force",
+        action="store_true",
+        help="replace an existing unpublished ledger",
+    )
+    ledger_init.add_argument("--format", choices=("text", "json"), default="json")
     review_lifecycle = review_sub.add_parser(
         "lifecycle",
         help=_command_help("review lifecycle"),
@@ -635,6 +656,29 @@ def _main(argv: list[str] | None = None) -> int:
                     print(
                         f"[written] {relative_output.as_posix()}: "
                         f"{len(candidates.candidates)} candidate(s)"
+                    )
+                return 0
+
+            if args.review_command == "ledger":
+                output = args.out if args.out.is_absolute() else root / args.out
+                try:
+                    relative_output = output.resolve().relative_to(root)
+                except ValueError as exc:
+                    raise ConfigurationError(
+                        "review ledger output must stay inside the repository"
+                    ) from exc
+                if output.exists() and not args.force:
+                    raise ConfigurationError(
+                        "review ledger init refuses to replace an existing ledger; use --force"
+                    )
+                ledger = initialize_review_event_ledger(candidates)
+                write_review_event_ledger(ledger, output)
+                if args.format == "json":
+                    print(json.dumps(ledger.as_dict(), indent=2))
+                else:
+                    print(
+                        f"[written] {relative_output.as_posix()}: "
+                        f"{len(ledger.events)} event(s)"
                     )
                 return 0
 

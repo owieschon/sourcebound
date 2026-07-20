@@ -2,7 +2,7 @@
   "schema": "sourcebound.improvement-candidate-lifecycle.v2",
   "candidate_set": {
     "review_id": "repository-review",
-    "digest": "435e266842829c32c74f7843f4d2535b448f42b5383762f396626a2ab159d575",
+    "digest": "ef5dc4486b55cb138b7fcd05db71f039525235adf08f73fcfae26aa200fee17f",
     "repository_commit": "09e6551b89f43d6896ec44d823966d4491d06ab6"
   },
   "authority": {
@@ -14,7 +14,7 @@
   "candidates": [
     {
       "observation_id": "accepted-writing-debt",
-      "candidate_id": "342a476a6b356e7aea0ba0142abed4b6541f2f86e17780bf68f2fc0f96b9b35f",
+      "candidate_id": "3291fdd7af2ca5193d7bc2407660c973f1ec7931a52110c3e77c25b64593e93f",
       "state": "proposed",
       "history": []
     },
@@ -62,7 +62,7 @@
     },
     {
       "observation_id": "context-package-delivery",
-      "candidate_id": "c5ea6fb750626b7b4fa20e8b926bb6b05286514e7feba1cfdc01a6b40225a663",
+      "candidate_id": "5bb6e40142c76e3c4f0d8e9b9bf6ef71568876cec73a5e33b8969640e2c29c1f",
       "state": "proposed",
       "history": []
     },
@@ -80,7 +80,7 @@
     },
     {
       "observation_id": "direct-coverage-gap",
-      "candidate_id": "f454212db98a015c049639d5318c752e340ece5ec38bd0f8cbde293d6eccfe8a",
+      "candidate_id": "842b0456cd579bcf6e62a6ac4a7cb1b1aba19e3dbdaf956bd3c13ad7ce741d0c",
       "state": "proposed",
       "history": []
     },
@@ -92,13 +92,13 @@
     },
     {
       "observation_id": "historical-residue-exposure",
-      "candidate_id": "050796ab08659b8b322198a8596ad19bc1c9d0bf69c3639208fd9f2705f2c105",
+      "candidate_id": "1115197ee6615b736b2e3b3b1cb07a3d3b2b11dd7ae2a0cf29e10794887fbff0",
       "state": "proposed",
       "history": []
     },
     {
       "observation_id": "immutable-receipt-evidence",
-      "candidate_id": "521dc3fddfc504465bf7b7d028a7869c867d151dc2625e91e05e02fda5975ae4",
+      "candidate_id": "aa1f64c221b68c5b8ea891e01cc8a358882e0ad0d91d97cdfe2dcaf4b2c5d646",
       "state": "proposed",
       "history": []
     },
@@ -134,7 +134,7 @@
     },
     {
       "observation_id": "novice-terminology-load",
-      "candidate_id": "5a5effc23cf80159b20c7eddaa9adc46f1d414486f6094c1f52bb8d717c56017",
+      "candidate_id": "6c1a4bcfb9e4d9e7b835c425b30e2629bdb64e3190b742d5e8f479546ba1c0f7",
       "state": "proposed",
       "history": []
     },
@@ -146,7 +146,7 @@
     },
     {
       "observation_id": "portable-context-package",
-      "candidate_id": "fe842b1a4df4988b3845eaeb1887d99969aa27b779c5a1150b1d6bdaafa33444",
+      "candidate_id": "12c197a1751549d7e03f338b1c120fc179b402fe8aa36255a23d24bd7008ea39",
       "state": "proposed",
       "history": []
     },
@@ -158,7 +158,7 @@
     },
     {
       "observation_id": "production-shaped-adoption-examples",
-      "candidate_id": "c4745f8d77d8e1a25d00fb55c61c07c22376822d1c6de534e8865319684c4f2f",
+      "candidate_id": "ed8867c654924c1f912f7696acb577d671096b15d52f4393e5f2d4d11f290043",
       "state": "proposed",
       "history": []
     },
@@ -176,13 +176,13 @@
     },
     {
       "observation_id": "release-reader-attestation",
-      "candidate_id": "453610965cf6e3684a7f8cdc723c8d5f6e3f9c3728dda80f4265585de4e1751e",
+      "candidate_id": "d4fc6047dff6144ee6cdc509c3df68e15fa5c8cb7c99ad959e6a90d8edbccfad",
       "state": "proposed",
       "history": []
     },
     {
       "observation_id": "residue-policy-self-scan",
-      "candidate_id": "42b18b42256ac657c1f70439d0d3d7e4764939d9de810beec220a125dd150f33",
+      "candidate_id": "e8fb5a306b7a29d358a0a53c164253932b0dc95bcd11a672818e935f619f4bf2",
       "state": "proposed",
       "history": []
     },
@@ -235,5 +235,5 @@
       "history": []
     }
   ],
-  "digest": "df979eb22161a2e7abe650039e4140a2f23fc2b93a121eb498dd192a1c617299"
+  "digest": "bb1df79dbdc7ba30aebf042498db07d01ef60c26d48943151437a955cd759d3a"
 }

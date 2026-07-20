@@ -114,6 +114,8 @@ CLI_REFERENCE = (
     {"command": "context compile", "job": "Compile a bounded source-addressed context bundle", "writes": "no", "example": "sourcebound context compile --request context-request.json"},
     {"command": "review", "job": "Turn review observations into testable improvement candidates", "writes": "with --out", "example": "sourcebound review --help"},
     {"command": "review candidates", "job": "Compile documentation and product test candidates from one review", "writes": "with --out", "example": "sourcebound review candidates --input review-observations.json"},
+    {"command": "review ledger", "job": "Initialize an append-only review denominator", "writes": "with init", "example": "sourcebound review ledger --help"},
+    {"command": "review ledger init", "job": "Initialize a review ledger before it reaches a protected branch", "writes": "yes", "example": "sourcebound review ledger init --input review.json --out events.json"},
     {"command": "review lifecycle", "job": "Track assessment-only candidate status with typed evidence", "writes": "with init or transition", "example": "sourcebound review lifecycle --help"},
     {"command": "review lifecycle init", "job": "Initialize a lifecycle record for one candidate set", "writes": "yes", "example": "sourcebound review lifecycle init --input review.json --out lifecycle.json"},
     {"command": "review lifecycle transition", "job": "Apply one evidence-backed candidate transition", "writes": "yes", "example": "sourcebound review lifecycle transition --help"},
