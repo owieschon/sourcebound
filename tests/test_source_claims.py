@@ -115,7 +115,7 @@ def _claim_repository(tmp_path: Path) -> Path:
                 f"    locator: {subject.upper()}.fields#keys",
             )
         )
-    (root / ".clean-docs.yml").write_text(
+    (root / ".sourcebound.yml").write_text(
         "version: 1\n"
         "bindings:\n"
         "  - id: catalog\n"
@@ -185,7 +185,7 @@ def _changed_claim_repository(tmp_path: Path) -> Path:
         "# Gadgets\n\n## Inventory\n\nThe service contains 2 gadgets.\n"
     )
     (root / "README.md").write_text("# Fixture\n\n## API\n\nSee `widgets`.\n")
-    (root / ".clean-docs.yml").write_text("""\
+    (root / ".sourcebound.yml").write_text("""\
 version: 1
 bindings:
   - id: widgets
@@ -216,7 +216,7 @@ def test_twenty_source_claim_rows_replay_with_three_true_mismatches(
     tmp_path: Path,
 ) -> None:
     root = _claim_repository(tmp_path)
-    manifest = load_manifest(root / ".clean-docs.yml")
+    manifest = load_manifest(root / ".sourcebound.yml")
 
     report = scan_source_claims(root, manifest.source_claim_checks)
 
@@ -379,7 +379,7 @@ def test_enforcement_reads_only_accepted_relationship_paths(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     root = _claim_repository(tmp_path)
-    manifest = load_manifest(root / ".clean-docs.yml")
+    manifest = load_manifest(root / ".sourcebound.yml")
 
     def reject_repository_scan(_root: Path) -> list[Path]:
         raise AssertionError("enforcement must not scan the repository")
@@ -399,7 +399,7 @@ def test_ambiguous_or_missing_relationship_fails_closed(
     tmp_path: Path,
 ) -> None:
     root = _claim_repository(tmp_path)
-    manifest = load_manifest(root / ".clean-docs.yml")
+    manifest = load_manifest(root / ".sourcebound.yml")
     source = root / "component/catalog.py"
     source.write_text(source.read_text().replace("GROUPS =", "RENAMED_GROUPS ="))
 
@@ -419,7 +419,7 @@ def test_accepted_source_symlink_cannot_escape_the_repository(
     source = root / "src/widgets.py"
     source.unlink()
     source.symlink_to(outside)
-    manifest = load_manifest(root / ".clean-docs.yml")
+    manifest = load_manifest(root / ".sourcebound.yml")
 
     report = scan_source_claims(
         root,
@@ -440,11 +440,11 @@ def test_claims_cli_distinguishes_assessment_from_enforcement(
     assert main(["--root", str(root), "claims", "--format", "json"]) == 1
     captured = capsys.readouterr()
     enforced = json.loads(captured.out)
-    assert enforced["schema"] == "clean-docs.source-claims.v1"
+    assert enforced["schema"] == "sourcebound.source-claims.v1"
     assert enforced["authority"] == "enforced"
     assert enforced["ok"] is False
 
-    (root / ".clean-docs.yml").unlink()
+    (root / ".sourcebound.yml").unlink()
     assert main(["--root", str(root), "claims", "--format", "json"]) == 0
     captured = capsys.readouterr()
     assessment = json.loads(captured.out)
@@ -463,7 +463,7 @@ def test_changed_check_scopes_enforced_claims_to_affected_relationships(
 
     report = check_changed(
         root,
-        root / ".clean-docs.yml",
+        root / ".sourcebound.yml",
         base=base,
         head=head,
         use_cache=False,
@@ -491,7 +491,7 @@ def test_changed_check_accepts_source_and_document_updated_together(
 
     report = check_changed(
         root,
-        root / ".clean-docs.yml",
+        root / ".sourcebound.yml",
         base=base,
         head=head,
         use_cache=False,
@@ -529,7 +529,7 @@ def test_verify_receipt_reports_accepted_source_claim_state(
 ) -> None:
     root = _claim_repository(tmp_path)
 
-    receipt = build_outcome_receipt(root, root / ".clean-docs.yml")
+    receipt = build_outcome_receipt(root, root / ".sourcebound.yml")
     payload = receipt.as_dict()
 
     assert not receipt.ok
@@ -545,7 +545,7 @@ def test_source_claim_locator_kind_is_validated(
     tmp_path: Path,
 ) -> None:
     root = _changed_claim_repository(tmp_path)
-    manifest = root / ".clean-docs.yml"
+    manifest = root / ".sourcebound.yml"
     manifest.write_text(
         manifest.read_text().replace("WIDGETS#count", "WIDGETS#keys")
     )

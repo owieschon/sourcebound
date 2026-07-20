@@ -222,7 +222,7 @@ def run_cases(
             "stderr": proc.stderr,
         })
     return {
-        "schema": "clean-docs.acceptance.v1",
+        "schema": "sourcebound.acceptance.v1",
         "release": release,
         "ok": all(result["ok"] for result in results),
         "scenarios": results,

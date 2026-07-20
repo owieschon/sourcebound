@@ -37,7 +37,7 @@ class DiagnosticBundle:
 
     def as_dict(self) -> dict[str, object]:
         return {
-            "schema": "clean-docs.diagnostic.v2",
+            "schema": "sourcebound.diagnostic.v2",
             "ok": self.ok,
             "version": __version__,
             "runtime": {

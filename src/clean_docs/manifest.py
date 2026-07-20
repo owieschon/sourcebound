@@ -20,6 +20,7 @@ from clean_docs.models import (
     PLUGIN_API_VERSION,
     PLUGIN_INTERFACES,
     PluginSpec,
+    PublicDisposition,
     ProjectionConfig,
     RegionBinding,
     ReviewContract,
@@ -44,6 +45,7 @@ ROOT_KEYS = {
     "plugins",
     "projections",
     "review_contracts",
+    "public_dispositions",
     "source_claim_checks",
 }
 BINDING_KEYS = {
@@ -85,6 +87,9 @@ REVIEW_EXTRACTOR_SUFFIXES = {
     "markdown-section": {".md", ".mdx"},
     "python-symbol": {".py"},
     "structured-data": {".json", ".toml", ".yaml", ".yml"},
+}
+PUBLIC_DISPOSITION_KEYS = {
+    "base", "kind", "subject", "documentation", "replacement", "reason"
 }
 MANIFEST_REFERENCE = (
     {
@@ -297,6 +302,60 @@ def _load_review_contracts(raw: Any) -> tuple[ReviewContract, ...]:
     return tuple(contracts)
 
 
+def _load_public_dispositions(
+    raw: Any,
+    *,
+    root: Path,
+) -> tuple[PublicDisposition, ...]:
+    if raw is None:
+        return ()
+    if not isinstance(raw, list):
+        raise ConfigurationError("public_dispositions must be a list")
+    dispositions: list[PublicDisposition] = []
+    subjects: set[tuple[str, str]] = set()
+    for index, record in enumerate(raw):
+        where = f"public_dispositions[{index}]"
+        data = _mapping(record, where)
+        _reject_unknown(data, PUBLIC_DISPOSITION_KEYS, where)
+        base = _required_string(data.get("base"), f"{where}.base")
+        if re.fullmatch(r"[0-9a-f]{40}", base) is None:
+            raise ConfigurationError(f"{where}.base must be a full Git SHA")
+        kind = _required_string(data.get("kind"), f"{where}.kind")
+        if kind not in {"event", "artifact"}:
+            raise ConfigurationError(f"{where}.kind must be event or artifact")
+        subject = _required_string(data.get("subject"), f"{where}.subject")
+        if re.fullmatch(r"[0-9a-f]{64}", subject) is None:
+            raise ConfigurationError(f"{where}.subject must be a SHA-256")
+        if (kind, subject) in subjects:
+            raise ConfigurationError(
+                f"duplicate public disposition subject: {kind}:{subject}"
+            )
+        subjects.add((kind, subject))
+        documentation = _relative_path(
+            data.get("documentation"), f"{where}.documentation"
+        )
+        if documentation.suffix.lower() not in {".md", ".mdx"}:
+            raise ConfigurationError(f"{where}.documentation must be Markdown or MDX")
+        replacement = _required_string(data.get("replacement"), f"{where}.replacement")
+        reason = _required_string(data.get("reason"), f"{where}.reason")
+        if len(reason) < 12:
+            raise ConfigurationError(f"{where}.reason needs a specific explanation")
+        try:
+            documentation_text = (root / documentation).read_text(encoding="utf-8")
+        except OSError as exc:
+            raise ConfigurationError(
+                f"{where}.documentation cannot be read: {documentation}"
+            ) from exc
+        if replacement not in documentation_text:
+            raise ConfigurationError(
+                f"{where}.documentation must name replacement {replacement!r}"
+            )
+        dispositions.append(
+            PublicDisposition(base, kind, subject, documentation, replacement, reason)
+        )
+    return tuple(dispositions)
+
+
 def _load_projections(raw: Any, bound_docs: set[Path]) -> ProjectionConfig | None:
     if raw is None:
         return None
@@ -472,7 +531,7 @@ def load_manifest(path: Path) -> Manifest:
         if api_version != PLUGIN_API_VERSION:
             raise ConfigurationError(
                 f"plugin {plugin_id} API version {api_version} is incompatible; "
-                f"clean-docs supports {PLUGIN_API_VERSION}"
+                f"sourcebound supports {PLUGIN_API_VERSION}"
             )
         interfaces = plugin_data.get("interfaces")
         if (
@@ -806,6 +865,9 @@ def load_manifest(path: Path) -> Manifest:
         root.get("projections"), {binding.doc for binding in bindings}
     )
     review_contracts = _load_review_contracts(root.get("review_contracts", []))
+    public_dispositions = _load_public_dispositions(
+        root.get("public_dispositions"), root=path.parent
+    )
     projection_outputs: set[Path] = set()
     if projections is not None:
         if projections.llms_txt is not None:
@@ -831,5 +893,6 @@ def load_manifest(path: Path) -> Manifest:
         projections=projections,
         source_claim_checks=tuple(source_claim_checks),
         review_contracts=review_contracts,
+        public_dispositions=public_dispositions,
         deprecations=tuple(deprecations),
     )

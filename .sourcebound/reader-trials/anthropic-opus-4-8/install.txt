@@ -1,0 +1,57 @@
+participant_id: 0a809d28-062e-4926-b12e-ac8f7022d641
+profile: anthropic-opus-4-8
+independent: true
+context: published-docs-only
+completed_at: 2026-07-14T01:23:00Z
+task: install
+result: PASS
+
+STEP 1 -- verify candidate checksum (docs/SUPPORT.md, "Verify release
+artifacts"; documented python3 snippet, run from the profile root):
+
+  $ python3 - <<'PY' ... PY
+    clean_docs-1.0.0rc19-py3-none-any.whl: 9867c5f3f476c69b48e754e1d84bdd14d161934d7b0704f423a71a3326f53082
+    checksum_exit=0
+
+  Verified digest matches the published SHA256SUMS entry:
+    9867c5f3f476c69b48e754e1d84bdd14d161934d7b0704f423a71a3326f53082  clean_docs-1.0.0rc19-py3-none-any.whl
+
+  The `gh attestation verify` step in the same doc block was NOT run: it
+  requires network/GitHub access, which the trial forbids.
+
+STEP 2-3 -- isolated environment + network-free install (docs/SUPPORT.md,
+"Install, upgrade, roll back, and uninstall"; wheelhouse/--no-index form):
+
+  Documented command:
+    python -m pip install --no-index --find-links ./wheelhouse ./clean_docs-*.whl
+
+  As executed (venv created under workspace/ as required; the wheelhouse and
+  wheel are referenced by ABSOLUTE path because the assigned rules forbid
+  ".." and the artifacts live at the profile root -- a path form only, no
+  artifact name substituted):
+
+  cwd: workspace/
+  $ python3 -m venv .venv
+    venv_exit=0
+  $ .venv/bin/python -m pip install --no-index \
+      --find-links <root>/wheelhouse <root>/clean_docs-*.whl
+    Processing .../clean_docs-1.0.0rc19-py3-none-any.whl
+    Processing .../wheelhouse/pyyaml-6.0.3-cp314-cp314-macosx_11_0_arm64.whl (from sourcebound==1.0.0rc19)
+    Installing collected packages: PyYAML, sourcebound
+    Successfully installed PyYAML-6.0.3 sourcebound-1.0.0rc19
+    install_exit=0
+    (--no-index => no package index contacted; PyYAML resolved from the
+     bundled wheelhouse. No network used.)
+
+STEP 4 -- version:
+  $ .venv/bin/sourcebound --version
+    1.0.0rc19
+    version_exit=0
+  Reported version 1.0.0rc19 matches the wheel filename
+  clean_docs-1.0.0rc19-py3-none-any.whl (SUPPORT.md: "The version output
+  must match the wheel filename").
+
+Runtime: CPython 3.14.3 (supported per docs/SUPPORT.md).
+
+Documentation defects encountered: none in this task. (The SUPPORT.md
+checksum snippet uses python3 and ran cleanly with exit 0.)

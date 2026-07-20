@@ -23,7 +23,7 @@ def test_reader_install_and_repair_guidance_matches_candidate_artifacts() -> Non
 
     assert (
         "python -m pip install --no-index --find-links ./wheelhouse "
-        "./wheelhouse/clean_docs-*.whl"
+        "./wheelhouse/sourcebound-*.whl"
     ) in install
     assert "The version must match the wheel filename" in install
     checksum_section = install.split("## Verify release artifacts", 1)[1]
@@ -70,13 +70,13 @@ def _fixture(tmp_path: Path) -> tuple[Path, Path, str, str]:
     subprocess.run(["git", "init", "-q", str(root)], check=True)
     (root / "cli.py").write_text("parser.add_parser('serve')\n")
     (root / "README.md").write_text(
-        "# Fixture\n\n<!-- clean-docs:purpose -->\n"
+        "# Fixture\n\n<!-- sourcebound:purpose -->\n"
         "Use this fixture when testing support receipts. It gives operators one repository surface whose changed evidence can be measured.\n"
-        "<!-- clean-docs:end purpose -->\n\n## Repository surface\n\n"
-        "<!-- clean-docs:begin repository-surface -->\n"
-        "<!-- clean-docs:end repository-surface -->\n"
+        "<!-- sourcebound:end purpose -->\n\n## Repository surface\n\n"
+        "<!-- sourcebound:begin repository-surface -->\n"
+        "<!-- sourcebound:end repository-surface -->\n"
     )
-    manifest = root / ".clean-docs.yml"
+    manifest = root / ".sourcebound.yml"
     manifest.write_text(
         """\
 version: 1
@@ -156,7 +156,7 @@ def test_local_outcome_receipt_exposes_accepted_hygiene_debt(tmp_path: Path) -> 
     root, manifest, _base, _head = _fixture(tmp_path)
     (root / "STATUS.md").write_text(
         "# Existing status\n\n"
-        "<!-- clean-docs:policy register-v2 -->\n"
+        "<!-- sourcebound:policy register-v2 -->\n"
         "[Missing historical receipt](receipts/missing.md)\n"
     )
     subprocess.run(["git", "-C", str(root), "add", "STATUS.md"], check=True)
@@ -180,7 +180,7 @@ def test_verify_writes_the_same_local_receipt_it_prints(tmp_path: Path) -> None:
 
     assert command.returncode == 0, command.stderr
     assert command.stdout == (root / "outcome.json").read_text()
-    assert json.loads(command.stdout)["schema"] == "clean-docs.outcome.v2"
+    assert json.loads(command.stdout)["schema"] == "sourcebound.outcome.v2"
 
 
 def test_outcome_does_not_claim_complete_baseline_with_standard_gaps(
@@ -189,13 +189,13 @@ def test_outcome_does_not_claim_complete_baseline_with_standard_gaps(
     root = tmp_path / "gapped"
     root.mkdir()
     (root / "README.md").write_text(
-        "# Gapped\n\n<!-- clean-docs:purpose -->\n"
+        "# Gapped\n\n<!-- sourcebound:purpose -->\n"
         "Use this page when changing the fixture. Without its contract, callers can guess; "
         "after reading, they can use the declared API.\n"
-        "<!-- clean-docs:end purpose -->\n\n## API\n"
+        "<!-- sourcebound:end purpose -->\n\n## API\n"
     )
     (root / "api.py").write_text("def public_api():\n    return True\n")
-    manifest = root / ".clean-docs.yml"
+    manifest = root / ".sourcebound.yml"
     manifest.write_text(
         "version: 1\nbindings:\n  - id: api\n    type: symbol\n"
         "    doc: README.md\n    anchor: api\n"
@@ -243,7 +243,7 @@ def test_diagnostic_bundle_excludes_repository_and_environment_content(
         os.environ.pop("CLEAN_DOCS_TEST_SECRET")
 
     serialized = json.dumps(bundle)
-    assert bundle["schema"] == "clean-docs.diagnostic.v2"
+    assert bundle["schema"] == "sourcebound.diagnostic.v2"
     assert bundle["execution"] == {
         "declared_processes_run": 0,
         "network_isolation": "not-provided",

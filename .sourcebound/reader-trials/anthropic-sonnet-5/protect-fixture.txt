@@ -1,0 +1,135 @@
+participant_id: 33c28db4-66f2-407a-8916-e2b8af63b4e1
+profile: anthropic-sonnet-5
+independent: true
+context: published-docs-only
+completed_at: 2026-07-14T01:22:47Z
+task: protect-fixture
+result: PASS
+
+Instructions followed: README.md "Protect a repository" section
+(sourcebound init --no-model / git diff / sourcebound check / sourcebound
+verify), using the offline venv created in the install task.
+
+Fixture shape (fresh, minimal, undocumented -- authored by me to satisfy
+this task's setup requirement; not itself a documented step):
+
+workspace/fixture/
+  README.md: substantive purpose prose ("Use fixture-pkg to exercise a
+    minimal repository for sourcebound review. It exposes an example
+    arithmetic function so a reviewer can confirm that generated
+    documentation stays bound to the source that defines it.")
+  pyproject.toml: minimal [project] table, name "fixture-pkg"
+  src/fixture_pkg/__init__.py: public function add(a, b)
+
+$ git init -q && git add -A && git commit -q -m "initial fixture"
+setup_exit=0 (one commit: c39fcae "initial fixture")
+
+commands, exit codes, and output:
+
+$ sourcebound init --no-model
+[applied] write README.md: bind detected repository surfaces
+[applied] write .sourcebound.yml: declare the generated binding
+[applied] write llms.txt: index the canonical documentation
+init: applied 3 operation(s); 3 grounded fact(s)
+init_exit=0
+
+Generated paths: README.md (modified in place), .sourcebound.yml (new),
+llms.txt (new).
+
+$ git status --short
+ M README.md
+?? .sourcebound.yml
+?? llms.txt
+
+$ git diff
+diff --git a/README.md b/README.md
+index d63c9a1..85b5551 100644
+--- a/README.md
++++ b/README.md
+@@ -1,5 +1,21 @@
+ # fixture-pkg
+
++<!-- sourcebound:purpose -->
+ Use fixture-pkg to exercise a minimal repository for sourcebound review.
+ It exposes an example arithmetic function so a reviewer can confirm
+ that generated documentation stays bound to the source that defines it.
++<!-- sourcebound:end purpose -->
++
++## Repository surface
++
++This summary is a static catalog of detected package, CLI, API, schema, and test surfaces. It does not validate existing prose claims. Direct manifest bindings are the accuracy boundary; run `sourcebound inventory` for coverage state and the full catalog.
++
++<!-- sourcebound:begin repository-surface -->
++| surface | discovered | examples |
++| --- | ---: | --- |
++| api-symbol | 1 | `add` |
++| package | 1 | `fixture-pkg` |
++| runtime-constraint | 1 | `Python >=3.10` |
++
++<!-- sourcebound:inventory-sha256 f4010a8c2a533162ab44d61b5407e6dc9c0a6970426074cc1f38e2840ffc0906 -->
++<!-- sourcebound:end repository-surface -->
+diff_exit=0
+
+generated .sourcebound.yml:
+version: 1
+bindings:
+  - id: repository-surface
+    type: region
+    doc: README.md
+    region: repository-surface
+    extractor: repository-overview
+    source: {path: .}
+    renderer: markdown-fragment
+projections:
+  llms_txt:
+    output: llms.txt
+    title: Repository documentation
+    summary: Bound facts and explicitly declared canonical repository context.
+
+generated llms.txt:
+# Repository documentation
+
+> Bound facts and explicitly declared canonical repository context.
+
+## Canonical documentation
+
+- [README.md](README.md): bindings: repository-surface; sha256: 82ea229a6e2da199d9efdd9539e4e5c56592dae5d604d270c3f29d59c5a81aba
+
+$ sourcebound check
+[current] repository-surface: README.md
+[current] projection:llms.txt: llms.txt
+check_exit=0
+
+$ sourcebound verify
+{
+  "schema": "sourcebound.outcome.v1",
+  "version": "1.0.0rc19",
+  "ref": "WORKTREE",
+  "ok": true,
+  "outcomes": {
+    "protected_baseline_current": true,
+    "coverage_complete": true,
+    "direct_coverage_complete": false,
+    "drift_caught_before_merge": 0
+  },
+  "documentation": {"active": 1, "archived": 0, "hygiene_findings": 0, "baselined_hygiene_findings": 0},
+  "coverage": {"total": 4, "bound": 0, "cataloged": 4, "ignored": 0, "standard_gaps": 0},
+  "bindings": {"total": 1, "current": 1, "drifted": 0},
+  "projections": {"total": 1, "current": 1, "stale": 0},
+  "changed": null,
+  "network_requests": 0
+}
+verify_exit=0
+
+Baseline committed for reuse by the repair-drift task:
+$ git add README.md .sourcebound.yml llms.txt
+$ git commit -q -m "protected baseline (sourcebound init)"
+eb3b636 protected baseline (sourcebound init)
+
+result: init, generated-file inspection, check, and verify all
+completed and passed exactly as documented (init_exit=0, check_exit=0,
+verify_exit=0, verify ok:true, protected_baseline_current:true,
+network_requests:0), with no undocumented setup knowledge beyond
+authoring the fixture's own minimal source/README content.
+
+documentation defect encountered: none.

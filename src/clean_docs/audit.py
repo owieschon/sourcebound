@@ -35,7 +35,7 @@ LINK = re.compile(
 HEADING = re.compile(r"^#{2,}\s+(.+?)\s*$")
 IDENTITY_HEADING = re.compile(r"^#{1,6}\s+(.+?)\s*$")
 PURPOSE_BLOCK = re.compile(
-    r"<!-- clean-docs:purpose -->\s*(.*?)\s*<!-- clean-docs:end purpose -->",
+    r"<!-- sourcebound:purpose -->\s*(.*?)\s*<!-- sourcebound:end purpose -->",
     re.DOTALL,
 )
 STOCK_PURPOSE_OPENING = re.compile(
@@ -43,11 +43,11 @@ STOCK_PURPOSE_OPENING = re.compile(
     re.IGNORECASE,
 )
 ALLOW = re.compile(
-    r'<!--\s*clean-docs:allow\s+([a-z][a-z-]+)\s+reason="([^"]+)"\s*-->'
+    r'<!--\s*sourcebound:allow\s+([a-z][a-z-]+)\s+reason="([^"]+)"\s*-->'
 )
-AUDIT_BASELINE_SCHEMA_V1 = "clean-docs.audit-baseline.v1"
-AUDIT_BASELINE_SCHEMA = "clean-docs.audit-baseline.v2"
-AUDIT_BASELINE_PATH = Path(".clean-docs/audit-baseline.json")
+AUDIT_BASELINE_SCHEMA_V1 = "sourcebound.audit-baseline.v1"
+AUDIT_BASELINE_SCHEMA = "sourcebound.audit-baseline.v2"
+AUDIT_BASELINE_PATH = Path(".sourcebound/audit-baseline.json")
 
 
 def _is_test_fixture_path(value: str) -> bool:
@@ -598,7 +598,7 @@ def _page_type(relative: Path, text: str) -> str:
         "REFERENCE" in name
         or name in {
             "STANDARD.MD",
-            "CLEAN_DOCS_SPEC.MD",
+            "SOURCEBOUND_SPEC.MD",
             "DECISION_LOG.MD",
             "CLI.MD",
             "RELEASES.MD",
@@ -755,7 +755,7 @@ def _purpose_template_findings(documents: dict[str, str]) -> list[AuditFinding]:
                     for line_number, line in enumerate(
                         documents[doc].splitlines(), start=1
                     )
-                    if line.strip() == "<!-- clean-docs:purpose -->"
+                    if line.strip() == "<!-- sourcebound:purpose -->"
                 ),
                 1,
             ),
@@ -767,7 +767,7 @@ def _purpose_template_findings(documents: dict[str, str]) -> list[AuditFinding]:
 
 def _scan_audit(root: Path, *, preview_policy: bool = False) -> AuditReport:
     root = root.resolve()
-    repository_integrity_enforced = (root / ".clean-docs.yml").is_file()
+    repository_integrity_enforced = (root / ".sourcebound.yml").is_file()
     pack = load_default_pack()
     repository_entries = _repository_entries(root)
     tracked_documents = _tracked_markdown(root)

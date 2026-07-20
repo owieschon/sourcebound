@@ -12,9 +12,9 @@ def _fixture(tmp_path: Path) -> Path:
     root.mkdir()
     (root / "facts.txt").write_text("current\n")
     (root / "README.md").write_text(
-        "# Fixture\n\n<!-- clean-docs:begin fact -->\nstale\n<!-- clean-docs:end fact -->\n"
+        "# Fixture\n\n<!-- sourcebound:begin fact -->\nstale\n<!-- sourcebound:end fact -->\n"
     )
-    (root / ".clean-docs.yml").write_text("""\
+    (root / ".sourcebound.yml").write_text("""\
 version: 1
 bindings:
   - id: fact
@@ -36,7 +36,7 @@ def test_cli_exit_codes_distinguish_drift_configuration_and_extraction(
     assert main(["--root", str(root), "check"]) == 1
     capsys.readouterr()
 
-    manifest = root / ".clean-docs.yml"
+    manifest = root / ".sourcebound.yml"
     valid = manifest.read_text()
     manifest.write_text(valid.replace("version: 1", "version: 9"))
     assert main(["--root", str(root), "check"]) == 2

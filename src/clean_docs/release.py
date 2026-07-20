@@ -40,7 +40,7 @@ class ReleaseReport:
 
     def as_dict(self) -> dict[str, object]:
         return {
-            "schema": "clean-docs.release-delta.v1",
+            "schema": "sourcebound.release-delta.v1",
             "from": self.from_ref,
             "to": self.to_ref,
             "deltas": [asdict(delta) for delta in self.deltas],
@@ -80,7 +80,7 @@ def _items(root: Path, ref: str) -> tuple[str, dict[str, InventoryItem]]:
     label = snapshot.label
     with snapshot.materialized_root() as materialized:
         items = list(scan_inventory(materialized).items)
-        manifest_path = materialized / ".clean-docs.yml"
+        manifest_path = materialized / ".sourcebound.yml"
         plugins = load_manifest(manifest_path).plugins if manifest_path.is_file() else ()
     merged = merge_plugin_inventory(
         tuple(items), discover_plugin_items(snapshot, plugins)
@@ -141,9 +141,9 @@ def validate_release_narrative(report: ReleaseReport, response: str) -> Narrativ
     except json.JSONDecodeError as exc:
         raise ConfigurationError(f"release narrative is not valid JSON: {exc}") from exc
     root = _mapping(raw, "release narrative")
-    if set(root) != {"schema", "drafts"} or root.get("schema") != "clean-docs.release-narrative.v1":
+    if set(root) != {"schema", "drafts"} or root.get("schema") != "sourcebound.release-narrative.v1":
         raise ConfigurationError(
-            "release narrative must contain schema clean-docs.release-narrative.v1 and drafts"
+            "release narrative must contain schema sourcebound.release-narrative.v1 and drafts"
         )
     if not isinstance(root["drafts"], list):
         raise ConfigurationError("release narrative drafts must be a list")

@@ -27,15 +27,15 @@ SOURCE = 'ACTIONS = {"a": {"name": "a", "tier": 1}}\n'
 README = """\
 # Fixture
 
-<!-- clean-docs:purpose -->
+<!-- sourcebound:purpose -->
 Use this fixture when testing a stepwise projection. It gives maintainers one bound document to audit and repair.
-<!-- clean-docs:end purpose -->
+<!-- sourcebound:end purpose -->
 
-<!-- clean-docs:begin actions -->
+<!-- sourcebound:begin actions -->
 | name | tier |
 | --- | --- |
 | a | 1 |
-<!-- clean-docs:end actions -->
+<!-- sourcebound:end actions -->
 """
 
 
@@ -55,7 +55,7 @@ def _run(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
 def _repo(tmp_path: Path) -> Path:
     root = tmp_path / "repo"
     (root / "src").mkdir(parents=True)
-    (root / ".clean-docs.yml").write_text(MANIFEST)
+    (root / ".sourcebound.yml").write_text(MANIFEST)
     (root / "src/actions.py").write_text(SOURCE)
     (root / "README.md").write_text(README)
     subprocess.run(["git", "init", "-q", str(root)], check=True)
@@ -141,7 +141,7 @@ def test_large_stepwise_projection_does_not_repeat_the_bound_document_index(
         )
         for index in range(12)
     )
-    (root / ".clean-docs.yml").write_text(manifest)
+    (root / ".sourcebound.yml").write_text(manifest)
 
     assert _run(root, "emit", "stepwise-skill", "--out", "dist/stepwise").returncode == 0
     output = root / "dist/stepwise"

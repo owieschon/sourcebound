@@ -87,7 +87,7 @@ def load_demo_evidence(path: Path) -> DemoEvidence:
         raise ConfigurationError(f"invalid demo evidence JSON: {exc}") from exc
     root = _mapping(raw, "demo evidence")
     _exact(root, EVIDENCE_KEYS, "demo evidence")
-    if root["schema"] != "clean-docs.demo-evidence.v1":
+    if root["schema"] != "sourcebound.demo-evidence.v1":
         raise ConfigurationError("demo evidence has an unsupported schema")
     raw_states = root["states"]
     if not isinstance(raw_states, list) or len(raw_states) != 3:
@@ -347,9 +347,9 @@ def render_static_demo(evidence: DemoEvidence, output: Path) -> str:
       </div>
       <div class="binding" aria-label="A source command no longer matches its README claim">
         <p class="binding-title">Binding: <code>public-command</code></p>
-        <div class="node"><span class="node-label">Source · command.txt</span><code>clean-docs check --changed</code></div>
+        <div class="node"><span class="node-label">Source · command.txt</span><code>sourcebound check --changed</code></div>
         <div class="tether mismatch"><span>mismatch</span></div>
-        <div class="node"><span class="node-label">Document · README.md</span><code>clean-docs check</code></div>
+        <div class="node"><span class="node-label">Document · README.md</span><code>sourcebound check</code></div>
       </div>
     </div>
   </header>

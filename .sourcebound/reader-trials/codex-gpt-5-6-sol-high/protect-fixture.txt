@@ -1,0 +1,95 @@
+participant_id: ec4b4e80-111c-448b-8d6e-497ca42ecfe5
+profile: codex-gpt-5-6-sol-high
+independent: true
+context: published-docs-only
+completed_at: 2026-07-14T01:35:57Z
+task: protect-fixture
+result: PASS
+evidence:
+  Published procedure: README.md, "Protect a repository", lines 51-65.
+  Fresh fixture: workspace/protect-fixture
+  Initial tracked shape: src/widget.py only; no Markdown, manifest, projection, or prior sourcebound state.
+  Initial source excerpt:
+    """Public widget helpers."""
+
+    def public_greeting(name: str) -> str:
+        """Return a greeting for a widget user."""
+        return f"Hello, {name}!"
+  Command: git init -b main .
+  Exit code: 0
+  Output:
+    Initialized empty Git repository in /home/reader/sourcebound-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/protect-fixture/.git/
+  Commands: git config user.name 'Clean Docs Trial'; git config user.email 'trial@example.invalid'; git add src/widget.py
+  Exit codes: 0, 0, 0
+  Output: <empty for all three commands>
+  Command: git commit -m 'Create undocumented fixture'
+  Exit code: 0
+  Output:
+    [main (root-commit) c9fac3a] Create undocumented fixture
+     1 file changed, 6 insertions(+)
+     create mode 100644 src/widget.py
+  Command: /home/reader/sourcebound-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/sourcebound init --no-model
+  Exit code: 0
+  Output:
+    [applied] write README.md: bind detected repository surfaces
+    [applied] write .sourcebound.yml: declare the generated binding
+    [applied] write llms.txt: index the canonical documentation
+    init: applied 3 operation(s); 1 grounded fact(s)
+  Generated paths observed with direct reads:
+    README.md
+    .sourcebound.yml
+    llms.txt
+  Command: git status --short
+  Exit code: 0
+  Output:
+    ?? .sourcebound.yml
+    ?? README.md
+    ?? llms.txt
+  Generated README relevant excerpt:
+    # Repository
+
+    <!-- sourcebound:purpose -->
+    Use this repository guide when you need to run or change this project. Without a source-bound overview, entry points and public surfaces can drift from the implementation; after reading, you can locate the detected surfaces and verify their current sources.
+    <!-- sourcebound:end purpose -->
+
+    <!-- sourcebound:begin repository-surface -->
+    | surface | discovered | examples |
+    | --- | ---: | --- |
+    | api-symbol | 1 | public_greeting |
+    <!-- sourcebound:end repository-surface -->
+  Generated manifest:
+    version: 1
+    bindings:
+      - id: repository-surface
+        type: region
+        doc: README.md
+        region: repository-surface
+        extractor: repository-overview
+        source: {path: .}
+        renderer: markdown-fragment
+    projections:
+      llms_txt:
+        output: llms.txt
+        title: Repository documentation
+        summary: Bound facts and explicitly declared canonical repository context.
+  Generated projection relevant output:
+    # Repository documentation
+    ## Canonical documentation
+    - README.md: bindings: repository-surface; sha256: 9dd5c656ab7b915f0d9516ccb6e4e1144c220b73b7dfce887299854a790d7326
+  Command: /home/reader/sourcebound-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/sourcebound check
+  Exit code: 0
+  Output:
+    [current] repository-surface: README.md
+    [current] projection:llms.txt: llms.txt
+  Command: /home/reader/sourcebound-reader-trials-rc19/codex-gpt-5-6-sol-high/workspace/install-venv/bin/sourcebound verify
+  Exit code: 0
+  Relevant output:
+    "schema": "sourcebound.outcome.v1"
+    "version": "1.0.0rc19"
+    "ok": true
+    "protected_baseline_current": true
+    "bindings": {"total": 1, "current": 1, "drifted": 0}
+    "projections": {"total": 1, "current": 1, "stale": 0}
+    "network_requests": 0
+  Execution note: an earlier generated copy of this fixture was discarded before evidence generation because its CLI invocation string contained the prompt-prohibited parent-path token. The recorded rerun above used only absolute in-root paths and produced the directly observed PASS.
+documentation_defects: none

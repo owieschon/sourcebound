@@ -16,8 +16,8 @@ from clean_docs.errors import ConfigurationError
 from clean_docs.policy import PolicyFinding
 
 
-CONFIG_NAME = ".clean-docs-residue.yml"
-LOCAL_CONFIG_NAME = ".clean-docs-residue.local.yml"
+CONFIG_NAME = ".sourcebound-residue.yml"
+LOCAL_CONFIG_NAME = ".sourcebound-residue.local.yml"
 ROOT_KEYS = {"version", "exclude", "rules"}
 RULE_KEYS = {"id", "token_sha256", "include", "reason"}
 LOCAL_RULE_KEYS = {"id", "token", "include"}

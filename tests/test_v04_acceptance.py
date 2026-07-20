@@ -13,13 +13,13 @@ def test_human_quickstart_installs_and_runs_from_declared_docs(tmp_path: Path) -
     del tmp_path
     quickstart = _quickstart_script()
     for command in (
-        "gh release download --repo owieschon/clean-docs",
+        "gh release download --repo owieschon/sourcebound",
         "python3 -m venv .venv",
-        'python -m pip install "$release_dir"/clean_docs-*.whl',
-        "clean-docs audit",
-        "clean-docs init --no-model",
-        "clean-docs check",
-        "clean-docs verify",
+        'python -m pip install "$release_dir"/sourcebound-*.whl',
+        "sourcebound audit",
+        "sourcebound init --no-model",
+        "sourcebound check",
+        "sourcebound verify",
     ):
         assert command in quickstart
     assert "git clone" not in quickstart
@@ -31,12 +31,12 @@ def test_human_quickstart_installs_and_runs_from_declared_docs(tmp_path: Path) -
 
 
 def test_agent_configuration_round_trip_uses_only_contributor_bundle() -> None:
-    tasks = load_evaluation_tasks(ROOT / ".clean-docs/eval.yml")
+    tasks = load_evaluation_tasks(ROOT / ".sourcebound/eval.yml")
     task = next(task for task in tasks if task.id == "manifest-round-trip")
-    assert task.context == (Path(".clean-docs/context/contributor.md"),)
+    assert task.context == (Path(".sourcebound/context/contributor.md"),)
 
     report = run_evaluation(
-        ROOT, ROOT / ".clean-docs.yml", ROOT / ".clean-docs/eval.yml"
+        ROOT, ROOT / ".sourcebound.yml", ROOT / ".sourcebound/eval.yml"
     )
     result = next(result for result in report.agent_tasks if result.id == task.id)
     assert result.ok
@@ -45,12 +45,12 @@ def test_agent_configuration_round_trip_uses_only_contributor_bundle() -> None:
 
 def test_limitation_retrieval_cites_canonical_limit_without_inference() -> None:
     report = run_evaluation(
-        ROOT, ROOT / ".clean-docs.yml", ROOT / ".clean-docs/eval.yml"
+        ROOT, ROOT / ".sourcebound.yml", ROOT / ".sourcebound/eval.yml"
     )
     result = next(
         result for result in report.agent_tasks if result.id == "limitation-retrieval"
     )
-    response = (ROOT / ".clean-docs/evaluation/responses/limitation.txt").read_text()
+    response = (ROOT / ".sourcebound/evaluation/responses/limitation.txt").read_text()
     assert result.ok
     assert "README.md#current-boundaries" in response
-    assert "clean-docs enforces network isolation" not in response.lower()
+    assert "sourcebound enforces network isolation" not in response.lower()

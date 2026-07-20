@@ -1,1 +1,1 @@
-"""External fixture package for the clean-docs plugin protocol."""
+"""External fixture package for the sourcebound plugin protocol."""

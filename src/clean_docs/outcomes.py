@@ -85,7 +85,7 @@ class OutcomeReceipt:
                 "ok": self.changed.ok,
             }
         return {
-            "schema": "clean-docs.outcome.v2",
+            "schema": "sourcebound.outcome.v2",
             "version": __version__,
             "ref": self.ref,
             "ok": self.ok,

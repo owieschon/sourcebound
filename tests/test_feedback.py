@@ -48,7 +48,7 @@ def test_disabled_feedback_has_zero_side_effects(
         execution_policy="static-only",
     ) is None
 
-    assert not (root / ".clean-docs").exists()
+    assert not (root / ".sourcebound").exists()
     assert network_attempts == 0
 
 
@@ -294,7 +294,7 @@ def test_purge_removes_configuration_identifier_and_all_state(
     purge_feedback(root)
 
     assert not (root / CONFIG_PATH).exists()
-    assert not (root / ".clean-docs/feedback").exists()
+    assert not (root / ".sourcebound/feedback").exists()
 
 
 def test_local_sink_cannot_escape_repository(tmp_path: Path) -> None:
@@ -347,7 +347,7 @@ def test_retention_prunes_expired_outbox_records(tmp_path: Path) -> None:
 
 def _signal(**overrides: object) -> dict[str, object]:
     body: dict[str, object] = {
-        "schema": "clean-docs.behavior-signal.v1",
+        "schema": "sourcebound.behavior-signal.v1",
         "metric": {
             "name": "successful_repair_rate",
             "version": "1",
@@ -427,7 +427,7 @@ def test_signal_ingest_is_idempotent_and_cannot_skip_states(tmp_path: Path) -> N
     assert first == second
     assert first["state"] == "observed"
     receipt = root / "regression.json"
-    _write_json(receipt, {"schema": "clean-docs.regression-receipt.v1"})
+    _write_json(receipt, {"schema": "sourcebound.regression-receipt.v1"})
     with pytest.raises(ConfigurationError, match="must transition"):
         transition_improvement_case(
             root,
@@ -451,7 +451,7 @@ def _shadow_receipt(
     candidate_threshold_digest: str = "c" * 64,
 ) -> dict[str, object]:
     return {
-        "schema": "clean-docs.shadow-evaluation.v1",
+        "schema": "sourcebound.shadow-evaluation.v1",
         "prior_receipt_sha256": prior_receipt_sha256,
         "cohort_version": "repair-v1",
         "direction": "higher-is-better",
@@ -476,7 +476,7 @@ def _shadow_receipt(
 
 def _ready_verdict() -> dict[str, object]:
     unsigned: dict[str, object] = {
-        "schema": "clean-docs.pr-verdict.v1",
+        "schema": "sourcebound.pr-verdict.v1",
         "state": "ready",
         "ready": True,
         "findings": [],
@@ -500,7 +500,7 @@ def _transition_receipt(
 ) -> dict[str, object]:
     if state == "reproduced":
         return {
-            "schema": "clean-docs.reproduction.v1",
+            "schema": "sourcebound.reproduction.v1",
             "signal_id": signal_id,
             "fixture_sha256": "1" * 64,
             "baseline_outcome_id": "2" * 64,
@@ -509,14 +509,14 @@ def _transition_receipt(
         }
     if state == "root-cause-classified":
         return {
-            "schema": "clean-docs.root-cause.v1",
+            "schema": "sourcebound.root-cause.v1",
             "prior_receipt_sha256": prior_receipt_sha256,
             "classification": "tool-defect",
             "evidence_sha256": "3" * 64,
         }
     if state == "evaluation-proposed":
         return {
-            "schema": "clean-docs.evaluation-proposal.v1",
+            "schema": "sourcebound.evaluation-proposal.v1",
             "prior_receipt_sha256": prior_receipt_sha256,
             "metric_sha256": "4" * 64,
             "scorer_sha256": "5" * 64,
@@ -525,7 +525,7 @@ def _transition_receipt(
         }
     if state == "regression-added":
         return {
-            "schema": "clean-docs.regression-receipt.v1",
+            "schema": "sourcebound.regression-receipt.v1",
             "prior_receipt_sha256": prior_receipt_sha256,
             "fixture_sha256": "7" * 64,
             "demonstrated_red": True,
@@ -534,7 +534,7 @@ def _transition_receipt(
         return _shadow_receipt(prior_receipt_sha256=prior_receipt_sha256)
     if state == "candidate-change":
         return {
-            "schema": "clean-docs.candidate-change.v1",
+            "schema": "sourcebound.candidate-change.v1",
             "prior_receipt_sha256": prior_receipt_sha256,
             "change_sha256": "8" * 64,
             "regression_suite_sha256": "9" * 64,
@@ -611,7 +611,7 @@ def test_improvement_case_rejects_a_changed_prior_receipt(tmp_path: Path) -> Non
     )
     stored = (
         root
-        / ".clean-docs/feedback/receipts"
+        / ".sourcebound/feedback/receipts"
         / case_id
         / "reproduced.json"
     )

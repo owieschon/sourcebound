@@ -110,7 +110,7 @@ class EvaluationReport:
 
     def as_dict(self) -> dict[str, object]:
         return {
-            "schema": "clean-docs.evaluation.v1",
+            "schema": "sourcebound.evaluation.v1",
             "mode": self.mode,
             "ok": self.ok,
             "scores": {
@@ -192,7 +192,7 @@ def _score(results: tuple[TaskResult, ...]) -> dict[str, int]:
 
 
 def _command_environment() -> dict[str, str]:
-    """Resolve sibling console scripts from the environment running clean-docs."""
+    """Resolve sibling console scripts from the environment running Sourcebound."""
     executable_dir = str(Path(sys.executable).parent)
     inherited_path = os.environ.get("PATH", "")
     path = executable_dir if not inherited_path else executable_dir + os.pathsep + inherited_path
@@ -277,7 +277,7 @@ def _provider_run_record(
         json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
     return {
-        "schema": "clean-docs.provider-run.v1",
+        "schema": "sourcebound.provider-run.v1",
         "run_id": run_id,
         "idempotency_id": run_id,
         "task": task.id,
@@ -520,7 +520,7 @@ def _context(root: Path, task: EvaluationTask) -> tuple[str, str]:
         digest.update(b"\0")
         digest.update(content.encode())
     prompt = json.dumps({
-        "schema": "clean-docs.round-trip.v1",
+        "schema": "sourcebound.round-trip.v1",
         "task": task.prompt,
         "context": records,
         "response_type": task.scorer["type"],
@@ -582,10 +582,10 @@ def _configuration_score(
     source = root / _relative(scorer["repository"], "configuration scorer repository")
     if not source.is_dir():
         raise ConfigurationError(f"configuration scorer repository does not exist: {source}")
-    with tempfile.TemporaryDirectory(prefix="clean-docs-eval-config-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="sourcebound-eval-config-") as temporary:
         destination = Path(temporary) / "repo"
         shutil.copytree(source, destination, ignore=shutil.ignore_patterns(".git"))
-        manifest_path = destination / ".clean-docs.yml"
+        manifest_path = destination / ".sourcebound.yml"
         manifest_path.write_text(response, encoding="utf-8")
         try:
             load_manifest(manifest_path)
@@ -849,7 +849,7 @@ def write_evaluation_history(path: Path, report: EvaluationReport) -> None:
             raw = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
             raise ConfigurationError(f"cannot read evaluation history {path}: {exc}") from exc
-        if not isinstance(raw, dict) or raw.get("schema") != "clean-docs.evaluation-history.v1":
+        if not isinstance(raw, dict) or raw.get("schema") != "sourcebound.evaluation-history.v1":
             raise ConfigurationError("evaluation history has an unsupported schema")
         if not isinstance(raw.get("records"), list):
             raise ConfigurationError("evaluation history records must be a list")
@@ -861,7 +861,7 @@ def write_evaluation_history(path: Path, report: EvaluationReport) -> None:
         records.append(record)
     unique = {record["record_id"]: record for record in records}
     rendered = json.dumps({
-        "schema": "clean-docs.evaluation-history.v1",
+        "schema": "sourcebound.evaluation-history.v1",
         "records": [unique[key] for key in sorted(unique)],
     }, indent=2, sort_keys=True) + "\n"
     atomic_write(path, rendered)

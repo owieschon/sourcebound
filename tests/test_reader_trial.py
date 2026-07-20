@@ -69,7 +69,7 @@ def _write_trial(
             "tasks": tasks,
         })
     receipt = {
-        "schema": "clean-docs.independent-reader-trial.v2",
+        "schema": "sourcebound.independent-reader-trial.v2",
         "candidate": candidate,
         "candidate_commit": "a" * 40,
         "candidate_artifact_sha256": "b" * 64,
@@ -115,14 +115,14 @@ def test_version_11_reader_trial_uses_two_families_and_learning_tasks(tmp_path: 
         "codex-gpt-5-6-sol-high": 1,
     }
     assert summary["tasks_per_participant"] == 5
-    assert summary["receipt_path"] == ".clean-docs/reader-trial-v1.1.json"
-    assert summary["evidence_root"] == ".clean-docs/reader-trials-v1.1"
+    assert summary["receipt_path"] == ".sourcebound/reader-trial-v1.1.json"
+    assert summary["evidence_root"] == ".sourcebound/reader-trials-v1.1"
     assert summary["receipt_sha256"] == _sha256(receipt.read_bytes())
 
 
 def test_version_11_runnable_context_includes_tutorial_prerequisites() -> None:
     rubric = yaml.safe_load(
-        (ROOT / ".clean-docs/reader-trial-rubric-v1.1.yml").read_text()
+        (ROOT / ".sourcebound/reader-trial-rubric-v1.1.yml").read_text()
     )
     tutorial = Path("docs/learn/tutorial-catch-a-lying-doc.md")
     content = (ROOT / tutorial).read_text()
@@ -204,9 +204,9 @@ def test_version_10_stable_release_requires_reader_trial_while_candidate_does_no
     assert verify_release_reader_trial(tmp_path) == {"required": False}
 
     project.write_text('[project]\nname = "fixture"\nversion = "1.0.0"\n')
-    rubric = tmp_path / ".clean-docs/reader-trial-rubric.yml"
+    rubric = tmp_path / ".sourcebound/reader-trial-rubric.yml"
     rubric.parent.mkdir(parents=True)
-    shutil.copyfile(ROOT / ".clean-docs/reader-trial-rubric.yml", rubric)
+    shutil.copyfile(ROOT / ".sourcebound/reader-trial-rubric.yml", rubric)
     with pytest.raises(ReaderTrialError, match="cannot read independent-reader receipt"):
         verify_release_reader_trial(tmp_path)
 
@@ -227,9 +227,9 @@ def test_version_11_reader_calibration_is_reported_but_does_not_gate_release(
 ) -> None:
     project = tmp_path / "pyproject.toml"
     project.write_text('[project]\nname = "fixture"\nversion = "1.1.0"\n')
-    rubric = tmp_path / ".clean-docs/reader-trial-rubric-v1.1.yml"
+    rubric = tmp_path / ".sourcebound/reader-trial-rubric-v1.1.yml"
     rubric.parent.mkdir(parents=True)
-    shutil.copyfile(ROOT / ".clean-docs/reader-trial-rubric-v1.1.yml", rubric)
+    shutil.copyfile(ROOT / ".sourcebound/reader-trial-rubric-v1.1.yml", rubric)
 
     assert verify_release_reader_trial(tmp_path) == {
         "required": False,

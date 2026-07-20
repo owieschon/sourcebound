@@ -18,7 +18,7 @@ from clean_docs.outcomes import RepositoryEvidence, collect_repository_evidence
 from clean_docs.sensitivity import RECEIPT_SCHEMA, load_json_object
 
 
-VERDICT_SCHEMA = "clean-docs.pr-verdict.v1"
+VERDICT_SCHEMA = "sourcebound.pr-verdict.v1"
 NON_CLAIMS = (
     "unbound prose is not certified",
     "judgment prose is not certified",
@@ -135,7 +135,7 @@ class PullRequestVerdict:
         )
         return {
             "schema": VERDICT_SCHEMA,
-            "producer": {"name": "clean-docs", "version": __version__},
+            "producer": {"name": "sourcebound", "version": __version__},
             "state": self.state,
             "ready": self.ok,
             "gate": {
@@ -491,8 +491,8 @@ def _validate_legacy_verdict_payload(payload: Mapping[str, object]) -> None:
             "legacy verdict.producer",
             frozenset({"name", "version"}),
         )
-        if producer["name"] != "clean-docs":
-            raise ConfigurationError("legacy verdict.producer.name must be clean-docs")
+        if producer["name"] != "sourcebound":
+            raise ConfigurationError("legacy verdict.producer.name must be sourcebound")
         _string(producer["version"], "legacy verdict.producer.version")
     findings = payload["findings"]
     if not isinstance(findings, list):
@@ -548,8 +548,8 @@ def validate_verdict_payload(payload: Mapping[str, object]) -> None:
         "verdict.producer",
         frozenset({"name", "version"}),
     )
-    if producer["name"] != "clean-docs":
-        raise ConfigurationError("verdict.producer.name must be clean-docs")
+    if producer["name"] != "sourcebound":
+        raise ConfigurationError("verdict.producer.name must be sourcebound")
     _string(producer["version"], "verdict.producer.version")
 
     states = {"ready", "not_ready", "unknown"}
@@ -833,6 +833,7 @@ def validate_verdict_payload(payload: Mapping[str, object]) -> None:
             f"verdict.changed_surface.artifacts[{index}]",
             frozenset(
                 {
+                    "id",
                     "path",
                     "change",
                     "base_blob",
@@ -845,6 +846,7 @@ def validate_verdict_payload(payload: Mapping[str, object]) -> None:
                 }
             ),
         )
+        _string(artifact["id"], f"verdict artifact {index}.id")
         _string(artifact["path"], f"verdict artifact {index}.path")
         if artifact["change"] not in {"added", "modified", "removed"}:
             raise ConfigurationError(f"verdict artifact {index}.change is invalid")
@@ -1130,7 +1132,7 @@ def _collect_findings(
                 "error",
                 audit_finding.path,
                 audit_finding.detail,
-                f"clean-docs explain {audit_finding.rule}",
+                f"sourcebound explain {audit_finding.rule}",
             )
         )
     for stale_finding in evidence.audit.stale_baseline:
@@ -1140,7 +1142,7 @@ def _collect_findings(
                 "error",
                 stale_finding.path,
                 f"resolved {stale_finding.rule} debt remains in the accepted baseline",
-                "clean-docs audit --update-baseline",
+                "sourcebound audit --update-baseline",
             )
         )
     for result in evidence.bindings:
@@ -1152,10 +1154,10 @@ def _collect_findings(
                     result.doc,
                     f"{result.binding_type} binding {result.binding_id} is stale",
                     (
-                        f"clean-docs drive --binding {result.binding_id}"
+                        f"sourcebound drive --binding {result.binding_id}"
                         if result.binding_type == "region"
                         else "repair the configured relationship, then run "
-                        f"clean-docs check --binding {result.binding_id}"
+                        f"sourcebound check --binding {result.binding_id}"
                     ),
                 )
             )
@@ -1167,7 +1169,7 @@ def _collect_findings(
                     "error",
                     result.doc,
                     f"projection {result.binding_id} is stale",
-                    "clean-docs project",
+                    "sourcebound project",
                 )
             )
     if evidence.source_claims is not None:
@@ -1180,7 +1182,7 @@ def _collect_findings(
                         source_claim.doc,
                         f"accepted source claim {source_claim.id} is stale",
                         "update the documented value or accepted relationship, "
-                        "then run clean-docs claims",
+                        "then run sourcebound claims",
                     )
                 )
         for missing in evidence.source_claims.missing:
@@ -1191,7 +1193,7 @@ def _collect_findings(
                     missing.doc,
                     f"accepted source claim {missing.id} is missing",
                     "restore the documented claim and source locator or remove "
-                    "the obsolete relationship from .clean-docs.yml",
+                    "the obsolete relationship from .sourcebound.yml",
                 )
             )
     assert evidence.changed is not None
@@ -1224,7 +1226,7 @@ def _collect_findings(
                 (impact_unknown.paths[0] if impact_unknown.paths else impact.manifest),
                 impact_unknown.message,
                 "resolve the unsupported surface or declare its disposition, "
-                "then rerun clean-docs plan",
+                "then rerun sourcebound plan",
             )
         )
     for contract in impact.review_contracts:
@@ -1251,7 +1253,7 @@ def _collect_findings(
                     f"review contract {contract.contract_id} could not resolve "
                     "every configured locator",
                     "repair the unresolved review-contract locator, then rerun "
-                    "clean-docs verdict",
+                    "sourcebound verdict",
                 )
             )
     unique = {finding.id: finding for finding in findings}
@@ -1350,7 +1352,7 @@ def render_verdict_payload_sarif(payload: Mapping[str, object]) -> str:
             {
                 "tool": {
                     "driver": {
-                        "name": "clean-docs",
+                        "name": "sourcebound",
                         "version": version,
                         "rules": [
                             {

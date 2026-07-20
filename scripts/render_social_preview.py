@@ -14,8 +14,8 @@ from clean_docs.regions import atomic_write
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SVG_OUTPUT = ROOT / "docs/assets/clean-docs-social.svg"
-PNG_OUTPUT = ROOT / "docs/assets/clean-docs-social.png"
+SVG_OUTPUT = ROOT / "docs/assets/sourcebound-social.svg"
+PNG_OUTPUT = ROOT / "docs/assets/sourcebound-social.png"
 WIDTH = 1280
 HEIGHT = 640
 
@@ -36,7 +36,7 @@ def _design_tokens() -> dict[str, str]:
 def render_svg() -> str:
     token = _design_tokens()
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{WIDTH}" height="{HEIGHT}" viewBox="0 0 {WIDTH} {HEIGHT}" role="img" aria-labelledby="title desc">
-  <title id="title">clean-docs: docs that answer to code</title>
+  <title id="title">Sourcebound: docs that answer to code</title>
   <desc id="desc">A three-step source-bound documentation flow. Repository sources own facts, bindings connect facts to prose, and a deterministic check rejects stale changes.</desc>
   <defs>
     <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
@@ -66,7 +66,7 @@ def render_svg() -> str:
   <g transform="translate(70 64)">
     <rect width="48" height="48" rx="10" fill="{token['line']}"/>
     <path d="M14 14h20v20H14zM20 9v30M28 9v30" fill="none" stroke="#fff" stroke-width="3"/>
-    <text x="64" y="33" class="brand">clean-docs</text>
+    <text x="64" y="33" class="brand">Sourcebound</text>
   </g>
   <text x="70" y="154" class="eyebrow">SOURCE-BOUND DOCUMENTATION ENGINE</text>
   <text x="70" y="225" class="headline">Docs that answer to code.</text>
@@ -131,7 +131,7 @@ def _chrome() -> str:
 
 
 def render_png(svg: str, output: Path) -> None:
-    with tempfile.TemporaryDirectory(prefix="clean-docs-social-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="sourcebound-social-") as temporary:
         html = Path(temporary) / "preview.html"
         html.write_text(
             '<!doctype html><html><head><meta charset="utf-8"><style>'

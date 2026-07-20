@@ -1,30 +1,30 @@
-# Archived clean-docs build plan through Version 1.1
+# Archived sourcebound build plan through Version 1.1
 
 This file preserves the implementation plan that produced the Version 1.0 and Version 1.1
 surfaces. It mixes shipped behavior with historical milestones and is not a current product
-contract. Use [`CLEAN_DOCS_SPEC.md`](../../../CLEAN_DOCS_SPEC.md) for supported behavior.
+contract. Use [`SOURCEBOUND_SPEC.md`](../../../SOURCEBOUND_SPEC.md) for supported behavior.
 
-<!-- clean-docs:policy register-v2 -->
-<!-- clean-docs:purpose -->
-Use this specification when deciding what clean-docs must ship or whether a release claim is earned. It keeps product scope, version order, functional tests, and definitions of done in one contract so implementation and acceptance cannot drift apart.
-<!-- clean-docs:end purpose -->
+<!-- sourcebound:policy register-v2 -->
+<!-- sourcebound:purpose -->
+Use this specification when deciding what sourcebound must ship or whether a release claim is earned. It keeps product scope, version order, functional tests, and definitions of done in one contract so implementation and acceptance cannot drift apart.
+<!-- sourcebound:end purpose -->
 
 
 The product combines two workflows over one evidence model:
 
-1. `clean-docs init` brings an existing repository to the declared standard.
-2. `clean-docs drive` regenerates and repairs documentation after repository changes.
-3. `clean-docs check` enforces the standard and source bindings in CI.
+1. `sourcebound init` brings an existing repository to the declared standard.
+2. `sourcebound drive` regenerates and repairs documentation after repository changes.
+3. `sourcebound check` enforces the standard and source bindings in CI.
 
-Generation is the setup path. Continuous verification is the compounding product value. Both paths must share the same evidence graph, bindings, extractors, and renderers. A generator and a checker with separate interpretations of the repository would reproduce the drift clean-docs exists to prevent.
+Generation is the setup path. Continuous verification is the compounding product value. Both paths must share the same evidence graph, bindings, extractors, and renderers. A generator and a checker with separate interpretations of the repository would reproduce the drift sourcebound exists to prevent.
 
 ## 1. Product outcome
 
-A repository using clean-docs has a documentation surface that is:
+A repository using sourcebound has a documentation surface that is:
 
 | Property | Product behavior | Evidence |
 | --- | --- | --- |
-| Accurate | Bound facts are derived from code, commands, schemas, tests, and repository metadata. | `clean-docs check` re-evaluates each binding and fails on drift. |
+| Accurate | Bound facts are derived from code, commands, schemas, tests, and repository metadata. | `sourcebound check` re-evaluates each binding and fails on drift. |
 | Current | Pull requests cannot merge while protected facts differ from their sources. | Required CI check and a deliberate source-change test. |
 | Clean | Pages follow the writing standard and the corpus has a deliberate information architecture. | Policy checks and standard-constrained generation. |
 | Human-readable | Pages define the subject first, explain constraints plainly, and use the medium that matches the reader's task. | Task-based human E2E tests and blind comprehension tests. |
@@ -33,13 +33,13 @@ A repository using clean-docs has a documentation surface that is:
 
 ### Product promise
 
-clean-docs can guarantee that a bound fact does not silently drift. It can detect likely undocumented change outside the bound surface. It cannot guarantee that every concept in any repository has been documented, or that unbound judgment prose remains correct.
+sourcebound can guarantee that a bound fact does not silently drift. It can detect likely undocumented change outside the bound surface. It cannot guarantee that every concept in any repository has been documented, or that unbound judgment prose remains correct.
 
 "Any repository" means the core can inspect files, run explicitly accepted commands, and apply bindings without depending on a repository's language. Rich discovery of framework concepts requires a first-party or third-party adapter. Unsupported ecosystems retain the generic binding path instead of receiving fabricated semantic coverage.
 
 Use this public claim:
 
-> Write your documentation standard once. clean-docs drives every repository to it and keeps the result current for humans and agents.
+> Write your documentation standard once. sourcebound drives every repository to it and keeps the result current for humans and agents.
 
 Do not claim that documentation can never become stale.
 
@@ -47,11 +47,11 @@ Do not claim that documentation can never become stale.
 
 ### Maintainer
 
-The maintainer writes or selects a documentation standard. They run `clean-docs init`; the product audits the repository, builds the evidence graph and bindings, writes the documentation, and verifies the result against the standard.
+The maintainer writes or selects a documentation standard. They run `sourcebound init`; the product audits the repository, builds the evidence graph and bindings, writes the documentation, and verifies the result against the standard.
 
 ### Contributor
 
-The contributor changes code without manually tracing documentation impact. `clean-docs drive --changed` regenerates affected documentation, and `clean-docs check --changed` proves that the committed result matches the source and standard.
+The contributor changes code without manually tracing documentation impact. `sourcebound drive --changed` regenerates affected documentation, and `sourcebound check --changed` proves that the committed result matches the source and standard.
 
 ### Repository operator
 
@@ -67,7 +67,7 @@ The agent needs compact, current context with stable identifiers and source link
 
 ## 3. Product principles
 
-1. **The standard is the human-authored input.** It captures the judgment clean-docs applies across repositories and changes.
+1. **The standard is the human-authored input.** It captures the judgment sourcebound applies across repositories and changes.
 2. **Repository evidence owns factual content.** Derive facts from deterministic sources when they exist.
 3. **Models phrase; they do not decide.** A model may turn an evidence-backed content plan into readable prose under the standard. Deterministic code owns facts, scope, validation, and gate results.
 4. **One evidence model serves every mode.** Audit, render, check, release notes, and agent packaging call the same extractor interface.
@@ -76,23 +76,23 @@ The agent needs compact, current context with stable identifiers and source link
 7. **Every failure carries an automatic repair path.** Name the source, document, observed value, expected value, and `drive` action.
 8. **Coverage is explicit.** Report bound, unbound, ignored, and standard-gap surfaces separately.
 9. **No executable source by default.** Static extractors parse source. Command extractors require explicit allowlisting and run with declared timeouts.
-10. **The product dogfoods itself.** clean-docs generates and verifies its own CLI, configuration, and capability references.
+10. **The product dogfoods itself.** sourcebound generates and verifies its own CLI, configuration, and capability references.
 11. **The repository contains product truth only.** Private planning, unrelated project context, and publication residue stay outside product code, docs, tests, issues, examples, and metadata.
-12. **The product stays local-first.** The CLI, pre-commit hook, and CI action are the product. A static demonstration may explain recorded behavior, but clean-docs does not require a hosted service or outbound telemetry.
+12. **The product stays local-first.** The CLI, pre-commit hook, and CI action are the product. A static demonstration may explain recorded behavior, but sourcebound does not require a hosted service or outbound telemetry.
 
 ## 4. Starting foundation
 
-clean-docs began with a working documentation-standard system. Version 0 preserves its evidence and shortcomings. The version plan records how the product packaged and extended this foundation instead of recreating it.
+sourcebound began with a working documentation-standard system. Version 0 preserves its evidence and shortcomings. The version plan records how the product packaged and extended this foundation instead of recreating it.
 
 | Existing artifact | Proven behavior | Product destination |
 | --- | --- | --- |
-| [`STANDARD.md`](STANDARD.md) | Defines sentence voice, medium choice, page shape, corpus structure, and the boundary between checks and judgment. | Becomes the default `clean-docs` policy profile and the canonical authoring standard. |
+| [`STANDARD.md`](STANDARD.md) | Defines sentence voice, medium choice, page shape, corpus structure, and the boundary between checks and judgment. | Becomes the default `sourcebound` policy profile and the canonical authoring standard. |
 | [`quality-gate.py`](quality-gate.py) | Blocks high-confidence language, engineering-claim, code, and secret patterns before an agent writes a file. | Its portable rules move into `policy`; the pre-write hook remains one adapter. |
 | [`doc-hygiene.py`](doc-hygiene.py) | Checks process artifacts, agent-addressed docs, provenance, length, duplication, and restatement across tracked Markdown. | Its tested rules move into `policy` with stable finding identifiers, configuration, and regression fixtures. |
 | [`skill/SKILL.md`](skill/SKILL.md) | Runs residue and corpus checks during one agent's pre-publish workflow. | Remains a distribution adapter. Equivalent CLI, CI, agent, editor, and publishing adapters call the same core. |
 | [`DECISION_LOG.md`](DECISION_LOG.md) | Records why archive handling and several noisy patterns were changed after real-repo triage. | Seeds regression cases and architecture decisions. |
 | [`docs/archive/v0/ultra-csm-findings.json`](docs/archive/v0/ultra-csm-findings.json) and [`docs/archive/v0/ultra-csm-before-after.md`](docs/archive/v0/ultra-csm-before-after.md) | Preserve the 280-finding baseline and the docs-only cleanup evidence. | Seed corpus-policy fixtures and the first dogfood case. |
-| Prior product brief | Defines ref-aware extraction, region/claim/symbol bindings, derive/check symmetry, and a no-model CI gate. | Supplies the binding engine contract in this specification under the final `clean-docs` name. |
+| Prior product brief | Defines ref-aware extraction, region/claim/symbol bindings, derive/check symmetry, and a no-model CI gate. | Supplies the binding engine contract in this specification under the final `sourcebound` name. |
 
 ### What the existing proof establishes
 
@@ -170,7 +170,7 @@ repository at git ref
         +------> evaluators ---> hygiene / human tasks / agent round trips
 ```
 
-The deterministic enforcement class includes schema validation, extraction, content planning, binding comparison, claim assertions, symbol checks, policy checks, link checks, and approved command checks. The model receives the standard and grounded content plan, then phrases documentation. Its output must preserve cited facts and pass deterministic validation before clean-docs writes it.
+The deterministic enforcement class includes schema validation, extraction, content planning, binding comparison, claim assertions, symbol checks, policy checks, link checks, and approved command checks. The model receives the standard and grounded content plan, then phrases documentation. Its output must preserve cited facts and pass deterministic validation before sourcebound writes it.
 
 ### 6.1 Core packages
 
@@ -215,7 +215,7 @@ Ref-aware extraction is required from the first release. The same extractor must
 
 | Binding | Documentation behavior | Check behavior | Typical source |
 | --- | --- | --- | --- |
-| `region` | clean-docs renders a marked block. | Re-render and compare normalized output. | Registry, enum, schema, CLI, routes, MCP tools. |
+| `region` | sourcebound renders a marked block. | Re-render and compare normalized output. | Registry, enum, schema, CLI, routes, MCP tools. |
 | `claim` | The content plan pairs phrased prose with a machine-checkable assertion. | Evaluate the assertion and compare the typed result. | Test count, coverage floor, package count, compatibility range. |
 | `symbol` | Generated prose cites a path, symbol, endpoint, or anchor. | Resolve it at the target ref. | Source files, functions, routes, config keys. |
 | `coverage` | The standard declares which public surfaces require documentation. | Compare discovered public surface with bindings or explicit ignores. | Packages, exported symbols, CLI commands, endpoints. |
@@ -228,7 +228,7 @@ This section keeps the complete example together because readers need to see how
 
 #### Manifest contract
 
-The canonical file is `.clean-docs.yml`. Paths are repository-relative. Unknown keys fail schema validation.
+The canonical file is `.sourcebound.yml`. Paths are repository-relative. Unknown keys fail schema validation.
 
 #### Complete example
 
@@ -293,7 +293,7 @@ projections:
     include: [README.md, docs/CONTRIBUTING.md, docs/ARCHITECTURE.md]
   bundles:
     - id: contributor
-      output: .clean-docs/context/contributor.md
+      output: .sourcebound/context/contributor.md
       include: [README.md, docs/CONTRIBUTING.md, docs/ARCHITECTURE.md]
 ```
 
@@ -304,9 +304,9 @@ projections:
 Markers carry a stable binding identifier. Generated content never nests.
 
 ```markdown
-<!-- clean-docs:begin csm-actions -->
+<!-- sourcebound:begin csm-actions -->
 ...generated Markdown...
-<!-- clean-docs:end csm-actions -->
+<!-- sourcebound:end csm-actions -->
 ```
 
 `derive` refuses malformed, missing, duplicate, or nested markers. It writes through a temporary file and an atomic replace. It changes no text outside the selected regions.
@@ -315,18 +315,18 @@ Markers carry a stable binding identifier. Generated content never nests.
 
 | Command | Reader's task | Gate class |
 | --- | --- | --- |
-| `clean-docs init` | Audit a repository, create bindings and information architecture, write the baseline, and verify it against the standard. | Self-driving; `--dry-run` previews without becoming a gate. |
-| `clean-docs inventory` | List docs, public surfaces, evidence candidates, and coverage. | Deterministic inventory with standard and adapter gaps. |
-| `clean-docs derive [--binding ID] [--check]` | Render bound documentation or show the diff without writing. | Deterministic. |
-| `clean-docs drive [--changed]` | Regenerate facts and prose affected by repository changes, then run required checks. | Self-driving. |
-| `clean-docs check [--changed]` | Verify bindings, policy, links, projections, and declared coverage. | Deterministic failures plus separated coverage gaps. |
-| `clean-docs doctor` | Verify configuration, dependencies, isolation support, provider access, and required tool versions before a run. | Deterministic and fail closed for required checks. |
-| `clean-docs explain ID` | Show why a finding exists and how to repair it. | Deterministic. |
-| `clean-docs project` | Regenerate `llms.txt` and context bundles. | Deterministic. |
-| `clean-docs emit llms-txt` | Emit a manifest-derived index of bound documents with content digests. | Deterministic. |
-| `clean-docs emit stepwise-skill` | Project the manifest and maintenance workflow into an interoperable stepwise skill package. | Deterministic. |
-| `clean-docs eval` | Run human-task fixtures and agent round-trip evaluations. | Deterministic scoring over recorded outputs; model execution is opt-in. |
-| `clean-docs release --from REF --to REF` | Produce grounded release notes phrased to the standard. | Deterministic facts with standard-constrained phrasing. |
+| `sourcebound init` | Audit a repository, create bindings and information architecture, write the baseline, and verify it against the standard. | Self-driving; `--dry-run` previews without becoming a gate. |
+| `sourcebound inventory` | List docs, public surfaces, evidence candidates, and coverage. | Deterministic inventory with standard and adapter gaps. |
+| `sourcebound derive [--binding ID] [--check]` | Render bound documentation or show the diff without writing. | Deterministic. |
+| `sourcebound drive [--changed]` | Regenerate facts and prose affected by repository changes, then run required checks. | Self-driving. |
+| `sourcebound check [--changed]` | Verify bindings, policy, links, projections, and declared coverage. | Deterministic failures plus separated coverage gaps. |
+| `sourcebound doctor` | Verify configuration, dependencies, isolation support, provider access, and required tool versions before a run. | Deterministic and fail closed for required checks. |
+| `sourcebound explain ID` | Show why a finding exists and how to repair it. | Deterministic. |
+| `sourcebound project` | Regenerate `llms.txt` and context bundles. | Deterministic. |
+| `sourcebound emit llms-txt` | Emit a manifest-derived index of bound documents with content digests. | Deterministic. |
+| `sourcebound emit stepwise-skill` | Project the manifest and maintenance workflow into an interoperable stepwise skill package. | Deterministic. |
+| `sourcebound eval` | Run human-task fixtures and agent round-trip evaluations. | Deterministic scoring over recorded outputs; model execution is opt-in. |
+| `sourcebound release --from REF --to REF` | Produce grounded release notes phrased to the standard. | Deterministic facts with standard-constrained phrasing. |
 
 ### Exit codes
 
@@ -342,7 +342,7 @@ JSON and SARIF output must carry the same result identifiers and evidence as ter
 
 ## 8. Repository onboarding workflow
 
-`clean-docs init` turns the configured standard and repository evidence into a verified documentation baseline.
+`sourcebound init` turns the configured standard and repository evidence into a verified documentation baseline.
 
 1. Inventory languages, build systems, public surfaces, docs, links, and current claims.
 2. Run deterministic hygiene and duplication checks.
@@ -357,7 +357,7 @@ The no-model path still inventories, checks, creates deterministic bindings, and
 
 ## 9. Continuous freshness workflow
 
-`clean-docs check --changed` runs in a pull request:
+`sourcebound check --changed` runs in a pull request:
 
 1. Resolve the merge base and head ref.
 2. Map changed files and symbols to extractors and bindings.
@@ -379,7 +379,7 @@ A failed binding report must answer five questions in one screen:
 
 ## 10. Human and agent accessibility
 
-Canonical documentation follows the existing clean-docs standard:
+Canonical documentation follows the existing sourcebound standard:
 
 - Open every reader-facing page with one marked BLUF purpose contract immediately after its H1.
 - Name who should read, the problem that makes the page necessary, and the capability the reader gains.
@@ -429,7 +429,7 @@ Repository content is untrusted input.
 - Discovery never imports repository Python or JavaScript modules.
 - Command extractors run only named `argv` arrays from the configured manifest.
 - Shell interpolation is unsupported.
-- Deterministic clean-docs paths make no network request, and manifests cannot grant network access to a declared command or plugin.
+- Deterministic sourcebound paths make no network request, and manifests cannot grant network access to a declared command or plugin.
 - The local process wrapper cannot revoke host network access or absolute host paths. The execution environment must enforce those boundaries before it runs untrusted declared code.
 - Commands have time, output, and process-count limits.
 - Temporary checkouts are isolated from the user's working tree.
@@ -441,8 +441,8 @@ Repository content is untrusted input.
 - Secret values resolve outside model context and never enter prompts or provider logs.
 - Repository text is scanned for prompt-injection patterns before it enters a phrasing-model context.
 - Provider health checks fail closed before model-assisted work starts.
-- CI pins clean-docs and third-party extractor versions.
-- A clean-docs candidate cannot be its own release authority. The last trusted commit
+- CI pins sourcebound and third-party extractor versions.
+- A sourcebound candidate cannot be its own release authority. The last trusted commit
   checks the candidate tree independently, and trust-pin promotion is a separate release
   operation after candidate tests and dogfood proofs pass.
 
@@ -450,7 +450,7 @@ The initial local implementation may rely on operating-system process controls. 
 
 ## 12. Quality model and metrics
 
-No single score represents documentation quality. clean-docs reports separate measures so one improvement cannot hide another failure.
+No single score represents documentation quality. sourcebound reports separate measures so one improvement cannot hide another failure.
 
 | Measure | Definition |
 | --- | --- |
@@ -473,13 +473,13 @@ Each release proves one product claim before the next release broadens it. A lat
 
 | Release | Commit | Required CI | Wheel SHA-256 |
 | --- | --- | --- | --- |
-| [`v0.1.0`](https://github.com/owieschon/clean-docs/releases/tag/v0.1.0) | `de5cdc5458d319043da31f2d874b3186c9840224` | [29226615998](https://github.com/owieschon/clean-docs/actions/runs/29226615998) | `5b8f53dfe3ee546e7efd9656414385099ef9a2f9eae00d3ffc0b04f286315497` |
-| [`v0.2.0`](https://github.com/owieschon/clean-docs/releases/tag/v0.2.0) | `cea7c10b52c2fb4e7f836a92836a210bbc7557a7` | [29228125889](https://github.com/owieschon/clean-docs/actions/runs/29228125889) | `02b742a95d2676453e1ca14129978297e496f2a441c27c80f91f8c75f4d59b46` |
-| [`v0.3.0`](https://github.com/owieschon/clean-docs/releases/tag/v0.3.0) | `f7c036198c7f2cbff59247d1307218133502b724` | [29228926772](https://github.com/owieschon/clean-docs/actions/runs/29228926772) | `0430ab14d02b643aab6990caed1094d1b89f6dfcd08d414d7968b39ff8ba21ac` |
-| [`v0.4.0`](https://github.com/owieschon/clean-docs/releases/tag/v0.4.0) | `715b91f01f67d519993f5aa23640867b76178e1a` | [29231093305](https://github.com/owieschon/clean-docs/actions/runs/29231093305) | `7599cdfc191089b2b7cead7798512ed4814a85e5fb73d40b806be60b9eb5eff9` |
-| [`v0.5.0`](https://github.com/owieschon/clean-docs/releases/tag/v0.5.0) | `17cd5461214e456d9f1925280627d7ec9ec0f0cb` | [29232645262](https://github.com/owieschon/clean-docs/actions/runs/29232645262) | `ed31005ab2160267701d7e16e1dacc8b0fa28935fcc321c3826f1973e8540f6d` |
-| [`v1.0.0rc5`](https://github.com/owieschon/clean-docs/releases/tag/v1.0.0rc5) | `a7c37ee90c9c6f73af1d73e685be9690d6856b92` | [29238892016](https://github.com/owieschon/clean-docs/actions/runs/29238892016) | `0ddb43c5a848e4243466bb6222f090cf8cbc0d9a414c07b98cc53e519a1ffc83` |
-| [`v1.0.0rc6`](https://github.com/owieschon/clean-docs/releases/tag/v1.0.0rc6) | `7f204ad38ac4c0668786c7cf7989b49fe435bb2e` | [29241466531](https://github.com/owieschon/clean-docs/actions/runs/29241466531) | `8d74fe28ab5c24d13899c7535c24286ec7795cb7c4b962ffab79bad53d8968c8` |
+| [`v0.1.0`](https://github.com/owieschon/sourcebound/releases/tag/v0.1.0) | `de5cdc5458d319043da31f2d874b3186c9840224` | [29226615998](https://github.com/owieschon/sourcebound/actions/runs/29226615998) | `5b8f53dfe3ee546e7efd9656414385099ef9a2f9eae00d3ffc0b04f286315497` |
+| [`v0.2.0`](https://github.com/owieschon/sourcebound/releases/tag/v0.2.0) | `cea7c10b52c2fb4e7f836a92836a210bbc7557a7` | [29228125889](https://github.com/owieschon/sourcebound/actions/runs/29228125889) | `02b742a95d2676453e1ca14129978297e496f2a441c27c80f91f8c75f4d59b46` |
+| [`v0.3.0`](https://github.com/owieschon/sourcebound/releases/tag/v0.3.0) | `f7c036198c7f2cbff59247d1307218133502b724` | [29228926772](https://github.com/owieschon/sourcebound/actions/runs/29228926772) | `0430ab14d02b643aab6990caed1094d1b89f6dfcd08d414d7968b39ff8ba21ac` |
+| [`v0.4.0`](https://github.com/owieschon/sourcebound/releases/tag/v0.4.0) | `715b91f01f67d519993f5aa23640867b76178e1a` | [29231093305](https://github.com/owieschon/sourcebound/actions/runs/29231093305) | `7599cdfc191089b2b7cead7798512ed4814a85e5fb73d40b806be60b9eb5eff9` |
+| [`v0.5.0`](https://github.com/owieschon/sourcebound/releases/tag/v0.5.0) | `17cd5461214e456d9f1925280627d7ec9ec0f0cb` | [29232645262](https://github.com/owieschon/sourcebound/actions/runs/29232645262) | `ed31005ab2160267701d7e16e1dacc8b0fa28935fcc321c3826f1973e8540f6d` |
+| [`v1.0.0rc5`](https://github.com/owieschon/sourcebound/releases/tag/v1.0.0rc5) | `a7c37ee90c9c6f73af1d73e685be9690d6856b92` | [29238892016](https://github.com/owieschon/sourcebound/actions/runs/29238892016) | `0ddb43c5a848e4243466bb6222f090cf8cbc0d9a414c07b98cc53e519a1ffc83` |
+| [`v1.0.0rc6`](https://github.com/owieschon/sourcebound/releases/tag/v1.0.0rc6) | `7f204ad38ac4c0668786c7cf7989b49fe435bb2e` | [29241466531](https://github.com/owieschon/sourcebound/actions/runs/29241466531) | `8d74fe28ab5c24d13899c7535c24286ec7795cb7c4b962ffab79bad53d8968c8` |
 
 ### Version 0: Proven local foundation, complete
 
@@ -510,15 +510,15 @@ Version 0 preservation work at the start of Version 0.1:
 
 ### Version 0.1: Deterministic binding engine, complete
 
-**Claim:** clean-docs packages the proven policy foundation, then derives and continuously verifies factual documentation on two dissimilar repositories without a model. The two initial dogfoods prove repository independence, not cross-language discovery.
+**Claim:** sourcebound packages the proven policy foundation, then derives and continuously verifies factual documentation on two dissimilar repositories without a model. The two initial dogfoods prove repository independence, not cross-language discovery.
 
 #### Build
 
-- Python package and `clean-docs` CLI.
+- Python package and `sourcebound` CLI.
 - Packaged standard, write-gate rules, and corpus-hygiene rules behind a shared policy result model.
 - Packaged residue and cross-project leakage rules with neutral defaults and repository-owned configuration.
 - Compatibility wrappers for the existing standalone scripts and pre-write hook.
-- Versioned `.clean-docs.yml` schema with strict validation.
+- Versioned `.sourcebound.yml` schema with strict validation.
 - Immutable git snapshot abstraction.
 - Evidence value and provenance model.
 - `region`, `claim`, and `symbol` bindings.
@@ -530,14 +530,14 @@ Version 0 preservation work at the start of Version 0.1:
 - `doctor` command for configuration, dependency, and isolation readiness.
 - Pinned dogfood manifests for ultra-csm and agent-governance-lab.
 - A dual self-hosting gate that runs both the candidate and a verifier extracted from a
-  pinned trusted ancestor without importing candidate clean-docs code.
+  pinned trusted ancestor without importing candidate sourcebound code.
 
 #### Functional E2E tests
 
 1. **ultra-csm capability drift**
    - Given a fixture containing `CSM_ACTION_SPECS` and a matching README region.
    - When a tenth action is added without regenerating the README.
-   - Then `clean-docs check` exits `1`, names the binding and changed action, and `clean-docs derive` adds the row without changing surrounding prose.
+   - Then `sourcebound check` exits `1`, names the binding and changed action, and `sourcebound derive` adds the row without changing surrounding prose.
 2. **bank-mcp command claim**
    - Given a README claim bound to an allowlisted deterministic fixture command.
    - When the command result changes from 340 to 341.
@@ -576,21 +576,21 @@ Version 0 preservation work at the start of Version 0.1:
 - All nine E2E scenarios run in CI from temporary git repositories.
 - The packaged policy engine passes Version 0 parity before the binding engine replaces any live script.
 - Unit and integration tests cover schema rejection, marker corruption, extractor failure, and exit-code contracts.
-- `clean-docs check` invokes no model and performs no network request.
+- `sourcebound check` invokes no model and performs no network request.
 - Both dogfood repositories pass at pinned commits with different binding types.
 - A deliberate drift commit fails in each dogfood repository.
 - A candidate checker cannot override a trusted-verifier failure, and CI fetches the
   pinned ancestor required to run that verifier.
 - The generic file, structured-data, command, and path bindings require no Python project metadata.
-- Installation from a clean environment and `clean-docs --help` succeed on supported Python versions.
-- The README CLI and manifest reference are generated and verified by clean-docs itself.
+- Installation from a clean environment and `sourcebound --help` succeed on supported Python versions.
+- The README CLI and manifest reference are generated and verified by sourcebound itself.
 - The standalone scripts remain available as compatibility entry points or print an exact migration command.
 - The repository carries an OSI-approved license, security policy, and reproducible release artifact.
 - A repository-residue scan passes across code, docs, tests, examples, issue templates, and package metadata.
 
 ### Version 0.2: Repository audit and baseline generation, complete
 
-**Claim:** clean-docs can drive an unfamiliar repository to the configured documentation standard without turning model output into factual authority.
+**Claim:** sourcebound can drive an unfamiliar repository to the configured documentation standard without turning model output into factual authority.
 
 #### Build
 
@@ -610,11 +610,11 @@ Version 0 preservation work at the start of Version 0.1:
 
 1. **unfamiliar Python repository baseline**
    - Given a fixture with a package, argparse CLI, tests, stale README command list, duplicate docs, and a process handoff under `docs/`.
-   - When `clean-docs init --no-model` runs.
-   - Then clean-docs inventories the public CLI, repairs the stale list, removes the duplicate and process artifact from the reader surface, creates deterministic bindings, and passes `check`.
+   - When `sourcebound init --no-model` runs.
+   - Then sourcebound inventories the public CLI, repairs the stale list, removes the duplicate and process artifact from the reader surface, creates deterministic bindings, and passes `check`.
 2. **standard-once bootstrap**
    - Given a repository and a configured documentation standard.
-   - When `clean-docs init` runs without interactive input.
+   - When `sourcebound init` runs without interactive input.
    - Then it writes the baseline, manifest, and projections; every generated fact has evidence; and a following `check` passes.
 3. **model boundary**
    - Given a model response containing an unsupported capability claim.
@@ -651,7 +651,7 @@ Version 0 preservation work at the start of Version 0.1:
 
 ### Version 0.3: Change-impact and pull-request gate, complete
 
-**Claim:** clean-docs catches both drift in documented facts and likely new undocumented public surface on every repository change.
+**Claim:** sourcebound catches both drift in documented facts and likely new undocumented public surface on every repository change.
 
 #### Build
 
@@ -700,7 +700,7 @@ Version 0 preservation work at the start of Version 0.1:
 - Stable finding identifiers preserve finding identity across reruns.
 - Cached and uncached runs return byte-identical normalized results.
 - Median changed-file check time meets the published budget on dogfood repositories.
-- The GitHub Action requires a full clean-docs commit, uses read-only repository permissions, and publishes a content-addressed receipt that binds the installed candidate, source commit, workflow run, and raw evidence files.
+- The GitHub Action requires a full sourcebound commit, uses read-only repository permissions, and publishes a content-addressed receipt that binds the installed candidate, source commit, workflow run, and raw evidence files.
 
 ### Version 0.4: Human and agent projections with task evaluation, complete
 
@@ -773,7 +773,7 @@ Version 0 preservation work at the start of Version 0.1:
 
 ### Version 0.5: Grounded release workflow and extension API, complete
 
-**Claim:** clean-docs can compare evidence across refs, produce an accurate factual release skeleton, and support new ecosystems without changing the core.
+**Claim:** sourcebound can compare evidence across refs, produce an accurate factual release skeleton, and support new ecosystems without changing the core.
 
 #### Build
 
@@ -798,12 +798,12 @@ Version 0 preservation work at the start of Version 0.1:
    - Then the factual section remains unchanged and the conflicting draft is flagged.
 3. **third-party extractor**
    - Given a fixture plugin implementing the published interface.
-   - When clean-docs loads it.
+   - When sourcebound loads it.
    - Then it returns typed evidence, participates in derive/check/release, and cannot write outside its output contract.
 4. **incompatible plugin**
    - Given a plugin targeting a different API version.
    - When configuration loads.
-   - Then clean-docs exits `2` with an exact compatibility message before extraction.
+   - Then sourcebound exits `2` with an exact compatibility message before extraction.
 5. **schema migration**
    - Given a prior manifest version.
    - When migration runs.
@@ -824,7 +824,7 @@ Version 0 preservation work at the start of Version 0.1:
 
 ### Version 1.0: Supported product
 
-**Claim:** clean-docs is safe and practical for continuous use across supported repository types.
+**Claim:** sourcebound is safe and practical for continuous use across supported repository types.
 
 #### Build
 
@@ -839,7 +839,7 @@ Version 0 preservation work at the start of Version 0.1:
 - Nested workspace and package discovery, including package manifests outside the root workspace glob.
 - Conservative onboarding that leaves weak purpose openings unresolved instead of certifying metadata or boilerplate.
 - Bounded canonical-document selection for `llms.txt`, with bound facts distinguished from declared context.
-- Public documentation generated and checked by clean-docs.
+- Public documentation generated and checked by sourcebound.
 - A compiled voice and BLUF purpose contract used by bootstrap, audit, and phrasing prompts.
 - Public source repository under the MIT license from the first supported release.
 - Signed release artifacts and software bill of materials.
@@ -848,7 +848,7 @@ Version 0 preservation work at the start of Version 0.1:
 
 1. **empty-to-protected repository**
    - Given an undocumented supported repository.
-   - When a maintainer supplies the standard and runs `clean-docs init`.
+   - When a maintainer supplies the standard and runs `sourcebound init`.
    - Then the repo reaches a passing protected baseline without manual document or manifest editing for discovered standard surfaces.
    - Every active Markdown page opens with a purpose contract; existing author prose remains byte-for-byte inside its markers, and a second init has no patch.
    - Given an existing corpus with hygiene debt, the explicit adoption mode records exact findings, fails on new findings, and requires baseline pruning when debt is resolved.
@@ -869,10 +869,10 @@ Version 0 preservation work at the start of Version 0.1:
    - Then the product does not execute undeclared code, leak secrets, escape the repo, or exceed declared limits.
 5. **upgrade compatibility**
    - Given repositories pinned to the prior supported minor release.
-   - When clean-docs upgrades to 1.0.
+   - When sourcebound upgrades to 1.0.
    - Then manifests migrate or fail with an exact action, and bound evidence does not silently change.
 6. **independent reader success**
-   - Given fresh sessions for Anthropic Opus 4.8, Anthropic Sonnet 5, Codex GPT 5.5 High, and Codex GPT 5.6 Sol High with only published clean-docs docs.
+   - Given fresh sessions for Anthropic Opus 4.8, Anthropic Sonnet 5, Codex GPT 5.5 High, and Codex GPT 5.6 Sol High with only published sourcebound docs.
    - When each model independently installs the tool, protects a fixture repo, repairs deliberate drift, and explains one limitation.
    - Then every model passes every observable task in the published rubric without shared history or prior outputs.
    - A reader can identify the README's applicability, problem, and resulting capability without reading past its first body block.
@@ -889,7 +889,7 @@ Version 0 preservation work at the start of Version 0.1:
 - Install, upgrade, rollback, and uninstall paths are documented and tested.
 - Signed artifacts, checksums, SBOM, license, support policy, and security reporting path are published.
 - Machine-readable run summaries report product outcomes locally and make no outbound request.
-- The static docs and demonstration site, `llms.txt`, context bundles, and CLI reference all pass clean-docs at the release commit.
+- The static docs and demonstration site, `llms.txt`, context bundles, and CLI reference all pass sourcebound at the release commit.
 - Audit fails on a missing, misplaced, malformed, or title-restating purpose contract, and generated stepwise docs pass the same rule.
 - Functional tests prove that the phrasing prompt carries the structured voice and purpose rubrics while release-note fragments are not misclassified as complete documents.
 - The public guarantee matches the boundary in section 1.
@@ -900,7 +900,7 @@ Version 0 preservation work at the start of Version 0.1:
 non-blocking pilot observation window may continue in parallel; it does not delay this version.
 
 **Claim:** the repository teaches why source-bound documentation matters, how to use it, and where
-its deterministic boundary sits. clean-docs keeps the checkable spine of that teaching corpus
+its deterministic boundary sits. sourcebound keeps the checkable spine of that teaching corpus
 current in the same repository.
 
 #### Build
@@ -908,7 +908,7 @@ current in the same repository.
 - Set the public repository description to a one-sentence category and purpose contract.
 - Add the topics `documentation`, `docs-as-code`, `developer-experience`, `context-engineering`,
   `llm`, `ai`, `cli`, `python`, `pre-commit`, and `technical-writing`.
-- Render `docs/assets/clean-docs-social.png` from the system-map source at the repository social
+- Render `docs/assets/sourcebound-social.png` from the system-map source at the repository social
   preview aspect ratio, then set it as the repository preview image.
 - Keep the README purpose contract as its first body block. Add a compact status, license, and
   package badge row plus a **Start here** link to `docs/learn/index.md` before the product detail.
@@ -986,7 +986,7 @@ current in the same repository.
 - Tutorial outputs, historical measurements, and implementation-boundary claims are source-bound;
   changing their defining evidence makes check fail before repair.
 - Existing canonical reference tables and version facts are linked, never copied into the lessons.
-- `clean-docs audit`, `check`, `project --check`, and `verify` pass with zero new or baselined finding
+- `sourcebound audit`, `check`, `project --check`, and `verify` pass with zero new or baselined finding
   for the learning corpus, and all inherited release E2E suites remain green.
 - The README links the learning index above product detail, the index links every lesson in the
   declared reading order, and `llms.txt` contains all four pages with current digests.
@@ -1006,7 +1006,7 @@ Functional E2E tests use real temporary git repositories, not mocks of git behav
 - Expected exit code.
 - Expected file diff.
 - Expected finding identifiers and evidence.
-- Forbidden side effects, including undeclared working-tree mutation, network requests by deterministic clean-docs paths, secret output, and unrelated prose changes. Declared child-process network isolation remains an execution-environment responsibility.
+- Forbidden side effects, including undeclared working-tree mutation, network requests by deterministic sourcebound paths, secret output, and unrelated prose changes. Declared child-process network isolation remains an execution-environment responsibility.
 
 Keep four fixture classes:
 
@@ -1031,13 +1031,13 @@ Each version follows the same delivery sequence:
 6. Run it on the two dissimilar dogfood repositories.
 7. Record false positives, false negatives, repair time, and unsafe behavior.
 8. Fix the product when a finding is wrong. Do not weaken a fixture to make it green without a recorded product decision.
-9. Dogfood the release on clean-docs itself.
+9. Dogfood the release on sourcebound itself.
 10. Retire an old script only after its replacement passes parity and its callers have a migration path.
 11. Publish only when the version DoD and every inherited E2E test pass.
 
 ## 16. Product decisions carried forward
 
-- The product name is `clean-docs`. The CLI is `clean-docs`. The manifest is `.clean-docs.yml`.
+- The product name is `sourcebound`. The CLI is `sourcebound`. The manifest is `.sourcebound.yml`.
 - `STANDARD.md`, `quality-gate.py`, and `doc-hygiene.py` are inherited product inputs, not disposable prototypes.
 - The deterministic freshness gate is the product center.
 - The repository bootstrapper is the self-driving setup path, but it does not delay the first gate release.
@@ -1055,6 +1055,6 @@ Each version follows the same delivery sequence:
 2. Static Python evidence uses the standard-library abstract syntax tree and never imports repository modules.
 3. `derive` prints a diff by default. `derive --write` and `drive` are the explicit write paths.
 4. A static micro-repository check must complete within five seconds. Explicit command runtime is governed separately by each allowlisted timeout.
-5. Tables and lists preserve source evidence order. Path evidence sorts lexicographically. clean-docs does not reorder semantic arrays to manufacture stable output.
+5. Tables and lists preserve source evidence order. Path evidence sorts lexicographically. sourcebound does not reorder semantic arrays to manufacture stable output.
 
 Product extensions, model providers, static publishing, and additional ecosystems do not alter these Version 0.1 contracts.

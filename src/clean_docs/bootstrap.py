@@ -34,7 +34,7 @@ from clean_docs.write_gate import redact_secrets
 
 
 REFERENCE_REGION = "repository-surface"
-GENERATED_REFERENCE = ".clean-docs/repository-surface.md"
+GENERATED_REFERENCE = ".sourcebound/repository-surface.md"
 PLAN_FACT_LIMIT = 100
 PLAN_DIFF_LIMIT = 4000
 REFERENCE_SECTION = re.compile(
@@ -77,7 +77,7 @@ class BootstrapPlan:
             })
         serialized_facts = facts[:PLAN_FACT_LIMIT]
         return {
-            "schema": "clean-docs.content-plan.v1",
+            "schema": "sourcebound.content-plan.v1",
             "ok": not self.gaps,
             "digest": self.digest,
             "fact_count": len(facts),
@@ -174,12 +174,12 @@ def _reference_document(
         heading = next((index for index, line in enumerate(lines) if line.startswith("# ")), 0)
         purpose = [
             REGISTER_PROFILE,
-            "<!-- clean-docs:purpose -->",
+            "<!-- sourcebound:purpose -->",
             "Use this repository guide when you need to run or change this project. Without a "
             "source-bound overview, entry points and public surfaces can drift from the "
             "implementation; after reading, you can locate the detected surfaces and verify "
             "their current sources.",
-            "<!-- clean-docs:end purpose -->",
+            "<!-- sourcebound:end purpose -->",
         ]
         lines[heading + 1:heading + 1] = ["", *purpose]
         current = "\n".join(lines).rstrip() + "\n"
@@ -195,14 +195,14 @@ def _reference_document(
         "## Repository surface\n\n"
         "This summary is a static catalog of detected package, CLI, API, schema, and test "
         "surfaces. It does not validate existing prose claims. Direct manifest bindings are "
-        "the accuracy boundary; run `clean-docs inventory` for coverage state and the full "
+        "the accuracy boundary; run `sourcebound inventory` for coverage state and the full "
         "catalog.\n\n"
         f"{highlights}"
-        f"<!-- clean-docs:begin {REFERENCE_REGION} -->\n"
+        f"<!-- sourcebound:begin {REFERENCE_REGION} -->\n"
         f"{generated}\n"
-        f"<!-- clean-docs:end {REFERENCE_REGION} -->\n"
+        f"<!-- sourcebound:end {REFERENCE_REGION} -->\n"
     )
-    if f"<!-- clean-docs:begin {REFERENCE_REGION} -->" in current:
+    if f"<!-- sourcebound:begin {REFERENCE_REGION} -->" in current:
         return replace_region(current, REFERENCE_REGION, generated)
     if REFERENCE_SECTION.search(current):
         return REFERENCE_SECTION.sub(section + "\n", current, count=1).rstrip() + "\n"
@@ -214,7 +214,7 @@ def _diff(path: str, before: str, after: str) -> str:
         before.splitlines(keepends=True),
         after.splitlines(keepends=True),
         fromfile=path,
-        tofile=f"{path} (clean-docs init)",
+        tofile=f"{path} (sourcebound init)",
     ))
 
 
@@ -258,7 +258,7 @@ def build_bootstrap_plan(
         generated_reference = root / binding_document
         if (
             generated_reference.exists()
-            and f"<!-- clean-docs:begin {REFERENCE_REGION} -->"
+            and f"<!-- sourcebound:begin {REFERENCE_REGION} -->"
             not in generated_reference.read_text(encoding="utf-8")
         ):
             raise ConfigurationError(
@@ -269,7 +269,7 @@ def build_bootstrap_plan(
     canonical_documents = _canonical_documents(
         root, readme_path, {item.source for item in archive_candidates}
     )
-    existing_manifest = root / ".clean-docs.yml"
+    existing_manifest = root / ".sourcebound.yml"
     manifest_text = _manifest_text(binding_document, canonical_documents)
     if existing_manifest.exists() and existing_manifest.read_text(encoding="utf-8") != manifest_text:
         raise ConfigurationError(
@@ -285,7 +285,7 @@ def build_bootstrap_plan(
     )
     moved = {item.source for item in moves}
     manifest = Manifest(
-        path=root / ".clean-docs.yml",
+        path=root / ".sourcebound.yml",
         version=1,
         bindings=(_binding(binding_document),),
         projections=ProjectionConfig(
@@ -324,7 +324,7 @@ def build_bootstrap_plan(
                 reference,
                 "bind detected repository surfaces",
             ),
-            _planned_write(root, ".clean-docs.yml", manifest_text, "declare the generated binding"),
+            _planned_write(root, ".sourcebound.yml", manifest_text, "declare the generated binding"),
             _planned_write(root, "llms.txt", llms, "index the source-bound documentation"),
         ) if item is not None
     ]
@@ -340,7 +340,7 @@ def build_bootstrap_plan(
         if not profile.applies("purpose-contract"):
             continue
         updated = ensure_purpose_contract(current, fallback=False)
-        if "<!-- clean-docs:purpose -->" not in updated:
+        if "<!-- sourcebound:purpose -->" not in updated:
             purpose_gaps.append(
                 f"purpose contract needs authored judgment: {relative}"
             )
@@ -450,7 +450,7 @@ def apply_bootstrap_plan(root: Path, plan: BootstrapPlan) -> None:
             completed_moves.append(move)
         for write in plan.writes:
             atomic_write(root / write.path, write.content)
-        results = evaluate(root, root / ".clean-docs.yml")
+        results = evaluate(root, root / ".sourcebound.yml")
         if any(result.changed for result in results):
             raise ConfigurationError("init wrote a baseline that does not pass binding checks")
         if plan.accept_hygiene_baseline:
@@ -466,7 +466,7 @@ def apply_bootstrap_plan(root: Path, plan: BootstrapPlan) -> None:
                     for finding in report.stale_baseline[:5]
                 )
             raise PolicyError(f"init baseline has policy findings: {details}")
-        manifest = load_manifest(root / ".clean-docs.yml")
+        manifest = load_manifest(root / ".sourcebound.yml")
         if any(result.changed for result in evaluate_projections(root, manifest)):
             raise ConfigurationError("init wrote a baseline with stale projections")
     except Exception:

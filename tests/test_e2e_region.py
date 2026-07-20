@@ -45,16 +45,16 @@ SOURCE_THREE = SOURCE_TWO.replace(
 README = """\
 # Fixture
 
-<!-- clean-docs:purpose -->
+<!-- sourcebound:purpose -->
 Author-owned introduction.
-<!-- clean-docs:end purpose -->
+<!-- sourcebound:end purpose -->
 
-<!-- clean-docs:begin actions -->
+<!-- sourcebound:begin actions -->
 | name | tier | external |
 | --- | --- | --- |
 | recommend | 1 | false |
 | draft | 2 | true |
-<!-- clean-docs:end actions -->
+<!-- sourcebound:end actions -->
 
 Author-owned ending.
 """
@@ -76,7 +76,7 @@ def _run(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
 def _repo(tmp_path: Path) -> Path:
     root = tmp_path / "repo"
     (root / "src").mkdir(parents=True)
-    (root / ".clean-docs.yml").write_text(MANIFEST)
+    (root / ".sourcebound.yml").write_text(MANIFEST)
     (root / "src/actions.py").write_text(SOURCE_TWO)
     (root / "README.md").write_text(README)
     subprocess.run(["git", "init", "-q", str(root)], check=True)
@@ -112,8 +112,8 @@ def test_detects_repairs_and_preserves_author_prose(tmp_path: Path) -> None:
     assert write.returncode == 0
     updated = (root / "README.md").read_text()
     assert updated.startswith(
-        "# Fixture\n\n<!-- clean-docs:purpose -->\n"
-        "Author-owned introduction.\n<!-- clean-docs:end purpose -->\n"
+        "# Fixture\n\n<!-- sourcebound:purpose -->\n"
+        "Author-owned introduction.\n<!-- sourcebound:end purpose -->\n"
     )
     assert updated.endswith("\nAuthor-owned ending.\n")
     assert "| call | 3 | true |" in updated
@@ -153,8 +153,8 @@ def test_tenth_action_drift_is_detected_and_repaired(tmp_path: Path) -> None:
     repaired = _run(root, "derive", "--write")
     assert repaired.returncode == 0, repaired.stderr
     after = (root / "README.md").read_text()
-    begin = "<!-- clean-docs:begin actions -->"
-    end = "<!-- clean-docs:end actions -->"
+    begin = "<!-- sourcebound:begin actions -->"
+    end = "<!-- sourcebound:end actions -->"
     assert after.split(begin, 1)[0] == before.split(begin, 1)[0]
     assert after.split(end, 1)[1] == before.split(end, 1)[1]
     assert "| action-10 | 10 | false |" in after
@@ -167,22 +167,22 @@ def test_ci_evidence_fails_on_drift_and_passes_after_regeneration(tmp_path: Path
 
     audit = _run(root, "audit", "--format", "json")
     check = _run(root, "check", "--format", "json")
-    (root / "clean-docs-audit.json").write_text(audit.stdout)
-    (root / "clean-docs-check.json").write_text(check.stdout)
+    (root / "sourcebound-audit.json").write_text(audit.stdout)
+    (root / "sourcebound-check.json").write_text(check.stdout)
 
     assert audit.returncode == 0
     assert check.returncode == 1
-    assert json.loads((root / "clean-docs-audit.json").read_text())["ok"] is True
-    assert json.loads((root / "clean-docs-check.json").read_text())["ok"] is False
+    assert json.loads((root / "sourcebound-audit.json").read_text())["ok"] is True
+    assert json.loads((root / "sourcebound-check.json").read_text())["ok"] is False
 
     assert _run(root, "derive", "--write").returncode == 0
     repaired = _run(root, "check", "--format", "json")
     assert repaired.returncode == 0
     assert json.loads(repaired.stdout)["ok"] is True
-    workflow = yaml.safe_load((ROOT / ".github/workflows/reusable-clean-docs.yml").read_text())
+    workflow = yaml.safe_load((ROOT / ".github/workflows/reusable-sourcebound.yml").read_text())
     upload = next(
         step
-        for step in workflow["jobs"]["clean-docs"]["steps"]
+        for step in workflow["jobs"]["sourcebound"]["steps"]
         if step.get("uses")
         == "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a"
     )
@@ -223,9 +223,9 @@ def test_drive_does_not_write_a_policy_failure(tmp_path: Path) -> None:
     original = README.replace(
         "# Fixture\n",
         "# Fixture\n\n"
-        "<!-- clean-docs:policy register-v2 -->\n"
-        '<!-- clean-docs:allow preamble-contract reason="Fixture isolates the booster rule" -->\n'
-        '<!-- clean-docs:allow readme-routing reason="Fixture isolates the booster rule" -->\n',
+        "<!-- sourcebound:policy register-v2 -->\n"
+        '<!-- sourcebound:allow preamble-contract reason="Fixture isolates the booster rule" -->\n'
+        '<!-- sourcebound:allow readme-routing reason="Fixture isolates the booster rule" -->\n',
     ).replace("Author-owned introduction.", "A powerful introduction.")
     (root / "README.md").write_text(original)
     (root / "src/actions.py").write_text(SOURCE_THREE)
@@ -239,7 +239,7 @@ def test_drive_does_not_write_a_policy_failure(tmp_path: Path) -> None:
 def test_json_pointer_binding_repairs_realistic_corpus_table(tmp_path: Path) -> None:
     root = tmp_path / "json-repo"
     (root / "experiment").mkdir(parents=True)
-    (root / ".clean-docs.yml").write_text(MANIFEST.replace(
+    (root / ".sourcebound.yml").write_text(MANIFEST.replace(
         "extractor: python-literal\n    source:\n      path: src/actions.py\n      symbol: ACTIONS",
         "extractor: json\n    source:\n      path: experiment/corpus.json\n      pointer: /cases",
     ).replace("columns: [name, tier, external]", "columns: [name, tier, external]"))
@@ -265,15 +265,15 @@ def test_two_region_repair_preserves_every_unbound_byte(tmp_path: Path) -> None:
     (root / "first.txt").write_text("new first\n")
     (root / "second.txt").write_text("new second\n")
     original = (
-        "# Fixture\n\n<!-- clean-docs:purpose -->\n"
-        "Author introduction.\n<!-- clean-docs:end purpose -->\n\n"
-        "<!-- clean-docs:begin first -->\nold first\n<!-- clean-docs:end first -->\n\n"
+        "# Fixture\n\n<!-- sourcebound:purpose -->\n"
+        "Author introduction.\n<!-- sourcebound:end purpose -->\n\n"
+        "<!-- sourcebound:begin first -->\nold first\n<!-- sourcebound:end first -->\n\n"
         "Author bridge.\n\n"
-        "<!-- clean-docs:begin second -->\nold second\n<!-- clean-docs:end second -->\n\n"
+        "<!-- sourcebound:begin second -->\nold second\n<!-- sourcebound:end second -->\n\n"
         "Author ending.\n"
     )
     (root / "README.md").write_text(original)
-    (root / ".clean-docs.yml").write_text("""\
+    (root / ".sourcebound.yml").write_text("""\
 version: 1
 bindings:
   - id: first
@@ -299,7 +299,7 @@ bindings:
     assert derived.returncode == 0, derived.stderr
     updated = (root / "README.md").read_text()
     body = re.compile(
-        r"(<!-- clean-docs:begin [^ ]+ -->\n).*?(<!-- clean-docs:end [^ ]+ -->)",
+        r"(<!-- sourcebound:begin [^ ]+ -->\n).*?(<!-- sourcebound:end [^ ]+ -->)",
         re.DOTALL,
     )
     assert body.sub(r"\1<generated>\n\2", updated) == body.sub(

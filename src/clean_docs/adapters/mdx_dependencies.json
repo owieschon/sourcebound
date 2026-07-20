@@ -1,5 +1,5 @@
 {
-  "lock_sha256": "7f11a7d12a606ee77f40468d2db9522bf078df4423d644808302dabab713dea7",
+  "lock_sha256": "03e1864604ce2e2c74958671698339fb76d1d6759be8d60eeed99162554510cf",
   "packages": [
     {
       "integrity": "sha512-f6ZO2ifpwAQIpzGWaBQT2TXxPv6z3RBzQKpVftEWN78Vl/YweF1uwussDx8ECAXVtr3Rs89fKyG9YlzUs9DyGQ==",
@@ -710,5 +710,5 @@
       "version": "2.0.4"
     }
   ],
-  "schema": "clean-docs.mdx-dependencies.v1"
+  "schema": "sourcebound.mdx-dependencies.v1"
 }

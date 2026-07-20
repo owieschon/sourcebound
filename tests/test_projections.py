@@ -24,7 +24,7 @@ projections:
     summary: Canonical fixture pages and their verified bindings.
   bundles:
     - id: contributor
-      output: .clean-docs/context/contributor.md
+      output: .sourcebound/context/contributor.md
       include: [README.md]
 """
 
@@ -48,10 +48,10 @@ def _repo(tmp_path: Path) -> Path:
     (root / "source.txt").write_text("Bound overview\n")
     (root / "README.md").write_text(
         "# Fixture\n\n[Limits](#limits)\n\n"
-        "<!-- clean-docs:begin overview -->\nBound overview\n"
-        "<!-- clean-docs:end overview -->\n\n## Limits\n\nOnly declared bindings are checked.\n"
+        "<!-- sourcebound:begin overview -->\nBound overview\n"
+        "<!-- sourcebound:end overview -->\n\n## Limits\n\nOnly declared bindings are checked.\n"
     )
-    (root / ".clean-docs.yml").write_text(MANIFEST)
+    (root / ".sourcebound.yml").write_text(MANIFEST)
     subprocess.run(["git", "init", "-q", str(root)], check=True)
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
     subprocess.run(
@@ -67,7 +67,7 @@ def test_single_source_projection_changes_every_affected_output(tmp_path: Path) 
     first = _run(root, "project")
     assert first.returncode == 0, first.stderr
     llms_before = (root / "llms.txt").read_text()
-    bundle_before = (root / ".clean-docs/context/contributor.md").read_text()
+    bundle_before = (root / ".sourcebound/context/contributor.md").read_text()
     readme_before = (root / "README.md").read_text()
     readme_digest = hashlib.sha256(readme_before.encode()).hexdigest()
     assert f"sha256: {readme_digest}" in llms_before
@@ -81,8 +81,8 @@ def test_single_source_projection_changes_every_affected_output(tmp_path: Path) 
     second = _run(root, "project")
     assert second.returncode == 0, second.stderr
     assert (root / "llms.txt").read_text() != llms_before
-    assert (root / ".clean-docs/context/contributor.md").read_text() != bundle_before
-    assert "A canonical task note." in (root / ".clean-docs/context/contributor.md").read_text()
+    assert (root / ".sourcebound/context/contributor.md").read_text() != bundle_before
+    assert "A canonical task note." in (root / ".sourcebound/context/contributor.md").read_text()
 
 
 def test_stale_projection_fails_check_and_project_repairs_it(tmp_path: Path) -> None:
@@ -94,7 +94,7 @@ def test_stale_projection_fails_check_and_project_repairs_it(tmp_path: Path) -> 
     stale = _run(root, "check")
     assert stale.returncode == 1
     assert "[drift] projection:llms.txt" in stale.stdout
-    assert "[drift] projection:.clean-docs/context/contributor.md" in stale.stdout
+    assert "[drift] projection:.sourcebound/context/contributor.md" in stale.stdout
 
     assert _run(root, "project").returncode == 0
     assert _run(root, "project", "--check").returncode == 0

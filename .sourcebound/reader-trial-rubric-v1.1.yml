@@ -1,0 +1,31 @@
+version: 1
+context:
+  - README.md
+  - docs/INSTALL.md
+  - docs/learn/index.md
+  - docs/learn/tutorial-catch-a-lying-doc.md
+  - docs/learn/postmortem-the-readme-that-lied.md
+  - docs/learn/deep-dive-the-deterministic-seam.md
+profiles:
+  - id: anthropic-opus-4-8
+    provider: anthropic
+    model: Opus 4.8
+  - id: codex-gpt-5-6-sol-high
+    provider: codex
+    model: GPT 5.6 Sol High
+tasks:
+  - id: route-orientation
+    instruction: Starting from the README first screen and learning index, choose the page that explains what sourcebound is and why source-bound documentation matters.
+    passes_when: The reader chooses the README overview for product orientation, then identifies the learning index thesis that documentation drift is a source-derivation problem.
+  - id: route-hands-on
+    instruction: Starting from the learning index, choose the page for learning the repair loop by doing it.
+    passes_when: The reader chooses the catch-a-lying-doc tutorial and states that it establishes a baseline, creates source drift, observes failure, repairs the declared region, refreshes projections, and verifies the result.
+  - id: route-mechanism
+    instruction: Starting from the learning index, choose the page that explains who owns facts, phrasing, and the gate result.
+    passes_when: The reader chooses the deterministic-seam deep dive and assigns evidence selection and pass-or-fail authority to deterministic code while limiting a model to phrasing supplied evidence.
+  - id: run-tutorial
+    instruction: Follow the published offline-install prerequisite, run the published tutorial against the candidate in a fresh repository, and record each command exit and declared file change.
+    passes_when: The baseline passes, deliberate source drift fails first with the named binding, drive changes the declared documentation region, project refreshes llms.txt, and final check and verify exit zero.
+  - id: explain-authority-boundary
+    instruction: Explain why a model cannot select facts, widen scope, or decide whether sourcebound passes, using only the published learning pages.
+    passes_when: The answer preserves the evidence-to-phrasing-to-gate sequence, names deterministic code as the authority on inputs and outcomes, and does not grant the model merge-gate authority.

@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   reusable-gate:
-    uses: ./.github/workflows/reusable-clean-docs.yml
+    uses: ./.github/workflows/reusable-sourcebound.yml
     with:
       package-ref: ${{ github.event.pull_request.head.sha || github.sha }}
       base-ref: ${{ github.event.pull_request.base.sha || github.event.before || github.sha }}
@@ -39,48 +39,48 @@ jobs:
       - run: python -m mypy src/clean_docs
       - run: python -m ruff check src tests
       - run: python scripts/check_doc_names.py
-      - run: clean-docs --help
-      - run: clean-docs --root . audit
-      - run: clean-docs --root . doctor
-      - run: clean-docs --root . emit stepwise-skill --out /tmp/clean-docs-stepwise
-      - run: clean-docs --root /tmp/clean-docs-stepwise audit
-      - run: clean-docs --root . emit llms-txt --out /tmp/clean-docs-llms.txt
-      - run: clean-docs --root . project --check
+      - run: sourcebound --help
+      - run: sourcebound --root . audit
+      - run: sourcebound --root . doctor
+      - run: sourcebound --root . emit stepwise-skill --out /tmp/sourcebound-stepwise
+      - run: sourcebound --root /tmp/sourcebound-stepwise audit
+      - run: sourcebound --root . emit llms-txt --out /tmp/sourcebound-llms.txt
+      - run: sourcebound --root . project --check
       - run: |
           base="${{ github.event.pull_request.base.sha || github.event.before || github.sha }}"
           prior=()
-          if git cat-file -e "$base:.clean-docs/reviews/repository-events.json" 2>/dev/null; then
-            git show "$base:.clean-docs/reviews/repository-events.json" > /tmp/clean-docs-review-events-base.json
-            prior=(--prior-ledger /tmp/clean-docs-review-events-base.json)
+          if git cat-file -e "$base:.sourcebound/reviews/repository-events.json" 2>/dev/null; then
+            git show "$base:.sourcebound/reviews/repository-events.json" > /tmp/sourcebound-review-events-base.json
+            prior=(--prior-ledger /tmp/sourcebound-review-events-base.json)
           fi
-          clean-docs --root . review candidates \
-            --input .clean-docs/reviews/repository-review.json \
-            --ledger .clean-docs/reviews/repository-events.json \
+          sourcebound --root . review candidates \
+            --input .sourcebound/reviews/repository-review.json \
+            --ledger .sourcebound/reviews/repository-events.json \
             "${prior[@]}" \
-            --out .clean-docs/improvement-candidates.json \
+            --out .sourcebound/improvement-candidates.json \
             --check \
             --format text
       - run: >-
-          clean-docs --root . review lifecycle check
-          --input .clean-docs/reviews/repository-review.json
-          --state .clean-docs/improvement-lifecycle.json
+          sourcebound --root . review lifecycle check
+          --input .sourcebound/reviews/repository-review.json
+          --state .sourcebound/improvement-lifecycle.json
           --format text
       - run: >-
-          clean-docs --root . verdict
+          sourcebound --root . verdict
           --base "${{ github.event.pull_request.base.sha || github.event.before || github.sha }}"
           --head HEAD
           --format json
-      - run: clean-docs --root . eval --format json
-      - run: clean-docs --root . release --from v0.4.0 --to HEAD --format json
-      - run: python scripts/record_demo.py --out /tmp/clean-docs-demo-evidence.json
-      - run: cmp .clean-docs/demo/evidence.json /tmp/clean-docs-demo-evidence.json
-      - run: python scripts/build_learning_evidence.py --out /tmp/clean-docs-learning-evidence.json
-      - run: cmp .clean-docs/learning/ultra-csm-hygiene.json /tmp/clean-docs-learning-evidence.json
+      - run: sourcebound --root . eval --format json
+      - run: sourcebound --root . release --from v0.4.0 --to HEAD --format json
+      - run: python scripts/record_demo.py --out /tmp/sourcebound-demo-evidence.json
+      - run: cmp .sourcebound/demo/evidence.json /tmp/sourcebound-demo-evidence.json
+      - run: python scripts/build_learning_evidence.py --out /tmp/sourcebound-learning-evidence.json
+      - run: cmp .sourcebound/learning/ultra-csm-hygiene.json /tmp/sourcebound-learning-evidence.json
       - run: >-
           python scripts/record_learning_tutorial.py
-          --clean-docs "$(command -v clean-docs)"
-          --out /tmp/clean-docs-tutorial-evidence.json
-      - run: cmp .clean-docs/learning/tutorial-evidence.json /tmp/clean-docs-tutorial-evidence.json
+          --sourcebound "$(command -v sourcebound)"
+          --out /tmp/sourcebound-tutorial-evidence.json
+      - run: cmp .sourcebound/learning/tutorial-evidence.json /tmp/sourcebound-tutorial-evidence.json
       - run: python scripts/render_social_preview.py --check
       - run: python scripts/trusted_self_check.py
 
@@ -115,16 +115,16 @@ jobs:
           python -m pip install
           "build==1.2.2.post1" "PyYAML==6.0.3" "setuptools==75.8.0" "wheel==0.45.1"
       - run: python scripts/build_release.py --out dist
-      - run: python -m venv /tmp/clean-docs-release
-      - run: /tmp/clean-docs-release/bin/pip install dist/*.whl
-      - run: /tmp/clean-docs-release/bin/clean-docs --help
-      - run: /tmp/clean-docs-release/bin/clean-docs --root . audit
-      - run: /tmp/clean-docs-release/bin/clean-docs --root . project --check
-      - run: /tmp/clean-docs-release/bin/clean-docs --root . eval --format json
+      - run: python -m venv /tmp/sourcebound-release
+      - run: /tmp/sourcebound-release/bin/pip install dist/*.whl
+      - run: /tmp/sourcebound-release/bin/sourcebound --help
+      - run: /tmp/sourcebound-release/bin/sourcebound --root . audit
+      - run: /tmp/sourcebound-release/bin/sourcebound --root . project --check
+      - run: /tmp/sourcebound-release/bin/sourcebound --root . eval --format json
       - run: python scripts/test_release_lifecycle.py --wheel dist/*.whl
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: clean-docs-release-${{ github.sha }}
+          name: sourcebound-release-${{ github.sha }}
           path: |
             dist/*.whl
             dist/*.spdx.json
@@ -159,11 +159,11 @@ jobs:
           python scripts/test_readme_quickstart.py
           --wheel dist/*.whl
           --wheelhouse wheelhouse
-          --out clean-docs-quickstart.json
+          --out sourcebound-quickstart.json
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: clean-docs-quickstart-${{ matrix.os }}-${{ github.sha }}
-          path: clean-docs-quickstart.json
+          name: sourcebound-quickstart-${{ matrix.os }}-${{ github.sha }}
+          path: sourcebound-quickstart.json
           if-no-files-found: error
 
   acceptance-v0-1:
@@ -178,12 +178,12 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: python -m pip install ".[dev]"
-      - run: python scripts/run_acceptance.py --out clean-docs-v01-acceptance.json
+      - run: python scripts/run_acceptance.py --out sourcebound-v01-acceptance.json
       - if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: clean-docs-v0.1-acceptance-${{ github.sha }}
-          path: clean-docs-v01-acceptance.json
+          name: sourcebound-v0.1-acceptance-${{ github.sha }}
+          path: sourcebound-v01-acceptance.json
           if-no-files-found: error
 
   acceptance-v0-2:
@@ -201,12 +201,12 @@ jobs:
       - run: >-
           python scripts/run_acceptance.py
           --registry tests/v02-acceptance.yml
-          --out clean-docs-v02-acceptance.json
+          --out sourcebound-v02-acceptance.json
       - if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: clean-docs-v0.2-acceptance-${{ github.sha }}
-          path: clean-docs-v02-acceptance.json
+          name: sourcebound-v0.2-acceptance-${{ github.sha }}
+          path: sourcebound-v02-acceptance.json
           if-no-files-found: error
 
   acceptance-v0-3:
@@ -224,12 +224,12 @@ jobs:
       - run: >-
           python scripts/run_acceptance.py
           --registry tests/v03-acceptance.yml
-          --out clean-docs-v03-acceptance.json
+          --out sourcebound-v03-acceptance.json
       - if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: clean-docs-v0.3-acceptance-${{ github.sha }}
-          path: clean-docs-v03-acceptance.json
+          name: sourcebound-v0.3-acceptance-${{ github.sha }}
+          path: sourcebound-v03-acceptance.json
           if-no-files-found: error
 
   acceptance-v0-4:
@@ -247,12 +247,12 @@ jobs:
       - run: >-
           python scripts/run_acceptance.py
           --registry tests/v04-acceptance.yml
-          --out clean-docs-v04-acceptance.json
+          --out sourcebound-v04-acceptance.json
       - if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: clean-docs-v0.4-acceptance-${{ github.sha }}
-          path: clean-docs-v04-acceptance.json
+          name: sourcebound-v0.4-acceptance-${{ github.sha }}
+          path: sourcebound-v04-acceptance.json
           if-no-files-found: error
 
   acceptance-v0-5:
@@ -270,12 +270,12 @@ jobs:
       - run: >-
           python scripts/run_acceptance.py
           --registry tests/v05-acceptance.yml
-          --out clean-docs-v05-acceptance.json
+          --out sourcebound-v05-acceptance.json
       - if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: clean-docs-v0.5-acceptance-${{ github.sha }}
-          path: clean-docs-v05-acceptance.json
+          name: sourcebound-v0.5-acceptance-${{ github.sha }}
+          path: sourcebound-v05-acceptance.json
           if-no-files-found: error
 
   acceptance-v1-0:
@@ -296,12 +296,12 @@ jobs:
       - run: >-
           python scripts/run_acceptance.py
           --registry tests/v10-acceptance.yml
-          --out clean-docs-v10-acceptance.json
+          --out sourcebound-v10-acceptance.json
       - if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: clean-docs-v1.0-acceptance-${{ matrix.os }}-${{ github.sha }}
-          path: clean-docs-v10-acceptance.json
+          name: sourcebound-v1.0-acceptance-${{ matrix.os }}-${{ github.sha }}
+          path: sourcebound-v10-acceptance.json
           if-no-files-found: error
 
   acceptance-v1-1:
@@ -322,12 +322,12 @@ jobs:
       - run: >-
           python scripts/run_acceptance.py
           --registry tests/v11-acceptance.yml
-          --out clean-docs-v11-acceptance.json
+          --out sourcebound-v11-acceptance.json
       - if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: clean-docs-v1.1-acceptance-${{ matrix.os }}-${{ github.sha }}
-          path: clean-docs-v11-acceptance.json
+          name: sourcebound-v1.1-acceptance-${{ matrix.os }}-${{ github.sha }}
+          path: sourcebound-v11-acceptance.json
           if-no-files-found: error
 
   acceptance-v1-2a:
@@ -348,12 +348,12 @@ jobs:
       - run: >-
           python scripts/run_acceptance.py
           --registry tests/v12-acceptance.yml
-          --out clean-docs-v12-acceptance.json
+          --out sourcebound-v12-acceptance.json
       - if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: clean-docs-v1.2a-acceptance-${{ matrix.os }}-${{ github.sha }}
-          path: clean-docs-v12-acceptance.json
+          name: sourcebound-v1.2a-acceptance-${{ matrix.os }}-${{ github.sha }}
+          path: sourcebound-v12-acceptance.json
           if-no-files-found: error
 
   acceptance-v1-2-mdx:
@@ -378,12 +378,12 @@ jobs:
       - run: >-
           python scripts/run_acceptance.py
           --registry tests/v12-mdx-acceptance.yml
-          --out clean-docs-v12-mdx-acceptance.json
+          --out sourcebound-v12-mdx-acceptance.json
       - if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: clean-docs-v1.2-mdx-acceptance-${{ matrix.os }}-${{ github.sha }}
-          path: clean-docs-v12-mdx-acceptance.json
+          name: sourcebound-v1.2-mdx-acceptance-${{ matrix.os }}-${{ github.sha }}
+          path: sourcebound-v12-mdx-acceptance.json
           if-no-files-found: error
 
   acceptance-v1-2-feedback:
@@ -404,12 +404,12 @@ jobs:
       - run: >-
           python scripts/run_acceptance.py
           --registry tests/v12-feedback-acceptance.yml
-          --out clean-docs-v12-feedback-acceptance.json
+          --out sourcebound-v12-feedback-acceptance.json
       - if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: clean-docs-v1.2-feedback-acceptance-${{ matrix.os }}-${{ github.sha }}
-          path: clean-docs-v12-feedback-acceptance.json
+          name: sourcebound-v1.2-feedback-acceptance-${{ matrix.os }}-${{ github.sha }}
+          path: sourcebound-v12-feedback-acceptance.json
           if-no-files-found: error
 
   performance-v1-0:
@@ -427,10 +427,10 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: python -m pip install .
-      - run: python scripts/benchmark_fixtures.py --out clean-docs-performance.json
+      - run: python scripts/benchmark_fixtures.py --out sourcebound-performance.json
       - if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: clean-docs-performance-${{ matrix.os }}-${{ github.sha }}
-          path: clean-docs-performance.json
+          name: sourcebound-performance-${{ matrix.os }}-${{ github.sha }}
+          path: sourcebound-performance.json
           if-no-files-found: error

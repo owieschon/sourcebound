@@ -54,13 +54,13 @@ def _symbol_repository(tmp_path: Path) -> Path:
     )
     (root / "README.md").write_text(
         "# Fixture\n\n"
-        "<!-- clean-docs:purpose -->\n"
+        "<!-- sourcebound:purpose -->\n"
         "This repository is a verdict fixture. Maintainers use its API contract "
         "to detect documentation impact before merging a change.\n"
-        "<!-- clean-docs:end purpose -->\n\n"
+        "<!-- sourcebound:end purpose -->\n\n"
         "## API\n\n`public_api` is the supported entry point.\n"
     )
-    (root / ".clean-docs.yml").write_text(
+    (root / ".sourcebound.yml").write_text(
         """\
 version: 1
 bindings:
@@ -83,18 +83,18 @@ def _region_repository(tmp_path: Path) -> Path:
     )
     (root / "README.md").write_text(
         "# Fixture\n\n"
-        "<!-- clean-docs:purpose -->\n"
+        "<!-- sourcebound:purpose -->\n"
         "This repository records supported actions. Maintainers use the generated "
         "table to keep those actions aligned with source.\n"
-        "<!-- clean-docs:end purpose -->\n\n"
+        "<!-- sourcebound:end purpose -->\n\n"
         "## Actions\n\n"
-        "<!-- clean-docs:begin actions -->\n"
+        "<!-- sourcebound:begin actions -->\n"
         "| name | job |\n"
         "| --- | --- |\n"
         "| report | Report status |\n"
-        "<!-- clean-docs:end actions -->\n"
+        "<!-- sourcebound:end actions -->\n"
     )
-    (root / ".clean-docs.yml").write_text(
+    (root / ".sourcebound.yml").write_text(
         """\
 version: 1
 bindings:
@@ -120,13 +120,13 @@ def _command_repository(tmp_path: Path) -> Path:
     )
     (root / "README.md").write_text(
         "# Fixture\n\n"
-        "<!-- clean-docs:purpose -->\n"
+        "<!-- sourcebound:purpose -->\n"
         "This repository records one command result. Maintainers use it to exercise "
         "the static execution boundary.\n"
-        "<!-- clean-docs:end purpose -->\n\n"
+        "<!-- sourcebound:end purpose -->\n\n"
         "## Testing\n\n340 records.\n"
     )
-    (root / ".clean-docs.yml").write_text(
+    (root / ".sourcebound.yml").write_text(
         """\
 version: 1
 execution:
@@ -157,7 +157,7 @@ def _add_public_api_review_contract(
     *,
     target_locator: str = "#api",
 ) -> None:
-    manifest = root / ".clean-docs.yml"
+    manifest = root / ".sourcebound.yml"
     manifest.write_text(
         manifest.read_text()
         + f"""\
@@ -203,7 +203,7 @@ def _mutation_receipt(path: Path, head: str) -> None:
     path.write_text(
         json.dumps(
             {
-                "schema": "clean-docs.binding-sensitivity.v1",
+                "schema": "sourcebound.binding-sensitivity.v1",
                 "state": "sensitive",
                 "semantic_relationship_authorized": False,
                 "repository": {"commit": head},
@@ -232,13 +232,13 @@ def test_private_refactor_is_stable_and_ready_with_coverage_stated(
 
     first = build_pr_verdict(
         root,
-        root / ".clean-docs.yml",
+        root / ".sourcebound.yml",
         base=base,
         head=head,
     )
     second = build_pr_verdict(
         root,
-        root / ".clean-docs.yml",
+        root / ".sourcebound.yml",
         base=base,
         head=head,
     )
@@ -302,7 +302,7 @@ def test_review_contract_advisory_preserves_ready_verdict_and_receipts(
 
     verdict = build_pr_verdict(
         root,
-        root / ".clean-docs.yml",
+        root / ".sourcebound.yml",
         base=base,
         head=head,
     )
@@ -363,7 +363,7 @@ def test_unknown_review_contract_is_a_nonblocking_note(tmp_path: Path) -> None:
 
     verdict = build_pr_verdict(
         root,
-        root / ".clean-docs.yml",
+        root / ".sourcebound.yml",
         base=head,
         head=head,
     )
@@ -399,7 +399,7 @@ def test_unsupported_public_change_is_unknown(tmp_path: Path) -> None:
 
     verdict = build_pr_verdict(
         root,
-        root / ".clean-docs.yml",
+        root / ".sourcebound.yml",
         base=base,
         head=head,
     )
@@ -429,7 +429,7 @@ def test_static_verdict_classifies_valid_mdx_without_repository_execution(
 
     verdict = build_pr_verdict(
         root,
-        root / ".clean-docs.yml",
+        root / ".sourcebound.yml",
         base=base,
         head=head,
     )
@@ -451,7 +451,7 @@ def test_bound_region_drift_is_not_ready(tmp_path: Path) -> None:
 
     verdict = build_pr_verdict(
         root,
-        root / ".clean-docs.yml",
+        root / ".sourcebound.yml",
         base=base,
         head=head,
     )
@@ -476,7 +476,7 @@ def test_affected_command_is_unknown_without_executing_target(
 
     verdict = build_pr_verdict(
         root,
-        root / ".clean-docs.yml",
+        root / ".sourcebound.yml",
         base=base,
         head=head,
     )
@@ -498,7 +498,7 @@ def test_unaffected_command_pin_does_not_certify_legacy_prose(
 
     verdict = build_pr_verdict(
         root,
-        root / ".clean-docs.yml",
+        root / ".sourcebound.yml",
         base=head,
         head=head,
     )
@@ -566,7 +566,7 @@ def test_mutation_receipt_must_match_head_and_plan_digest(
 
     verdict = build_pr_verdict(
         root,
-        root / ".clean-docs.yml",
+        root / ".sourcebound.yml",
         base=head,
         head=head,
         mutation_receipt_paths=(receipt,),
@@ -674,7 +674,7 @@ def test_verdict_validation_rejects_resigned_semantic_tampering(
     head = _commit(root, "base")
     original = build_pr_verdict(
         root,
-        root / ".clean-docs.yml",
+        root / ".sourcebound.yml",
         base=head,
         head=head,
     ).as_dict()
@@ -755,7 +755,7 @@ def test_verdict_validation_rejects_resigned_gate_promotion(
     head = _commit(root, "drift")
     payload = build_pr_verdict(
         root,
-        root / ".clean-docs.yml",
+        root / ".sourcebound.yml",
         base=base,
         head=head,
     ).as_dict()
@@ -781,7 +781,7 @@ def test_verdict_validation_accepts_derived_ready_and_unknown_states(
     ready_head = _commit(ready_root, "base")
     ready = build_pr_verdict(
         ready_root,
-        ready_root / ".clean-docs.yml",
+        ready_root / ".sourcebound.yml",
         base=ready_head,
         head=ready_head,
     ).as_dict()
@@ -794,7 +794,7 @@ def test_verdict_validation_accepts_derived_ready_and_unknown_states(
     unknown_head = _commit(unknown_root, "add unsupported public service")
     unknown = build_pr_verdict(
         unknown_root,
-        unknown_root / ".clean-docs.yml",
+        unknown_root / ".sourcebound.yml",
         base=unknown_base,
         head=unknown_head,
     ).as_dict()
@@ -808,14 +808,14 @@ def test_verdict_validation_accepts_derived_ready_and_unknown_states(
 def test_verdict_validation_preserves_exact_legacy_shapes() -> None:
     payloads: list[dict[str, object]] = [
         {
-            "schema": "clean-docs.pr-verdict.v1",
+            "schema": "sourcebound.pr-verdict.v1",
             "state": "ready",
             "ready": True,
             "findings": [],
         },
         {
-            "schema": "clean-docs.pr-verdict.v1",
-            "producer": {"name": "clean-docs", "version": "1.0.0"},
+            "schema": "sourcebound.pr-verdict.v1",
+            "producer": {"name": "sourcebound", "version": "1.0.0"},
             "state": "unknown",
             "ready": False,
             "findings": [],
@@ -880,7 +880,7 @@ def test_extraction_failure_stays_machine_readable(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     root = _region_repository(tmp_path)
-    manifest = root / ".clean-docs.yml"
+    manifest = root / ".sourcebound.yml"
     manifest.write_text(
         """\
 version: 1

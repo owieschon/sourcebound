@@ -46,7 +46,7 @@ def _run_plugin(
         )
     request = json.dumps(
         {
-            "schema": "clean-docs.plugin-request.v1",
+            "schema": "sourcebound.plugin-request.v1",
             "api_version": PLUGIN_API_VERSION,
             "operation": operation,
             "snapshot": snapshot.label,
@@ -72,12 +72,12 @@ def _run_plugin(
     if (
         not isinstance(raw, dict)
         or set(raw) != {"schema", "api_version", "result"}
-        or raw.get("schema") != "clean-docs.plugin-response.v1"
+        or raw.get("schema") != "sourcebound.plugin-response.v1"
         or raw.get("api_version") != PLUGIN_API_VERSION
         or not isinstance(raw.get("result"), dict)
     ):
         raise ExtractionError(
-            f"plugin {plugin.id} must return clean-docs.plugin-response.v1 at API version 1"
+            f"plugin {plugin.id} must return sourcebound.plugin-response.v1 at API version 1"
         )
     return PluginResponse(plugin.id, operation, raw["result"])
 
@@ -241,7 +241,7 @@ def merge_plugin_inventory(
 
 def scan_extended_inventory(root: Path) -> InventoryReport:
     base = scan_inventory(root)
-    manifest_path = root / ".clean-docs.yml"
+    manifest_path = root / ".sourcebound.yml"
     if not manifest_path.is_file():
         return base
     manifest = load_manifest(manifest_path)

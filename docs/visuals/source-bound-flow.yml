@@ -1,11 +1,11 @@
-schema: clean-docs.visual.v1
+schema: sourcebound.visual.v1
 id: source-bound-flow
 kind: diagram
-src: docs/assets/clean-docs-social.svg
+src: docs/assets/sourcebound-social.svg
 width: 1280
 height: 640
 alt: Three connected cards show repository sources, source bindings, and a deterministic check.
-caption: clean-docs keeps source facts, prose bindings, and verification connected.
+caption: sourcebound keeps source facts, prose bindings, and verification connected.
 description: |
   The flow starts with repository sources, where code and structured files own facts.
   Source bindings connect those facts to specific documentation regions, command output,
