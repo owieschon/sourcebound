@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import configparser
 import json
 import os
 import subprocess
@@ -28,6 +29,20 @@ def _wheel_version(wheel: Path) -> str:
     return version
 
 
+def _wheel_executable(wheel: Path) -> str:
+    """Read the single console-script name carried by one release wheel."""
+    with zipfile.ZipFile(wheel) as archive:
+        names = [name for name in archive.namelist() if name.endswith(".dist-info/entry_points.txt")]
+        if len(names) != 1:
+            raise RuntimeError("release wheel must contain one entry-points file")
+        parser = configparser.ConfigParser()
+        parser.read_string(archive.read(names[0]).decode("utf-8"))
+    scripts = parser["console_scripts"] if parser.has_section("console_scripts") else {}
+    if len(scripts) != 1:
+        raise RuntimeError("release wheel must contain one console script")
+    return next(iter(scripts))
+
+
 def _command(*args: str, env: dict[str, str] | None = None) -> str:
     proc = subprocess.run(
         list(args),
@@ -47,26 +62,29 @@ def _command(*args: str, env: dict[str, str] | None = None) -> str:
 def verify_lifecycle(candidate: Path) -> None:
     candidate = candidate.resolve()
     candidate_version = _wheel_version(candidate)
+    candidate_executable_name = _wheel_executable(candidate)
     prior_ref = "v0.5.0^{}"
     prior_epoch = _run("git", "show", "-s", "--format=%ct", prior_ref)
     with tempfile.TemporaryDirectory(prefix="sourcebound-lifecycle-") as temporary:
         workspace = Path(temporary)
         prior = _build_once(prior_ref, prior_epoch, workspace, "prior")
+        prior_executable_name = _wheel_executable(prior)
         environment = dict(os.environ)
         environment["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
         venv = workspace / "venv"
         _command(sys.executable, "-m", "venv", "--system-site-packages", str(venv))
-        executable = venv / "bin" / "sourcebound"
         pip = venv / "bin" / "pip"
 
         _command(str(pip), "install", str(prior), env=environment)
-        prior_version = _command(str(executable), "--version", env=environment)
+        prior_executable = venv / "bin" / prior_executable_name
+        prior_version = _command(str(prior_executable), "--version", env=environment)
         if prior_version != "0.5.0":
             raise RuntimeError(
                 f"prior release install reported {prior_version!r}, expected '0.5.0'"
             )
 
         _command(str(pip), "install", "--upgrade", str(candidate), env=environment)
+        executable = venv / "bin" / candidate_executable_name
         upgraded_version = _command(str(executable), "--version", env=environment)
         if upgraded_version != candidate_version:
             raise RuntimeError(
@@ -100,7 +118,7 @@ def verify_lifecycle(candidate: Path) -> None:
             raise RuntimeError("installed wheel did not activate its bundled MDX parser")
 
         _command(str(pip), "install", "--force-reinstall", str(prior), env=environment)
-        rolled_back_version = _command(str(executable), "--version", env=environment)
+        rolled_back_version = _command(str(prior_executable), "--version", env=environment)
         if rolled_back_version != "0.5.0":
             raise RuntimeError(
                 f"executable rollback reported {rolled_back_version!r}, "
