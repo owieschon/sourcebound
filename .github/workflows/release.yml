@@ -79,11 +79,22 @@ jobs:
             args+=(--prerelease)
           fi
           python scripts/publish_release.py "${args[@]}"
+      - name: Stage the PyPI distribution
+        if: vars.PYPI_PUBLISH_ENABLED == 'true'
+        shell: bash
+        run: |
+          mapfile -t wheels < <(find dist -maxdepth 1 -type f -name '*.whl' -print)
+          if [[ "${#wheels[@]}" -ne 1 ]]; then
+            echo "expected one wheel for PyPI, found ${#wheels[@]}" >&2
+            exit 1
+          fi
+          mkdir -p pypi-dist
+          cp -f -- "${wheels[0]}" pypi-dist/
       - name: Publish the attested wheel to PyPI
         if: vars.PYPI_PUBLISH_ENABLED == 'true'
         uses: pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247 # release/v1
         with:
-          packages-dir: dist/
+          packages-dir: pypi-dist/
       - name: Upload publication receipt
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
