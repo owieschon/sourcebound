@@ -97,6 +97,26 @@ jobs:
       - run: python scripts/dogfood_public_repos.py
       - run: python scripts/dogfood_bootstrap_repos.py
 
+  mdx-runtime:
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: ["20", "24"]
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: python -m pip install ".[dev]"
+      - run: python scripts/build_mdx_adapter.py
+      - run: python -m pytest tests/test_mdx.py tests/test_e2e_mdx_region.py
+      - run: sourcebound --root . doctor
+
   release-artifact:
     needs: test
     runs-on: ubuntu-latest
