@@ -171,6 +171,26 @@ def test_distribution_integrations_are_strict() -> None:
     assert acceptance_v03["steps"][-1]["with"]["if-no-files-found"] == "error"
 
 
+def test_mdx_adapter_boundary_is_explicit_and_tested() -> None:
+    assert (ROOT / ".gitattributes").read_text() == (
+        "src/clean_docs/adapters/mdx_parser.mjs linguist-generated=true\n"
+    )
+    architecture = (ROOT / "docs/ARCHITECTURE.md").read_text()
+    assert "Sourcebound is a Python package and CLI." in architecture
+    assert "tools/mdx-parser/src/parser.mjs" in architecture
+    assert "Markdown only | Absent | All supported documentation checks run normally" in architecture
+    install = (ROOT / "docs/INSTALL.md").read_text()
+    assert "uv tool install sourcebound" in install
+    assert "pipx install sourcebound" in install
+
+    workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
+    mdx_runtime = workflow["jobs"]["mdx-runtime"]
+    assert mdx_runtime["strategy"]["matrix"]["node-version"] == ["20", "24"]
+    commands = [step["run"] for step in mdx_runtime["steps"] if "run" in step]
+    assert "python scripts/build_mdx_adapter.py" in commands
+    assert "python -m pytest tests/test_mdx.py tests/test_e2e_mdx_region.py" in commands
+
+
 def test_reusable_action_writes_self_contained_evidence_receipt(tmp_path: Path) -> None:
     workflow = yaml.safe_load((ROOT / ".github/workflows/reusable-sourcebound.yml").read_text())
     receipt_step = next(

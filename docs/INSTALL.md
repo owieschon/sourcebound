@@ -9,7 +9,17 @@ version or artifact check, so the executable is known before it becomes a gate.
 
 **[Install the latest stable release](#install-the-latest-stable-release)**.
 
-The reported version is the first proof; release checks add the wheel digest and attestation.
+## Install with a Python tool installer
+
+After a stable Sourcebound release reaches PyPI, install the CLI in an isolated environment:
+
+```bash
+uv tool install sourcebound
+sourcebound --version
+```
+
+Use `pipx install sourcebound` for the same persistent command, or `uvx sourcebound --help` once.
+PyPI receives the same attested wheel published as a GitHub Release asset.
 
 ## Install the latest stable release
 
@@ -60,6 +70,9 @@ sourcebound doctor
 `doctor` reports `mdx-parser` as ready when the runtime and bundled parser are present. Without
 that runtime, Markdown remains available while every MDX document stays explicitly unsupported.
 Sourcebound never downloads Node.js or parser packages during an audit.
+
+The [runtime architecture](ARCHITECTURE.md) explains why MDX uses this bounded adapter rather than
+making Node.js a requirement for every Sourcebound installation.
 
 ## Upgrade, roll back, or remove the executable
 
