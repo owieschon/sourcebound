@@ -11,6 +11,7 @@ import pytest
 
 import clean_docs.impact as impact_module
 import clean_docs.extractors.inventory as inventory_extractor
+from clean_docs import __version__
 from clean_docs.cli import main
 from clean_docs.impact import build_impact_plan
 from clean_docs.snapshot import RepositorySnapshot
@@ -281,7 +282,7 @@ def test_private_refactor_produces_coverage_complete_stable_no_impact(
     assert payload["schema"] == "sourcebound.impact-plan.v2"
     assert payload["producer"] == {
         "name": "sourcebound",
-        "version": "1.2.0",
+        "version": __version__,
     }
     assert payload["digest"] == first.digest
     assert payload["no_impact"] is True
