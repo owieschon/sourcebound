@@ -833,6 +833,7 @@ def validate_verdict_payload(payload: Mapping[str, object]) -> None:
             f"verdict.changed_surface.artifacts[{index}]",
             frozenset(
                 {
+                    "id",
                     "path",
                     "change",
                     "base_blob",
@@ -845,6 +846,7 @@ def validate_verdict_payload(payload: Mapping[str, object]) -> None:
                 }
             ),
         )
+        _string(artifact["id"], f"verdict artifact {index}.id")
         _string(artifact["path"], f"verdict artifact {index}.path")
         if artifact["change"] not in {"added", "modified", "removed"}:
             raise ConfigurationError(f"verdict artifact {index}.change is invalid")

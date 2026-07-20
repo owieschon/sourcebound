@@ -114,10 +114,10 @@ was built, not that the branch is documentation-complete. Use `check --changed` 
 blocking gate. A projection output is evidence of prior work, so changing only that generated file
 does not recursively make it an impact root.
 
-When a GitHub Actions workflow limits an event with `paths`, the plan reports changed paths outside
-that filter as `ci-path-filter-unverified`. The static result is `unknown`: a workflow-level success
-does not prove that its specialized job ran. Attach a run receipt before treating that job as
-evidence; missing credentials or run data remain unknown rather than a passing check.
+When a GitHub Actions workflow uses `paths`, the plan reports changed paths outside that filter as
+`ci-path-filter-unverified`. That result is `unknown`. A workflow-level success does not prove that
+its specialized job ran. Attach a run receipt before treating that job as evidence; missing
+credentials or run data remain unknown rather than a passing check.
 
 ## Pull-request verdicts
 

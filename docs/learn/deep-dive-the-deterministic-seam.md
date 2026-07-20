@@ -20,6 +20,11 @@ job-specific exits. This page follows the three authority handoffs inside that p
 a provider may select an allowed presentation, and deterministic checks retain rendering and verdict
 authority.
 
+The repository social preview is a raster derivative. Its accessible architecture surface is the
+[source-bound flow projection](../generated/source-bound-flow.md), generated from
+[`docs/assets/sourcebound-social.svg`](../assets/sourcebound-social.svg) and paired with text that
+does not depend on pixels.
+
 ## Evidence authority
 
 [`evaluate`](../../src/clean_docs/engine.py) owns the source-to-binding comparison. It loads the

@@ -1017,6 +1017,72 @@ annotations: []
     }
 
 
+def test_public_disposition_is_limited_to_one_historical_finding(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "retired-command-repository"
+    (root / "src").mkdir(parents=True)
+    subprocess.run(["git", "init", "-q", "-b", "main", str(root)], check=True)
+    (root / "src/api.py").write_text("def current_entry():\n    return 1\n")
+    (root / "README.md").write_text(
+        "# Fixture\n\n## API\n\nRun `current-entry` after installation.\n"
+    )
+    manifest = root / ".sourcebound.yml"
+    manifest.write_text(
+        """\
+version: 1
+bindings:
+  - id: current-api
+    type: symbol
+    doc: README.md
+    anchor: api
+    source: {path: src/api.py, symbol: current_entry}
+"""
+    )
+    (root / "pyproject.toml").write_text(
+        "[project.scripts]\nhistoric-entry = 'fixture:main'\n"
+    )
+    base = _commit(root, "base public command")
+    (root / "pyproject.toml").write_text(
+        "[project.scripts]\ncurrent-entry = 'fixture:main'\n"
+    )
+    (root / ".sourcebound-ignore.yml").write_text(
+        """\
+version: 1
+ignore:
+  - id: cli-command:pyproject.toml:project.scripts.current-entry
+    reason: This fixture records the current command in README.md.
+"""
+    )
+    first_head = _commit(root, "rename public command")
+    first = build_impact_plan(root, manifest, base=base, head=first_head)
+    manifest.write_text(
+        manifest.read_text()
+        + f"""\
+public_dispositions:
+  - base: {base}
+    kind: event
+    subject: {next(item.id for item in first.events if item.kind == 'command-removed')}
+    documentation: README.md
+    replacement: current-entry
+    reason: The installation page names the supported command after the rename.
+"""
+    )
+    head = _commit(root, "record command migration")
+
+    plan = build_impact_plan(root, manifest, base=base, head=head)
+
+    assert plan.coverage_complete
+    assert not plan.unknown
+    disposition = next(
+        item
+        for item in plan.unrelated
+        if item.rule == "declared-public-disposition"
+    )
+    assert "README.md" in disposition.message
+    assert "current-entry" in disposition.message
+
+
 def test_plan_uses_merge_base_for_diverged_and_stacked_history(
     tmp_path: Path,
 ) -> None:
