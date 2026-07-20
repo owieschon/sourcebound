@@ -182,6 +182,11 @@ def test_mdx_adapter_boundary_is_explicit_and_tested() -> None:
     install = (ROOT / "docs/INSTALL.md").read_text()
     assert "uv tool install sourcebound" in install
     assert "pipx install sourcebound" in install
+    assert "pipx upgrade sourcebound" in install
+    assert 'pipx install --force "sourcebound==<version>"' in install
+    assert "pipx uninstall sourcebound" in install
+    assert "uv tool upgrade sourcebound" in install
+    assert "uv tool uninstall sourcebound" in install
 
     workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
     mdx_runtime = workflow["jobs"]["mdx-runtime"]

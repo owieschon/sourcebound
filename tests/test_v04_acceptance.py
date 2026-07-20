@@ -13,9 +13,7 @@ def test_human_quickstart_installs_and_runs_from_declared_docs(tmp_path: Path) -
     del tmp_path
     quickstart = _quickstart_script()
     for command in (
-        "gh release download --repo owieschon/sourcebound",
-        "python3 -m venv .venv",
-        'python -m pip install "$release_dir"/sourcebound-*.whl',
+        "pipx install sourcebound",
         "sourcebound audit",
         "sourcebound init --no-model",
         "sourcebound check",
@@ -27,7 +25,8 @@ def test_human_quickstart_installs_and_runs_from_declared_docs(tmp_path: Path) -
     lifecycle = (ROOT / "scripts/test_readme_quickstart.py").read_text()
     assert '"PYTHONPATH"' in lifecycle
     assert "source_checkout_shadowed" in lifecycle
-    assert "CLEAN_DOCS_CANDIDATE_WHEEL" in lifecycle
+    assert '"PIPX_HOME"' in lifecycle
+    assert '"PIP_NO_INDEX"' in lifecycle
 
 
 def test_agent_configuration_round_trip_uses_only_contributor_bundle() -> None:

@@ -8,7 +8,6 @@ import hashlib
 import json
 import os
 import re
-import stat
 import subprocess
 import sys
 import tempfile
@@ -62,6 +61,8 @@ def _run_quickstart(candidate: Path, wheelhouse: Path) -> dict[str, object]:
         path.name.lower().startswith("pyyaml-") for path in wheelhouse.glob("*.whl")
     ):
         raise RuntimeError("wheelhouse must contain one PyYAML wheel")
+    if not any(path.name.lower().startswith("pip-") for path in wheelhouse.glob("*.whl")):
+        raise RuntimeError("wheelhouse must contain one pip wheel for the isolated pipx runtime")
     version = _wheel_version(candidate)
     candidate_sha256 = hashlib.sha256(candidate.read_bytes()).hexdigest()
     with tempfile.TemporaryDirectory(prefix="sourcebound-readme-quickstart-") as raw:
@@ -83,19 +84,7 @@ def _run_quickstart(candidate: Path, wheelhouse: Path) -> dict[str, object]:
 
         bin_dir = workspace / "bin"
         bin_dir.mkdir()
-        gh = bin_dir / "gh"
-        gh.write_text(
-            "#!/usr/bin/env python3\n"
-            "import os, pathlib, shutil, sys\n"
-            "args = sys.argv[1:]\n"
-            "if args[:2] != ['release', 'download'] or '--dir' not in args:\n"
-            "    raise SystemExit('quickstart gh shim accepts only release download --dir')\n"
-            "destination = pathlib.Path(args[args.index('--dir') + 1])\n"
-            "destination.mkdir(parents=True, exist_ok=True)\n"
-            "shutil.copy2(os.environ['CLEAN_DOCS_CANDIDATE_WHEEL'], destination)\n",
-            encoding="utf-8",
-        )
-        gh.chmod(gh.stat().st_mode | stat.S_IXUSR)
+        pipx_home = workspace / "pipx-home"
         environment = {
             key: value
             for key, value in os.environ.items()
@@ -103,12 +92,15 @@ def _run_quickstart(candidate: Path, wheelhouse: Path) -> dict[str, object]:
         }
         environment.update(
             {
-                "CLEAN_DOCS_CANDIDATE_WHEEL": candidate.as_posix(),
                 "HOME": (workspace / "home").as_posix(),
                 "PATH": bin_dir.as_posix() + os.pathsep + environment["PATH"],
                 "PIP_DISABLE_PIP_VERSION_CHECK": "1",
-                "PIP_FIND_LINKS": wheelhouse.as_posix(),
+                "PIP_FIND_LINKS": f"{candidate.parent} {wheelhouse}",
                 "PIP_NO_INDEX": "1",
+                "PIPX_BIN_DIR": bin_dir.as_posix(),
+                "PIPX_DEFAULT_PYTHON": sys.executable,
+                "PIPX_HOME": pipx_home.as_posix(),
+                "PIPX_SHARED_LIBS": (workspace / "pipx-shared").as_posix(),
             }
         )
         (workspace / "home").mkdir()
@@ -124,8 +116,8 @@ def _run_quickstart(candidate: Path, wheelhouse: Path) -> dict[str, object]:
         if process.returncode != 0:
             detail = process.stderr.strip() or process.stdout.strip()
             raise RuntimeError(f"README quickstart failed: {detail}")
-        executable = repository / ".venv/bin/sourcebound"
-        python = repository / ".venv/bin/python"
+        executable = bin_dir / "sourcebound"
+        python = pipx_home / "venvs/sourcebound/bin/python"
         reported = subprocess.run(
             [str(executable), "--version"],
             cwd=repository,
@@ -172,6 +164,7 @@ def _run_quickstart(candidate: Path, wheelhouse: Path) -> dict[str, object]:
                 "package_module": module_path.as_posix(),
             },
             "observed": {
+                "installer": "pipx",
                 "readme_bash_blocks": 2,
                 "verification_receipt": True,
                 "network_package_index_used": False,

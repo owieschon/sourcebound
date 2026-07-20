@@ -168,11 +168,13 @@ jobs:
           cache: pip
       - run: >-
           python -m pip install
-          "build==1.2.2.post1" "PyYAML==6.0.3" "setuptools==75.8.0" "wheel==0.45.1"
+          "build==1.2.2.post1" "pipx==1.8.0" "PyYAML==6.0.3"
+          "setuptools==75.8.0" "wheel==0.45.1"
       - run: >-
           python -m pip download
           --only-binary=:all:
           --dest wheelhouse
+          "pip==25.3"
           "PyYAML==6.0.3"
       - run: python scripts/build_release.py --out dist
       - run: >-

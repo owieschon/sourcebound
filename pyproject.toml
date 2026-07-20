@@ -15,6 +15,7 @@ dependencies = ["PyYAML>=6.0", "tomli>=2.0; python_version < '3.11'"]
 dev = [
   "build==1.2.2.post1",
   "mypy>=1.10",
+  "pipx==1.8.0",
   "pytest>=8.0",
   "ruff>=0.6",
   "setuptools==75.8.0",

@@ -1,13 +1,13 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `2bbea252669405281abe5b3e84a61eeec205257d99b18c78bf52996322cb38e0`
+- Corpus sha256: `90daf326a4950cf2e97a04e8f3a0490ee702637513adc392d335c8db71422288`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `d943d7a09a22e2a67c94b370b9a92bc000de02d0e460cb6bcf6cb31022a3534c`
+- Content sha256: `7bae61d93eef29e6ac61bf489e61f3ca2a7857295ee0cf0176ba513d2770dce4`
 
 <!-- sourcebound:canonical README.md begin -->
 # Sourcebound
@@ -49,17 +49,17 @@ Human review can improve a sentence. It cannot make the sentence fail when its d
 
 ## Install in the repository you want to protect
 
-From that repository, download the latest stable wheel, install it in an isolated environment, and run the manifest-free audit:
+Install the stable CLI in an isolated environment, then run the manifest-free audit from the
+repository you want to protect:
 
 ```bash
-release_dir="$(mktemp -d)"
-gh release download --repo owieschon/sourcebound \
-  --pattern 'sourcebound-*-py3-none-any.whl' --dir "$release_dir"
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install "$release_dir"/sourcebound-*.whl
+pipx install sourcebound
 sourcebound audit
 ```
+
+Use `uv tool install sourcebound` instead when `uv` owns your command-line tools. The
+[installation guide](docs/INSTALL.md) covers offline wheelhouses, upgrades, and rollback. The
+[release verification guide](docs/VERIFY_RELEASE.md) checks published bytes and provenance.
 
 After reviewing the assessment, inspect the files that `init` proposes before accepting its gate:
 
