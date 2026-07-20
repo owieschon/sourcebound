@@ -29,15 +29,15 @@ bindings:
 README = """\
 # Fixture service
 
-<!-- clean-docs:purpose -->
+<!-- sourcebound:purpose -->
 Use this fixture when demonstrating a source-bound command repair. It lets readers observe drift, a bounded write, and the passing check.
-<!-- clean-docs:end purpose -->
+<!-- sourcebound:end purpose -->
 
 ## Command
 
-<!-- clean-docs:begin public-command -->
-clean-docs check
-<!-- clean-docs:end public-command -->
+<!-- sourcebound:begin public-command -->
+sourcebound check
+<!-- sourcebound:end public-command -->
 """
 
 
@@ -56,20 +56,20 @@ def _run(root: Path, *arguments: str) -> dict[str, object]:
     if proc.stderr:
         output += proc.stderr
     return {
-        "command": "clean-docs " + " ".join(arguments),
+        "command": "sourcebound " + " ".join(arguments),
         "exit_code": proc.returncode,
         "output": output.rstrip(),
     }
 
 
 def record() -> dict[str, object]:
-    with tempfile.TemporaryDirectory(prefix="clean-docs-demo-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="sourcebound-demo-") as temporary:
         root = Path(temporary)
-        (root / ".clean-docs.yml").write_text(MANIFEST, encoding="utf-8")
+        (root / ".sourcebound.yml").write_text(MANIFEST, encoding="utf-8")
         (root / "README.md").write_text(README, encoding="utf-8")
-        (root / "command.txt").write_text("clean-docs check\n", encoding="utf-8")
+        (root / "command.txt").write_text("sourcebound check\n", encoding="utf-8")
         before = _run(root, "check")
-        (root / "command.txt").write_text("clean-docs check --changed\n", encoding="utf-8")
+        (root / "command.txt").write_text("sourcebound check --changed\n", encoding="utf-8")
         drift = _run(root, "check")
         repair = _run(root, "drive")
         verified = _run(root, "check")
@@ -77,7 +77,7 @@ def record() -> dict[str, object]:
     if expected != (0, 1, 0, 0):
         raise RuntimeError(f"demo fixture returned unexpected exit codes: {expected}")
     return {
-        "schema": "clean-docs.demo-evidence.v1",
+        "schema": "sourcebound.demo-evidence.v1",
         "title": "Make stale prose fail loudly.",
         "intended_reader": (
             "Maintainers deciding whether source-bound documentation is worth adding to a repository."
@@ -105,14 +105,14 @@ def record() -> dict[str, object]:
         ],
         "next_step": {
             "label": "Run the local quickstart",
-            "href": "https://github.com/owieschon/clean-docs#install-and-audit",
+            "href": "https://github.com/owieschon/sourcebound#install-and-audit",
         },
     }
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--out", type=Path, default=ROOT / ".clean-docs/demo/evidence.json")
+    parser.add_argument("--out", type=Path, default=ROOT / ".sourcebound/demo/evidence.json")
     args = parser.parse_args()
     rendered = json.dumps(record(), indent=2, sort_keys=True) + "\n"
     atomic_write(args.out.resolve(), rendered)

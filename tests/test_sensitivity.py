@@ -291,7 +291,7 @@ def test_cli_requires_fact_digest_and_uses_state_exit_classes(
         ]
     ) == 0
     payload = json.loads(capsys.readouterr().out)
-    assert payload["schema"] == "clean-docs.binding-sensitivity.v1"
+    assert payload["schema"] == "sourcebound.binding-sensitivity.v1"
     assert payload["state"] == "sensitive"
 
     assert main(
@@ -359,15 +359,15 @@ def test_evaluation_mutation_red_scorer_reuses_the_sensitivity_primitive(
     (evaluation_root / "source.txt").write_text("Evaluation fixture\n")
     (evaluation_root / "README.md").write_text(
         "# Evaluation\n\n"
-        "<!-- clean-docs:purpose -->\n"
+        "<!-- sourcebound:purpose -->\n"
         "Use this fixture to replay a binding-sensitivity proposal. It gives the "
         "scorer one frozen target repository.\n"
-        "<!-- clean-docs:end purpose -->\n\n"
-        "<!-- clean-docs:begin overview -->\n"
+        "<!-- sourcebound:end purpose -->\n\n"
+        "<!-- sourcebound:begin overview -->\n"
         "Evaluation fixture\n"
-        "<!-- clean-docs:end overview -->\n"
+        "<!-- sourcebound:end overview -->\n"
     )
-    (evaluation_root / ".clean-docs.yml").write_text(
+    (evaluation_root / ".sourcebound.yml").write_text(
         "version: 1\n"
         "bindings:\n"
         "  - id: overview\n"
@@ -399,7 +399,7 @@ def test_evaluation_mutation_red_scorer_reuses_the_sensitivity_primitive(
 
     report = run_evaluation(
         evaluation_root,
-        evaluation_root / ".clean-docs.yml",
+        evaluation_root / ".sourcebound.yml",
         evaluation_root / "eval.yml",
     )
 

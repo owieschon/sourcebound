@@ -140,7 +140,7 @@ def list_documents(root: Path) -> list[Path]:
         for path in root.rglob(pattern)
         if _is_document_candidate(path.relative_to(root), fallback=True)
         and "archive" not in path.relative_to(root).parts
-        and ".clean-docs" not in path.relative_to(root).parts
+        and ".sourcebound" not in path.relative_to(root).parts
         and not _hidden_document(path.relative_to(root))
     )
 

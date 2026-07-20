@@ -26,21 +26,21 @@ def _track(root: Path, *, allow_readme_routing: bool = True) -> None:
         if len([line for line in content.splitlines() if line.strip()]) == 1:
             content = content.rstrip() + f"\n\nUse {path.stem} when its repository details are required.\n"
         content = ensure_purpose_contract(content, fallback=True)
-        if "clean-docs:allow preamble-contract" not in content:
+        if "sourcebound:allow preamble-contract" not in content:
             content = content.replace(
                 "\n",
-                '\n<!-- clean-docs:allow preamble-contract '
+                '\n<!-- sourcebound:allow preamble-contract '
                 'reason="Fixture isolates a different audit rule" -->\n',
                 1,
             )
         if (
             path.name == "README.md"
             and allow_readme_routing
-            and "clean-docs:allow readme-routing" not in content
+            and "sourcebound:allow readme-routing" not in content
         ):
             content = content.replace(
                 "\n",
-                '\n<!-- clean-docs:allow readme-routing '
+                '\n<!-- sourcebound:allow readme-routing '
                 'reason="Fixture isolates a different audit rule" -->\n',
                 1,
             )
@@ -96,7 +96,7 @@ def test_archive_and_reasoned_length_allowance_are_explicit(tmp_path: Path) -> N
     archive.mkdir(parents=True)
     (archive / "REPORT.md").write_text("# Historical report\n")
     long_doc = "# Reference\n\n" + (
-        '<!-- clean-docs:allow doc-length reason="Lookup rows moved to the generated reference" -->\n'
+        '<!-- sourcebound:allow doc-length reason="Lookup rows moved to the generated reference" -->\n'
     ) + "\n".join(f"line {index}" for index in range(130))
     (root / "REFERENCE.md").write_text(long_doc)
     _track(root)
@@ -112,7 +112,7 @@ def test_comprehensiveness_is_not_a_length_allowance(tmp_path: Path) -> None:
     body = "\n".join(f"line {index}" for index in range(160))
     (root / "GUIDE.md").write_text(
         "# Guide\n\n"
-        '<!-- clean-docs:allow doc-length reason="Everything stays together for completeness" -->\n'
+        '<!-- sourcebound:allow doc-length reason="Everything stays together for completeness" -->\n'
         f"{body}\n"
     )
     _track(root)
@@ -126,8 +126,8 @@ def test_readme_budget_and_reference_exemption_resolve_by_depth(tmp_path: Path) 
     root = _repo(tmp_path)
     readme = (
         "# Project\n\n"
-        "<!-- clean-docs:policy register-v2 -->\n"
-        '<!-- clean-docs:allow preamble-contract reason="Fixture isolates the page budget" -->\n'
+        "<!-- sourcebound:policy register-v2 -->\n"
+        '<!-- sourcebound:allow preamble-contract reason="Fixture isolates the page budget" -->\n'
         + "\n".join(f"overview line {index}" for index in range(95))
     )
     reference = "# Reference\n\n" + "\n".join(
@@ -148,11 +148,11 @@ def test_readme_requires_routing_and_moves_large_reference_blocks(tmp_path: Path
     block = "\n".join(f"key_{index}: value" for index in range(13))
     (root / "README.md").write_text(
         "# Project\n\n"
-        "<!-- clean-docs:policy register-v2 -->\n"
-        '<!-- clean-docs:allow preamble-contract reason="Fixture isolates reference depth" -->\n'
-        "<!-- clean-docs:purpose -->\n"
+        "<!-- sourcebound:policy register-v2 -->\n"
+        '<!-- sourcebound:allow preamble-contract reason="Fixture isolates reference depth" -->\n'
+        "<!-- sourcebound:purpose -->\n"
         "Project maps repository facts for maintainers who must catch stale documentation.\n"
-        "<!-- clean-docs:end purpose -->\n"
+        "<!-- sourcebound:end purpose -->\n"
         "```yaml\n"
         f"{block}\n"
         "```\n"
@@ -172,7 +172,7 @@ def test_assurance_dedup_points_to_the_canonical_boundary(tmp_path: Path) -> Non
         "# Boundary\n\nDeterministic code owns the gate result in this canonical explanation.\n"
     )
     (root / "README.md").write_text(
-        "# Project\n\n<!-- clean-docs:policy register-v2 -->\n"
+        "# Project\n\n<!-- sourcebound:policy register-v2 -->\n"
         "Deterministic code owns the gate result in this overview.\n"
     )
     _track(root)
@@ -187,7 +187,7 @@ def test_audit_runs_corpus_rules_and_accepts_named_reasoned_allowances(tmp_path:
     root = _repo(tmp_path)
     (root / "REFERENCE.md").write_text(
         "# Reference\n\n"
-        "<!-- clean-docs:allow audience reason=\"This page documents the workflow vocabulary\" -->\n"
+        "<!-- sourcebound:allow audience reason=\"This page documents the workflow vocabulary\" -->\n"
         "The next executor can pick up this branch from the worktree.\n\n"
         "The value was recorded in (Program 7).\n"
     )
@@ -204,9 +204,9 @@ def test_audit_requires_the_purpose_contract_before_body_content(tmp_path: Path)
     root = _repo(tmp_path)
     (root / "README.md").write_text(
         "# Project\n"
-        "<!-- clean-docs:policy register-v2 -->\n"
-        '<!-- clean-docs:allow preamble-contract reason="Fixture isolates purpose policy" -->\n'
-        '<!-- clean-docs:allow readme-routing reason="Fixture isolates purpose policy" -->\n\n'
+        "<!-- sourcebound:policy register-v2 -->\n"
+        '<!-- sourcebound:allow preamble-contract reason="Fixture isolates purpose policy" -->\n'
+        '<!-- sourcebound:allow readme-routing reason="Fixture isolates purpose policy" -->\n\n'
         "Body content arrives first.\n"
     )
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
@@ -222,12 +222,12 @@ def test_audit_applies_sentence_policy_to_reader_documents(tmp_path: Path) -> No
     root = _repo(tmp_path)
     (root / "README.md").write_text(
         "# Project\n"
-        "<!-- clean-docs:policy register-v2 -->\n"
-        '<!-- clean-docs:allow preamble-contract reason="Fixture isolates booster policy" -->\n'
-        '<!-- clean-docs:allow readme-routing reason="Fixture isolates booster policy" -->\n\n'
-        "<!-- clean-docs:purpose -->\n"
+        "<!-- sourcebound:policy register-v2 -->\n"
+        '<!-- sourcebound:allow preamble-contract reason="Fixture isolates booster policy" -->\n'
+        '<!-- sourcebound:allow readme-routing reason="Fixture isolates booster policy" -->\n\n'
+        "<!-- sourcebound:purpose -->\n"
         "Use this page when source claims can drift. It gives maintainers a checked repair path.\n"
-        "<!-- clean-docs:end purpose -->\n\nA powerful workflow.\n"
+        "<!-- sourcebound:end purpose -->\n\nA powerful workflow.\n"
     )
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
 
@@ -270,10 +270,10 @@ def test_audit_rejects_a_repeated_stock_purpose_shell_across_the_corpus(
     for path, purpose in pages.items():
         (root / path).write_text(
             f"# {Path(path).stem.title()}\n\n"
-            "<!-- clean-docs:policy register-v2 -->\n"
-            "<!-- clean-docs:purpose -->\n"
+            "<!-- sourcebound:policy register-v2 -->\n"
+            "<!-- sourcebound:purpose -->\n"
             f"{purpose}\n"
-            "<!-- clean-docs:end purpose -->\n"
+            "<!-- sourcebound:end purpose -->\n"
         )
     _track(root)
 
@@ -292,11 +292,11 @@ def test_audit_allows_two_literal_pages_to_share_a_purpose_opening(
     for path, subject in (("CLI.md", "commands"), ("REFERENCE.md", "manifest fields")):
         (root / path).write_text(
             f"# {Path(path).stem.title()}\n\n"
-            "<!-- clean-docs:policy register-v2 -->\n"
-            "<!-- clean-docs:purpose -->\n"
+            "<!-- sourcebound:policy register-v2 -->\n"
+            "<!-- sourcebound:purpose -->\n"
             f"Use this reference when looking up {subject}. "
             "The page keeps exact values in one literal lookup surface.\n"
-            "<!-- clean-docs:end purpose -->\n"
+            "<!-- sourcebound:end purpose -->\n"
         )
     _track(root)
 
@@ -310,7 +310,7 @@ def test_generated_context_bundles_are_not_canonical_corpus_pages(tmp_path: Path
     (root / "README.md").write_text(
         "# Project\n\nCanonical factual guidance with enough distinct words for corpus analysis.\n"
     )
-    bundle = root / ".clean-docs/context/contributor.md"
+    bundle = root / ".sourcebound/context/contributor.md"
     bundle.parent.mkdir(parents=True)
     bundle.write_text(
         "# Context bundle\n\n"
@@ -322,7 +322,7 @@ def test_generated_context_bundles_are_not_canonical_corpus_pages(tmp_path: Path
 
     assert report.findings == ()
     assert report.documents == ("README.md",)
-    assert report.ignored_documents == (".clean-docs/context/contributor.md",)
+    assert report.ignored_documents == (".sourcebound/context/contributor.md",)
 
 
 def test_hidden_configuration_markdown_is_not_reader_documentation(tmp_path: Path) -> None:
@@ -416,7 +416,7 @@ def test_manifest_accepts_repository_integrity_findings_as_gates(
     tmp_path: Path,
 ) -> None:
     root = _repo(tmp_path)
-    (root / ".clean-docs.yml").write_text("version: 1\nbindings: []\n")
+    (root / ".sourcebound.yml").write_text("version: 1\nbindings: []\n")
     (root / "README.md").write_text(
         "# Project\n\n[Missing](docs/missing.md)\n"
     )
@@ -434,7 +434,7 @@ def test_manifest_keeps_test_fixture_machine_paths_advisory(
     tmp_path: Path,
 ) -> None:
     root = _repo(tmp_path)
-    (root / ".clean-docs.yml").write_text("version: 1\nbindings: []\n")
+    (root / ".sourcebound.yml").write_text("version: 1\nbindings: []\n")
     fixture = root / "src/__tests__/paths.test.ts"
     fixture.parent.mkdir(parents=True)
     fixture.write_text(
@@ -527,7 +527,7 @@ def test_explicit_role_overrides_a_heuristic_without_suppressing_integrity(
     root = _repo(tmp_path)
     (root / "README.md").write_text(
         "# Generated prompt input\n\n"
-        "<!-- clean-docs:role template -->\n"
+        "<!-- sourcebound:role template -->\n"
         f"{REGISTER_PROFILE}\n"
         "{{runtime_instructions}}\n"
         "[Missing](missing.md)\n"
@@ -545,14 +545,14 @@ def test_invalid_explicit_role_fails_instead_of_silently_using_a_guess(
 ) -> None:
     root = _repo(tmp_path)
     (root / "README.md").write_text(
-        "# Project\n\n<!-- clean-docs:role brochure -->\n"
+        "# Project\n\n<!-- sourcebound:role brochure -->\n"
     )
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
 
     assert [
         (finding.rule, finding.detail) for finding in audit(root).findings
     ] == [
-        ("invalid-document-role", "unsupported clean-docs role: brochure"),
+        ("invalid-document-role", "unsupported sourcebound role: brochure"),
     ]
 
 
@@ -589,9 +589,9 @@ def test_architecture_and_reference_density_are_not_page_length_failures(
         (root / name).write_text(
             f"# {title}\n\n"
             f"{REGISTER_PROFILE}\n"
-            "<!-- clean-docs:purpose -->\n"
+            "<!-- sourcebound:purpose -->\n"
             "Maintainers use this page to inspect the current system boundary before changing it.\n"
-            "<!-- clean-docs:end purpose -->\n\n"
+            "<!-- sourcebound:end purpose -->\n\n"
             f"{body}\n"
         )
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
@@ -617,9 +617,9 @@ def test_support_page_keeps_complete_operational_sequences(
     support.write_text(
         "# Support\n\n"
         f"{REGISTER_PROFILE}\n"
-        "<!-- clean-docs:purpose -->\n"
+        "<!-- sourcebound:purpose -->\n"
         "Operators use this page to diagnose and recover a failing service.\n"
-        "<!-- clean-docs:end purpose -->\n\n"
+        "<!-- sourcebound:end purpose -->\n\n"
         "## Recover the service\n\n"
         + "\n".join(f"{index}. Run recovery check {index}." for index in range(45))
         + "\n"
@@ -788,7 +788,7 @@ def test_frontmatter_requires_document_start_and_closing_delimiter(
     malformed = root / "BROKEN.md"
     malformed.write_text(
         "---\nname: broken\n"
-        "<!-- clean-docs:role reference -->\n"
+        "<!-- sourcebound:role reference -->\n"
         "# Broken\n"
     )
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
@@ -846,7 +846,7 @@ def test_audit_checks_structurally_valid_mdx_without_executing_templates(
 
 def test_audit_fails_closed_on_malformed_mdx(tmp_path: Path) -> None:
     root = _repo(tmp_path)
-    (root / ".clean-docs.yml").write_text("version: 1\nbindings: []\n")
+    (root / ".sourcebound.yml").write_text("version: 1\nbindings: []\n")
     (root / "README.md").write_text("# Project\n")
     (root / "broken.mdx").write_text("# Broken\n\n<Callout>\n")
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
@@ -868,7 +868,7 @@ def test_audit_never_counts_mdx_as_checked_when_runtime_is_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     root = _repo(tmp_path)
-    (root / ".clean-docs.yml").write_text("version: 1\nbindings: []\n")
+    (root / ".sourcebound.yml").write_text("version: 1\nbindings: []\n")
     (root / "README.md").write_text("# Project\n")
     (root / "guide.mdx").write_text("# Guide\n\n<Component />\n")
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
@@ -896,7 +896,7 @@ def test_mdx_template_placeholder_is_advisory_not_a_broken_link(
     template.parent.mkdir()
     template.write_text(
         "# Prompt template\n\n"
-        "{/* clean-docs:role template */}\n\n"
+        "{/* sourcebound:role template */}\n\n"
         "Read [the generated destination]({docs_url}).\n"
     )
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
@@ -923,7 +923,7 @@ def test_agent_documentation_is_active_while_tool_context_stays_internal(
     skill = root / ".agents/skills/inspect/SKILL.md"
     skill.parent.mkdir(parents=True)
     skill.write_text("# Inspect\n\n[Missing](references/missing.md)\n")
-    context = root / ".clean-docs/context/contributor.md"
+    context = root / ".sourcebound/context/contributor.md"
     context.parent.mkdir(parents=True)
     context.write_text("# Generated context\n")
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
@@ -931,7 +931,7 @@ def test_agent_documentation_is_active_while_tool_context_stays_internal(
     report = audit(root)
 
     assert report.documents == (".agents/skills/inspect/SKILL.md",)
-    assert report.ignored_documents == (".clean-docs/context/contributor.md",)
+    assert report.ignored_documents == (".sourcebound/context/contributor.md",)
     assert [(finding.rule, finding.path) for finding in report.advisories] == [
         ("broken-local-link", ".agents/skills/inspect/SKILL.md"),
     ]
@@ -987,7 +987,7 @@ def test_exact_baseline_fails_on_new_and_resolved_findings(tmp_path: Path) -> No
     assert report.findings == ()
     assert [item.rule for item in report.baselined_findings] == ["broken-local-link"]
     assert report.stale_baseline == ()
-    assert baseline_path == root / ".clean-docs/audit-baseline.json"
+    assert baseline_path == root / ".sourcebound/audit-baseline.json"
 
     (root / "STATUS.md").write_text("# Status\n")
     _track(root)
@@ -1022,7 +1022,7 @@ def test_audit_baseline_v2_is_line_stable_and_uses_multiset_identity(
     baseline_path = write_audit_baseline(root)
     baseline = json.loads(baseline_path.read_text())
 
-    assert baseline["schema"] == "clean-docs.audit-baseline.v2"
+    assert baseline["schema"] == "sourcebound.audit-baseline.v2"
     assert all("line_hint" in item and "line" not in item for item in baseline["findings"])
     assert len({item["duplicate_ordinal"] for item in baseline["findings"]}) == 2
 
@@ -1092,10 +1092,10 @@ def test_audit_reads_v1_baseline_and_update_migrates_to_v2(
         sort_keys=True,
         separators=(",", ":"),
     )
-    baseline_path = root / ".clean-docs/audit-baseline.json"
+    baseline_path = root / ".sourcebound/audit-baseline.json"
     baseline_path.parent.mkdir()
     baseline_path.write_text(json.dumps({
-        "schema": "clean-docs.audit-baseline.v1",
+        "schema": "sourcebound.audit-baseline.v1",
         "findings": [{
             "fingerprint": hashlib.sha256(legacy_payload.encode()).hexdigest(),
             "rule": finding.rule,
@@ -1108,7 +1108,7 @@ def test_audit_reads_v1_baseline_and_update_migrates_to_v2(
     assert audit(root).ok
     write_audit_baseline(root)
     assert json.loads(baseline_path.read_text())["schema"] == (
-        "clean-docs.audit-baseline.v2"
+        "sourcebound.audit-baseline.v2"
     )
 
 
@@ -1132,10 +1132,10 @@ def test_update_baseline_is_explicit_and_tampering_is_rejected(
     capsys.readouterr()
     assert audit(root).ok
 
-    baseline = root / ".clean-docs/audit-baseline.json"
+    baseline = root / ".sourcebound/audit-baseline.json"
     assert main(["--root", str(root), "audit", "--update-baseline"]) == 0
     baseline.write_text(
-        '{"schema":"clean-docs.audit-baseline.v1","findings":['
+        '{"schema":"sourcebound.audit-baseline.v1","findings":['
         '{"fingerprint":"tampered","rule":"broken-local-link",'
         '"path":"README.md","line":1,"detail":"target does not exist: missing.md"}]}'
     )

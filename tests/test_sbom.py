@@ -9,12 +9,12 @@ from scripts.build_sbom import render_sbom
 
 
 def test_sbom_is_deterministic_and_describes_wheel_dependencies(tmp_path: Path) -> None:
-    wheel = tmp_path / "clean_docs-1.0.0-py3-none-any.whl"
+    wheel = tmp_path / "sourcebound-1.0.0-py3-none-any.whl"
     with zipfile.ZipFile(wheel, "w") as archive:
         archive.writestr(
-            "clean_docs-1.0.0.dist-info/METADATA",
+            "sourcebound-1.0.0.dist-info/METADATA",
             "Metadata-Version: 2.4\n"
-            "Name: clean-docs\n"
+            "Name: sourcebound\n"
             "Version: 1.0.0\n"
             "Requires-Dist: PyYAML>=6.0\n",
         )
@@ -22,7 +22,7 @@ def test_sbom_is_deterministic_and_describes_wheel_dependencies(tmp_path: Path) 
             "clean_docs/adapters/mdx_dependencies.json",
             json.dumps(
                 {
-                    "schema": "clean-docs.mdx-dependencies.v1",
+                    "schema": "sourcebound.mdx-dependencies.v1",
                     "lock_sha256": "0" * 64,
                     "packages": [
                         {
@@ -49,7 +49,7 @@ def test_sbom_is_deterministic_and_describes_wheel_dependencies(tmp_path: Path) 
         }
     ]
     assert {item["name"] for item in payload["packages"]} == {
-        "clean-docs",
+        "sourcebound",
         "PyYAML",
         "@mdx-js/mdx",
     }

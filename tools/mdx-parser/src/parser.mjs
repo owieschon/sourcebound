@@ -2,9 +2,9 @@ import {createHash} from 'node:crypto'
 import {createProcessor} from '@mdx-js/mdx'
 import remarkFrontmatter from 'remark-frontmatter'
 
-const REQUEST_SCHEMA = 'clean-docs.mdx-parse-request.v1'
-const SCHEMA = 'clean-docs.mdx-parse.v1'
-const BATCH_SCHEMA = 'clean-docs.mdx-parse-batch.v1'
+const REQUEST_SCHEMA = 'sourcebound.mdx-parse-request.v1'
+const SCHEMA = 'sourcebound.mdx-parse.v1'
+const BATCH_SCHEMA = 'sourcebound.mdx-parse-batch.v1'
 
 function readStdin() {
   return new Promise((resolve, reject) => {

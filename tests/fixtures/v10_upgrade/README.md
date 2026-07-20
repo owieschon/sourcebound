@@ -1,12 +1,12 @@
 # Upgrade fixture
 
-<!-- clean-docs:purpose -->
+<!-- sourcebound:purpose -->
 Use this fixture when testing a manifest upgrade. It gives maintainers a bound region whose bytes must survive migration and rollback.
-<!-- clean-docs:end purpose -->
+<!-- sourcebound:end purpose -->
 
-<!-- clean-docs:begin facts -->
+<!-- sourcebound:begin facts -->
 ```text
 alpha
 beta
 ```
-<!-- clean-docs:end facts -->
+<!-- sourcebound:end facts -->

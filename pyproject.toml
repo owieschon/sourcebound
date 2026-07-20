@@ -3,9 +3,9 @@ requires = ["setuptools==75.8.0", "wheel==0.45.1"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "clean-docs"
+name = "sourcebound"
 version = "1.2.0"
-description = "Keep repository documentation bound to its sources."
+description = "Bind documentation claims to source evidence and fail CI when they drift."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -23,7 +23,7 @@ dev = [
 ]
 
 [project.scripts]
-clean-docs = "clean_docs.cli:main"
+sourcebound = "clean_docs.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

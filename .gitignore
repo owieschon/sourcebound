@@ -8,4 +8,4 @@ build/
 dist/
 node_modules/
 .claude/
-.clean-docs-residue.local.yml
+.sourcebound-residue.local.yml

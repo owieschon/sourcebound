@@ -35,7 +35,7 @@ def test_cli_and_manifest_registries_drive_the_parser_and_self_manifest() -> Non
         "claim",
         "symbol",
     }
-    manifest = load_manifest(ROOT / ".clean-docs.yml")
+    manifest = load_manifest(ROOT / ".sourcebound.yml")
     assert {binding.id for binding in manifest.bindings} >= {
         "cli-reference",
         "manifest-reference",
@@ -43,13 +43,13 @@ def test_cli_and_manifest_registries_drive_the_parser_and_self_manifest() -> Non
 
 
 def test_repository_dogfoods_the_source_bound_visual_projection() -> None:
-    manifest = load_manifest(ROOT / ".clean-docs.yml")
+    manifest = load_manifest(ROOT / ".sourcebound.yml")
     assert [item.id for item in manifest.projections.visuals] == ["source-bound-flow"]
     assert [
         item.doc for item in evaluate_projections(ROOT, manifest)
     ] == [
-        ".clean-docs/context/contributor.md",
-        ".clean-docs/visuals/source-bound-flow.md",
+        ".sourcebound/context/contributor.md",
+        ".sourcebound/visuals/source-bound-flow.md",
         "docs/demo/index.html",
         "docs/generated/source-bound-flow.md",
         "llms.txt",
@@ -96,7 +96,7 @@ def test_self_check_detects_reference_source_drift(
     (root / "docs/REFERENCE.md").write_text((ROOT / "docs/REFERENCE.md").read_text())
     for name in ("capabilities.py", "manifest.py"):
         (package / name).write_text((ROOT / "src/clean_docs" / name).read_text())
-    (root / ".clean-docs.yml").write_text("""\
+    (root / ".sourcebound.yml").write_text("""\
 version: 1
 bindings:
   - id: cli-reference
@@ -121,7 +121,7 @@ bindings:
     assert content.count(old) == 1
     target.write_text(content.replace(old, new))
 
-    results = evaluate(root, root / ".clean-docs.yml")
+    results = evaluate(root, root / ".sourcebound.yml")
 
     changed = [result.binding_id for result in results if result.changed]
     assert changed == [binding]

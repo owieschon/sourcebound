@@ -50,7 +50,7 @@ def test_explain_distinguishes_gap_and_reasoned_ignore(
     assert gap["evidence"]["adapter"] == "python-package"
 
     reason = "This package is documented by an external generated reference."
-    (root / ".clean-docs-ignore.yml").write_text(
+    (root / ".sourcebound-ignore.yml").write_text(
         "version: 1\nignore:\n"
         f"  - id: {json.dumps(identifier)}\n"
         f"    reason: {reason}\n"
@@ -65,7 +65,7 @@ def test_inventory_rejects_an_invalid_coverage_policy(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     root = _repository(tmp_path)
-    (root / ".clean-docs-ignore.yml").write_text(
+    (root / ".sourcebound-ignore.yml").write_text(
         "version: 1\nignore:\n  - id: missing-id\n    reason: too short\n"
     )
 

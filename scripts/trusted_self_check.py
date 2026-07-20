@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check a candidate tree with both pinned and candidate clean-docs code."""
+"""Check a candidate tree with both pinned and candidate Sourcebound code."""
 
 from __future__ import annotations
 
@@ -125,7 +125,7 @@ def _candidate_command(root: Path, args: tuple[str, ...]) -> tuple[list[str], di
 
 def _trusted_manifest(root: Path, destination: Path) -> Path:
     """Write the manifest subset understood by the pinned verifier."""
-    manifest = root / ".clean-docs.yml"
+    manifest = root / ".sourcebound.yml"
     try:
         raw = yaml.safe_load(manifest.read_text(encoding="utf-8"))
     except (OSError, yaml.YAMLError) as exc:
@@ -147,11 +147,11 @@ def _trusted_manifest(root: Path, destination: Path) -> Path:
 
 def verify(root: Path, trust_path: Path | None = None) -> dict[str, Any]:
     root = root.resolve()
-    trust_file = trust_path or root / ".clean-docs-trust.json"
+    trust_file = trust_path or root / ".sourcebound-trust.json"
     trust = _load_trust(trust_file)
     _validate_commit(root, trust)
     results: list[CheckResult] = []
-    with tempfile.TemporaryDirectory(prefix="clean-docs-trusted-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="sourcebound-trusted-") as temporary:
         temp_root = Path(temporary)
         source = _extract_trusted_source(root, trust["commit"], temp_root)
         trusted_manifest = _trusted_manifest(root, temp_root)

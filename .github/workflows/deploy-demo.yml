@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - .clean-docs/demo/evidence.json
+      - .sourcebound/demo/evidence.json
       - .github/workflows/deploy-demo.yml
       - docs/demo/index.html
       - src/clean_docs/demo.py
@@ -36,7 +36,7 @@ jobs:
       - name: Verify projection freshness and structure
         run: |
           python -m pip install .
-          clean-docs --root . project --check
+          sourcebound --root . project --check
       - name: Configure Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - name: Upload the single static page

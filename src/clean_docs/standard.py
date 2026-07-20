@@ -10,7 +10,7 @@ from typing import Any
 from clean_docs.errors import ConfigurationError
 
 PACK_VERSION = 1
-DEFAULT_PROFILE = "clean-docs-default"
+DEFAULT_PROFILE = "sourcebound-default"
 HEADING_RE = re.compile(r"^(#{2,4})\s+(.+?)\s*$")
 CHECK_RE = re.compile(r"^- \[ \]\s+(.+)$")
 
@@ -187,8 +187,8 @@ def _style_contract(text: str, checks: list[str]) -> dict[str, Any]:
             "contractions": "allowed",
         },
         "purpose_contract": {
-            "begin_marker": "<!-- clean-docs:purpose -->",
-            "end_marker": "<!-- clean-docs:end purpose -->",
+            "begin_marker": "<!-- sourcebound:purpose -->",
+            "end_marker": "<!-- sourcebound:end purpose -->",
             "position": "first meaningful block after the H1",
             "mechanical": [
                 "exactly one marked purpose block",

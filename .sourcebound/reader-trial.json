@@ -1,0 +1,183 @@
+{
+  "candidate": "1.0.0rc19",
+  "candidate_artifact_sha256": "9867c5f3f476c69b48e754e1d84bdd14d161934d7b0704f423a71a3326f53082",
+  "candidate_commit": "7b9cb6a6c2cf88c64f9ea8f43529548e9fdb733c",
+  "context": [
+    {
+      "path": "README.md",
+      "sha256": "4289b0409955e0ce025e67cdf718814f0c0d77971663fe779809a64aa8e39d05"
+    },
+    {
+      "path": "docs/CLI.md",
+      "sha256": "dae82eebf8e8712dce8b4c17e480f13912155078b3e34fb0159ff2f2c45510bc"
+    },
+    {
+      "path": "docs/SUPPORT.md",
+      "sha256": "bc0055417eb4be09a5e8722aaa0bfa7454877b3909e38a72b7d03f9fbd7576ab"
+    },
+    {
+      "path": "docs/SECURITY_MODEL.md",
+      "sha256": "29d9f2582186f19d72823e163512fa12f6d7459f4da273ca3d8be56d5befd2bf"
+    }
+  ],
+  "participants": [
+    {
+      "completed_at": "2026-07-14T01:25:57Z",
+      "context": "published-docs-only",
+      "id": "0a809d28-062e-4926-b12e-ac8f7022d641",
+      "independent": true,
+      "profile": "anthropic-opus-4-8",
+      "tasks": [
+        {
+          "evidence": ".sourcebound/reader-trials/anthropic-opus-4-8/identify-purpose.txt",
+          "id": "identify-purpose",
+          "ok": true,
+          "sha256": "b5d688b1c1cf28fce38e1fdc611f1bc49f2ccf87b6e9acbdb061df845048b861"
+        },
+        {
+          "evidence": ".sourcebound/reader-trials/anthropic-opus-4-8/install.txt",
+          "id": "install",
+          "ok": true,
+          "sha256": "a29c9541987a30dc0ab8ef871ae84959b3cd18c9300b4a78e2f5fa2b0a73667c"
+        },
+        {
+          "evidence": ".sourcebound/reader-trials/anthropic-opus-4-8/protect-fixture.txt",
+          "id": "protect-fixture",
+          "ok": true,
+          "sha256": "3a94f950f482c2d4025bcdc7945ad67e4527f3d24038d342e472acf1786758a6"
+        },
+        {
+          "evidence": ".sourcebound/reader-trials/anthropic-opus-4-8/repair-drift.txt",
+          "id": "repair-drift",
+          "ok": true,
+          "sha256": "6a8777ebb74458196e0e5b52e9bba54523b9f9ebc18a01a3bc90fc28db230a20"
+        },
+        {
+          "evidence": ".sourcebound/reader-trials/anthropic-opus-4-8/explain-limitation.txt",
+          "id": "explain-limitation",
+          "ok": true,
+          "sha256": "7eedc99045a7976eadbf55083506670089192f52d0d51a23674ecbc60c4c5cf7"
+        }
+      ]
+    },
+    {
+      "completed_at": "2026-07-14T01:22:47Z",
+      "context": "published-docs-only",
+      "id": "33c28db4-66f2-407a-8916-e2b8af63b4e1",
+      "independent": true,
+      "profile": "anthropic-sonnet-5",
+      "tasks": [
+        {
+          "evidence": ".sourcebound/reader-trials/anthropic-sonnet-5/identify-purpose.txt",
+          "id": "identify-purpose",
+          "ok": true,
+          "sha256": "91dd647e89bca66e7cdf2dc1e2c6c36104b3f37a104916529b7677c5751a5b65"
+        },
+        {
+          "evidence": ".sourcebound/reader-trials/anthropic-sonnet-5/install.txt",
+          "id": "install",
+          "ok": true,
+          "sha256": "54c9a2a113ebabbba6b19c7c42ac36c7549c7160ee4991171c0c82c03ade01e0"
+        },
+        {
+          "evidence": ".sourcebound/reader-trials/anthropic-sonnet-5/protect-fixture.txt",
+          "id": "protect-fixture",
+          "ok": true,
+          "sha256": "858a6df6e837fa3e679b34e34fa78fd18290632acb64d0cbd9552f977b752e66"
+        },
+        {
+          "evidence": ".sourcebound/reader-trials/anthropic-sonnet-5/repair-drift.txt",
+          "id": "repair-drift",
+          "ok": true,
+          "sha256": "926c9e2a35b72f5a2aa5ca95a4d4971089be2bb44a8df78ab27bf7fb59d011e1"
+        },
+        {
+          "evidence": ".sourcebound/reader-trials/anthropic-sonnet-5/explain-limitation.txt",
+          "id": "explain-limitation",
+          "ok": true,
+          "sha256": "399c0a7eba061e04e61dc95b256829001719af6dd5bf14f5e1c9aea5f1d24886"
+        }
+      ]
+    },
+    {
+      "completed_at": "2026-07-14T01:36:16Z",
+      "context": "published-docs-only",
+      "id": "970fe2c3-a376-4b56-a68c-474d3c9bfe45",
+      "independent": true,
+      "profile": "codex-gpt-5-5-high",
+      "tasks": [
+        {
+          "evidence": ".sourcebound/reader-trials/codex-gpt-5-5-high/identify-purpose.txt",
+          "id": "identify-purpose",
+          "ok": true,
+          "sha256": "5e0789ea2a543e7547e5e26e3f1838458ac91b5582e1f035ce8bc700ba7b4ec1"
+        },
+        {
+          "evidence": ".sourcebound/reader-trials/codex-gpt-5-5-high/install.txt",
+          "id": "install",
+          "ok": true,
+          "sha256": "c24445e15c97085a7ef14553a254fbcf211af8b7f309d1602ba0f1a12f8e17cc"
+        },
+        {
+          "evidence": ".sourcebound/reader-trials/codex-gpt-5-5-high/protect-fixture.txt",
+          "id": "protect-fixture",
+          "ok": true,
+          "sha256": "d519cb3a143e38eb8c2faef37ad5e0ceeb32ad5e5e6793d6eb773c049acfcdd8"
+        },
+        {
+          "evidence": ".sourcebound/reader-trials/codex-gpt-5-5-high/repair-drift.txt",
+          "id": "repair-drift",
+          "ok": true,
+          "sha256": "12d45498f378aa6b8f6ca94c022e046bc345db512d8ad776b24f9995aa8875cb"
+        },
+        {
+          "evidence": ".sourcebound/reader-trials/codex-gpt-5-5-high/explain-limitation.txt",
+          "id": "explain-limitation",
+          "ok": true,
+          "sha256": "7d64a1747fa16378e53e5b556d60938b05a9d3a8a3f02c55d07674aba27af38d"
+        }
+      ]
+    },
+    {
+      "completed_at": "2026-07-14T01:35:57Z",
+      "context": "published-docs-only",
+      "id": "ec4b4e80-111c-448b-8d6e-497ca42ecfe5",
+      "independent": true,
+      "profile": "codex-gpt-5-6-sol-high",
+      "tasks": [
+        {
+          "evidence": ".sourcebound/reader-trials/codex-gpt-5-6-sol-high/identify-purpose.txt",
+          "id": "identify-purpose",
+          "ok": true,
+          "sha256": "5be78b29532e6e77837835cf93d982b848ed4ac55f7c1b293e993394da6f400f"
+        },
+        {
+          "evidence": ".sourcebound/reader-trials/codex-gpt-5-6-sol-high/install.txt",
+          "id": "install",
+          "ok": true,
+          "sha256": "a19166cfa95cb4af284ed3d26b36abcc53609b0ff42735ef01f72c027397a2f9"
+        },
+        {
+          "evidence": ".sourcebound/reader-trials/codex-gpt-5-6-sol-high/protect-fixture.txt",
+          "id": "protect-fixture",
+          "ok": true,
+          "sha256": "78a8b0a5a022d95206a0f99ee39ccacb85e996191f0c6c788d1d3433d39fc540"
+        },
+        {
+          "evidence": ".sourcebound/reader-trials/codex-gpt-5-6-sol-high/repair-drift.txt",
+          "id": "repair-drift",
+          "ok": true,
+          "sha256": "c6c4cee31d17ac0deef2e594b37de5c121610af2e9eafb18131615025b8bac2c"
+        },
+        {
+          "evidence": ".sourcebound/reader-trials/codex-gpt-5-6-sol-high/explain-limitation.txt",
+          "id": "explain-limitation",
+          "ok": true,
+          "sha256": "b6eb30f73cc3b37fa169359bb1b12855abe51d467f257210285bbd0d4ffaa92e"
+        }
+      ]
+    }
+  ],
+  "rubric_sha256": "b9e9d9c8300471f81ad2d819c8abe5f3fb488381fe19dde1b209340bcc18f394",
+  "schema": "sourcebound.independent-reader-trial.v2"
+}

@@ -7,9 +7,9 @@ PROJECT = Path(__file__).parents[1]
 
 
 def test_current_product_contract_excludes_historical_and_future_state() -> None:
-    specification = (PROJECT / "CLEAN_DOCS_SPEC.md").read_text()
+    specification = (PROJECT / "SOURCEBOUND_SPEC.md").read_text()
 
-    assert "# Current clean-docs product contract" in specification
+    assert "# Current sourcebound product contract" in specification
     assert "An outcome with `\"ok\": true` means the configured contract passed" in specification
     assert "`drive --changed`" not in specification
     assert "### Version 0.3" not in specification
@@ -18,10 +18,10 @@ def test_current_product_contract_excludes_historical_and_future_state() -> None
 
 
 def test_current_assurance_table_is_bound_to_the_capability_registry() -> None:
-    specification = (PROJECT / "CLEAN_DOCS_SPEC.md").read_text()
+    specification = (PROJECT / "SOURCEBOUND_SPEC.md").read_text()
     results = {
         result.binding_id: result
-        for result in evaluate(PROJECT, PROJECT / ".clean-docs.yml")
+        for result in evaluate(PROJECT, PROJECT / ".sourcebound.yml")
     }
 
     assert "assurance-boundaries" in results
@@ -33,6 +33,6 @@ def test_current_assurance_table_is_bound_to_the_capability_registry() -> None:
 def test_historical_build_plan_is_archived_and_labels_its_authority() -> None:
     archived = (PROJECT / "docs/archive/v1/BUILD_PLAN.md").read_text()
 
-    assert archived.startswith("# Archived clean-docs build plan through Version 1.1")
+    assert archived.startswith("# Archived sourcebound build plan through Version 1.1")
     assert "not a current product contract" in " ".join(archived.split())
     assert "### Version 1.1: Governed learning layer" in archived

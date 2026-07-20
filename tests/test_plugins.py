@@ -84,12 +84,12 @@ def _root(tmp_path: Path) -> Path:
     shutil.copy2(FIXTURE_PLUGIN / "pyproject.toml", root / "plugin-pyproject.toml")
     (root / "facts.ext").write_text("alpha\n")
     (root / "README.md").write_text(
-        "# Fixture\n\n<!-- clean-docs:purpose -->\n"
+        "# Fixture\n\n<!-- sourcebound:purpose -->\n"
         "Use this fixture when testing an external evidence plugin. It gives maintainers one bounded region and one policy surface.\n"
-        "<!-- clean-docs:end purpose -->\n\n<!-- clean-docs:begin facts -->\n"
-        "<!-- clean-docs:end facts -->\n"
+        "<!-- sourcebound:end purpose -->\n\n<!-- sourcebound:begin facts -->\n"
+        "<!-- sourcebound:end facts -->\n"
     )
-    (root / ".clean-docs.yml").write_text(_manifest())
+    (root / ".sourcebound.yml").write_text(_manifest())
     subprocess.run(["git", "init", "-q", str(root)], check=True)
     return root
 
@@ -98,16 +98,16 @@ def test_external_extractor_participates_in_drive_check_and_release(
     tmp_path: Path,
 ) -> None:
     root = _root(tmp_path)
-    results, findings = drive(root, root / ".clean-docs.yml")
+    results, findings = drive(root, root / ".sourcebound.yml")
     assert not findings
     assert results[0].changed
     assert "- alpha" in (root / "README.md").read_text()
     assert not (root / "plugin-write-attempt.txt").exists()
-    assert not any(item.changed for item in evaluate(root, root / ".clean-docs.yml"))
+    assert not any(item.changed for item in evaluate(root, root / ".sourcebound.yml"))
     before = _commit(root, "before")
     (root / "facts.ext").write_text("beta\n")
     after = _commit(root, "after")
-    assert evaluate(root, root / ".clean-docs.yml")[0].changed
+    assert evaluate(root, root / ".sourcebound.yml")[0].changed
     (root / "fixture_plugin/__main__.py").write_text(
         "raise SystemExit('worktree-only failure')\n"
     )
@@ -123,18 +123,18 @@ def test_external_extractor_participates_in_drive_check_and_release(
 
 def test_incompatible_plugin_fails_before_extraction(tmp_path: Path) -> None:
     root = _root(tmp_path)
-    (root / ".clean-docs.yml").write_text(_manifest(api_version=2))
+    (root / ".sourcebound.yml").write_text(_manifest(api_version=2))
 
     with pytest.raises(
         ConfigurationError,
-        match=r"plugin fixture API version 2 is incompatible; clean-docs supports 1",
+        match=r"plugin fixture API version 2 is incompatible; sourcebound supports 1",
     ):
-        load_manifest(root / ".clean-docs.yml")
+        load_manifest(root / ".sourcebound.yml")
 
     command = _run(root, "check")
     assert command.returncode == 2
     assert (
-        "plugin fixture API version 2 is incompatible; clean-docs supports 1"
+        "plugin fixture API version 2 is incompatible; sourcebound supports 1"
         in command.stderr
     )
     assert not (root / "plugin-write-attempt.txt").exists()
@@ -186,7 +186,7 @@ def test_plugin_policy_blocks_plugin_rendered_output_before_write(tmp_path: Path
     (root / "facts.ext").write_text("FORBIDDEN\n")
     before = (root / "README.md").read_text()
 
-    results, findings = drive(root, root / ".clean-docs.yml")
+    results, findings = drive(root, root / ".sourcebound.yml")
 
     assert results[0].changed
     assert [finding.rule for finding in findings] == ["fixture-forbidden"]

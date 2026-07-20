@@ -50,21 +50,21 @@ review_contracts:
 
 
 def test_loads_strict_region_binding(tmp_path: Path) -> None:
-    path = tmp_path / ".clean-docs.yml"
+    path = tmp_path / ".sourcebound.yml"
     path.write_text(VALID)
     manifest = load_manifest(path)
     assert manifest.bindings[0].source.symbol == "ACTIONS"
 
 
 def test_manifest_defaults_to_no_review_contracts(tmp_path: Path) -> None:
-    path = tmp_path / ".clean-docs.yml"
+    path = tmp_path / ".sourcebound.yml"
     path.write_text(VALID)
 
     assert load_manifest(path).review_contracts == ()
 
 
 def test_loads_observe_review_contract(tmp_path: Path) -> None:
-    path = tmp_path / ".clean-docs.yml"
+    path = tmp_path / ".sourcebound.yml"
     path.write_text(VALID + VALID_REVIEW_CONTRACTS)
 
     contract = load_manifest(path).review_contracts[0]
@@ -210,7 +210,7 @@ def test_loads_observe_review_contract(tmp_path: Path) -> None:
 def test_rejects_invalid_review_contracts(
     tmp_path: Path, review_contracts: str, message: str
 ) -> None:
-    path = tmp_path / ".clean-docs.yml"
+    path = tmp_path / ".sourcebound.yml"
     path.write_text(VALID + review_contracts)
 
     with pytest.raises(ConfigurationError, match=message):
@@ -220,7 +220,7 @@ def test_rejects_invalid_review_contracts(
 def test_rejects_review_contract_source_target_identity_with_different_ids(
     tmp_path: Path,
 ) -> None:
-    path = tmp_path / ".clean-docs.yml"
+    path = tmp_path / ".sourcebound.yml"
     contract = VALID_REVIEW_CONTRACTS.replace(
         "        path: docs/delivery.md\n"
         "        extractor: markdown-section\n"
@@ -259,7 +259,7 @@ projections:
     - id: generated-visual
       source: docs/visuals/generated-visual.yml
       human_output: docs/generated.md
-      agent_output: .clean-docs/visuals/generated-visual.md
+      agent_output: .sourcebound/visuals/generated-visual.md
 """,
     ],
 )
@@ -267,7 +267,7 @@ def test_rejects_generated_projection_as_review_target(
     tmp_path: Path,
     projection: str,
 ) -> None:
-    path = tmp_path / ".clean-docs.yml"
+    path = tmp_path / ".sourcebound.yml"
     contract = """\
 review_contracts:
   - id: generated-target
@@ -293,7 +293,7 @@ review_contracts:
 
 
 def test_allows_non_generated_python_review_target(tmp_path: Path) -> None:
-    path = tmp_path / ".clean-docs.yml"
+    path = tmp_path / ".sourcebound.yml"
     path.write_text(
         VALID
         + """\
@@ -392,7 +392,7 @@ def test_bounds_review_contract_manifest_work(
     contracts: list[dict[str, object]],
     message: str,
 ) -> None:
-    path = tmp_path / ".clean-docs.yml"
+    path = tmp_path / ".sourcebound.yml"
     path.write_text(
         VALID + yaml.safe_dump({"review_contracts": contracts}, sort_keys=False)
     )
@@ -402,7 +402,7 @@ def test_bounds_review_contract_manifest_work(
 
 
 def test_rejects_repeated_review_locator_identity(tmp_path: Path) -> None:
-    path = tmp_path / ".clean-docs.yml"
+    path = tmp_path / ".sourcebound.yml"
     contract = _review_contract(0, 1, 1)
     targets = contract["targets"]
     assert isinstance(targets, list)
@@ -421,7 +421,7 @@ def test_rejects_repeated_review_locator_identity(tmp_path: Path) -> None:
 
 
 def test_loads_json_pointer_binding(tmp_path: Path) -> None:
-    path = tmp_path / ".clean-docs.yml"
+    path = tmp_path / ".sourcebound.yml"
     path.write_text(VALID.replace(
         "extractor: python-literal\n    source:\n      path: src/actions.py\n      symbol: ACTIONS",
         "extractor: json\n    source:\n      path: experiment/corpus.json\n      pointer: /cases",
@@ -432,7 +432,7 @@ def test_loads_json_pointer_binding(tmp_path: Path) -> None:
 
 
 def test_python_token_is_valid_only_as_the_allowlisted_executable(tmp_path: Path) -> None:
-    path = tmp_path / ".clean-docs.yml"
+    path = tmp_path / ".sourcebound.yml"
     path.write_text(
         VALID.replace(
             "bindings:",
@@ -451,7 +451,7 @@ def test_python_token_is_valid_only_as_the_allowlisted_executable(tmp_path: Path
 
 
 def test_loads_strict_projection_contract(tmp_path: Path) -> None:
-    path = tmp_path / ".clean-docs.yml"
+    path = tmp_path / ".sourcebound.yml"
     path.write_text(VALID + """\
 projections:
   llms_txt:
@@ -460,7 +460,7 @@ projections:
     include: [README.md, docs/CANONICAL.md]
   bundles:
     - id: contributor
-      output: .clean-docs/context/contributor.md
+      output: .sourcebound/context/contributor.md
       include: [README.md]
 """)
 
@@ -494,19 +494,19 @@ projections:
 def test_rejects_invalid_projection_contract(
     tmp_path: Path, projection: str, message: str
 ) -> None:
-    path = tmp_path / ".clean-docs.yml"
+    path = tmp_path / ".sourcebound.yml"
     path.write_text(VALID + f"projections:\n  {projection}\n")
     with pytest.raises(ConfigurationError, match=message):
         load_manifest(path)
 
 
 def test_loads_static_demo_projection(tmp_path: Path) -> None:
-    path = tmp_path / ".clean-docs.yml"
+    path = tmp_path / ".sourcebound.yml"
     path.write_text(VALID + """\
 projections:
   demo:
     output: docs/demo/index.html
-    evidence: .clean-docs/demo/evidence.json
+    evidence: .sourcebound/demo/evidence.json
 """)
     projections = load_manifest(path).projections
     assert projections is not None and projections.demo is not None
@@ -514,14 +514,14 @@ projections:
 
 
 def test_loads_structured_visual_projection(tmp_path: Path) -> None:
-    path = tmp_path / ".clean-docs.yml"
+    path = tmp_path / ".sourcebound.yml"
     path.write_text(VALID + """\
 projections:
   visuals:
     - id: queue-flow
       source: docs/visuals/queue-flow.yml
       human_output: docs/generated/queue-flow.mdx
-      agent_output: .clean-docs/visuals/queue-flow.md
+      agent_output: .sourcebound/visuals/queue-flow.md
 """)
 
     projections = load_manifest(path).projections
@@ -532,14 +532,14 @@ projections:
 
 
 def test_visual_projection_cannot_replace_a_bound_document(tmp_path: Path) -> None:
-    path = tmp_path / ".clean-docs.yml"
+    path = tmp_path / ".sourcebound.yml"
     path.write_text(VALID + """\
 projections:
   visuals:
     - id: queue-flow
       source: docs/visuals/queue-flow.yml
       human_output: README.md
-      agent_output: .clean-docs/visuals/queue-flow.md
+      agent_output: .sourcebound/visuals/queue-flow.md
 """)
 
     with pytest.raises(ConfigurationError, match="cannot replace a bound document"):
@@ -568,14 +568,14 @@ def test_rejects_invalid_contract(tmp_path: Path, replacement: str, message: str
         text = text.replace("version: 1", "version: 1\ndocs: {}")
     else:
         text = text.replace("type: region", replacement)
-    path = tmp_path / ".clean-docs.yml"
+    path = tmp_path / ".sourcebound.yml"
     path.write_text(text)
     with pytest.raises(ConfigurationError, match=message):
         load_manifest(path)
 
 
 def test_v2_rejects_deprecated_network_declaration(tmp_path: Path) -> None:
-    path = tmp_path / ".clean-docs.yml"
+    path = tmp_path / ".sourcebound.yml"
     path.write_text(
         VALID.replace("version: 1", "version: 2").replace(
             "bindings:",
@@ -595,7 +595,7 @@ def test_v2_rejects_deprecated_network_declaration(tmp_path: Path) -> None:
 
 
 def test_v1_reports_deprecated_network_declaration(tmp_path: Path) -> None:
-    path = tmp_path / ".clean-docs.yml"
+    path = tmp_path / ".sourcebound.yml"
     path.write_text(
         VALID.replace(
             "bindings:",

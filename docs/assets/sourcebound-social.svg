@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="title desc">
+  <title id="title">Sourcebound: docs that answer to code</title>
+  <desc id="desc">A three-step source-bound documentation flow. Repository sources own facts, bindings connect facts to prose, and a deterministic check rejects stale changes.</desc>
+  <defs>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.5" fill="#a9bfda"/>
+    </pattern>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="135%">
+      <feDropShadow dx="0" dy="7" stdDeviation="8" flood-color="#26355e" flood-opacity="0.13"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0 0L12 6L0 12Z" fill="#25225f"/>
+    </marker>
+    <style>
+      .brand { font: 800 24px ui-sans-serif, system-ui, sans-serif; fill: #15143b; }
+      .eyebrow { font: 750 15px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .14em; fill: #4541a2; }
+      .headline { font: 800 62px ui-sans-serif, system-ui, sans-serif; letter-spacing: -.035em; fill: #15143b; }
+      .subhead { font: 540 22px ui-sans-serif, system-ui, sans-serif; fill: #41415f; }
+      .step { font: 750 14px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .12em; fill: #4541a2; }
+      .card-title { font: 790 27px ui-sans-serif, system-ui, sans-serif; fill: #15143b; }
+      .card-body { font: 540 18px ui-sans-serif, system-ui, sans-serif; fill: #41415f; }
+      .outcome { font: 720 15px ui-sans-serif, system-ui, sans-serif; fill: #25225f; }
+    </style>
+  </defs>
+  <rect width="1280" height="640" fill="#edf6ff"/>
+  <rect width="1280" height="640" fill="url(#grid)"/>
+  <rect x="34" y="34" width="1212" height="572" rx="22" fill="#edf6ff" fill-opacity=".91" stroke="#25225f" stroke-width="3"/>
+
+  <g transform="translate(70 64)">
+    <rect width="48" height="48" rx="10" fill="#25225f"/>
+    <path d="M14 14h20v20H14zM20 9v30M28 9v30" fill="none" stroke="#fff" stroke-width="3"/>
+    <text x="64" y="33" class="brand">Sourcebound</text>
+  </g>
+  <text x="70" y="154" class="eyebrow">SOURCE-BOUND DOCUMENTATION ENGINE</text>
+  <text x="70" y="225" class="headline">Docs that answer to code.</text>
+  <text x="70" y="270" class="subhead">When source moves, stale prose fails loudly.</text>
+
+  <path d="M370 424H481M772 424H883" fill="none" stroke="#25225f" stroke-width="5" stroke-linecap="round" marker-end="url(#arrow)"/>
+
+  <g transform="translate(70 336)" filter="url(#shadow)">
+    <rect width="300" height="176" rx="16" fill="#fff" stroke="#302d78" stroke-width="3"/>
+    <text x="26" y="38" class="step">01 · SOURCE</text>
+    <text x="26" y="82" class="card-title">Repository sources</text>
+    <text x="26" y="116" class="card-body">Code owns the fact.</text>
+    <rect x="26" y="140" width="118" height="26" rx="13" fill="#dbe8ff"/>
+    <text x="43" y="159" class="outcome">static evidence</text>
+    <circle cx="300" cy="88" r="8" fill="#fff" stroke="#25225f" stroke-width="4"/>
+  </g>
+
+  <g transform="translate(472 336)" filter="url(#shadow)">
+    <rect width="300" height="176" rx="16" fill="#fff" stroke="#302d78" stroke-width="3"/>
+    <text x="26" y="38" class="step">02 · BIND</text>
+    <text x="26" y="82" class="card-title">Source bindings</text>
+    <text x="26" y="116" class="card-body">Prose names its owner.</text>
+    <rect x="26" y="140" width="154" height="26" rx="13" fill="#dff4ed"/>
+    <text x="43" y="159" class="outcome">region · command pin · symbol</text>
+    <circle cx="0" cy="88" r="8" fill="#fff" stroke="#25225f" stroke-width="4"/>
+    <circle cx="300" cy="88" r="8" fill="#fff" stroke="#25225f" stroke-width="4"/>
+  </g>
+
+  <g transform="translate(874 336)" filter="url(#shadow)">
+    <rect width="300" height="176" rx="16" fill="#25225f" stroke="#15143b" stroke-width="3"/>
+    <text x="26" y="38" class="step" style="fill:#c9c7ff">03 · PROVE</text>
+    <text x="26" y="82" class="card-title" style="fill:#fff">Deterministic check</text>
+    <text x="26" y="116" class="card-body" style="fill:#eef0ff">Drift fails before merge.</text>
+    <rect x="26" y="140" width="194" height="26" rx="13" fill="#fff"/>
+    <text x="43" y="159" class="outcome">repair · reject · project</text>
+    <circle cx="0" cy="88" r="8" fill="#fff" stroke="#25225f" stroke-width="4"/>
+  </g>
+
+  <path d="M70 558H1174" stroke="#4541a2" stroke-width="3" stroke-linecap="round"/>
+  <text x="70" y="586" class="step">THE CHECKABLE SPINE STAYS ATTACHED</text>
+</svg>

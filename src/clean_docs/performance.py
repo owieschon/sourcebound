@@ -41,7 +41,7 @@ class PerformanceReceipt:
 
     def as_dict(self) -> dict[str, object]:
         return {
-            "schema": "clean-docs.performance.v2",
+            "schema": "sourcebound.performance.v2",
             "ok": self.ok,
             "base": self.base,
             "head": self.head,

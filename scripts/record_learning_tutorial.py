@@ -12,7 +12,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT / ".clean-docs/learning/tutorial-evidence.json"
+OUTPUT = ROOT / ".sourcebound/learning/tutorial-evidence.json"
 MANIFEST = """\
 version: 1
 bindings:
@@ -34,14 +34,14 @@ projections:
 README = """\
 # Moonbase Status
 
-<!-- clean-docs:purpose -->
+<!-- sourcebound:purpose -->
 Use this fixture when a public command changes before its operator guide. It gives maintainers a checked path from stale prose to a repaired and verified page.
-<!-- clean-docs:end purpose -->
+<!-- sourcebound:end purpose -->
 
 ## Operator actions
 
-<!-- clean-docs:begin status-actions -->
-<!-- clean-docs:end status-actions -->
+<!-- sourcebound:begin status-actions -->
+<!-- sourcebound:end status-actions -->
 """
 SOURCE_BEFORE = """\
 ACTIONS = [
@@ -64,7 +64,7 @@ def _run(executable: Path, root: Path, *arguments: str) -> dict[str, object]:
     )
     output = (process.stdout + process.stderr).strip()
     return {
-        "command": "clean-docs " + " ".join(arguments),
+        "command": "sourcebound " + " ".join(arguments),
         "exit_code": process.returncode,
         "observed": output.splitlines()[0] if output else "No terminal output",
     }
@@ -72,13 +72,13 @@ def _run(executable: Path, root: Path, *arguments: str) -> dict[str, object]:
 
 def _write_fixture(root: Path) -> None:
     (root / "src").mkdir()
-    (root / ".clean-docs.yml").write_text(MANIFEST, encoding="utf-8")
+    (root / ".sourcebound.yml").write_text(MANIFEST, encoding="utf-8")
     (root / "README.md").write_text(README, encoding="utf-8")
     (root / "src/actions.py").write_text(SOURCE_BEFORE, encoding="utf-8")
 
 
 def record(executable: Path) -> dict[str, object]:
-    with tempfile.TemporaryDirectory(prefix="clean-docs-learning-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="sourcebound-learning-") as temporary:
         root = Path(temporary)
         _write_fixture(root)
         drive_baseline = _run(executable, root, "drive")
@@ -111,35 +111,35 @@ def record(executable: Path) -> dict[str, object]:
     if "publish" not in readme_after_repair or "report" not in readme_before_repair:
         raise RuntimeError("tutorial repair did not update the declared documentation region")
     prefix_before, suffix_before = readme_before_repair.split(
-        "<!-- clean-docs:begin status-actions -->", 1
+        "<!-- sourcebound:begin status-actions -->", 1
     )
     prefix_after, suffix_after = readme_after_repair.split(
-        "<!-- clean-docs:begin status-actions -->", 1
+        "<!-- sourcebound:begin status-actions -->", 1
     )
     if prefix_before != prefix_after or suffix_before.split(
-        "<!-- clean-docs:end status-actions -->", 1
-    )[1] != suffix_after.split("<!-- clean-docs:end status-actions -->", 1)[1]:
+        "<!-- sourcebound:end status-actions -->", 1
+    )[1] != suffix_after.split("<!-- sourcebound:end status-actions -->", 1)[1]:
         raise RuntimeError("tutorial repair changed prose outside the declared region")
     return {
-        "schema": "clean-docs.tutorial-evidence.v1",
+        "schema": "sourcebound.tutorial-evidence.v1",
         "steps": [
-            {"moment": "Protected baseline", "command": "clean-docs check", "exit": 0, "meaning": "The bound page matches source."},
-            {"moment": "Source changed alone", "command": "clean-docs check", "exit": 1, "meaning": "The status-actions binding is stale."},
-            {"moment": "Declared region repaired", "command": "clean-docs drive", "exit": 0, "meaning": "Only the bound region changes."},
-            {"moment": "Projection refreshed", "command": "clean-docs project", "exit": 0, "meaning": "llms.txt receives the repaired page digest."},
-            {"moment": "Repository verified", "command": "clean-docs verify", "exit": 0, "meaning": "Bindings and projections are current."},
+            {"moment": "Protected baseline", "command": "sourcebound check", "exit": 0, "meaning": "The bound page matches source."},
+            {"moment": "Source changed alone", "command": "sourcebound check", "exit": 1, "meaning": "The status-actions binding is stale."},
+            {"moment": "Declared region repaired", "command": "sourcebound drive", "exit": 0, "meaning": "Only the bound region changes."},
+            {"moment": "Projection refreshed", "command": "sourcebound project", "exit": 0, "meaning": "llms.txt receives the repaired page digest."},
+            {"moment": "Repository verified", "command": "sourcebound verify", "exit": 0, "meaning": "Bindings and projections are current."},
         ],
     }
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--clean-docs", type=Path, required=True)
+    parser.add_argument("--sourcebound", type=Path, required=True)
     parser.add_argument("--out", type=Path, default=OUTPUT)
     args = parser.parse_args()
-    executable = args.clean_docs.resolve()
+    executable = args.sourcebound.resolve()
     if not executable.is_file():
-        raise SystemExit(f"clean-docs executable not found: {executable}")
+        raise SystemExit(f"sourcebound executable not found: {executable}")
     rendered = json.dumps(record(executable), indent=2, sort_keys=True) + "\n"
     args.out.resolve().parent.mkdir(parents=True, exist_ok=True)
     args.out.resolve().write_text(rendered, encoding="utf-8")

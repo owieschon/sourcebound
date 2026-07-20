@@ -20,9 +20,9 @@ except ImportError:  # pragma: no cover - exercised on Python 3.10 in CI
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RUBRIC = Path(".clean-docs/reader-trial-rubric.yml")
-RECEIPT = Path(".clean-docs/reader-trial.json")
-EVIDENCE_ROOT = Path(".clean-docs/reader-trials")
+RUBRIC = Path(".sourcebound/reader-trial-rubric.yml")
+RECEIPT = Path(".sourcebound/reader-trial.json")
+EVIDENCE_ROOT = Path(".sourcebound/reader-trials")
 STABLE_VERSION = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 CANDIDATE_VERSION = re.compile(r"^(?P<line>[0-9]+\.[0-9]+\.[0-9]+)rc[0-9]+$")
 PARTICIPANT_ID = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
@@ -47,16 +47,16 @@ def trial_layout(release_version: str) -> TrialLayout:
     release_line = ".".join(release_version.split(".")[:2])
     if release_version.startswith("1.1."):
         return TrialLayout(
-            rubric=Path(".clean-docs/reader-trial-rubric-v1.1.yml"),
-            receipt=Path(".clean-docs/reader-trial-v1.1.json"),
-            evidence_root=Path(".clean-docs/reader-trials-v1.1"),
+            rubric=Path(".sourcebound/reader-trial-rubric-v1.1.yml"),
+            receipt=Path(".sourcebound/reader-trial-v1.1.json"),
+            evidence_root=Path(".sourcebound/reader-trials-v1.1"),
         )
     if release_version.startswith("1.0."):
         return TrialLayout(rubric=RUBRIC, receipt=RECEIPT, evidence_root=EVIDENCE_ROOT)
     return TrialLayout(
-        rubric=Path(f".clean-docs/reader-trial-rubric-v{release_line}.yml"),
-        receipt=Path(f".clean-docs/reader-trial-v{release_line}.json"),
-        evidence_root=Path(f".clean-docs/reader-trials-v{release_line}"),
+        rubric=Path(f".sourcebound/reader-trial-rubric-v{release_line}.yml"),
+        receipt=Path(f".sourcebound/reader-trial-v{release_line}.json"),
+        evidence_root=Path(f".sourcebound/reader-trials-v{release_line}"),
     )
 
 
@@ -186,7 +186,7 @@ def verify_reader_trial(root: Path, release_version: str) -> dict[str, object]:
             "participants",
         },
     )
-    if receipt["schema"] != "clean-docs.independent-reader-trial.v2":
+    if receipt["schema"] != "sourcebound.independent-reader-trial.v2":
         raise ReaderTrialError("independent-reader receipt schema is unsupported")
     candidate = receipt["candidate"]
     match = CANDIDATE_VERSION.fullmatch(candidate) if isinstance(candidate, str) else None

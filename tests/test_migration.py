@@ -37,13 +37,13 @@ def test_v0_to_v1_migration_matches_golden_and_preserves_evidence(
 ) -> None:
     root = tmp_path / "repo"
     root.mkdir()
-    manifest = root / ".clean-docs.yml"
+    manifest = root / ".sourcebound.yml"
     source = root / "source.txt"
     readme = root / "README.md"
     source.write_text("Grounded fact\n")
     readme.write_text(
-        "# Fixture\n\n<!-- clean-docs:begin fact -->\nGrounded fact\n"
-        "<!-- clean-docs:end fact -->\n"
+        "# Fixture\n\n<!-- sourcebound:begin fact -->\nGrounded fact\n"
+        "<!-- sourcebound:end fact -->\n"
     )
     shutil.copy2(FIXTURES / "manifest-v1.yml", manifest)
     expected = evaluate(root, manifest)
@@ -74,7 +74,7 @@ def test_v0_to_v1_migration_matches_golden_and_preserves_evidence(
 def test_v1_to_v2_migration_removes_only_network_declaration(
     tmp_path: Path,
 ) -> None:
-    manifest = tmp_path / ".clean-docs.yml"
+    manifest = tmp_path / ".sourcebound.yml"
     manifest.write_text(
         "version: 1\n"
         "execution:\n"

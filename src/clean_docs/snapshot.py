@@ -112,7 +112,7 @@ class RepositorySnapshot:
                 )
             archive_paths.append(path.as_posix().strip("/"))
         archive_paths = self._include_symlink_targets(archive_paths)
-        with tempfile.TemporaryDirectory(prefix="clean-docs-snapshot-") as temporary:
+        with tempfile.TemporaryDirectory(prefix="sourcebound-snapshot-") as temporary:
             destination = Path(temporary)
             archive = destination / "snapshot.tar"
             arguments = [

@@ -77,7 +77,7 @@ def test_release_reports_added_and_removed_cli_evidence_with_provenance(
     }
     assert all(delta.source == "cli.py" for delta in report.deltas)
     payload = report.as_dict()
-    assert payload["schema"] == "clean-docs.release-delta.v1"
+    assert payload["schema"] == "sourcebound.release-delta.v1"
     assert payload["counts"] == {"added": 1, "removed": 1, "changed": 0}
     rendered = render_release_markdown(report)
     assert "[cli.py](cli.py)" in rendered
@@ -132,7 +132,7 @@ def test_release_narrative_cannot_omit_or_contradict_typed_facts(
     delta = report.deltas[0]
     response = json.dumps(
         {
-            "schema": "clean-docs.release-narrative.v1",
+            "schema": "sourcebound.release-narrative.v1",
             "drafts": [
                 {
                     "delta_id": delta.id,
@@ -198,7 +198,7 @@ def test_release_narrative_accepts_exact_cited_facts(tmp_path: Path) -> None:
 
     narrative = validate_release_narrative(
         report,
-        json.dumps({"schema": "clean-docs.release-narrative.v1", "drafts": drafts}),
+        json.dumps({"schema": "sourcebound.release-narrative.v1", "drafts": drafts}),
     )
 
     assert narrative.ok

@@ -1,20 +1,20 @@
 # Documentation style guide: clean, grounded developer docs
 
-<!-- clean-docs:policy register-v2 -->
-<!-- clean-docs:purpose -->
-STANDARD.md is the canonical writing and documentation policy packaged with clean-docs. Use it when writing or reviewing repository documentation for people or agents: it prevents correct facts from becoming hard to find, easy to misread, or detached from source, and it defines how to choose the right medium, voice, canonical home, and evidence boundary for each claim.
-<!-- clean-docs:end purpose -->
+<!-- sourcebound:policy register-v2 -->
+<!-- sourcebound:purpose -->
+STANDARD.md is the canonical writing and documentation policy packaged with Sourcebound. Use it when writing or reviewing repository documentation for people or agents: it prevents correct facts from becoming hard to find, easy to misread, or detached from source, and it defines how to choose the right medium, voice, canonical home, and evidence boundary for each claim.
+<!-- sourcebound:end purpose -->
 
 **[Start with the governing principle](#the-one-principle-everything-else-follows)**.
 
 The [pre-publish checklist](#pre-publish-checklist) is the proof surface for an authored review.
 
-<!-- clean-docs:allow audience reason="This standard names agent-workflow signals as policy examples rather than addressing an agent" -->
+<!-- sourcebound:allow audience reason="This standard names agent-workflow signals as policy examples rather than addressing an agent" -->
 
 Derived from a close reading of a developer-documentation corpus spanning overview,
 quickstart, workflows, best practices, memory, hooks, integrations, settings, and CLI
 reference pages. Every rule below traces to an observed, repeated convention in that corpus.
-clean-docs packages this file as its canonical default standard.
+sourcebound packages this file as its canonical default standard.
 
 ## The one principle everything else follows
 
@@ -51,7 +51,7 @@ record preserves observations. An agent procedure constrains actions, and a temp
 input.
 
 Prefer path, filename, frontmatter, title, and repository convention as role evidence. When those
-signals are ambiguous, declare `<!-- clean-docs:role reference -->` with the narrowest matching role.
+signals are ambiguous, declare `<!-- sourcebound:role reference -->` with the narrowest matching role.
 The supported roles are `overview`, `component-overview`, `tutorial`, `task`, `troubleshooting`,
 `reference`, `architecture`, `plan`, `evidence`, `agent-procedure`, and `template`. A role marker
 scopes rules; it never suppresses broken links, source drift, unreadable bytes, or concrete residue.
@@ -59,8 +59,8 @@ A rule that helps one role can damage another. Purpose and routing checks help a
 corrupt a two-line prompt template. Fixed page budgets can expose a sprawling guide; they can split
 a safety constraint from the step it governs or make a reference harder to scan.
 
-Repositories may adopt the clean-docs register for one document by adding
-`<!-- clean-docs:policy register-v2 -->` after its title. The marker selects a policy profile; it
+Repositories may adopt the sourcebound register for one document by adding
+`<!-- sourcebound:policy register-v2 -->` after its title. The marker selects a policy profile; it
 does not decide which rules fit. The document's role still selects rules one by one. The marker
 never changes that role, overrides a repository-native form, or turns an uncertain editorial call
 into a mechanical failure.
@@ -86,7 +86,7 @@ caveat, source proof, or schema. Delete only material that no reader layer needs
 Mark an unavoidable loss instead of hiding it:
 
 ```markdown
-<!-- clean-docs:yield rule="qualifier-density" to="truth-honesty"
+<!-- sourcebound:yield rule="qualifier-density" to="truth-honesty"
      reason="The sentence preserves two independent safety boundaries" -->
 ```
 
@@ -185,7 +185,7 @@ alt text, and provide light and dark variants when appearance changes. A caption
 notice rather than repeating the image.
 
 Every image has useful alternative text unless it is decorative. Mark a decorative Markdown image
-with `<!-- clean-docs:decorative-image -->`; native HTML uses `alt="" role="presentation"`.
+with `<!-- sourcebound:decorative-image -->`; native HTML uses `alt="" role="presentation"`.
 
 Video is optional. Use it only when motion is necessary to understand a multi-step interaction or
 temporal UI behavior and the team can maintain it. Prefer a controllable video to an animated image.
@@ -439,20 +439,20 @@ Use this routing-table shape:
 
 The deterministic register floor catches five repeatable failures:
 
-<!-- clean-docs:yield rule="nominalization-density" to="truth-honesty"
+<!-- sourcebound:yield rule="nominalization-density" to="truth-honesty"
      reason="The rule definition must name nominalization and its abstraction suffixes" -->
 1. **Nominalization density.** A reader-facing sentence with three or more abstraction-suffix
    tokens (`-tion`, `-sion`, `-ment`, `-ance`, `-ence`, `-ivity`) fails after the narrow allowlist
    for `documentation`, `application`, `section`, and `configuration`.
-<!-- clean-docs:yield rule="nominalization-density" to="truth-honesty"
+<!-- sourcebound:yield rule="nominalization-density" to="truth-honesty"
      reason="The rule definition must preserve its exact sentence-variance terms" -->
 2. **Sentence variance.** A paragraph of at least three sentences fails when every sentence is
    15-35 words. Give the reader one short beat.
-<!-- clean-docs:yield rule="nominalization-density" to="truth-honesty"
+<!-- sourcebound:yield rule="nominalization-density" to="truth-honesty"
      reason="The rule definition must preserve its exact assurance and execution terms" -->
 3. **Assurance deduplication.** Each authority or execution boundary has one canonical home.
    Overview pages link to it instead of repeating it.
-<!-- clean-docs:yield rule="significance-narration" to="truth-honesty"
+<!-- sourcebound:yield rule="significance-narration" to="truth-honesty"
      reason="The rule definition must quote each phrase that it rejects" -->
 4. **Significance narration.** Cut "exactly the", "the very", "this demonstrates",
    "deliberately", "is itself", and "which is precisely" when the page praises its own system.
@@ -569,7 +569,7 @@ turn an editorial opinion into gate authority.
 
 ### What only judgment can check (the honest seam)
 
-`clean-docs audit` sees document roles, names, structure, lengths, links, token overlap, registered
+`sourcebound audit` sees document roles, names, structure, lengths, links, token overlap, registered
 prose tells, and exact accepted debt. Its role classifier is evidence for applicability, not proof
 of editorial intent. Patterns cannot decide several corpus and teaching rules. A reviewer or an
 advisory judge owns them. Each rule is stated so a human can run it today; none is faked into a

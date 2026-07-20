@@ -15,7 +15,7 @@ from clean_docs.applicability import classify_document
 from clean_docs.models import BindingResult, Provenance, SourceClaimCheck
 
 
-CLAIM_REPORT_SCHEMA = "clean-docs.source-claims.v1"
+CLAIM_REPORT_SCHEMA = "sourcebound.source-claims.v1"
 MAX_RANKED_CANDIDATES = 100
 SKIP_PARTS = {
     ".git",

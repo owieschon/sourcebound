@@ -31,27 +31,27 @@ def _repo(tmp_path: Path) -> Path:
     (root / "README.md").write_text("""\
 # Fixture
 
-<!-- clean-docs:purpose -->
+<!-- sourcebound:purpose -->
 Use this fixture when testing static extractors. It gives maintainers one document with scalar, path, table, and fenced outputs.
-<!-- clean-docs:end purpose -->
+<!-- sourcebound:end purpose -->
 
-<!-- clean-docs:begin version -->
+<!-- sourcebound:begin version -->
 stale
-<!-- clean-docs:end version -->
+<!-- sourcebound:end version -->
 
-<!-- clean-docs:begin guides -->
+<!-- sourcebound:begin guides -->
 stale
-<!-- clean-docs:end guides -->
+<!-- sourcebound:end guides -->
 
-<!-- clean-docs:begin commands -->
+<!-- sourcebound:begin commands -->
 stale
-<!-- clean-docs:end commands -->
+<!-- sourcebound:end commands -->
 
-<!-- clean-docs:begin example -->
+<!-- sourcebound:begin example -->
 stale
-<!-- clean-docs:end example -->
+<!-- sourcebound:end example -->
 """)
-    (root / ".clean-docs.yml").write_text("""\
+    (root / ".sourcebound.yml").write_text("""\
 version: 1
 bindings:
   - id: version
@@ -131,12 +131,12 @@ def test_static_extractors_render_and_remain_ref_pure(tmp_path: Path) -> None:
     pinned = _run(root, "check", "--ref", baseline)
     assert pinned.returncode == 0, pinned.stderr
     forward = (
-        evaluate(root, root / ".clean-docs.yml", ref=baseline),
-        evaluate(root, root / ".clean-docs.yml", ref=changed_ref),
+        evaluate(root, root / ".sourcebound.yml", ref=baseline),
+        evaluate(root, root / ".sourcebound.yml", ref=changed_ref),
     )
     reverse = (
-        evaluate(root, root / ".clean-docs.yml", ref=changed_ref),
-        evaluate(root, root / ".clean-docs.yml", ref=baseline),
+        evaluate(root, root / ".sourcebound.yml", ref=changed_ref),
+        evaluate(root, root / ".sourcebound.yml", ref=baseline),
     )
     assert forward[0] == reverse[1]
     assert forward[1] == reverse[0]

@@ -71,43 +71,43 @@
         <p class="eyebrow">Recorded, deterministic proof</p>
         <h1>Make stale prose fail loudly.</h1>
         <p>One binding connects a command in source to its README claim. When the source changes alone, the check fails with the exact stale region; repair rewrites that region and nothing else.</p>
-        <p class="digest">Evidence sha256: a654988941be1e2c8111ddb17cd4a6351f3ca2ccfa3b8d92215b984db299f4ce</p>
+        <p class="digest">Evidence sha256: 8abe8d8bce5b9e6c8eb80c0d4bb7c7a83502969d81d02e17199f0973d571cad5</p>
       </div>
       <div class="binding" aria-label="A source command no longer matches its README claim">
         <p class="binding-title">Binding: <code>public-command</code></p>
-        <div class="node"><span class="node-label">Source · command.txt</span><code>clean-docs check --changed</code></div>
+        <div class="node"><span class="node-label">Source · command.txt</span><code>sourcebound check --changed</code></div>
         <div class="tether mismatch"><span>mismatch</span></div>
-        <div class="node"><span class="node-label">Document · README.md</span><code>clean-docs check</code></div>
+        <div class="node"><span class="node-label">Document · README.md</span><code>sourcebound check</code></div>
       </div>
     </div>
   </header>
   <main id="main">
-    <section class="procedure" aria-labelledby="procedure"><p class="section-kicker">The complete loop</p><h2 id="procedure">One binding. Three observable states.</h2><p class="procedure-lead">The source changes in state two. The document is left untouched until the declared repair runs in state three.</p><div class="states"><article class="state before" aria-labelledby="state-before"><div class="state-heading"><span class="state-index">01</span><h3 id="state-before">Current</h3></div><p class="state-explanation">Source and README agree. The gate has nothing to repair.</p><div class="step"><p><code>clean-docs check</code> <span>exit 0</span></p><pre aria-label="Output from clean-docs check"><code>[current] public-command: README.md</code></pre></div></article><article class="state drift" aria-labelledby="state-drift"><div class="state-heading"><span class="state-index">02</span><h3 id="state-drift">Drift caught</h3></div><p class="state-explanation">The source changed; the README did not. The gate names the stale binding.</p><div class="step"><p><code>clean-docs check</code> <span>exit 1</span></p><pre aria-label="Output from clean-docs check"><code>[drift] public-command: README.md
+    <section class="procedure" aria-labelledby="procedure"><p class="section-kicker">The complete loop</p><h2 id="procedure">One binding. Three observable states.</h2><p class="procedure-lead">The source changes in state two. The document is left untouched until the declared repair runs in state three.</p><div class="states"><article class="state before" aria-labelledby="state-before"><div class="state-heading"><span class="state-index">01</span><h3 id="state-before">Current</h3></div><p class="state-explanation">Source and README agree. The gate has nothing to repair.</p><div class="step"><p><code>sourcebound check</code> <span>exit 0</span></p><pre aria-label="Output from sourcebound check"><code>[current] public-command: README.md</code></pre></div></article><article class="state drift" aria-labelledby="state-drift"><div class="state-heading"><span class="state-index">02</span><h3 id="state-drift">Drift caught</h3></div><p class="state-explanation">The source changed; the README did not. The gate names the stale binding.</p><div class="step"><p><code>sourcebound check</code> <span>exit 1</span></p><pre aria-label="Output from sourcebound check"><code>[drift] public-command: README.md
 --- README.md
 +++ README.md (derived)
 @@ -7,5 +7,5 @@
  ## Command
 &#32;
- &lt;!-- clean-docs:begin public-command --&gt;
--clean-docs check
-+clean-docs check --changed
- &lt;!-- clean-docs:end public-command --&gt;</code></pre></div></article><article class="state repaired" aria-labelledby="state-repaired"><div class="state-heading"><span class="state-index">03</span><h3 id="state-repaired">Repaired and verified</h3></div><p class="state-explanation">The declared region is regenerated, then the same check passes.</p><div class="step"><p><code>clean-docs drive</code> <span>exit 0</span></p><pre aria-label="Output from clean-docs drive"><code>[repaired] public-command: README.md
+ &lt;!-- sourcebound:begin public-command --&gt;
+-sourcebound check
++sourcebound check --changed
+ &lt;!-- sourcebound:end public-command --&gt;</code></pre></div></article><article class="state repaired" aria-labelledby="state-repaired"><div class="state-heading"><span class="state-index">03</span><h3 id="state-repaired">Repaired and verified</h3></div><p class="state-explanation">The declared region is regenerated, then the same check passes.</p><div class="step"><p><code>sourcebound drive</code> <span>exit 0</span></p><pre aria-label="Output from sourcebound drive"><code>[repaired] public-command: README.md
 --- README.md
 +++ README.md (derived)
 @@ -7,5 +7,5 @@
  ## Command
 &#32;
- &lt;!-- clean-docs:begin public-command --&gt;
--clean-docs check
-+clean-docs check --changed
- &lt;!-- clean-docs:end public-command --&gt;
-drive: repaired 1 document(s); implemented policy checks passed</code></pre></div><div class="step"><p><code>clean-docs check</code> <span>exit 0</span></p><pre aria-label="Output from clean-docs check"><code>[current] public-command: README.md</code></pre></div></article></div></section>
+ &lt;!-- sourcebound:begin public-command --&gt;
+-sourcebound check
++sourcebound check --changed
+ &lt;!-- sourcebound:end public-command --&gt;
+drive: repaired 1 document(s); implemented policy checks passed</code></pre></div><div class="step"><p><code>sourcebound check</code> <span>exit 0</span></p><pre aria-label="Output from sourcebound check"><code>[current] public-command: README.md</code></pre></div></article></div></section>
     <section class="intro-grid" aria-labelledby="intended-reader">
       <div><p class="section-kicker">Why this demonstration exists</p><h2 id="intended-reader">See the failure before adding the gate.</h2><p>Maintainers deciding whether source-bound documentation is worth adding to a repository.</p></div>
       <div><p class="section-kicker" id="prerequisites">What is running</p><ul class="prerequisites" aria-labelledby="prerequisites"><li>No account, credentials, backend, or database.</li><li>The outputs below come from a generated temporary repository.</li></ul></div>
     </section>
     <section class="proof" aria-labelledby="limits"><div><p class="section-kicker">Evidence boundary</p><h2 id="limits">What this proves.</h2></div><ul><li>This page replays recorded deterministic evidence; it does not execute in the browser.</li><li>The fixture proves one region-binding workflow, not every supported extractor.</li></ul></section>
-    <section class="next-section" aria-labelledby="next-step"><h2 id="next-step">Try the same loop in a repository.</h2><a class="next" href="https://github.com/owieschon/clean-docs#install-and-audit">Run the local quickstart</a></section>
+    <section class="next-section" aria-labelledby="next-step"><h2 id="next-step">Try the same loop in a repository.</h2><a class="next" href="https://github.com/owieschon/sourcebound#install-and-audit">Run the local quickstart</a></section>
   </main>
 </body>
 </html>

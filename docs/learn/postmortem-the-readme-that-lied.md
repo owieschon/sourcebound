@@ -1,9 +1,9 @@
 # Postmortem: the README that lied
 
-<!-- clean-docs:policy register-v2 -->
-<!-- clean-docs:purpose -->
+<!-- sourcebound:policy register-v2 -->
+<!-- sourcebound:purpose -->
 This case study is for maintainers whose documentation corpus feels polished but has lost a trustworthy reader path. It shows how one real repository separated current guidance from process exhaust, measured the result, and exposed which improvements still required human judgment.
-<!-- clean-docs:end purpose -->
+<!-- sourcebound:end purpose -->
 
 **[Inspect the archived before-and-after record](../archive/v0/ultra-csm-before-after.md)**.
 
@@ -21,7 +21,7 @@ This is a historical cleanup of `ultra-csm`, not a claim about that repository's
 The first pass reported 280 findings. It grouped them by structure, repeated text, length, source
 history, and intended reader:
 
-<!-- clean-docs:begin postmortem-measurements -->
+<!-- sourcebound:begin postmortem-measurements -->
 | measure | before | after |
 | --- | --- | --- |
 | Total findings | 280 | 73 (all justified in `NOTES.md`) |
@@ -32,7 +32,7 @@ history, and intended reader:
 | provenance | 11 | 1 (a run-ledger table cell) |
 | audience | 7 | 0 |
 | restatement | 2 | 1 |
-<!-- clean-docs:end postmortem-measurements -->
+<!-- sourcebound:end postmortem-measurements -->
 
 The count fell because the reader surface got smaller and the checker lost false positives. It did
 not fall because thresholds were loosened. The remaining findings were reviewed and justified in
@@ -44,13 +44,13 @@ complete record.
 The cleanup made each document answer a harder question than "is this Markdown useful somewhere?"
 It asked whether the page belonged on the current reader surface:
 
-<!-- clean-docs:begin postmortem-examples -->
+<!-- sourcebound:begin postmortem-examples -->
 | case | before | after |
 | --- | --- | --- |
 | process exhaust off the reader surface | an agent-to-agent handoff sat in the tracked doc tree a reader browses | relocated into the archive convention the repo already used, history intact |
 | one canonical home for a versioned prompt | four versions of one prompt tracked side by side, each a near-duplicate of the last | only the version `src/ultra_csm/agent1/slot_b.py:38` loads remains on the surface |
 | provenance stripped from a reader-facing reference | a worldbuilding reference tagged its content with the program that authored it | each passage is equally true, with the authoring history removed |
-<!-- clean-docs:end postmortem-examples -->
+<!-- sourcebound:end postmortem-examples -->
 
 The first change moved handoffs and status notes into the repository's archive convention. The
 second left one loaded prompt version on the current surface and preserved older versions as

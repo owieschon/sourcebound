@@ -26,7 +26,7 @@ def _track(root: Path) -> None:
 def test_scans_configured_tokens_paths_and_generated_artifacts(tmp_path: Path) -> None:
     root = _repo(tmp_path)
     digest = hashlib.sha256(b"foreign-token").hexdigest()
-    (root / ".clean-docs-residue.yml").write_text(f"""\
+    (root / ".sourcebound-residue.yml").write_text(f"""\
 version: 1
 rules:
   - id: foreign-context
@@ -58,7 +58,7 @@ exclude:
 
 
 def test_rejects_weak_or_unknown_residue_configuration(tmp_path: Path) -> None:
-    path = tmp_path / ".clean-docs-residue.yml"
+    path = tmp_path / ".sourcebound-residue.yml"
     path.write_text("version: 1\nrules: []\nunknown: true\n")
     with pytest.raises(ConfigurationError, match="unknown key"):
         load_residue_config(path)
@@ -67,7 +67,7 @@ def test_rejects_weak_or_unknown_residue_configuration(tmp_path: Path) -> None:
 def test_scans_current_worktree_content_before_it_is_staged(tmp_path: Path) -> None:
     root = _repo(tmp_path)
     digest = hashlib.sha256(b"foreign-token").hexdigest()
-    (root / ".clean-docs-residue.yml").write_text(f"""\
+    (root / ".sourcebound-residue.yml").write_text(f"""\
 version: 1
 rules:
   - id: foreign-context
@@ -89,8 +89,8 @@ rules:
 
 def test_v2_uses_private_local_rules_without_publishing_token_material(tmp_path: Path) -> None:
     root = _repo(tmp_path)
-    (root / ".clean-docs-residue.yml").write_text("version: 2\nexclude: []\n")
-    local = root / ".clean-docs-residue.local.yml"
+    (root / ".sourcebound-residue.yml").write_text("version: 2\nexclude: []\n")
+    local = root / ".sourcebound-residue.local.yml"
     local.write_text("version: 1\nrules:\n  - id: private-context\n    token: foreign-token\n    include: ['*']\n")
     local.chmod(0o600)
     (root / "README.md").write_text("# Product\n\nforeign-token\n")
@@ -104,7 +104,7 @@ def test_v2_uses_private_local_rules_without_publishing_token_material(tmp_path:
 
 
 def test_v2_rejects_published_residue_rules(tmp_path: Path) -> None:
-    path = tmp_path / ".clean-docs-residue.yml"
+    path = tmp_path / ".sourcebound-residue.yml"
     path.write_text("version: 2\nrules: []\nexclude: []\n")
 
     with pytest.raises(ConfigurationError, match="permits exclusions only"):
@@ -116,7 +116,7 @@ def test_scans_public_residue_policy_metadata_without_reading_digest_as_text(
 ) -> None:
     root = _repo(tmp_path)
     digest = hashlib.sha256(b"foreign-token").hexdigest()
-    (root / ".clean-docs-residue.yml").write_text(f"""\
+    (root / ".sourcebound-residue.yml").write_text(f"""\
 version: 1
 rules:
   - id: foreign-context
@@ -133,7 +133,7 @@ exclude: []
     assert [(finding.rule, finding.doc, finding.line, finding.detail) for finding in findings] == [
         (
             "residue-policy-metadata",
-            ".clean-docs-residue.yml",
+            ".sourcebound-residue.yml",
             6,
             "remove restricted context from residue policy metadata",
         ),
@@ -142,7 +142,7 @@ exclude: []
 
 def test_public_policy_metadata_allows_unrelated_technical_terms(tmp_path: Path) -> None:
     root = _repo(tmp_path)
-    (root / ".clean-docs-residue.yml").write_text("""\
+    (root / ".sourcebound-residue.yml").write_text("""\
 version: 2
 exclude:
   - pattern: docs/archive/**
@@ -162,7 +162,7 @@ def test_private_residue_status_is_redacted_and_initializer_is_restricted(
     assert main(["--root", str(root), "residue", "status"]) == 0
     assert "inactive" in capsys.readouterr().out
     assert main(["--root", str(root), "residue", "init-local"]) == 0
-    local = root / ".clean-docs-residue.local.yml"
+    local = root / ".sourcebound-residue.local.yml"
     assert local.stat().st_mode & 0o777 == 0o600
     local.write_text("version: 1\nrules:\n  - id: private-context\n    token: private-value\n    include: ['*']\n")
     local.chmod(0o600)
@@ -199,14 +199,14 @@ def test_excludes_versioned_independent_reader_evidence_verbatim(
     tmp_path: Path,
 ) -> None:
     root = _repo(tmp_path)
-    (root / ".clean-docs-residue.yml").write_text("""\
+    (root / ".sourcebound-residue.yml").write_text("""\
 version: 1
 exclude:
-  - pattern: .clean-docs/reader-trials*/**
+  - pattern: .sourcebound/reader-trials*/**
     reason: Independent reader evidence preserves observed paths verbatim.
 rules: []
 """)
-    evidence = root / ".clean-docs/reader-trials-v1.1/reader/run-tutorial.txt"
+    evidence = root / ".sourcebound/reader-trials-v1.1/reader/run-tutorial.txt"
     evidence.parent.mkdir(parents=True)
     evidence.write_text("workspace: /" + "Users/example/private/fixture\n")
     _track(root)
@@ -219,13 +219,13 @@ def test_invalid_policy_is_a_stable_audit_and_doctor_failure(
 ) -> None:
     root = _repo(tmp_path)
     (root / "README.md").write_text("# Product\n")
-    (root / ".clean-docs-residue.yml").write_text(
+    (root / ".sourcebound-residue.yml").write_text(
         "version: 1\nrules: []\nunknown: true\n"
     )
     _track(root)
 
     exit_code = main(["--root", str(root), "audit"])
-    checks = diagnose(root, root / ".clean-docs.yml")
+    checks = diagnose(root, root / ".sourcebound.yml")
 
     assert exit_code == 2
     assert "unknown key" in capsys.readouterr().err

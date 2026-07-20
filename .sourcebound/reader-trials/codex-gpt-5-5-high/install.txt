@@ -1,0 +1,60 @@
+participant_id: 970fe2c3-a376-4b56-a68c-474d3c9bfe45
+profile: codex-gpt-5-5-high
+independent: true
+context: published-docs-only
+completed_at: 2026-07-14T01:36:16Z
+task: install
+result: PASS
+
+Evidence:
+Published procedure used:
+  docs/SUPPORT.md, section "Install, upgrade, roll back, and uninstall" documents:
+  python3 -m venv .venv
+  source .venv/bin/activate
+  python -m pip install --no-index --find-links ./wheelhouse ./clean_docs-*.whl
+  sourcebound --version
+
+  docs/SUPPORT.md, section "Verify release artifacts" documents local checksum verification with python3 and SHA256SUMS.
+
+Command:
+  mkdir -p workspace/tmp && TMPDIR=/home/reader/sourcebound-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp python3 - <<'PY'
+  from hashlib import sha256
+  from pathlib import Path
+
+  wheels = list(Path('.').glob('clean_docs-*.whl'))
+  if len(wheels) != 1:
+      raise SystemExit(f'expected one wheel, found {len(wheels)}')
+  expected = {
+      filename: digest
+      for digest, filename in (
+          line.split(maxsplit=1) for line in Path('SHA256SUMS').read_text().splitlines()
+      )
+  }
+  actual = sha256(wheels[0].read_bytes()).hexdigest()
+  if expected.get(wheels[0].name) != actual:
+      raise SystemExit('wheel checksum mismatch')
+  print(f'{wheels[0].name}: {actual}')
+  PY
+Exit code: 0
+Relevant output:
+  clean_docs-1.0.0rc19-py3-none-any.whl: 9867c5f3f476c69b48e754e1d84bdd14d161934d7b0704f423a71a3326f53082
+
+Verified digest:
+  9867c5f3f476c69b48e754e1d84bdd14d161934d7b0704f423a71a3326f53082
+
+Command:
+  TMPDIR=/home/reader/sourcebound-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp python3 -m venv workspace/.venv && source workspace/.venv/bin/activate && TMPDIR=/home/reader/sourcebound-reader-trials-rc19/codex-gpt-5-5-high/workspace/tmp python -m pip install --no-index --find-links ./wheelhouse ./clean_docs-*.whl && sourcebound --version
+Exit code: 0
+Relevant output:
+  Looking in links: ./wheelhouse
+  Processing ./clean_docs-1.0.0rc19-py3-none-any.whl
+  Processing ./wheelhouse/pyyaml-6.0.3-cp314-cp314-macosx_11_0_arm64.whl (from sourcebound==1.0.0rc19)
+  Installing collected packages: PyYAML, sourcebound
+  Successfully installed PyYAML-6.0.3 sourcebound-1.0.0rc19
+  1.0.0rc19
+
+Reported version:
+  1.0.0rc19
+
+Documentation defects encountered:
+  none

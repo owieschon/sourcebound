@@ -95,7 +95,7 @@ def _run_case(parent: Path, case: FixtureCase) -> dict[str, object]:
     head = _commit(root, "public CLI change")
     receipt = benchmark_changed_check(
         root,
-        project_root / ".clean-docs.yml",
+        project_root / ".sourcebound.yml",
         base=base,
         head=head,
         project=case.project,
@@ -111,13 +111,13 @@ def main() -> int:
     parser.add_argument("--out", type=Path)
     args = parser.parse_args()
     try:
-        with tempfile.TemporaryDirectory(prefix="clean-docs-performance-") as temporary:
+        with tempfile.TemporaryDirectory(prefix="sourcebound-performance-") as temporary:
             cases = [_run_case(Path(temporary), case) for case in CASES]
     except (OSError, RuntimeError, subprocess.SubprocessError) as exc:
         print(f"performance: {exc}")
         return 2
     payload = {
-        "schema": "clean-docs.performance-suite.v1",
+        "schema": "sourcebound.performance-suite.v1",
         "ok": all(case["ok"] for case in cases),
         "cases": cases,
     }

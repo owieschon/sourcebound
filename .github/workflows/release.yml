@@ -24,21 +24,21 @@ jobs:
           python -m pip install
           "build==1.2.2.post1" "PyYAML==6.0.3" "setuptools==75.8.0" "wheel==0.45.1"
       - run: python scripts/build_release.py --out dist
-      - run: python -m venv /tmp/clean-docs-release
-      - run: /tmp/clean-docs-release/bin/pip install dist/*.whl
-      - run: /tmp/clean-docs-release/bin/clean-docs --version
-      - run: /tmp/clean-docs-release/bin/clean-docs --root . verify
+      - run: python -m venv /tmp/sourcebound-release
+      - run: /tmp/sourcebound-release/bin/pip install dist/*.whl
+      - run: /tmp/sourcebound-release/bin/sourcebound --version
+      - run: /tmp/sourcebound-release/bin/sourcebound --root . verify
       - run: python scripts/test_release_lifecycle.py --wheel dist/*.whl
       - run: >-
           python -m pip download
           --only-binary=:all:
-          --dest /tmp/clean-docs-wheelhouse
+          --dest /tmp/sourcebound-wheelhouse
           "PyYAML==6.0.3"
       - run: >-
           python scripts/test_readme_quickstart.py
           --wheel dist/*.whl
-          --wheelhouse /tmp/clean-docs-wheelhouse
-          --out clean-docs-quickstart.json
+          --wheelhouse /tmp/sourcebound-wheelhouse
+          --out sourcebound-quickstart.json
       - name: Resolve release files
         id: release-files
         shell: bash
@@ -60,7 +60,7 @@ jobs:
           sbom-path: ${{ steps.release-files.outputs.sbom }}
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: clean-docs-release-${{ github.sha }}
+          name: sourcebound-release-${{ github.sha }}
           path: dist/
           if-no-files-found: error
       - name: Publish release assets
@@ -82,8 +82,8 @@ jobs:
       - name: Upload publication receipt
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: clean-docs-release-publication-${{ github.sha }}
+          name: sourcebound-release-publication-${{ github.sha }}
           path: |
             release-publication.json
-            clean-docs-quickstart.json
+            sourcebound-quickstart.json
           if-no-files-found: error

@@ -23,8 +23,8 @@ PRESENTATION_ROLE = re.compile(
     re.IGNORECASE,
 )
 DECORATIVE_MARKERS = {
-    "<!-- clean-docs:decorative-image -->",
-    "{/* clean-docs:decorative-image */}",
+    "<!-- sourcebound:decorative-image -->",
+    "{/* sourcebound:decorative-image */}",
 }
 DIAGRAM_PREFIX = re.compile(r"^Diagram(?: description)?:\s+\S", re.IGNORECASE)
 
@@ -153,7 +153,7 @@ def check_accessibility(
                     line_number,
                     "image-alternative",
                     "write useful alt text or precede a decorative image with "
-                    "'<!-- clean-docs:decorative-image -->'",
+                    "'<!-- sourcebound:decorative-image -->'",
                 ))
         for match in HTML_IMAGE.finditer(visible_source):
             line_number = _line_number(visible_source, match.start())

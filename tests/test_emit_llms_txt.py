@@ -45,11 +45,11 @@ def _run(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
 def _repo(tmp_path: Path) -> Path:
     root = tmp_path / "repo"
     (root / "docs").mkdir(parents=True)
-    (root / ".clean-docs.yml").write_text(MANIFEST)
+    (root / ".sourcebound.yml").write_text(MANIFEST)
     (root / "source.txt").write_text("Bound overview")
     (root / "README.md").write_text(
-        "# Fixture\n\n<!-- clean-docs:begin overview -->\nBound overview\n"
-        "<!-- clean-docs:end overview -->\n"
+        "# Fixture\n\n<!-- sourcebound:begin overview -->\nBound overview\n"
+        "<!-- sourcebound:end overview -->\n"
     )
     (root / "docs/REFERENCE.md").write_text("# Reference\n\nSettings.\n")
     (root / "docs/CANONICAL.md").write_text("# Canonical\n\nDeclared context.\n")

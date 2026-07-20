@@ -29796,9 +29796,9 @@ function remarkFrontmatter(options) {
 }
 
 // tools/mdx-parser/src/parser.mjs
-var REQUEST_SCHEMA = "clean-docs.mdx-parse-request.v1";
-var SCHEMA = "clean-docs.mdx-parse.v1";
-var BATCH_SCHEMA = "clean-docs.mdx-parse-batch.v1";
+var REQUEST_SCHEMA = "sourcebound.mdx-parse-request.v1";
+var SCHEMA = "sourcebound.mdx-parse.v1";
+var BATCH_SCHEMA = "sourcebound.mdx-parse-batch.v1";
 function readStdin() {
   return new Promise((resolve, reject) => {
     const chunks = [];

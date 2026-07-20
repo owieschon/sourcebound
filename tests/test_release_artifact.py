@@ -25,7 +25,7 @@ UPLOAD_ARTIFACT = (
 
 
 def test_published_wheel_checksum_command_accepts_matching_artifact(tmp_path: Path) -> None:
-    wheel = tmp_path / "clean_docs-1.0.0rc14-py3-none-any.whl"
+    wheel = tmp_path / "sourcebound-1.0.0rc14-py3-none-any.whl"
     wheel.write_bytes(b"release candidate")
     digest = hashlib.sha256(wheel.read_bytes()).hexdigest()
     (tmp_path / "SHA256SUMS").write_text(f"{digest}  {wheel.name}\n")
@@ -74,14 +74,14 @@ def test_release_toolchain_and_ci_install_are_pinned() -> None:
     )
     package = (ROOT / "src/clean_docs/__init__.py").read_text()
     assert '__version__ = "' not in package
-    assert 'version("clean-docs")' in package
+    assert 'version("sourcebound")' in package
 
     workflow = yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text())
     steps = workflow["jobs"]["release-artifact"]["steps"]
     commands = [step["run"] for step in steps if "run" in step]
     assert "python scripts/build_release.py --out dist" in commands
-    assert "/tmp/clean-docs-release/bin/clean-docs --help" in commands
-    assert "/tmp/clean-docs-release/bin/clean-docs --root . audit" in commands
+    assert "/tmp/sourcebound-release/bin/sourcebound --help" in commands
+    assert "/tmp/sourcebound-release/bin/sourcebound --root . audit" in commands
     assert "python scripts/test_release_lifecycle.py --wheel dist/*.whl" in commands
     quickstart = workflow["jobs"]["quickstart-artifact"]
     assert quickstart["strategy"]["matrix"]["os"] == ["ubuntu-latest", "macos-latest"]
@@ -131,7 +131,7 @@ def test_release_workflow_attests_wheel_and_sbom() -> None:
         step for step in steps if step.get("name") == "Upload publication receipt"
     )
     assert "release-publication.json" in publication_upload["with"]["path"]
-    assert "clean-docs-quickstart.json" in publication_upload["with"]["path"]
+    assert "sourcebound-quickstart.json" in publication_upload["with"]["path"]
     assert publication_upload["with"]["if-no-files-found"] == "error"
 
 
@@ -166,7 +166,7 @@ def test_stable_release_accepts_only_reader_candidate_version_and_receipts(
         check=True,
     ).stdout.strip()
     project.write_text('[project]\nname = "fixture"\nversion = "1.0.0"\n')
-    receipts = tmp_path / ".clean-docs/reader-trials"
+    receipts = tmp_path / ".sourcebound/reader-trials"
     receipts.mkdir(parents=True)
     (receipts / "result.txt").write_text("passed\n")
     subprocess.run(["git", "-C", str(tmp_path), "add", "."], check=True)
@@ -203,8 +203,8 @@ def test_stable_release_accepts_only_reader_candidate_version_and_receipts(
         "required": True,
         "candidate_commit": candidate,
         "candidate_artifact_sha256": hashlib.sha256(wheel.read_bytes()).hexdigest(),
-        "receipt_path": ".clean-docs/reader-trial.json",
-        "evidence_root": ".clean-docs/reader-trials",
+        "receipt_path": ".sourcebound/reader-trial.json",
+        "evidence_root": ".sourcebound/reader-trials",
     }
 
     release_builder._verify_reader_candidate(final, trial, tmp_path / "build")

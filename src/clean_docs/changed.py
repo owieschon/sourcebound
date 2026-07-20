@@ -57,7 +57,7 @@ class ChangedReport:
 
     def as_dict(self) -> dict[str, object]:
         return {
-            "schema": "clean-docs.changed.v1",
+            "schema": "sourcebound.changed.v1",
             "ok": self.ok,
             "base": self.base,
             "head": self.head,
@@ -118,7 +118,7 @@ def _cache_root(root: Path) -> Path:
     path = Path(git_dir)
     if not path.is_absolute():
         path = root / path
-    return path.resolve() / "clean-docs-cache"
+    return path.resolve() / "sourcebound-cache"
 
 
 def _inventory(
@@ -166,7 +166,7 @@ def _inventory(
         if not project_root.is_dir():
             raise ConfigurationError(f"project does not exist at {ref}: {project}")
         items = list(scan_inventory(project_root).items)
-        manifest_path = project_root / ".clean-docs.yml"
+        manifest_path = project_root / ".sourcebound.yml"
         plugins = (
             load_manifest(manifest_path).plugins
             if manifest_path.is_file()
@@ -181,7 +181,7 @@ def _inventory(
     if use_cache:
         cache_path.parent.mkdir(parents=True, exist_ok=True)
         atomic_write(cache_path, json.dumps({
-            "schema": "clean-docs.inventory-cache.v1",
+            "schema": "sourcebound.inventory-cache.v1",
             "key": key,
             "items": [asdict(item) for item in items],
         }, sort_keys=True, separators=(",", ":")) + "\n")
@@ -294,7 +294,7 @@ def _check_changed_details(
                     (
                         "run the binding in a separately configured trusted environment"
                         if result.state == "skipped-untrusted-execution"
-                        else f"clean-docs{root_arg} drive --binding {result.binding_id}"
+                        else f"sourcebound{root_arg} drive --binding {result.binding_id}"
                     ),
                 ))
         affected_claim_checks = []
@@ -334,7 +334,7 @@ def _check_changed_details(
                         claim_result.locator,
                         claim_result.detail,
                         "update the documented value or accepted relationship, "
-                        "then run clean-docs claims",
+                        "then run sourcebound claims",
                     )
                 )
             for missing_claim in claim_report.missing:
@@ -351,7 +351,7 @@ def _check_changed_details(
                         f"accepted source claim {missing_claim.id} cannot be verified: "
                         f"{missing_claim.detail}",
                         "restore the documented claim and source locator or remove "
-                        "the obsolete relationship from .clean-docs.yml",
+                        "the obsolete relationship from .sourcebound.yml",
                     )
                 )
 
@@ -371,7 +371,7 @@ def _check_changed_details(
             inventory_item.locator,
             f"new {inventory_item.kind} {inventory_item.name!r} has coverage "
             f"state {inventory_item.coverage}",
-            "add a source binding or a specific .clean-docs-ignore.yml record",
+            "add a source binding or a specific .sourcebound-ignore.yml record",
         )
         if inventory_item.coverage == "ignored":
             ignored.append(finding)
@@ -426,7 +426,7 @@ def render_sarif(report: ChangedReport) -> str:
         "runs": [{
             "tool": {
                 "driver": {
-                    "name": "clean-docs",
+                    "name": "sourcebound",
                     "rules": [
                         {"id": rule, "shortDescription": {"text": rule.replace("-", " ")}}
                         for rule in sorted({finding.rule for finding, _level in findings})

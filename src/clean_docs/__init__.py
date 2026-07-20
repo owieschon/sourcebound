@@ -18,7 +18,7 @@ def _package_version() -> str:
         except (OSError, KeyError, tomllib.TOMLDecodeError):
             pass
     try:
-        return version("clean-docs")
+        return version("sourcebound")
     except PackageNotFoundError:
         return "0+unknown"
 

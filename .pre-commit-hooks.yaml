@@ -1,14 +1,14 @@
-- id: clean-docs-check
-  name: clean-docs check
+- id: sourcebound-check
+  name: sourcebound check
   description: Reject documentation drift.
-  entry: clean-docs check
+  entry: sourcebound check
   language: python
   pass_filenames: false
   always_run: true
-- id: clean-docs-audit
-  name: clean-docs audit
+- id: sourcebound-audit
+  name: sourcebound audit
   description: Reject documentation corpus findings.
-  entry: clean-docs audit
+  entry: sourcebound audit
   language: python
   pass_filenames: false
   always_run: true

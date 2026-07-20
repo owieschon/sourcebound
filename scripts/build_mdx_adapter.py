@@ -49,7 +49,7 @@ def _dependency_manifest() -> str:
             }
         )
     payload = {
-        "schema": "clean-docs.mdx-dependencies.v1",
+        "schema": "sourcebound.mdx-dependencies.v1",
         "lock_sha256": hashlib.sha256(lock_bytes).hexdigest(),
         "packages": packages,
     }
@@ -95,7 +95,7 @@ def main() -> int:
     args = parser.parse_args()
     try:
         dependencies = _dependency_manifest()
-        with tempfile.TemporaryDirectory(prefix="clean-docs-mdx-build-") as temporary:
+        with tempfile.TemporaryDirectory(prefix="sourcebound-mdx-build-") as temporary:
             generated_bundle = Path(temporary) / "mdx_parser.mjs"
             _build_bundle(generated_bundle)
             bundle_bytes = generated_bundle.read_bytes()

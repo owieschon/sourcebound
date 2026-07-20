@@ -14,12 +14,12 @@ from pathlib import Path
 from typing import Any
 
 
-MDX_PARSE_SCHEMA = "clean-docs.mdx-parse.v1"
-MDX_PARSE_BATCH_SCHEMA = "clean-docs.mdx-parse-batch.v1"
-MDX_PARSE_REQUEST_SCHEMA = "clean-docs.mdx-parse-request.v1"
+MDX_PARSE_SCHEMA = "sourcebound.mdx-parse.v1"
+MDX_PARSE_BATCH_SCHEMA = "sourcebound.mdx-parse-batch.v1"
+MDX_PARSE_REQUEST_SCHEMA = "sourcebound.mdx-parse-request.v1"
 MDX_PARSER_ID = "@mdx-js/mdx@3.1.1"
 MDX_CONTROL = re.compile(
-    r"^(?P<indent>\s*)\{/\*\s*(?P<body>clean-docs:.*?)\s*\*/\}\s*$"
+    r"^(?P<indent>\s*)\{/\*\s*(?P<body>sourcebound:.*?)\s*\*/\}\s*$"
 )
 
 
@@ -209,7 +209,7 @@ def parse_mdx_documents(
         "PATH": os.environ.get("PATH", ""),
         "TZ": "UTC",
     }
-    with tempfile.TemporaryDirectory(prefix="clean-docs-mdx-") as working:
+    with tempfile.TemporaryDirectory(prefix="sourcebound-mdx-") as working:
         try:
             process = subprocess.run(
                 ["node", "--no-warnings", str(parser_path())],

@@ -131,6 +131,18 @@ class ReviewContract:
 
 
 @dataclass(frozen=True)
+class PublicDisposition:
+    """A narrowly scoped, documented disposition for one historical finding."""
+
+    base: str
+    kind: str
+    subject: str
+    documentation: Path
+    replacement: str
+    reason: str
+
+
+@dataclass(frozen=True)
 class ProjectionConfig:
     llms_txt: LlmsTxtProjection | None = None
     bundles: tuple[ContextBundleProjection, ...] = ()
@@ -148,6 +160,7 @@ class Manifest:
     projections: ProjectionConfig | None = None
     source_claim_checks: tuple[SourceClaimCheck, ...] = ()
     review_contracts: tuple[ReviewContract, ...] = ()
+    public_dispositions: tuple[PublicDisposition, ...] = ()
     deprecations: tuple[str, ...] = ()
 
 

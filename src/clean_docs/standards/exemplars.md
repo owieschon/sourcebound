@@ -7,7 +7,7 @@ fact. The after side changes only altitude, rhythm, emphasis, or warmth.
 
 Before:
 
-> clean-docs is a source-bound documentation engine and CLI for maintainers whose code changes
+> sourcebound is a source-bound documentation engine and CLI for maintainers whose code changes
 > faster than its documentation. It identifies stale claims and provides a local, deterministic
 > path from source change to repaired, verified docs.
 >
@@ -16,11 +16,11 @@ Before:
 
 After:
 
-> clean-docs is a source-bound documentation engine and CLI for maintainers who need code and prose
+> sourcebound is a source-bound documentation engine and CLI for maintainers who need code and prose
 > to change together. It turns selected source facts into checked documentation, so stale claims
 > fail in local workflows and CI.
 >
-> Install clean-docs and catch your first stale claim. The final `clean-docs verify` command prints
+> Install sourcebound and catch your first stale claim. The final `sourcebound verify` command prints
 > a receipt with `"ok": true`.
 
 The after side defines the product, gives one first action, and names the proof. A routing table then
@@ -32,7 +32,7 @@ Mechanism and reference detail move deeper; they are not deleted.
 Before: The system performs repository documentation validation through deterministic extraction and
 comparison mechanisms.
 
-After: clean-docs fails the change when a bound claim no longer matches its source. Static extraction
+After: sourcebound fails the change when a bound claim no longer matches its source. Static extraction
 and comparison produce that result.
 
 ## Concrete actors

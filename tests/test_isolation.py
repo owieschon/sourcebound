@@ -6,7 +6,11 @@ from pathlib import Path
 import pytest
 
 from clean_docs.errors import ExtractionError
-from clean_docs.isolation import MAX_PROCESS_IO_BYTES, run_isolated_process
+from clean_docs.isolation import (
+    MAX_PROCESS_IO_BYTES,
+    _sandbox_environment,
+    run_isolated_process,
+)
 from clean_docs.snapshot import RepositorySnapshot
 
 
@@ -114,3 +118,9 @@ def test_declared_process_rejects_repository_symlink(tmp_path: Path) -> None:
             label="fixture",
             timeout_seconds=5,
         )
+
+
+def test_sandbox_environment_has_only_declared_keys(tmp_path: Path) -> None:
+    environment = _sandbox_environment(tmp_path / "home", tmp_path / "tmp")
+
+    assert set(environment) == {"HOME", "TMPDIR", "PATH", "NO_COLOR"}

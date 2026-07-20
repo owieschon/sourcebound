@@ -1,12 +1,12 @@
 # Turn review findings into testable candidates
 
-<!-- clean-docs:policy register-v2 -->
-<!-- clean-docs:purpose -->
+<!-- sourcebound:policy register-v2 -->
+<!-- sourcebound:purpose -->
 Use this guide after a human, agent, audit, or external standard review finds a documentation
 problem that does not yet have gate authority. It records the observation once, then produces
 separate documentation and product test candidates without treating either proposal as an
 authorized change.
-<!-- clean-docs:end purpose -->
+<!-- sourcebound:end purpose -->
 
 **[Compile the repository's recorded review](#compile-candidates)**.
 
@@ -21,7 +21,7 @@ external evidence, judge a proposed test, or prove that the observation set is c
 ## Review observations
 
 Store review evidence outside the reader-facing documentation surface. A
-`clean-docs.review-observations.v1` file contains the reviewed repository commit, source URLs, and
+`sourcebound.review-observations.v1` file contains the reviewed repository commit, source URLs, and
 one or more observations. The schema requires:
 
 - a stable kebab-case ID and a nonempty summary;
@@ -50,10 +50,10 @@ fixture and assertion.
 Compile the observations and write the deterministic candidate set:
 
 ```bash
-clean-docs review candidates \
-  --input .clean-docs/reviews/repository-review.json \
-  --ledger .clean-docs/reviews/repository-events.json \
-  --out .clean-docs/improvement-candidates.json \
+sourcebound review candidates \
+  --input .sourcebound/reviews/repository-review.json \
+  --ledger .sourcebound/reviews/repository-events.json \
+  --out .sourcebound/improvement-candidates.json \
   --format text
 ```
 
@@ -69,10 +69,10 @@ command receipts remain `unverified` until immutable records bind them.
 Check that the committed candidate set still matches its observations:
 
 ```bash
-clean-docs review candidates \
-  --input .clean-docs/reviews/repository-review.json \
-  --ledger .clean-docs/reviews/repository-events.json \
-  --out .clean-docs/improvement-candidates.json \
+sourcebound review candidates \
+  --input .sourcebound/reviews/repository-review.json \
+  --ledger .sourcebound/reviews/repository-events.json \
+  --out .sourcebound/improvement-candidates.json \
   --check \
   --format text
 ```
@@ -98,7 +98,7 @@ Use this sequence for each candidate:
 1. Reproduce the observation against its pinned evidence.
 2. Implement the smallest documentation or product test that fails for the observed reason.
 3. Make the change that passes that test without weakening an existing boundary.
-4. Run the ordinary clean-docs and repository gates.
+4. Run the ordinary sourcebound and repository gates.
 5. Record the verified change in the repository's issue or pull-request system.
 
 The lifecycle compiler records these transitions but never performs the linked work. Aggregate

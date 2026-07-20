@@ -12,7 +12,7 @@ from clean_docs.regions import atomic_write
 
 DEFAULT_TITLE = "Repository documentation"
 DEFAULT_SUMMARY = (
-    "Index of repository documents with source-bound facts. clean-docs checks the named bindings "
+    "Index of repository documents with source-bound facts. Sourcebound checks the named bindings "
     "for drift."
 )
 

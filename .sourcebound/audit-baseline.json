@@ -1,0 +1,95 @@
+{
+  "schema": "sourcebound.audit-baseline.v2",
+  "findings": [
+    {
+      "fingerprint": "07de18dd5b416ecb6c7d4d12d39fa6772eddaafdd6d41e4f03258ad009f3dca3",
+      "rule": "nominalization-density",
+      "path": "DECISION_LOG.md",
+      "line_hint": 17,
+      "detail": "replace clustered abstractions with actors and concrete verbs: evidence, evidence, curation",
+      "normalized": "replace clustered abstractions with actors and concrete verbs: evidence, evidence, curation",
+      "section_anchor": "1-define-the-reader-facing-surface-by-the-repo-s-own-index-not-by-filename-alone-2026-07-12",
+      "duplicate_ordinal": 1
+    },
+    {
+      "fingerprint": "c02e80838bb8a8609cfae65ad55c53c3cce76d1f3971845a2f27816fd12fee55",
+      "rule": "nominalization-density",
+      "path": "DECISION_LOG.md",
+      "line_hint": 258,
+      "detail": "replace clustered abstractions with actors and concrete verbs: extension, extension, evidence",
+      "normalized": "replace clustered abstractions with actors and concrete verbs: extension, extension, evidence",
+      "section_anchor": "24-reject-extension-evidence-identity-collisions-2026-07-13",
+      "duplicate_ordinal": 1
+    },
+    {
+      "fingerprint": "048fe0d9a4d080ebeaad399efcabbb2fcf69ea551f015c9bec11341c4fed552c",
+      "rule": "nominalization-density",
+      "path": "DECISION_LOG.md",
+      "line_hint": 241,
+      "detail": "replace clustered abstractions with actors and concrete verbs: omission, contradiction, violation, citation",
+      "normalized": "replace clustered abstractions with actors and concrete verbs: omission, contradiction, violation, citation",
+      "section_anchor": "22-keep-release-facts-separate-from-narrative-phrasing-2026-07-13",
+      "duplicate_ordinal": 1
+    },
+    {
+      "fingerprint": "7d96488c0ddc456edf49a28dfd8d3f196b63f345d7b51201ec414c80689031b0",
+      "rule": "nominalization-density",
+      "path": "DECISION_LOG.md",
+      "line_hint": 308,
+      "detail": "replace clustered abstractions with actors and concrete verbs: presence, position, restatement, rejection, judgment",
+      "normalized": "replace clustered abstractions with actors and concrete verbs: presence, position, restatement, rejection, judgment",
+      "section_anchor": "29-compile-the-writing-personality-and-enforce-a-bluf-purpose-contract-2026-07-13",
+      "duplicate_ordinal": 1
+    },
+    {
+      "fingerprint": "89410f6d745a45652bc07b8a0b559b38cf37b7e1e21f7b5a57d008f1b93b1e0f",
+      "rule": "nominalization-density",
+      "path": "DECISION_LOG.md",
+      "line_hint": 221,
+      "detail": "replace clustered abstractions with actors and concrete verbs: projection, deployment, evaluation",
+      "normalized": "replace clustered abstractions with actors and concrete verbs: projection, deployment, evaluation",
+      "section_anchor": "20-generate-one-static-demonstration-from-recorded-evidence-2026-07-13",
+      "duplicate_ordinal": 1
+    },
+    {
+      "fingerprint": "a2d25605c4c368e89a53e9ef6fe0a7ecad59f41645da5fa55c52d9227b53a5bc",
+      "rule": "nominalization-density",
+      "path": "DECISION_LOG.md",
+      "line_hint": 196,
+      "detail": "replace clustered abstractions with actors and concrete verbs: projection, selection, projection",
+      "normalized": "replace clustered abstractions with actors and concrete verbs: projection, selection, projection",
+      "section_anchor": "18-treat-generated-context-as-a-verified-projection-not-a-second-corpus-2026-07-13",
+      "duplicate_ordinal": 1
+    },
+    {
+      "fingerprint": "a68aa2302613c8f7b23e2d118a519d5143c60edb0bbaf2784908e1923c702d17",
+      "rule": "sentence-variance",
+      "path": "DECISION_LOG.md",
+      "line_hint": 167,
+      "detail": "add one short sentence beat or combine claims that share evidence",
+      "normalized": "add one short sentence beat or combine claims that share evidence",
+      "section_anchor": "16-compare-normalized-surfaces-across-refs-before-filtering-by-changed-files-2026-07-13",
+      "duplicate_ordinal": 1
+    },
+    {
+      "fingerprint": "b66d54278796a84bcdaca1c3e85ee283c50c0e4f873f00bed606f13bb2254be7",
+      "rule": "sentence-variance",
+      "path": "DECISION_LOG.md",
+      "line_hint": 258,
+      "detail": "add one short sentence beat or combine claims that share evidence",
+      "normalized": "add one short sentence beat or combine claims that share evidence",
+      "section_anchor": "24-reject-extension-evidence-identity-collisions-2026-07-13",
+      "duplicate_ordinal": 1
+    },
+    {
+      "fingerprint": "5cd0436b5d998958c30acbaa1b828d0a63f589669670a2fb992ca198540cb83a",
+      "rule": "sentence-variance",
+      "path": "DECISION_LOG.md",
+      "line_hint": 327,
+      "detail": "add one short sentence beat or combine claims that share evidence",
+      "normalized": "add one short sentence beat or combine claims that share evidence",
+      "section_anchor": "31-hash-python-source-evidence-instead-of-runtime-ast-serialization-2026-07-13",
+      "duplicate_ordinal": 1
+    }
+  ]
+}

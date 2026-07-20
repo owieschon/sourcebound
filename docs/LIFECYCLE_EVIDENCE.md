@@ -1,11 +1,11 @@
 # Record candidate lifecycle evidence
 
-<!-- clean-docs:policy register-v2 -->
-<!-- clean-docs:purpose -->
+<!-- sourcebound:policy register-v2 -->
+<!-- sourcebound:purpose -->
 Use this reference after compiling review candidates and before relying on a lifecycle transition.
 It records which local evidence proves the attempted state change without granting the record gate
 or change authority.
-<!-- clean-docs:end purpose -->
+<!-- sourcebound:end purpose -->
 
 **[Compile candidates first](IMPROVEMENTS.md#compile-candidates)**.
 
@@ -26,7 +26,7 @@ Use a repository-local receipt to reproduce or verify a candidate:
 
 ```json
 {
-  "schema": "clean-docs.lifecycle-test-receipt.v1",
+  "schema": "sourcebound.lifecycle-test-receipt.v1",
   "repository_commit": "<full reviewed commit SHA>",
   "producer_version": "<tool version>",
   "command": ["<program>", "<argument>"],
@@ -42,36 +42,36 @@ Issue and decision evidence need an explicit local-file provider:
 
 ```json
 {
-  "schema": "clean-docs.lifecycle-evidence-providers.v1",
+  "schema": "sourcebound.lifecycle-evidence-providers.v1",
   "providers": {
-    "issue": {"kind": "local-file", "root": ".clean-docs/issues"},
-    "decision": {"kind": "local-file", "root": ".clean-docs/decisions"}
+    "issue": {"kind": "local-file", "root": ".sourcebound/issues"},
+    "decision": {"kind": "local-file", "root": ".sourcebound/decisions"}
   }
 }
 ```
 
-Store the configuration at `.clean-docs/lifecycle-evidence-providers.json`. Each reference uses a
+Store the configuration at `.sourcebound/lifecycle-evidence-providers.json`. Each reference uses a
 forward-slash path inside its configured directory. Missing configuration, files, commits, receipts,
-or changed receipt bytes resolve `unknown`; clean-docs does not call a network service to fill them.
+or changed receipt bytes resolve `unknown`; sourcebound does not call a network service to fill them.
 
 ## Record and check a transition
 
 Initialize the record once:
 
 ```bash
-clean-docs review lifecycle init --input .clean-docs/reviews/repository-review.json --out .clean-docs/improvement-lifecycle.json --format text
+sourcebound review lifecycle init --input .sourcebound/reviews/repository-review.json --out .sourcebound/improvement-lifecycle.json --format text
 ```
 
 Then record a supported transition:
 
 ```bash
-clean-docs review lifecycle transition --input .clean-docs/reviews/repository-review.json --state .clean-docs/improvement-lifecycle.json --observation accepted-writing-debt --to reproduced --evidence-kind test-receipt --reference .clean-docs/receipts/accepted-writing-debt.json --detail "The fixture reproduces the accepted finding." --format text
+sourcebound review lifecycle transition --input .sourcebound/reviews/repository-review.json --state .sourcebound/improvement-lifecycle.json --observation accepted-writing-debt --to reproduced --evidence-kind test-receipt --reference .sourcebound/receipts/accepted-writing-debt.json --detail "The fixture reproduces the accepted finding." --format text
 ```
 
 Initialization refuses to replace an existing record. Check the record before relying on it:
 
 ```bash
-clean-docs review lifecycle check --input .clean-docs/reviews/repository-review.json --state .clean-docs/improvement-lifecycle.json --format text
+sourcebound review lifecycle check --input .sourcebound/reviews/repository-review.json --state .sourcebound/improvement-lifecycle.json --format text
 ```
 
 The check exits `1` if the candidate set changed, a state was skipped, a stored resolution no longer

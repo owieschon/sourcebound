@@ -35,10 +35,10 @@ def _region_repository(tmp_path: Path) -> Path:
         'COMMANDS = [{"name": "serve", "job": "Run the service"}]\n'
     )
     (root / "README.md").write_text(
-        "# Service\n\n<!-- clean-docs:begin commands -->\n"
-        "<!-- clean-docs:end commands -->\n"
+        "# Service\n\n<!-- sourcebound:begin commands -->\n"
+        "<!-- sourcebound:end commands -->\n"
     )
-    (root / ".clean-docs.yml").write_text("""\
+    (root / ".sourcebound.yml").write_text("""\
 version: 1
 bindings:
   - id: commands
@@ -65,7 +65,7 @@ def _symbol_repository(tmp_path: Path) -> Path:
     (root / "README.md").write_text(
         "# Service\n\n## API\n\nThe public API is defined in `src/api.py`.\n"
     )
-    (root / ".clean-docs.yml").write_text("""\
+    (root / ".sourcebound.yml").write_text("""\
 version: 1
 bindings:
   - id: public-api
@@ -101,7 +101,7 @@ def test_changed_bound_evidence_has_stable_required_finding_and_sarif(
     assert len(first["required"]) == 1
     finding = first["required"][0]
     assert finding["rule"] == "binding-drift"
-    assert finding["repair"] == "clean-docs drive --binding commands"
+    assert finding["repair"] == "sourcebound drive --binding commands"
 
     assert main(args) == 1
     second = json.loads(capsys.readouterr().out)
@@ -154,7 +154,7 @@ def test_changed_link_line_move_is_not_a_public_surface_gap(
     head = _commit(root, "move link down")
 
     report = check_changed(
-        root, root / ".clean-docs.yml", base=base, head=head
+        root, root / ".sourcebound.yml", base=base, head=head
     )
 
     assert report.ok
@@ -178,10 +178,10 @@ def test_changed_first_install_accepts_derived_repository_overview(
 
     (root / "README.md").write_text(
         "# Existing repository\n\n## Repository surface\n\n"
-        "<!-- clean-docs:begin repository-surface -->\n"
-        "<!-- clean-docs:end repository-surface -->\n"
+        "<!-- sourcebound:begin repository-surface -->\n"
+        "<!-- sourcebound:end repository-surface -->\n"
     )
-    (root / ".clean-docs.yml").write_text("""\
+    (root / ".sourcebound.yml").write_text("""\
 version: 1
 bindings:
   - id: repository-surface
@@ -193,9 +193,9 @@ bindings:
     renderer: markdown-fragment
 """)
     assert main(["--root", str(root), "derive", "--write"]) == 0
-    head = _commit(root, "install clean-docs")
+    head = _commit(root, "install sourcebound")
 
-    report = check_changed(root, root / ".clean-docs.yml", base=base, head=head)
+    report = check_changed(root, root / ".sourcebound.yml", base=base, head=head)
 
     assert report.ok
     assert report.required == ()
@@ -231,7 +231,7 @@ def test_changed_reasoned_ignore_is_visible_and_stale_ignore_fails(
     original = source.read_text()
     source.write_text(original + '\nsub.add_parser("internal")\n')
     identifier = "cli-command:src/api.py:internal"
-    (root / ".clean-docs-ignore.yml").write_text(
+    (root / ".sourcebound-ignore.yml").write_text(
         "version: 1\nignore:\n"
         f"  - id: {json.dumps(identifier)}\n"
         "    reason: This command is reserved for repository maintainers.\n"
@@ -262,7 +262,7 @@ def test_changed_cache_reuses_base_and_preserves_normalized_output(tmp_path: Pat
     source = root / "src/api.py"
     source.write_text(source.read_text().replace("return 1", "return 2"))
     head = _commit(root, "first private refactor")
-    manifest = root / ".clean-docs.yml"
+    manifest = root / ".sourcebound.yml"
 
     first = check_changed(root, manifest, base=base, head=head)
     second = check_changed(root, manifest, base=base, head=head)
@@ -293,7 +293,7 @@ def test_changed_monorepo_project_selection_isolates_other_manifests(
     subprocess.run(["git", "init", "-q", str(root)], check=True)
     (project_a / "src/api.py").write_text("def public_api():\n    return True\n")
     (project_a / "README.md").write_text("# A\n\n## API\n\nPublic API.\n")
-    (project_a / ".clean-docs.yml").write_text("""\
+    (project_a / ".sourcebound.yml").write_text("""\
 version: 1
 bindings:
   - id: public-api
@@ -302,7 +302,7 @@ bindings:
     anchor: api
     source: {path: src/api.py, symbol: public_api}
 """)
-    (project_b / ".clean-docs.yml").write_text("invalid: true\n")
+    (project_b / ".sourcebound.yml").write_text("invalid: true\n")
     base = _commit(root, "base")
     (project_a / "src/api.py").write_text(
         "def public_api():\n    return True\n\nsub.add_parser(\"serve\")\n"

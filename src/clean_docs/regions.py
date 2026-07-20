@@ -10,15 +10,15 @@ from clean_docs.errors import RegionError
 
 def markers(region: str) -> tuple[str, str]:
     return (
-        f"<!-- clean-docs:begin {region} -->",
-        f"<!-- clean-docs:end {region} -->",
+        f"<!-- sourcebound:begin {region} -->",
+        f"<!-- sourcebound:end {region} -->",
     )
 
 
 def mdx_markers(region: str) -> tuple[str, str]:
     return (
-        f"{{/* clean-docs:begin {region} */}}",
-        f"{{/* clean-docs:end {region} */}}",
+        f"{{/* sourcebound:begin {region} */}}",
+        f"{{/* sourcebound:end {region} */}}",
     )
 
 
@@ -43,13 +43,13 @@ def replace_region(document: str, region: str, generated: str) -> str:
     if any(
         marker in between
         for marker in (
-            "<!-- clean-docs:begin ",
-            "<!-- clean-docs:end ",
-            "{/* clean-docs:begin ",
-            "{/* clean-docs:end ",
+            "<!-- sourcebound:begin ",
+            "<!-- sourcebound:end ",
+            "{/* sourcebound:begin ",
+            "{/* sourcebound:end ",
         )
     ):
-        raise RegionError(f"region {region!r} contains nested clean-docs markers")
+        raise RegionError(f"region {region!r} contains nested sourcebound markers")
     return document[:start] + "\n" + generated.rstrip() + "\n" + document[finish:]
 
 

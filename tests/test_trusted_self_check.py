@@ -26,7 +26,7 @@ def test_candidate_checker_bypass_cannot_override_trusted_failure(tmp_path: Path
     subprocess.run(
         ["git", "clone", "-q", "--no-hardlinks", str(ROOT), str(clone)], check=True
     )
-    shutil.copyfile(ROOT / ".clean-docs-trust.json", clone / ".clean-docs-trust.json")
+    shutil.copyfile(ROOT / ".sourcebound-trust.json", clone / ".sourcebound-trust.json")
     capabilities = clone / "src/clean_docs/capabilities.py"
     source = capabilities.read_text()
     marker = "SUPPORTED_BINDINGS = {"

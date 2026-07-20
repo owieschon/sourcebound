@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a deterministic SPDX 2.3 SBOM for one clean-docs wheel."""
+"""Build a deterministic SPDX 2.3 SBOM for one Sourcebound wheel."""
 
 from __future__ import annotations
 
@@ -97,7 +97,7 @@ def render_sbom(wheel: Path, source_date_epoch: int) -> str:
         )
     if (
         not isinstance(mdx_manifest, dict)
-        or mdx_manifest.get("schema") != "clean-docs.mdx-dependencies.v1"
+        or mdx_manifest.get("schema") != "sourcebound.mdx-dependencies.v1"
         or not isinstance(mdx_manifest.get("packages"), list)
     ):
         raise ValueError("wheel MDX dependency manifest has an unsupported schema")
@@ -156,11 +156,11 @@ def render_sbom(wheel: Path, source_date_epoch: int) -> str:
         "SPDXID": "SPDXRef-DOCUMENT",
         "name": f"{name}-{version}",
         "documentNamespace": (
-            "https://github.com/owieschon/clean-docs/sbom/" + wheel_digest
+            "https://github.com/owieschon/sourcebound/sbom/" + wheel_digest
         ),
         "creationInfo": {
             "created": created,
-            "creators": ["Tool: clean-docs-build-sbom"],
+            "creators": ["Tool: sourcebound-build-sbom"],
             "licenseListVersion": "3.26",
         },
         "packages": packages,

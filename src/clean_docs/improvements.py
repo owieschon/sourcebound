@@ -15,13 +15,13 @@ from clean_docs.regions import atomic_write
 from clean_docs.snapshot import RepositorySnapshot
 
 
-OBSERVATIONS_SCHEMA = "clean-docs.review-observations.v1"
-CANDIDATES_SCHEMA = "clean-docs.improvement-candidates.v1"
-LIFECYCLE_SCHEMA_V1 = "clean-docs.improvement-candidate-lifecycle.v1"
-LIFECYCLE_SCHEMA = "clean-docs.improvement-candidate-lifecycle.v2"
-LIFECYCLE_PROVIDER_SCHEMA = "clean-docs.lifecycle-evidence-providers.v1"
-LIFECYCLE_PROVIDER_PATH = Path(".clean-docs/lifecycle-evidence-providers.json")
-LIFECYCLE_TEST_RECEIPT_SCHEMA = "clean-docs.lifecycle-test-receipt.v1"
+OBSERVATIONS_SCHEMA = "sourcebound.review-observations.v1"
+CANDIDATES_SCHEMA = "sourcebound.improvement-candidates.v1"
+LIFECYCLE_SCHEMA_V1 = "sourcebound.improvement-candidate-lifecycle.v1"
+LIFECYCLE_SCHEMA = "sourcebound.improvement-candidate-lifecycle.v2"
+LIFECYCLE_PROVIDER_SCHEMA = "sourcebound.lifecycle-evidence-providers.v1"
+LIFECYCLE_PROVIDER_PATH = Path(".sourcebound/lifecycle-evidence-providers.json")
+LIFECYCLE_TEST_RECEIPT_SCHEMA = "sourcebound.lifecycle-test-receipt.v1"
 TEST_KINDS = {
     "command",
     "fixture",

@@ -1,15 +1,15 @@
 # Support and lifecycle
 
-<!-- clean-docs:policy register-v2 -->
-<!-- clean-docs:purpose -->
+<!-- sourcebound:policy register-v2 -->
+<!-- sourcebound:purpose -->
 Operators come here to adopt an existing corpus, pin the reusable gate, inspect a receipt, or build
 a diagnostic bundle. It routes package lifecycle work to one install guide, so each operational
 procedure has one canonical home.
-<!-- clean-docs:end purpose -->
+<!-- sourcebound:end purpose -->
 
 **[Check the supported environment](#supported-environments)**.
 
-Run `clean-docs doctor` after installation; each reported check is the local readiness proof.
+Run `sourcebound doctor` after installation; each reported check is the local readiness proof.
 
 Install, upgrade, rollback, uninstall, and release verification live in the
 [install guide](INSTALL.md).
@@ -35,8 +35,8 @@ Pin both the reusable workflow and its package input to the same full commit:
 
 ```yaml
 jobs:
-  clean-docs:
-    uses: owieschon/clean-docs/.github/workflows/reusable-clean-docs.yml@FULL_40_CHARACTER_CLEAN_DOCS_COMMIT
+  sourcebound:
+    uses: owieschon/sourcebound/.github/workflows/reusable-sourcebound.yml@FULL_40_CHARACTER_CLEAN_DOCS_COMMIT
     with: {package-ref: FULL_40_CHARACTER_CLEAN_DOCS_COMMIT}
 ```
 
@@ -45,13 +45,13 @@ installation. It checks out the immutable head, requests read-only repository pe
 one static `verdict`. Python starts in isolated mode, and evidence is written outside the checkout
 so fork-controlled import hooks and symlinks cannot capture the gate. Pull-request content cannot
 enable commands or plugins. Its
-`clean-docs-evidence` artifact contains the authoritative verdict JSON, a SARIF projection from
-those same bytes, the command exit receipt, and `clean-docs-run.json`. The transport receipt
+`sourcebound-evidence` artifact contains the authoritative verdict JSON, a SARIF projection from
+those same bytes, the command exit receipt, and `sourcebound-run.json`. The transport receipt
 identifies the installed version and commit, comparison commits, workflow run and attempt, verdict
 digest, and the byte count and SHA-256 of every evidence file. The job validates those bytes before
 using the recorded verdict state as its result.
 
-Use the separate [read-only verification skill](../skills/clean-docs-verify/SKILL.md) when an
+Use the separate [read-only verification skill](../skills/sourcebound-verify/SKILL.md) when an
 external agent needs the same static boundary. It never writes. The skill can inspect inventory, source-claim
 candidates, impact, verdicts, and independently frozen sensitivity receipts. It cannot repair,
 project, initialize, migrate, update baselines, run live evaluation, or start repository-declared
@@ -68,9 +68,9 @@ inspect the compatible policy candidates as bounded advisories before adopting t
 repository can preserve strict future checks while recording existing blocking debt:
 
 ```bash
-clean-docs init --no-model --accept-hygiene-baseline
-git diff -- .clean-docs/audit-baseline.json
-clean-docs audit
+sourcebound init --no-model --accept-hygiene-baseline
+git diff -- .sourcebound/audit-baseline.json
+sourcebound audit
 ```
 
 The committed version 2 baseline records each blocking rule, path, normalized offending content,
@@ -87,12 +87,12 @@ corpus; `.agents` documentation is active and other hidden configuration trees s
 first-party MDX adapter reads frontmatter, headings, links, ESM syntax, JSX structure, expressions,
 comments, and fenced code without resolving an import or executing a component. It audits real
 Markdown links while ignoring link-shaped text inside code, attributes, and expressions. Run
-`clean-docs doctor` to verify the required Node.js 20 runtime. A missing runtime or malformed MDX
+`sourcebound doctor` to verify the required Node.js 20 runtime. A missing runtime or malformed MDX
 stays in `unsupported_documents` and cannot look checked. `audit` fails when a new blocker appears. It also fails with `stale-baseline`
 when a recorded blocker is resolved, because the baseline must shrink to match current debt.
 
 For an established README that has not adopted the policy profile, init writes detected source
-facts to `.clean-docs/repository-surface.md` and leaves the README unchanged. The manifest binds
+facts to `.sourcebound/repository-surface.md` and leaves the README unchanged. The manifest binds
 that generated file, while `llms.txt` still indexes the README as canonical context. A new or
 registered README may own the generated region directly.
 
@@ -105,9 +105,9 @@ pages with bindings from declared context.
 After reviewing intentional documentation repairs, replace the baseline with the current exact findings:
 
 ```bash
-clean-docs audit --update-baseline
-git diff -- .clean-docs/audit-baseline.json
-clean-docs audit
+sourcebound audit --update-baseline
+git diff -- .sourcebound/audit-baseline.json
+sourcebound audit
 ```
 
 Review and commit the baseline change with the documentation change. A malformed, tampered, duplicated, or symbolic-link baseline exits `2` instead of weakening the gate.
@@ -126,10 +126,10 @@ required manifest change before it reads source evidence.
 
 ## Record local outcomes
 
-`verify` runs audit, binding, and projection checks and prints `clean-docs.outcome.v2`. Add immutable refs to include pull-request impact, and write the same bytes to a local receipt with:
+`verify` runs audit, binding, and projection checks and prints `sourcebound.outcome.v2`. Add immutable refs to include pull-request impact, and write the same bytes to a local receipt with:
 
 ```bash
-clean-docs verify --base origin/main --head HEAD --out .clean-docs/outcome.json
+sourcebound verify --base origin/main --head HEAD --out .sourcebound/outcome.json
 ```
 
 The receipt counts current bindings, caught drift, coverage gaps, active and baselined hygiene findings, and projection state. `bound` means a source-specific binding covers the detected locator. `cataloged` means a repository-wide inventory binding tracks the surface but no source-specific documentation claim covers it. `coverage_complete` permits either form; `direct_coverage_complete` requires source-specific bindings or reasoned ignores for the whole detected surface.
@@ -139,13 +139,13 @@ Read the receipt's `assurance` object before interpreting a green result. Its
 configured contract does not certify unbound prose. `command_pin_prose_checked` is `true` only when
 every executed command pin declares and verifies text under its anchor. The
 receipt records an `execution` object with `network_isolation: not-provided` and
-`network_observation: not-instrumented`. clean-docs sends no feedback from this command, but an
+`network_observation: not-instrumented`. sourcebound sends no feedback from this command, but an
 allowed command can use the host network when the runner permits it.
 
 Measure the changed-check P95 and peak process memory on a repository with:
 
 ```bash
-clean-docs benchmark --base origin/main --head HEAD --out .clean-docs/performance.json
+sourcebound benchmark --base origin/main --head HEAD --out .sourcebound/performance.json
 ```
 
 The command exits `1` when either published budget is exceeded.
@@ -155,7 +155,7 @@ The command exits `1` when either published budget is exceeded.
 Write a support-safe JSON bundle with:
 
 ```bash
-clean-docs doctor --format json --bundle .clean-docs/diagnostic.json
+sourcebound doctor --format json --bundle .sourcebound/diagnostic.json
 ```
 
 The bundle contains runtime versions, repository ref, manifest counts, plugin IDs, and doctor results. It excludes environment variables, credentials, document and source contents, and command arguments. Review the file before attaching it to a private security advisory or public support issue.

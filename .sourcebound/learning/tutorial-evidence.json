@@ -1,0 +1,35 @@
+{
+  "schema": "sourcebound.tutorial-evidence.v1",
+  "steps": [
+    {
+      "command": "sourcebound check",
+      "exit": 0,
+      "meaning": "The bound page matches source.",
+      "moment": "Protected baseline"
+    },
+    {
+      "command": "sourcebound check",
+      "exit": 1,
+      "meaning": "The status-actions binding is stale.",
+      "moment": "Source changed alone"
+    },
+    {
+      "command": "sourcebound drive",
+      "exit": 0,
+      "meaning": "Only the bound region changes.",
+      "moment": "Declared region repaired"
+    },
+    {
+      "command": "sourcebound project",
+      "exit": 0,
+      "meaning": "llms.txt receives the repaired page digest.",
+      "moment": "Projection refreshed"
+    },
+    {
+      "command": "sourcebound verify",
+      "exit": 0,
+      "meaning": "Bindings and projections are current.",
+      "moment": "Repository verified"
+    }
+  ]
+}

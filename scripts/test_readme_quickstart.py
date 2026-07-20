@@ -18,7 +18,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SCHEMA = "clean-docs.quickstart-verification.v1"
+SCHEMA = "sourcebound.quickstart-verification.v1"
 
 
 def _wheel_version(wheel: Path) -> str:
@@ -64,7 +64,7 @@ def _run_quickstart(candidate: Path, wheelhouse: Path) -> dict[str, object]:
         raise RuntimeError("wheelhouse must contain one PyYAML wheel")
     version = _wheel_version(candidate)
     candidate_sha256 = hashlib.sha256(candidate.read_bytes()).hexdigest()
-    with tempfile.TemporaryDirectory(prefix="clean-docs-readme-quickstart-") as raw:
+    with tempfile.TemporaryDirectory(prefix="sourcebound-readme-quickstart-") as raw:
         workspace = Path(raw)
         repository = workspace / "moonbase-status"
         repository.mkdir()
@@ -124,7 +124,7 @@ def _run_quickstart(candidate: Path, wheelhouse: Path) -> dict[str, object]:
         if process.returncode != 0:
             detail = process.stderr.strip() or process.stdout.strip()
             raise RuntimeError(f"README quickstart failed: {detail}")
-        executable = repository / ".venv/bin/clean-docs"
+        executable = repository / ".venv/bin/sourcebound"
         python = repository / ".venv/bin/python"
         reported = subprocess.run(
             [str(executable), "--version"],
@@ -153,7 +153,7 @@ def _run_quickstart(candidate: Path, wheelhouse: Path) -> dict[str, object]:
                 f"quickstart reported {reported!r}, expected wheel version {version!r}"
             )
         if ROOT == module_path or ROOT in module_path.parents:
-            raise RuntimeError("quickstart imported clean-docs from the source checkout")
+            raise RuntimeError("quickstart imported Sourcebound from the source checkout")
         if '"ok": true' not in process.stdout:
             raise RuntimeError("README quickstart emitted no successful verification receipt")
         return {
