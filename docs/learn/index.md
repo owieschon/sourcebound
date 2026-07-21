@@ -18,11 +18,9 @@ fail?" Follow the path that matches your current job:
 | --- | --- | --- |
 | Decide what the product is | [Product overview](../../README.md) | The category, fit, architecture, and installation route |
 | Protect one fact yourself | [Catch a lying doc](tutorial-catch-a-lying-doc.md) | A working binding, a failed drift check, and a repaired page |
-| See the problem at repository scale | [The README that lied](postmortem-the-readme-that-lied.md) | A concrete cleanup case and the limits of its evidence |
 | Understand the model boundary | [The deterministic seam](deep-dive-the-deterministic-seam.md) | A precise account of who owns facts, prose, and gate results |
 
-The tutorial is the fastest proof. The postmortem explains why the proof matters beyond a toy
-fixture. The deep dive names the mechanism after you have seen it move.
+The tutorial is the fastest proof. The deep dive names the mechanism after you have seen it move.
 
 ## What this path does not replace
 

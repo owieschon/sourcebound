@@ -20,6 +20,8 @@ from scripts.verify_reader_trial import (
 
 
 ROOT = Path(__file__).parents[1]
+V1_RUBRIC = ROOT / "tests/fixtures/reader-trial/v1.yml"
+V11_RUBRIC = ROOT / "tests/fixtures/reader-trial/v1.1.yml"
 
 
 def _sha256(data: bytes) -> str:
@@ -35,7 +37,14 @@ def _write_trial(
     layout = trial_layout(release_version)
     rubric_path = root / layout.rubric
     rubric_path.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(ROOT / layout.rubric, rubric_path)
+    source_rubric = (
+        V1_RUBRIC
+        if release_version.startswith("1.0.")
+        else V11_RUBRIC
+        if release_version.startswith("1.1.")
+        else ROOT / layout.rubric
+    )
+    shutil.copyfile(source_rubric, rubric_path)
     rubric_bytes = rubric_path.read_bytes()
     rubric = yaml.safe_load(rubric_bytes)
     context = []
@@ -53,21 +62,27 @@ def _write_trial(
             relative = layout.evidence_root / profile_id / f"{task['id']}.txt"
             evidence = root / relative
             evidence.parent.mkdir(parents=True, exist_ok=True)
-            evidence.write_text(f"{profile_id} passed {task['id']} using published docs only\n")
-            tasks.append({
-                "id": task["id"],
-                "ok": True,
-                "evidence": relative.as_posix(),
-                "sha256": _sha256(evidence.read_bytes()),
-            })
-        participants.append({
-            "id": f"reader-{profile_id}",
-            "profile": profile_id,
-            "independent": True,
-            "context": "published-docs-only",
-            "completed_at": "2026-07-14T12:00:00Z",
-            "tasks": tasks,
-        })
+            evidence.write_text(
+                f"{profile_id} passed {task['id']} using published docs only\n"
+            )
+            tasks.append(
+                {
+                    "id": task["id"],
+                    "ok": True,
+                    "evidence": relative.as_posix(),
+                    "sha256": _sha256(evidence.read_bytes()),
+                }
+            )
+        participants.append(
+            {
+                "id": f"reader-{profile_id}",
+                "profile": profile_id,
+                "independent": True,
+                "context": "published-docs-only",
+                "completed_at": "2026-07-14T12:00:00Z",
+                "tasks": tasks,
+            }
+        )
     receipt = {
         "schema": "sourcebound.independent-reader-trial.v2",
         "candidate": candidate,
@@ -100,7 +115,9 @@ def test_reader_trial_binds_rubric_context_participants_and_task_evidence(
     assert summary["receipt_sha256"] == _sha256(receipt.read_bytes())
 
 
-def test_version_11_reader_trial_uses_two_families_and_learning_tasks(tmp_path: Path) -> None:
+def test_version_11_reader_trial_uses_two_families_and_learning_tasks(
+    tmp_path: Path,
+) -> None:
     receipt = _write_trial(
         tmp_path,
         release_version="1.1.0",
@@ -121,9 +138,7 @@ def test_version_11_reader_trial_uses_two_families_and_learning_tasks(tmp_path: 
 
 
 def test_version_11_runnable_context_includes_tutorial_prerequisites() -> None:
-    rubric = yaml.safe_load(
-        (ROOT / ".sourcebound/reader-trial-rubric-v1.1.yml").read_text()
-    )
+    rubric = yaml.safe_load(V11_RUBRIC.read_text())
     tutorial = Path("docs/learn/tutorial-catch-a-lying-doc.md")
     content = (ROOT / tutorial).read_text()
     prerequisites = content.split("## Before you begin", maxsplit=1)[1].split(
@@ -206,8 +221,10 @@ def test_version_10_stable_release_requires_reader_trial_while_candidate_does_no
     project.write_text('[project]\nname = "fixture"\nversion = "1.0.0"\n')
     rubric = tmp_path / ".sourcebound/reader-trial-rubric.yml"
     rubric.parent.mkdir(parents=True)
-    shutil.copyfile(ROOT / ".sourcebound/reader-trial-rubric.yml", rubric)
-    with pytest.raises(ReaderTrialError, match="cannot read independent-reader receipt"):
+    shutil.copyfile(V1_RUBRIC, rubric)
+    with pytest.raises(
+        ReaderTrialError, match="cannot read independent-reader receipt"
+    ):
         verify_release_reader_trial(tmp_path)
 
     _write_trial(tmp_path)
@@ -229,7 +246,7 @@ def test_version_11_reader_calibration_is_reported_but_does_not_gate_release(
     project.write_text('[project]\nname = "fixture"\nversion = "1.1.0"\n')
     rubric = tmp_path / ".sourcebound/reader-trial-rubric-v1.1.yml"
     rubric.parent.mkdir(parents=True)
-    shutil.copyfile(ROOT / ".sourcebound/reader-trial-rubric-v1.1.yml", rubric)
+    shutil.copyfile(V11_RUBRIC, rubric)
 
     assert verify_release_reader_trial(tmp_path) == {
         "required": False,

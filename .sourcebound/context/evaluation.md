@@ -1,7 +1,7 @@
-# Context bundle: contributor
+# Context bundle: evaluation
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `c3f487d6f5957c883525c3a9769149a4afa6c7da2775274cf5f0d079fbf02e7a`
+- Corpus sha256: `bb8837cb01e3a37951a25f2e23797d8a330b5153cba32871d2ea236a3994050d`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
@@ -104,7 +104,7 @@ Use the [learning path](docs/learn/index.md) for examples. The [product contract
 ## Canonical document: docs/EVALUATION.md
 
 - Source: [docs/EVALUATION.md](../../docs/EVALUATION.md)
-- Content sha256: `04c286cce68c5d4110d9ddf34ddbba7b6009189cb6b47659a06f8e46bf443ff0`
+- Content sha256: `0aef28b3725447c63ae3f26baa39857631b2f9d84b93b52126d2eeeaea148487`
 
 <!-- sourcebound:canonical docs/EVALUATION.md begin -->
 # Evaluate documentation tasks
@@ -167,7 +167,7 @@ tasks:
   - id: limitation-retrieval
     audience: agent
     prompt: Does the documented limit permit this behavior?
-    context: [.sourcebound/context/contributor.md]
+    context: [.sourcebound/context/evaluation.md]
     model:
       adapter: recorded
       name: recorded-fixture

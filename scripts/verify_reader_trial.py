@@ -66,7 +66,9 @@ def _sha256(data: bytes) -> str:
 
 def _mapping(value: Any, *, label: str, keys: set[str]) -> dict[str, Any]:
     if not isinstance(value, dict) or set(value) != keys:
-        raise ReaderTrialError(f"{label} must contain exactly {', '.join(sorted(keys))}")
+        raise ReaderTrialError(
+            f"{label} must contain exactly {', '.join(sorted(keys))}"
+        )
     return value
 
 
@@ -83,7 +85,9 @@ def _relative_file(root: Path, raw: Any, *, prefix: Path | None = None) -> Path:
     if relative.is_absolute() or ".." in relative.parts:
         raise ReaderTrialError(f"evidence path escapes the repository: {raw}")
     if prefix is not None and not relative.is_relative_to(prefix):
-        raise ReaderTrialError(f"evidence path must be under {prefix.as_posix()}: {raw}")
+        raise ReaderTrialError(
+            f"evidence path must be under {prefix.as_posix()}: {raw}"
+        )
     path = root / relative
     current = root
     for part in relative.parts:
@@ -127,7 +131,9 @@ def _load_rubric(root: Path, rubric_path: Path) -> tuple[dict[str, Any], bytes]:
     if rubric["version"] != 1:
         raise ReaderTrialError("reader rubric version must be 1")
     context = _list(rubric["context"], label="reader rubric context")
-    if not all(isinstance(item, str) for item in context) or len(set(context)) != len(context):
+    if not all(isinstance(item, str) for item in context) or len(set(context)) != len(
+        context
+    ):
         raise ReaderTrialError("reader rubric context paths must be unique strings")
     profiles = _list(rubric["profiles"], label="reader rubric profiles")
     profile_ids: list[str] = []
@@ -137,7 +143,9 @@ def _load_rubric(root: Path, rubric_path: Path) -> tuple[dict[str, Any], bytes]:
             label=f"reader rubric profile {index}",
             keys={"id", "provider", "model"},
         )
-        if not all(isinstance(profile[key], str) and profile[key].strip() for key in profile):
+        if not all(
+            isinstance(profile[key], str) and profile[key].strip() for key in profile
+        ):
             raise ReaderTrialError(
                 f"reader rubric profile {index} fields must be non-empty strings"
             )
@@ -155,7 +163,9 @@ def _load_rubric(root: Path, rubric_path: Path) -> tuple[dict[str, Any], bytes]:
             keys={"id", "instruction", "passes_when"},
         )
         if not all(isinstance(task[key], str) and task[key].strip() for key in task):
-            raise ReaderTrialError(f"reader rubric task {index} fields must be non-empty strings")
+            raise ReaderTrialError(
+                f"reader rubric task {index} fields must be non-empty strings"
+            )
         identifiers.append(task["id"])
     if len(set(identifiers)) != len(identifiers):
         raise ReaderTrialError("reader rubric task ids must be unique")
@@ -172,7 +182,9 @@ def verify_reader_trial(root: Path, release_version: str) -> dict[str, object]:
         receipt_bytes = receipt_path.read_bytes()
         raw: Any = json.loads(receipt_bytes)
     except (OSError, json.JSONDecodeError) as exc:
-        raise ReaderTrialError(f"cannot read independent-reader receipt: {exc}") from exc
+        raise ReaderTrialError(
+            f"cannot read independent-reader receipt: {exc}"
+        ) from exc
     receipt = _mapping(
         raw,
         label="independent-reader receipt",
@@ -189,23 +201,39 @@ def verify_reader_trial(root: Path, release_version: str) -> dict[str, object]:
     if receipt["schema"] != "sourcebound.independent-reader-trial.v2":
         raise ReaderTrialError("independent-reader receipt schema is unsupported")
     candidate = receipt["candidate"]
-    match = CANDIDATE_VERSION.fullmatch(candidate) if isinstance(candidate, str) else None
+    match = (
+        CANDIDATE_VERSION.fullmatch(candidate) if isinstance(candidate, str) else None
+    )
     if match is None or match.group("line") != release_version:
-        raise ReaderTrialError(f"reader trial candidate must be a release candidate for {release_version}")
+        raise ReaderTrialError(
+            f"reader trial candidate must be a release candidate for {release_version}"
+        )
     candidate_commit = receipt["candidate_commit"]
-    if not isinstance(candidate_commit, str) or COMMIT_SHA.fullmatch(candidate_commit) is None:
-        raise ReaderTrialError("reader trial candidate commit must be a full commit SHA")
+    if (
+        not isinstance(candidate_commit, str)
+        or COMMIT_SHA.fullmatch(candidate_commit) is None
+    ):
+        raise ReaderTrialError(
+            "reader trial candidate commit must be a full commit SHA"
+        )
     candidate_artifact = receipt["candidate_artifact_sha256"]
-    if not isinstance(candidate_artifact, str) or SHA256.fullmatch(candidate_artifact) is None:
+    if (
+        not isinstance(candidate_artifact, str)
+        or SHA256.fullmatch(candidate_artifact) is None
+    ):
         raise ReaderTrialError("reader trial candidate artifact digest must be SHA-256")
     rubric_digest = _sha256(rubric_bytes)
     if receipt["rubric_sha256"] != rubric_digest:
-        raise ReaderTrialError("reader trial rubric digest does not match the current rubric")
+        raise ReaderTrialError(
+            "reader trial rubric digest does not match the current rubric"
+        )
 
     expected_context = rubric["context"]
     context = _list(receipt["context"], label="reader receipt context")
     if len(context) != len(expected_context):
-        raise ReaderTrialError("reader receipt must bind every rubric context document exactly once")
+        raise ReaderTrialError(
+            "reader receipt must bind every rubric context document exactly once"
+        )
     bound_context: dict[str, str] = {}
     for index, value in enumerate(context):
         item = _mapping(value, label=f"reader context {index}", keys={"path", "sha256"})
@@ -243,18 +271,31 @@ def verify_reader_trial(root: Path, release_version: str) -> dict[str, object]:
             or PARTICIPANT_ID.fullmatch(identifier) is None
             or identifier in participant_ids
         ):
-            raise ReaderTrialError("reader participant ids must be unique safe identifiers")
+            raise ReaderTrialError(
+                "reader participant ids must be unique safe identifiers"
+            )
         participant_ids.add(identifier)
         profile = participant["profile"]
         if profile not in completed_profiles:
-            raise ReaderTrialError(f"reader participant {identifier} uses an undeclared profile")
+            raise ReaderTrialError(
+                f"reader participant {identifier} uses an undeclared profile"
+            )
         completed_profiles[profile] += 1
         if participant["independent"] is not True:
-            raise ReaderTrialError(f"reader participant {identifier} did not attest independence")
+            raise ReaderTrialError(
+                f"reader participant {identifier} did not attest independence"
+            )
         if participant["context"] != "published-docs-only":
-            raise ReaderTrialError(f"reader participant {identifier} used undeclared context")
-        _timestamp(participant["completed_at"], label=f"reader participant {identifier} completion")
-        results = _list(participant["tasks"], label=f"reader participant {identifier} tasks")
+            raise ReaderTrialError(
+                f"reader participant {identifier} used undeclared context"
+            )
+        _timestamp(
+            participant["completed_at"],
+            label=f"reader participant {identifier} completion",
+        )
+        results = _list(
+            participant["tasks"], label=f"reader participant {identifier} tasks"
+        )
         task_ids: set[str] = set()
         for task_index, value in enumerate(results):
             result = _mapping(
@@ -264,27 +305,45 @@ def verify_reader_trial(root: Path, release_version: str) -> dict[str, object]:
             )
             task_id = result["id"]
             if not isinstance(task_id, str) or task_id in task_ids:
-                raise ReaderTrialError(f"reader participant {identifier} task ids must be unique")
+                raise ReaderTrialError(
+                    f"reader participant {identifier} task ids must be unique"
+                )
             task_ids.add(task_id)
             if result["ok"] is not True:
-                raise ReaderTrialError(f"reader participant {identifier} did not pass {task_id}")
+                raise ReaderTrialError(
+                    f"reader participant {identifier} did not pass {task_id}"
+                )
             evidence = result["evidence"]
             digest = result["sha256"]
             if not isinstance(evidence, str) or evidence in evidence_paths:
-                raise ReaderTrialError("reader task evidence paths must be unique strings")
+                raise ReaderTrialError(
+                    "reader task evidence paths must be unique strings"
+                )
             if not isinstance(digest, str) or SHA256.fullmatch(digest) is None:
-                raise ReaderTrialError(f"reader task evidence digest is invalid: {evidence}")
+                raise ReaderTrialError(
+                    f"reader task evidence digest is invalid: {evidence}"
+                )
             evidence_path = _relative_file(root, evidence, prefix=layout.evidence_root)
             evidence_bytes = evidence_path.read_bytes()
             if not evidence_bytes or len(evidence_bytes) > MAX_EVIDENCE_BYTES:
-                raise ReaderTrialError(f"reader task evidence size is invalid: {evidence}")
+                raise ReaderTrialError(
+                    f"reader task evidence size is invalid: {evidence}"
+                )
             if _sha256(evidence_bytes) != digest:
-                raise ReaderTrialError(f"reader task evidence digest does not match: {evidence}")
+                raise ReaderTrialError(
+                    f"reader task evidence digest does not match: {evidence}"
+                )
             evidence_paths.add(evidence)
         if task_ids != expected_tasks:
-            raise ReaderTrialError(f"reader participant {identifier} did not complete the exact rubric")
-    if set(completed_profiles.values()) != {1} or len(participants) != len(required_profiles):
-        raise ReaderTrialError("reader trial requires exactly one participant for every model profile")
+            raise ReaderTrialError(
+                f"reader participant {identifier} did not complete the exact rubric"
+            )
+    if set(completed_profiles.values()) != {1} or len(participants) != len(
+        required_profiles
+    ):
+        raise ReaderTrialError(
+            "reader trial requires exactly one participant for every model profile"
+        )
 
     context_digest = _sha256(
         json.dumps(bound_context, sort_keys=True, separators=(",", ":")).encode()

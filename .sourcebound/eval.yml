@@ -15,7 +15,7 @@ tasks:
   - id: structured-command
     audience: agent
     prompt: Return the read-only documentation verification command as JSON.
-    context: [.sourcebound/context/contributor.md]
+    context: [.sourcebound/context/evaluation.md]
     model:
       adapter: recorded
       name: recorded-fixture
@@ -26,7 +26,7 @@ tasks:
   - id: recovery-procedure
     audience: agent
     prompt: Return the documented recovery sequence for source drift as JSON.
-    context: [.sourcebound/context/contributor.md]
+    context: [.sourcebound/context/evaluation.md]
     model:
       adapter: recorded
       name: recorded-fixture
@@ -38,7 +38,7 @@ tasks:
   - id: manifest-round-trip
     audience: agent
     prompt: Create a manifest whose region binding keeps the fixture document equal to source.txt.
-    context: [.sourcebound/context/contributor.md]
+    context: [.sourcebound/context/evaluation.md]
     model:
       adapter: recorded
       name: recorded-fixture
@@ -49,7 +49,7 @@ tasks:
   - id: limitation-retrieval
     audience: agent
     prompt: Does sourcebound itself enforce network isolation for allowlisted commands?
-    context: [.sourcebound/context/contributor.md]
+    context: [.sourcebound/context/evaluation.md]
     model:
       adapter: recorded
       name: recorded-fixture

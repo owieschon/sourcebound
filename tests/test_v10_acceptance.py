@@ -77,9 +77,7 @@ def _source_repository(tmp_path: Path) -> Path:
     (root / "cli.py").write_text(
         "parser.add_parser('serve')\nparser.add_argument('--port')\n"
     )
-    (root / "README.md").write_text(
-        "# Reader fixture\n\nA small command service.\n"
-    )
+    (root / "README.md").write_text("# Reader fixture\n\nA small command service.\n")
     return root
 
 
@@ -118,9 +116,8 @@ def test_empty_repository_reaches_protected_baseline_without_manual_docs(
         '[project]\nname = "mature-reader"\nversion = "1.0.0"\n'
     )
     (mature / "README.md").write_text(
-        "# Mature reader\n\n" + "\n".join(
-            f"Existing reference line {index}" for index in range(130)
-        )
+        "# Mature reader\n\n"
+        + "\n".join(f"Existing reference line {index}" for index in range(130))
     )
     subprocess.run(["git", "-C", str(mature), "add", "."], check=True)
 
@@ -276,7 +273,10 @@ def test_malicious_repository_controls_hold(tmp_path: Path) -> None:
     assert not imported.exists()
     assert hostile not in provider.last_prompt
     assert "[BLOCKED UNTRUSTED INSTRUCTION]" in provider.last_prompt
-    assert any(flag.startswith("prompt-injection:docs/CONTEXT.md") for flag in plan.model.context_flags)
+    assert any(
+        flag.startswith("prompt-injection:docs/CONTEXT.md")
+        for flag in plan.model.context_flags
+    )
     assert secret not in provider.last_prompt
 
     script = root / "fixture.py"
@@ -424,7 +424,7 @@ def test_independent_reader_release_requires_receipts_and_published_tasks_work(
     )
     rubric = release_gate / ".sourcebound/reader-trial-rubric.yml"
     rubric.parent.mkdir(parents=True)
-    shutil.copyfile(PROJECT / ".sourcebound/reader-trial-rubric.yml", rubric)
+    shutil.copyfile(PROJECT / "tests/fixtures/reader-trial/v1.yml", rubric)
     reader_trial = yaml.safe_load(rubric.read_text())
     assert [profile["id"] for profile in reader_trial["profiles"]] == [
         "anthropic-opus-4-8",
@@ -442,5 +442,7 @@ def test_independent_reader_release_requires_receipts_and_published_tasks_work(
     purpose_task = reader_trial["tasks"][0]
     assert "README's first body block" in purpose_task["instruction"]
     assert "code-to-documentation drift" in purpose_task["passes_when"]
-    with pytest.raises(ReaderTrialError, match="cannot read independent-reader receipt"):
+    with pytest.raises(
+        ReaderTrialError, match="cannot read independent-reader receipt"
+    ):
         verify_release_reader_trial(release_gate)

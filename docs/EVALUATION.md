@@ -58,7 +58,7 @@ tasks:
   - id: limitation-retrieval
     audience: agent
     prompt: Does the documented limit permit this behavior?
-    context: [.sourcebound/context/contributor.md]
+    context: [.sourcebound/context/evaluation.md]
     model:
       adapter: recorded
       name: recorded-fixture

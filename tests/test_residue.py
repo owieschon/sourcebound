@@ -87,11 +87,15 @@ rules:
     ]
 
 
-def test_v2_uses_private_local_rules_without_publishing_token_material(tmp_path: Path) -> None:
+def test_v2_uses_private_local_rules_without_publishing_token_material(
+    tmp_path: Path,
+) -> None:
     root = _repo(tmp_path)
     (root / ".sourcebound-residue.yml").write_text("version: 2\nexclude: []\n")
     local = root / ".sourcebound-residue.local.yml"
-    local.write_text("version: 1\nrules:\n  - id: private-context\n    token: foreign-token\n    include: ['*']\n")
+    local.write_text(
+        "version: 1\nrules:\n  - id: private-context\n    token: foreign-token\n    include: ['*']\n"
+    )
     local.chmod(0o600)
     (root / "README.md").write_text("# Product\n\nforeign-token\n")
     _track(root)
@@ -130,7 +134,10 @@ exclude: []
 
     findings = scan_residue(root)
 
-    assert [(finding.rule, finding.doc, finding.line, finding.detail) for finding in findings] == [
+    assert [
+        (finding.rule, finding.doc, finding.line, finding.detail)
+        for finding in findings
+    ] == [
         (
             "residue-policy-metadata",
             ".sourcebound-residue.yml",
@@ -140,7 +147,9 @@ exclude: []
     ]
 
 
-def test_public_policy_metadata_allows_unrelated_technical_terms(tmp_path: Path) -> None:
+def test_public_policy_metadata_allows_unrelated_technical_terms(
+    tmp_path: Path,
+) -> None:
     root = _repo(tmp_path)
     (root / ".sourcebound-residue.yml").write_text("""\
 version: 2
@@ -164,7 +173,9 @@ def test_private_residue_status_is_redacted_and_initializer_is_restricted(
     assert main(["--root", str(root), "residue", "init-local"]) == 0
     local = root / ".sourcebound-residue.local.yml"
     assert local.stat().st_mode & 0o777 == 0o600
-    local.write_text("version: 1\nrules:\n  - id: private-context\n    token: private-value\n    include: ['*']\n")
+    local.write_text(
+        "version: 1\nrules:\n  - id: private-context\n    token: private-value\n    include: ['*']\n"
+    )
     local.chmod(0o600)
     assert main(["--root", str(root), "residue", "status"]) == 0
     output = capsys.readouterr().out
@@ -202,11 +213,13 @@ def test_excludes_versioned_independent_reader_evidence_verbatim(
     (root / ".sourcebound-residue.yml").write_text("""\
 version: 1
 exclude:
-  - pattern: .sourcebound/reader-trials*/**
+  - pattern: evidence/releases/*/reader-trials/**
     reason: Independent reader evidence preserves observed paths verbatim.
 rules: []
 """)
-    evidence = root / ".sourcebound/reader-trials-v1.1/reader/run-tutorial.txt"
+    evidence = (
+        root / "evidence/releases/v1.1.0rc5/reader-trials/reader/run-tutorial.txt"
+    )
     evidence.parent.mkdir(parents=True)
     evidence.write_text("workspace: /" + "Users/example/private/fixture\n")
     _track(root)
@@ -229,6 +242,8 @@ def test_invalid_policy_is_a_stable_audit_and_doctor_failure(
 
     assert exit_code == 2
     assert "unknown key" in capsys.readouterr().err
-    documentation = next(check for check in checks if check.name == "documentation-audit")
+    documentation = next(
+        check for check in checks if check.name == "documentation-audit"
+    )
     assert documentation.ok is False
     assert "unknown key" in documentation.detail

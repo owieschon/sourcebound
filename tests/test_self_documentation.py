@@ -46,7 +46,7 @@ def test_repository_dogfoods_the_source_bound_visual_projection() -> None:
     manifest = load_manifest(ROOT / ".sourcebound.yml")
     assert [item.id for item in manifest.projections.visuals] == ["source-bound-flow"]
     assert [item.doc for item in evaluate_projections(ROOT, manifest)] == [
-        ".sourcebound/context/contributor.md",
+        ".sourcebound/context/evaluation.md",
         ".sourcebound/visuals/source-bound-flow.md",
         "docs/demo/index.html",
         "docs/generated/source-bound-flow.md",

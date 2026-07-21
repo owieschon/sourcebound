@@ -15,8 +15,7 @@
 - [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md): bindings: security-model; sha256: 3865422d3fe05b1f97cf68e89eaf4bd2cb662c1b7514d0dbcc64e04fc5755403
 - [docs/SUPPORT.md](docs/SUPPORT.md): bindings: support-guide; sha256: d26d344b47ff75813fcbc4e2df55e3045d3e7f94db7514c4637bf904e8549e69
 - [docs/learn/deep-dive-the-deterministic-seam.md](docs/learn/deep-dive-the-deterministic-seam.md): bindings: deterministic-seam-evidence, deterministic-seam-gate, deterministic-seam-phrasing; sha256: 37447f841031a48e4745083d1489de48d441f15ef13bc31c89d6af19b597e028
-- [docs/learn/index.md](docs/learn/index.md): declared canonical context; sha256: abd813774363fc58aa0b86a65ed7aa29b44d99b6bb3c0d263197a4f71e93096f
-- [docs/learn/postmortem-the-readme-that-lied.md](docs/learn/postmortem-the-readme-that-lied.md): bindings: postmortem-examples, postmortem-measurements; sha256: 360caf0dcd92bec01e008bc8c3b1ae631bbcb1dfb98684d1a5a1b63aca272341
+- [docs/learn/index.md](docs/learn/index.md): declared canonical context; sha256: e4547bc1e3d5042ea8bd72311887163fc1243a18c54a71a1d768e6cb1e33c02c
 - [docs/learn/tutorial-catch-a-lying-doc.md](docs/learn/tutorial-catch-a-lying-doc.md): bindings: tutorial-outcomes; sha256: ad35c0291a8f850d9468499b37bff7fc4ccd0aa4a4cf88cd3bc59a426c962dbc
 - [skill/SKILL.md](skill/SKILL.md): declared canonical context; sha256: 2bdbad462bd43a3741ccf3445368dd2ac50dabfc71b78ec4ef2fa11cca0beb11
 - [skills/sourcebound-verify/SKILL.md](skills/sourcebound-verify/SKILL.md): declared canonical context; sha256: 1cbf8f8d417297475be37a6c49795343724386e52bfc13ff2694d02be426b77b

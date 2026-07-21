@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 import json
-import shutil
 import struct
 import subprocess
 import sys
 from pathlib import Path
 
-from clean_docs.engine import drive, evaluate
-from scripts.build_learning_evidence import build_record
+from clean_docs.engine import evaluate
 from scripts.record_learning_tutorial import record
 from scripts.render_social_preview import HEIGHT, WIDTH, render_svg
 
@@ -94,12 +92,11 @@ def test_public_repository_legibility_e2e() -> None:
     test_social_preview_is_current_legible_and_at_repository_aspect_ratio()
 
 
-def test_learning_surface_contains_only_the_index_and_three_lessons() -> None:
+def test_learning_surface_contains_only_the_index_and_two_lessons() -> None:
     paths = sorted(path.name for path in LEARN.iterdir())
     assert paths == [
         "deep-dive-the-deterministic-seam.md",
         "index.md",
-        "postmortem-the-readme-that-lied.md",
         "tutorial-catch-a-lying-doc.md",
     ]
     for path in LEARN.iterdir():
@@ -115,7 +112,6 @@ def test_learning_index_routes_each_reader_job_without_copying_reference() -> No
     ordered = (
         "../../README.md",
         "tutorial-catch-a-lying-doc.md",
-        "postmortem-the-readme-that-lied.md",
         "deep-dive-the-deterministic-seam.md",
     )
     positions = [routing_table.index(path) for path in ordered]
@@ -123,85 +119,6 @@ def test_learning_index_routes_each_reader_job_without_copying_reference() -> No
     assert "../CLI.md" in index
     assert "../SUPPORT.md" in index
     assert "../SECURITY_MODEL.md" in index
-
-
-def test_postmortem_record_is_derived_from_the_archived_case() -> None:
-    committed = json.loads(
-        (ROOT / ".sourcebound/learning/ultra-csm-hygiene.json").read_text(
-            encoding="utf-8"
-        )
-    )
-    assert committed == build_record()
-    assert committed["measurements"][0] == {
-        "measure": "Total findings",
-        "before": "280",
-        "after": "73 (all justified in `NOTES.md`)",
-    }
-    assert len(committed["examples"]) == 3
-
-
-def test_postmortem_evidence_drift_repairs_only_bound_regions(tmp_path: Path) -> None:
-    root = tmp_path / "postmortem"
-    (root / "docs/learn").mkdir(parents=True)
-    (root / ".sourcebound/learning").mkdir(parents=True)
-    document = LEARN / "postmortem-the-readme-that-lied.md"
-    evidence = ROOT / ".sourcebound/learning/ultra-csm-hygiene.json"
-    shutil.copyfile(document, root / "docs/learn/postmortem-the-readme-that-lied.md")
-    shutil.copyfile(evidence, root / ".sourcebound/learning/ultra-csm-hygiene.json")
-    (root / ".sourcebound.yml").write_text(
-        """\
-version: 1
-bindings:
-  - id: measurements
-    type: region
-    doc: docs/learn/postmortem-the-readme-that-lied.md
-    region: postmortem-measurements
-    extractor: json
-    source: {path: .sourcebound/learning/ultra-csm-hygiene.json, pointer: /measurements}
-    renderer: markdown-table
-    columns: [measure, before, after]
-  - id: examples
-    type: region
-    doc: docs/learn/postmortem-the-readme-that-lied.md
-    region: postmortem-examples
-    extractor: json
-    source: {path: .sourcebound/learning/ultra-csm-hygiene.json, pointer: /examples}
-    renderer: markdown-table
-    columns: [case, before, after]
-""",
-        encoding="utf-8",
-    )
-    data_path = root / ".sourcebound/learning/ultra-csm-hygiene.json"
-    data = json.loads(data_path.read_text(encoding="utf-8"))
-    data["measurements"][0]["before"] = "281"
-    data_path.write_text(
-        json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
-    before = (root / "docs/learn/postmortem-the-readme-that-lied.md").read_text(
-        encoding="utf-8"
-    )
-    unbound_before = before.split(
-        "<!-- sourcebound:end postmortem-measurements -->", 1
-    )[1]
-
-    results = evaluate(root, root / ".sourcebound.yml")
-    assert [result.binding_id for result in results if result.changed] == [
-        "measurements"
-    ]
-    _results, findings = drive(root, root / ".sourcebound.yml")
-    assert not findings
-
-    after = (root / "docs/learn/postmortem-the-readme-that-lied.md").read_text(
-        encoding="utf-8"
-    )
-    assert "| Total findings | 281 |" in after
-    assert (
-        after.split("<!-- sourcebound:end postmortem-measurements -->", 1)[1]
-        == unbound_before
-    )
-    assert not any(
-        result.changed for result in evaluate(root, root / ".sourcebound.yml")
-    )
 
 
 def test_published_tutorial_runs_the_observed_drift_loop(tmp_path: Path) -> None:
@@ -254,7 +171,7 @@ def test_llms_projection_contains_every_learning_page() -> None:
 
 
 def test_additive_learning_corpus_passes_audit_projection_and_links() -> None:
-    test_learning_surface_contains_only_the_index_and_three_lessons()
+    test_learning_surface_contains_only_the_index_and_two_lessons()
     test_learning_index_routes_each_reader_job_without_copying_reference()
     test_llms_projection_contains_every_learning_page()
     for document in LEARN.iterdir():

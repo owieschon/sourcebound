@@ -18,3 +18,4 @@ Use this index when you are evaluating an optional Sourcebound capability rather
 | [Release records](RELEASES.md) and [release verification](VERIFY_RELEASE.md) | You are publishing or verifying a release. | Release procedures are not the daily documentation workflow. |
 | [Review ledger](REVIEW_LEDGER.md) | You need historical review evidence. | Historical evidence does not replace current checks. |
 | [Surface inventory](SURFACE.md) | You need the discovered repository surface. | Catalog coverage does not validate prose claims. |
+| [Evidence archive](../evidence/README.md) | You need a release-scoped historical receipt. | A past receipt never attests the current build. |
