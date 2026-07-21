@@ -94,7 +94,7 @@ def _extract_trusted_source(root: Path, commit: str, destination: Path) -> Path:
         "--format=tar",
         f"--output={archive}",
         commit,
-        "src/clean_docs",
+        "src/sourcebound",
     )
     if archived.returncode != 0:
         raise RuntimeError(f"cannot archive trusted verifier: {archived.stderr.strip()}")
@@ -111,7 +111,7 @@ def _trusted_command(source: Path, root: Path, args: tuple[str, ...]) -> list[st
     launcher = (
         "import sys;"
         f"sys.path.insert(0, {str(source)!r});"
-        "from clean_docs.cli import main;"
+        "from sourcebound.cli import main;"
         "raise SystemExit(main())"
     )
     return [sys.executable, "-I", "-c", launcher, "--root", str(root), *args]
@@ -120,7 +120,7 @@ def _trusted_command(source: Path, root: Path, args: tuple[str, ...]) -> list[st
 def _candidate_command(root: Path, args: tuple[str, ...]) -> tuple[list[str], dict[str, str]]:
     env = dict(os.environ)
     env["PYTHONPATH"] = str(root / "src")
-    return [sys.executable, "-m", "clean_docs", "--root", str(root), *args], env
+    return [sys.executable, "-m", "sourcebound", "--root", str(root), *args], env
 
 
 def _trusted_manifest(root: Path, destination: Path) -> Path:

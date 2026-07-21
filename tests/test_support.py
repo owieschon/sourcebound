@@ -6,11 +6,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-from clean_docs.audit import write_audit_baseline
-from clean_docs.doctor import build_diagnostic_bundle
-from clean_docs.engine import drive
-from clean_docs.outcomes import build_outcome_receipt
-from clean_docs.performance import benchmark_changed_check
+from sourcebound.audit import write_audit_baseline
+from sourcebound.doctor import build_diagnostic_bundle
+from sourcebound.engine import drive
+from sourcebound.outcomes import build_outcome_receipt
+from sourcebound.performance import benchmark_changed_check
 
 
 PROJECT = Path(__file__).parents[1]
@@ -109,7 +109,7 @@ def _run(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
     environment = dict(os.environ)
     environment["PYTHONPATH"] = str(PROJECT / "src")
     return subprocess.run(
-        [sys.executable, "-m", "clean_docs", "--root", str(root), *args],
+        [sys.executable, "-m", "sourcebound", "--root", str(root), *args],
         text=True,
         capture_output=True,
         check=False,
@@ -257,11 +257,11 @@ def test_diagnostic_bundle_excludes_repository_and_environment_content(
 ) -> None:
     root, manifest, _base, _head = _fixture(tmp_path)
     secret = "ghp_" + "B" * 24
-    os.environ["CLEAN_DOCS_TEST_SECRET"] = secret
+    os.environ["SOURCEBOUND_TEST_SECRET"] = secret
     try:
         bundle = build_diagnostic_bundle(root, manifest).as_dict()
     finally:
-        os.environ.pop("CLEAN_DOCS_TEST_SECRET")
+        os.environ.pop("SOURCEBOUND_TEST_SECRET")
 
     serialized = json.dumps(bundle)
     assert bundle["schema"] == "sourcebound.diagnostic.v2"

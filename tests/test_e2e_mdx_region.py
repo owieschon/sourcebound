@@ -69,7 +69,7 @@ def _run(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
     environment = dict(os.environ)
     environment["PYTHONPATH"] = str(ROOT / "src")
     return subprocess.run(
-        [sys.executable, "-m", "clean_docs", "--root", str(root), *args],
+        [sys.executable, "-m", "sourcebound", "--root", str(root), *args],
         text=True,
         capture_output=True,
         env=environment,

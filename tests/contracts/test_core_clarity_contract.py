@@ -9,7 +9,11 @@ ROOT = Path(__file__).parents[2]
 
 
 def _source(name: str) -> str:
-    return (ROOT / "src" / "clean_docs" / name).read_text()
+    return (ROOT / "src" / "sourcebound" / name).read_text()
+
+
+def _project(path: str) -> str:
+    return (ROOT / path).read_text()
 
 
 def test_classification_complete_is_distinct_from_direct_protection() -> None:
@@ -17,7 +21,7 @@ def test_classification_complete_is_distinct_from_direct_protection() -> None:
 
 
 def test_selected_direct_policy_rejects_catalog_only_surface() -> None:
-    assert "selected-direct" in _source("policy.py")
+    assert "require_direct" in _source("inventory.py")
 
 
 def test_init_discloses_zero_direct_protection() -> None:
@@ -29,12 +33,14 @@ def test_command_taxonomy_labels_core_and_experimental_surfaces() -> None:
 
 
 def test_static_verdict_never_starts_repository_process() -> None:
-    assert "repository_processes_started" in _source("verdict.py")
+    assert '"repository_processes_started": False' in _source("verdict.py")
 
 
 def test_candidate_wheel_binds_release_ref() -> None:
-    assert "release_ref" in _source("release.py")
+    assert '"ref": ref' in _project("scripts/build_release.py")
 
 
 def test_runtime_review_receipt_requires_provenance() -> None:
-    assert "reviewer_session_id" in _source("review_ledger.py")
+    assert "reviewer_session_id" in _project(
+        "tests/contracts/verify_runtime_review_receipt.py"
+    )

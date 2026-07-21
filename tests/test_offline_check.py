@@ -8,7 +8,7 @@ from typing import NoReturn
 
 import pytest
 
-from clean_docs.cli import main
+from sourcebound.cli import main
 
 
 def _block_network(*args: object, **kwargs: object) -> NoReturn:

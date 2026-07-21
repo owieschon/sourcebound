@@ -6,14 +6,14 @@ from pathlib import Path
 
 import pytest
 
-from clean_docs import claims as claim_module
-from clean_docs.applicability import classify_document
-from clean_docs.claims import scan_source_claims
-from clean_docs.changed import check_changed
-from clean_docs.cli import main
-from clean_docs.errors import ConfigurationError
-from clean_docs.manifest import load_manifest
-from clean_docs.outcomes import build_outcome_receipt
+from sourcebound import claims as claim_module
+from sourcebound.applicability import classify_document
+from sourcebound.claims import scan_source_claims
+from sourcebound.changed import check_changed
+from sourcebound.cli import main
+from sourcebound.errors import ConfigurationError
+from sourcebound.manifest import load_manifest
+from sourcebound.outcomes import build_outcome_receipt
 
 
 COUNT_CASES = (

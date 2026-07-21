@@ -6,11 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from clean_docs.capabilities import CLI_REFERENCE
-from clean_docs.cli import _command_help, _parser, _validate_arguments
-from clean_docs.engine import evaluate
-from clean_docs.manifest import MANIFEST_REFERENCE, load_manifest
-from clean_docs.projections import evaluate_projections
+from sourcebound.capabilities import CLI_REFERENCE
+from sourcebound.cli import _command_help, _parser, _validate_arguments
+from sourcebound.engine import evaluate
+from sourcebound.manifest import MANIFEST_REFERENCE, load_manifest
+from sourcebound.projections import evaluate_projections
 
 
 ROOT = Path(__file__).parents[1]
@@ -95,14 +95,14 @@ def test_self_check_detects_reference_source_drift(
     tmp_path: Path, source: str, old: str, new: str, binding: str
 ) -> None:
     root = tmp_path / "repo"
-    package = root / "src/clean_docs"
+    package = root / "src/sourcebound"
     package.mkdir(parents=True)
     (root / "docs").mkdir()
     (root / "README.md").write_text((ROOT / "README.md").read_text())
     (root / "docs/CLI.md").write_text((ROOT / "docs/CLI.md").read_text())
     (root / "docs/REFERENCE.md").write_text((ROOT / "docs/REFERENCE.md").read_text())
     for name in ("capabilities.py", "manifest.py"):
-        (package / name).write_text((ROOT / "src/clean_docs" / name).read_text())
+        (package / name).write_text((ROOT / "src/sourcebound" / name).read_text())
     (root / ".sourcebound.yml").write_text("""\
 version: 1
 bindings:
@@ -111,7 +111,7 @@ bindings:
     doc: docs/CLI.md
     region: cli-reference
     extractor: python-literal
-    source: {path: src/clean_docs/capabilities.py, symbol: CLI_REFERENCE}
+    source: {path: src/sourcebound/capabilities.py, symbol: CLI_REFERENCE}
     renderer: markdown-table
     columns: [area, command, job, writes, example]
   - id: manifest-reference
@@ -119,7 +119,7 @@ bindings:
     doc: docs/REFERENCE.md
     region: manifest-reference
     extractor: python-literal
-    source: {path: src/clean_docs/manifest.py, symbol: MANIFEST_REFERENCE}
+    source: {path: src/sourcebound/manifest.py, symbol: MANIFEST_REFERENCE}
     renderer: markdown-table
     columns: [binding, required, verifies]
 """)

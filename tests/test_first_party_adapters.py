@@ -4,7 +4,7 @@ import json
 import subprocess
 from pathlib import Path
 
-from clean_docs.inventory import scan_inventory
+from sourcebound.inventory import scan_inventory
 
 
 def test_python_and_typescript_ecosystem_adapters_share_inventory_types(

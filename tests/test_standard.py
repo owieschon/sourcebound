@@ -6,10 +6,10 @@ from pathlib import Path
 
 import pytest
 
-from clean_docs.capabilities import PRODUCT_OVERVIEW
-from clean_docs.errors import ConfigurationError
-from clean_docs.manifest import load_manifest
-from clean_docs.policy import (
+from sourcebound.capabilities import PRODUCT_OVERVIEW
+from sourcebound.errors import ConfigurationError
+from sourcebound.manifest import load_manifest
+from sourcebound.policy import (
     PURPOSE_BEGIN,
     PURPOSE_END,
     REGISTER_PROFILE,
@@ -17,7 +17,7 @@ from clean_docs.policy import (
     check_prose,
     ensure_purpose_contract,
 )
-from clean_docs.standard import compile_standard, load_default_pack, load_pack, pack_matches_standard
+from sourcebound.standard import compile_standard, load_default_pack, load_pack, pack_matches_standard
 
 
 ROOT = Path(__file__).parents[1]
@@ -25,7 +25,7 @@ ROOT = Path(__file__).parents[1]
 
 def test_bundled_pack_matches_canonical_standard() -> None:
     standard = ROOT / "STANDARD.md"
-    pack = ROOT / "src/clean_docs/standards/default.json"
+    pack = ROOT / "src/sourcebound/standards/default.json"
     assert pack_matches_standard(standard, pack)
     compiled = compile_standard(standard)
     assert compiled["source"]["sha256"]
@@ -67,7 +67,7 @@ def test_default_pack_is_available_as_package_data() -> None:
 def test_standard_change_makes_pack_stale(tmp_path: Path) -> None:
     standard = tmp_path / "STANDARD.md"
     standard.write_text((ROOT / "STANDARD.md").read_text() + "\nA new rule.\n")
-    pack = ROOT / "src/clean_docs/standards/default.json"
+    pack = ROOT / "src/sourcebound/standards/default.json"
     assert not pack_matches_standard(standard, pack)
 
 

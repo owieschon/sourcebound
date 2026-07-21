@@ -6,7 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from clean_docs.release import (
+from sourcebound.release import (
     build_release_report,
     render_release_markdown,
     validate_release_narrative,
@@ -20,7 +20,7 @@ def _run(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
     environment = dict(os.environ)
     environment["PYTHONPATH"] = str(PROJECT / "src")
     return subprocess.run(
-        [sys.executable, "-m", "clean_docs", "--root", str(root), *args],
+        [sys.executable, "-m", "sourcebound", "--root", str(root), *args],
         text=True,
         capture_output=True,
         check=False,

@@ -5,14 +5,14 @@ from pathlib import Path
 
 import pytest
 
-import clean_docs.review_contracts as review_contracts
-from clean_docs.models import ReviewContract, ReviewLocator
-from clean_docs.review_contracts import (
+import sourcebound.review_contracts as review_contracts
+from sourcebound.models import ReviewContract, ReviewLocator
+from sourcebound.review_contracts import (
     evaluate_review_contract,
     evaluate_review_contracts,
 )
-from clean_docs.review_limits import MAX_REVIEW_FILE_BYTES
-from clean_docs.snapshot import RepositorySnapshot
+from sourcebound.review_limits import MAX_REVIEW_FILE_BYTES
+from sourcebound.snapshot import RepositorySnapshot
 
 
 def _repository(tmp_path: Path) -> Path:

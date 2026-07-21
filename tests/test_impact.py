@@ -9,12 +9,12 @@ from pathlib import Path
 
 import pytest
 
-import clean_docs.impact as impact_module
-import clean_docs.extractors.inventory as inventory_extractor
-from clean_docs import __version__
-from clean_docs.cli import main
-from clean_docs.impact import build_impact_plan
-from clean_docs.snapshot import RepositorySnapshot
+import sourcebound.impact as impact_module
+import sourcebound.extractors.inventory as inventory_extractor
+from sourcebound import __version__
+from sourcebound.cli import main
+from sourcebound.impact import build_impact_plan
+from sourcebound.snapshot import RepositorySnapshot
 
 
 def _commit(root: Path, message: str) -> str:

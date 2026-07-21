@@ -74,7 +74,7 @@ def test_release_toolchain_and_ci_install_are_pinned() -> None:
         "setuptools==75.8.0",
         "wheel==0.45.1",
     } <= set(project["project"]["optional-dependencies"]["dev"])
-    package = (ROOT / "src/clean_docs/__init__.py").read_text()
+    package = (ROOT / "src/sourcebound/__init__.py").read_text()
     assert '__version__ = "' not in package
     assert 'version("sourcebound")' in package
 

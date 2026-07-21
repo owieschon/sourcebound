@@ -4,8 +4,8 @@ import json
 import subprocess
 from pathlib import Path
 
-from clean_docs.cli import main
-from clean_docs.context import compile_context
+from sourcebound.cli import main
+from sourcebound.context import compile_context
 
 
 def _repo(tmp_path: Path) -> tuple[Path, str]:

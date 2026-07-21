@@ -1,13 +1,13 @@
 # Context bundle: evaluation
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `bb8837cb01e3a37951a25f2e23797d8a330b5153cba32871d2ea236a3994050d`
+- Corpus sha256: `408bfd5421aadf79df6c7f2e9cffd1c58790ff9b45cd71aaae9c15eecc831975`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `c5dc88eadf3316d4749153b932dac527215b045713ae96d533d4d8e5ba93087b`
+- Content sha256: `f1adb9f32d995a33406f883801ed809432d6afd83ef30064f064c3a8ac9818fd`
 
 <!-- sourcebound:canonical README.md begin -->
 # Sourcebound
@@ -47,15 +47,9 @@ Human review can improve a sentence. It cannot make the sentence fail when its d
 
 ## Use Sourcebound when
 
-Use Sourcebound when an authored explanation contains a selected fact that has a stable owner in
-code, configuration, a schema, or a registry. For example, a public action table can derive from
-`ACTIONS` in `src/actions.py`; a source-only rename makes `check` fail, and `drive` updates only the
-declared table region. The [tutorial](docs/learn/tutorial-catch-a-lying-doc.md) runs that exact loop.
+Use Sourcebound when an authored explanation contains a selected fact with a stable owner in code, configuration, a schema, or a registry. For example, a public action table can derive from `ACTIONS` in `src/actions.py`; a source-only rename makes `check` fail, and `drive` updates only the declared table region. The [tutorial](docs/learn/tutorial-catch-a-lying-doc.md) runs that exact loop.
 
-Use another tool when it owns the job better. Vale can own prose mechanics. Doc Detective can own
-whether a consequential procedure still works. A generator can own an entire API or schema
-reference. If those tools already cover the facts you need, Sourcebound may not justify another
-gate. The [ecosystem guide](docs/ECOSYSTEM.md) names the boundary.
+Use another tool when it owns the job better. Vale can own prose mechanics. Doc Detective can own whether a consequential procedure still works. A generator can own an entire API or schema reference. If those tools already cover the facts you need, Sourcebound may not justify another gate. The [ecosystem guide](docs/ECOSYSTEM.md) names the boundary.
 
 ## Install in the repository you want to protect
 
@@ -88,7 +82,12 @@ After a bound source changes, run `check`, then use `drive` for a declared repai
 
 `authored intent + repository contract + change state → typed evidence → bounded check, repair, projection, and receipt`
 
-Intent supplies purpose; the repository contract supplies authority; change state supplies scope. Sourcebound keeps those inputs separate, and it never represents unbound prose or editorial judgment as verified. The [architecture reference](docs/ARCHITECTURE.md#documentation-flow) and [product contract](SOURCEBOUND_SPEC.md) name each boundary.
+**Authored intent** states what the maintainers want readers to know. Sourcebound does not infer its priority, completeness, or editorial quality. **Repository contract** selects the facts and relationships that earn deterministic treatment. Each mechanism proves only its declared relationship: accepted source-claim checks are separate from generated regions, and unbound prose stays visibly unknown.
+
+An immutable impact plan fixes the changed scope before a check reports on it. This gives the repository four job-specific exits: `drive` writes only planned regions; `check` and `verdict` are read-only; `project` writes declared outputs; and `verify` emits its own outcome receipt. `verdict` and `verify` produce independent receipts. Neither certifies unbound or judgment prose.
+
+The [architecture reference](docs/ARCHITECTURE.md#documentation-flow) and [product contract](SOURCEBOUND_SPEC.md)
+name each boundary in detail.
 
 ## Current boundaries
 

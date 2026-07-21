@@ -27,7 +27,7 @@ does not depend on pixels.
 
 ## Evidence authority
 
-[`evaluate`](../../src/clean_docs/engine.py) owns the source-to-binding comparison. It loads the
+[`evaluate`](../../src/sourcebound/engine.py) owns the source-to-binding comparison. It loads the
 manifest, creates a repository snapshot, dispatches only the declared extractor, renders the typed
 value, and compares the result with the marked document region. Claim and symbol bindings take the
 same route through typed results.
@@ -38,7 +38,7 @@ into an accepted claim. The [manifest page](../REFERENCE.md) owns the supported 
 
 ## Phrasing boundary
 
-[`build_model_record`](../../src/clean_docs/phrasing.py) receives inventory facts that already
+[`build_model_record`](../../src/sourcebound/phrasing.py) receives inventory facts that already
 exist. Its prompt exposes an allowlist of prose templates and asks for fact identifiers plus template
 names, not open-ended product copy. The parser rejects unknown facts, duplicate facts, unsupported
 templates, malformed responses, and more than five drafts.
@@ -58,7 +58,7 @@ verdict procedure; `skill/SKILL.md` exposes the repair and proposal procedure. U
 
 ## Gate authority
 
-[`build_outcome_receipt`](../../src/clean_docs/outcomes.py) combines deterministic audit, inventory,
+[`build_outcome_receipt`](../../src/sourcebound/outcomes.py) combines deterministic audit, inventory,
 binding, projection, and changed-file results. Its `ok` value follows those counts. It does not ask a
 provider whether the prose sounds supported.
 

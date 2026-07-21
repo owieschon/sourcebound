@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from clean_docs.errors import RegionError
-from clean_docs.regions import atomic_write, replace_region
+from sourcebound.errors import RegionError
+from sourcebound.regions import atomic_write, replace_region
 
 
 def test_replaces_only_marker_body() -> None:

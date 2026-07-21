@@ -10,7 +10,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from clean_docs.regions import atomic_write
+from sourcebound.regions import atomic_write
 
 
 ROOT = Path(__file__).resolve().parents[1]

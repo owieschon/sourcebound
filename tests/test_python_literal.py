@@ -2,10 +2,10 @@ from pathlib import Path
 
 import pytest
 
-from clean_docs.errors import ExtractionError
-from clean_docs.extractors import extract_python_literal
-from clean_docs.models import RegionBinding, Source
-from clean_docs.snapshot import RepositorySnapshot
+from sourcebound.errors import ExtractionError
+from sourcebound.extractors import extract_python_literal
+from sourcebound.models import RegionBinding, Source
+from sourcebound.snapshot import RepositorySnapshot
 
 
 def test_rejects_unresolved_names_in_factual_source(tmp_path: Path) -> None:

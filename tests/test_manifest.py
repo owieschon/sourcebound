@@ -3,9 +3,9 @@ from pathlib import Path
 import pytest
 import yaml
 
-from clean_docs.errors import ConfigurationError
-from clean_docs.manifest import load_manifest
-from clean_docs.review_limits import (
+from sourcebound.errors import ConfigurationError
+from sourcebound.manifest import load_manifest
+from sourcebound.review_limits import (
     MAX_REVIEW_CONTRACTS,
     MAX_REVIEW_LOCATORS,
     MAX_REVIEW_LOCATORS_PER_CONTRACT,

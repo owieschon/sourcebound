@@ -6,10 +6,10 @@ from pathlib import Path
 
 import pytest
 
-from clean_docs.cli import main
-from clean_docs.doctor import diagnose
-from clean_docs.errors import ConfigurationError
-from clean_docs.residue import load_residue_config, scan_residue
+from sourcebound.cli import main
+from sourcebound.doctor import diagnose
+from sourcebound.errors import ConfigurationError
+from sourcebound.residue import load_residue_config, scan_residue
 
 
 def _repo(tmp_path: Path) -> Path:

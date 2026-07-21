@@ -7,7 +7,7 @@ on:
       - .sourcebound/demo/evidence.json
       - .github/workflows/deploy-demo.yml
       - docs/demo/index.html
-      - src/clean_docs/demo.py
+      - src/sourcebound/demo.py
   workflow_dispatch:
 
 permissions:

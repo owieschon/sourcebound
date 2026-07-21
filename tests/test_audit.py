@@ -7,10 +7,10 @@ from pathlib import Path
 
 import pytest
 
-from clean_docs.audit import AuditFinding, audit, finding_fingerprint, write_audit_baseline
-from clean_docs.cli import main
-from clean_docs.errors import ConfigurationError
-from clean_docs.policy import REGISTER_PROFILE, ensure_purpose_contract
+from sourcebound.audit import AuditFinding, audit, finding_fingerprint, write_audit_baseline
+from sourcebound.cli import main
+from sourcebound.errors import ConfigurationError
+from sourcebound.policy import REGISTER_PROFILE, ensure_purpose_contract
 
 
 def _repo(tmp_path: Path) -> Path:
@@ -342,7 +342,7 @@ def test_hidden_configuration_markdown_is_not_reader_documentation(tmp_path: Pat
 
 def test_packaged_standard_assets_are_not_reader_documents(tmp_path: Path) -> None:
     root = _repo(tmp_path)
-    asset = root / "src/clean_docs/standards/exemplars.md"
+    asset = root / "src/sourcebound/standards/exemplars.md"
     asset.parent.mkdir(parents=True)
     asset.write_text("# Prompt exemplars\n\nInternal before and after pairs.\n")
     (root / "README.md").write_text("# Project\n")
@@ -363,8 +363,8 @@ def test_vcsless_audit_skips_build_outputs_and_test_fixtures(tmp_path: Path) -> 
         "Project checks source-bound prose for maintainers who need stale claims to fail.\n"
     ))
     for relative in (
-        "src/clean_docs/standards/exemplars.md",
-        "build/lib/clean_docs/standards/exemplars.md",
+        "src/sourcebound/standards/exemplars.md",
+        "build/lib/sourcebound/standards/exemplars.md",
         "tests/fixtures/v10_upgrade/README.md",
         "dist/generated/README.md",
     ):
@@ -873,7 +873,7 @@ def test_audit_never_counts_mdx_as_checked_when_runtime_is_missing(
     (root / "guide.mdx").write_text("# Guide\n\n<Component />\n")
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
     monkeypatch.setattr(
-        "clean_docs.audit.parser_availability",
+        "sourcebound.audit.parser_availability",
         lambda: (False, "Node.js executable not found"),
     )
 
@@ -900,7 +900,7 @@ def test_audit_needs_no_node_for_markdown_only_repository(
     (root / "README.md").write_text("# Project\n")
     subprocess.run(["git", "-C", str(root), "add", "."], check=True)
     monkeypatch.setattr(
-        "clean_docs.audit.parser_availability",
+        "sourcebound.audit.parser_availability",
         unexpected_mdx_runtime_check,
     )
 

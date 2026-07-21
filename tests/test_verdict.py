@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pytest
 
-from clean_docs.cli import main
-from clean_docs.errors import ConfigurationError
-from clean_docs.verdict import (
+from sourcebound.cli import main
+from sourcebound.errors import ConfigurationError
+from sourcebound.verdict import (
     build_pr_verdict,
     render_verdict_payload_sarif,
     validate_verdict_payload,
@@ -498,6 +498,7 @@ def test_static_verdict_classifies_valid_mdx_without_repository_execution(
 
     assert verdict.state == "ready"
     assert payload["execution"]["repository_commands"] == "skipped"
+    assert payload["execution"]["repository_processes_started"] is False
     assert payload["changed_surface"]["unsupported_documents"] == []
     assert payload["changed_surface"]["artifacts"][0]["adapter"] == "mdx-static"
     assert payload["changed_surface"]["artifacts"][0]["coverage"] == "document-direct"
@@ -545,6 +546,7 @@ def test_affected_command_is_unknown_without_executing_target(
     payload = verdict.as_dict()
     assert verdict.state == "unknown"
     assert payload["execution"]["repository_commands"] == "skipped"
+    assert payload["execution"]["repository_processes_started"] is False
     assert payload["execution"]["skipped_binding_ids"] == ["test-count"]
     assert payload["execution"]["skipped_command_ids"] == ["test-summary"]
     assert any(finding.rule == "execution-skipped" for finding in verdict.findings)

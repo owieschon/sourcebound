@@ -8,12 +8,12 @@ from pathlib import Path
 
 import pytest
 
-from clean_docs.bootstrap import build_bootstrap_plan
-from clean_docs.cli import main
-from clean_docs.errors import ConfigurationError
-from clean_docs.evaluation import MODEL_KEYS as EVALUATION_MODEL_KEYS
-from clean_docs.feedback import OUTBOX_DIR, enable_feedback
-from clean_docs.phrasing import (
+from sourcebound.bootstrap import build_bootstrap_plan
+from sourcebound.cli import main
+from sourcebound.errors import ConfigurationError
+from sourcebound.evaluation import MODEL_KEYS as EVALUATION_MODEL_KEYS
+from sourcebound.feedback import OUTBOX_DIR, enable_feedback
+from sourcebound.phrasing import (
     CommandPhrasingProvider,
     MODEL_KEYS,
     write_command_proposer_transcript,
@@ -321,7 +321,7 @@ def test_init_proposer_exposes_only_granted_environment_names(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     root = _root(tmp_path)
-    monkeypatch.setenv("CLEAN_DOCS_CANARY", "must-not-leak")
+    monkeypatch.setenv("SOURCEBOUND_CANARY", "must-not-leak")
     monkeypatch.setenv("SOURCEBOUND_ALLOWED", "granted")
     config = _write_config(root, """\
 adapter: command
@@ -339,7 +339,7 @@ env: [SOURCEBOUND_ALLOWED]
         "PATH": os.defpath,
         "SOURCEBOUND_ALLOWED": "granted",
     }
-    assert "CLEAN_DOCS_CANARY" not in environment
+    assert "SOURCEBOUND_CANARY" not in environment
     assert transcript["provider"]["granted_env_names"] == [
         "NO_COLOR", "PATH", "SOURCEBOUND_ALLOWED",
     ]

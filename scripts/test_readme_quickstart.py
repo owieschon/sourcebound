@@ -131,7 +131,7 @@ def _run_quickstart(candidate: Path, wheelhouse: Path) -> dict[str, object]:
                 [
                     str(python),
                     "-c",
-                    "import clean_docs; print(clean_docs.__file__)",
+                    "import sourcebound; print(sourcebound.__file__)",
                 ],
                 cwd=repository,
                 env=environment,

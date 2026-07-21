@@ -5,13 +5,13 @@ from pathlib import Path
 
 import pytest
 
-from clean_docs.errors import ExtractionError
-from clean_docs.isolation import (
+from sourcebound.errors import ExtractionError
+from sourcebound.isolation import (
     MAX_PROCESS_IO_BYTES,
     _sandbox_environment,
     run_isolated_process,
 )
-from clean_docs.snapshot import RepositorySnapshot
+from sourcebound.snapshot import RepositorySnapshot
 
 
 def _script(root: Path, body: str) -> Path:

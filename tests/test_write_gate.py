@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from clean_docs.write_gate import SECRET_RULES, redact_secrets
+from sourcebound.write_gate import SECRET_RULES, redact_secrets
 
 
 def _secret_pattern(rule_id: str):

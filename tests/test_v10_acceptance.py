@@ -12,17 +12,17 @@ from typing import NoReturn
 import pytest
 import yaml
 
-from clean_docs.bootstrap import apply_bootstrap_plan, build_bootstrap_plan
-from clean_docs.engine import drive, evaluate
-from clean_docs.errors import ExtractionError
-from clean_docs.evaluation import run_evaluation
-from clean_docs.isolation import MAX_PROCESS_IO_BYTES, run_isolated_process
-from clean_docs.inventory import scan_inventory
-from clean_docs.manifest import load_manifest
-from clean_docs.phrasing import MockProvider
-from clean_docs.projections import evaluate_projections, write_projections
-from clean_docs.release import build_release_report
-from clean_docs.snapshot import RepositorySnapshot
+from sourcebound.bootstrap import apply_bootstrap_plan, build_bootstrap_plan
+from sourcebound.engine import drive, evaluate
+from sourcebound.errors import ExtractionError
+from sourcebound.evaluation import run_evaluation
+from sourcebound.isolation import MAX_PROCESS_IO_BYTES, run_isolated_process
+from sourcebound.inventory import scan_inventory
+from sourcebound.manifest import load_manifest
+from sourcebound.phrasing import MockProvider
+from sourcebound.projections import evaluate_projections, write_projections
+from sourcebound.release import build_release_report
+from sourcebound.snapshot import RepositorySnapshot
 from scripts.verify_reader_trial import ReaderTrialError, verify_release_reader_trial
 
 
@@ -34,7 +34,7 @@ def _run(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
     environment = dict(os.environ)
     environment["PYTHONPATH"] = str(PROJECT / "src")
     return subprocess.run(
-        [sys.executable, "-m", "clean_docs", "--root", str(root), *args],
+        [sys.executable, "-m", "sourcebound", "--root", str(root), *args],
         text=True,
         capture_output=True,
         check=False,

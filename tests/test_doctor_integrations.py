@@ -4,15 +4,31 @@ import hashlib
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import yaml
 
-from clean_docs import __version__
-from clean_docs.doctor import diagnose
+from sourcebound import __version__
+from sourcebound.doctor import diagnose
 
 
 ROOT = Path(__file__).parents[1]
+
+
+def _isolated_sourcebound_python(tmp_path: Path) -> Path:
+    """Install this checkout where the reusable action's isolated Python can load it."""
+    environment = tmp_path / "sourcebound-runtime"
+    subprocess.run(
+        [sys.executable, "-m", "venv", "--system-site-packages", str(environment)],
+        check=True,
+    )
+    python = environment / "bin" / "python"
+    subprocess.run(
+        [str(python), "-m", "pip", "install", "--no-deps", "--no-build-isolation", str(ROOT)],
+        check=True,
+    )
+    return python
 
 
 def test_doctor_accepts_self_hosted_repository() -> None:
@@ -80,7 +96,7 @@ def test_distribution_integrations_are_strict() -> None:
     assert "checked-out commit" in comparison["run"]
     gate = next(step for step in steps if step.get("name") == "Evaluate one static verdict")
     assert gate["run"].count(
-        'python3 -I -m clean_docs --root "$GITHUB_WORKSPACE" verdict'
+        'python3 -I -m sourcebound --root "$GITHUB_WORKSPACE" verdict'
     ) == 1
     assert "sourcebound check" not in gate["run"]
     assert "sourcebound audit" not in gate["run"]
@@ -173,7 +189,7 @@ def test_distribution_integrations_are_strict() -> None:
 
 def test_mdx_adapter_boundary_is_explicit_and_tested() -> None:
     assert (ROOT / ".gitattributes").read_text() == (
-        "src/clean_docs/adapters/mdx_parser.mjs linguist-generated=true\n"
+        "src/sourcebound/adapters/mdx_parser.mjs linguist-generated=true\n"
     )
     architecture = (ROOT / "docs/ARCHITECTURE.md").read_text()
     assert "Sourcebound is a Python package and CLI." in architecture
@@ -381,6 +397,7 @@ def test_reusable_action_fails_closed_and_isolates_fork_files(
     ).stdout.strip()
     evidence_dir = tmp_path / "trusted-evidence"
     github_output = tmp_path / "github-output"
+    runtime_python = _isolated_sourcebound_python(tmp_path)
     environment = os.environ | {
         "SOURCEBOUND_BASE": head,
         "SOURCEBOUND_HEAD": head,
@@ -388,6 +405,7 @@ def test_reusable_action_fails_closed_and_isolates_fork_files(
         "GITHUB_OUTPUT": str(github_output),
         "GITHUB_WORKSPACE": str(repository),
         "HOSTILE_MARKER": str(marker),
+        "PATH": f"{runtime_python.parent}{os.pathsep}{os.environ['PATH']}",
     }
 
     completed = subprocess.run(
@@ -411,7 +429,7 @@ def test_reusable_action_fails_closed_and_isolates_fork_files(
 
 
 def test_reusable_action_enforces_the_recorded_verdict_bytes(tmp_path: Path) -> None:
-    from clean_docs.verdict import render_verdict_payload_sarif
+    from sourcebound.verdict import render_verdict_payload_sarif
 
     workflow = yaml.safe_load((ROOT / ".github/workflows/reusable-sourcebound.yml").read_text())
     enforcement = next(
@@ -423,7 +441,7 @@ def test_reusable_action_enforces_the_recorded_verdict_bytes(tmp_path: Path) -> 
         "schema": "sourcebound.pr-verdict.v1",
         "state": "ready",
         "ready": True,
-            "producer": {"name": "sourcebound", "version": __version__},
+        "producer": {"name": "sourcebound", "version": __version__},
         "findings": [],
     }
     payload["digest"] = hashlib.sha256(
@@ -465,9 +483,10 @@ def test_reusable_action_enforces_the_recorded_verdict_bytes(tmp_path: Path) -> 
         )
         + "\n"
     )
+    runtime_python = _isolated_sourcebound_python(tmp_path)
     environment = os.environ | {
         "SOURCEBOUND_EVIDENCE_DIR": str(tmp_path),
-        "PYTHONPATH": str(ROOT / "src"),
+        "PATH": f"{runtime_python.parent}{os.pathsep}{os.environ['PATH']}",
     }
 
     completed = subprocess.run(

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Compatibility entry point for the packaged Version 0 pre-write policy."""
 
-from clean_docs.write_gate import main
+from sourcebound.write_gate import main
 
 
 if __name__ == "__main__":
