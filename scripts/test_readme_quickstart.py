@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 import re
+import site
 import subprocess
 import sys
 import tempfile
@@ -85,6 +86,7 @@ def _run_quickstart(candidate: Path, wheelhouse: Path) -> dict[str, object]:
         bin_dir = workspace / "bin"
         bin_dir.mkdir()
         pipx_home = workspace / "pipx-home"
+        user_scripts = Path(site.getuserbase()) / "bin"
         environment = {
             key: value
             for key, value in os.environ.items()
@@ -92,8 +94,9 @@ def _run_quickstart(candidate: Path, wheelhouse: Path) -> dict[str, object]:
         }
         environment.update(
             {
-                "HOME": (workspace / "home").as_posix(),
-                "PATH": bin_dir.as_posix() + os.pathsep + environment["PATH"],
+                "PATH": os.pathsep.join(
+                    (bin_dir.as_posix(), user_scripts.as_posix(), environment["PATH"])
+                ),
                 "PIP_DISABLE_PIP_VERSION_CHECK": "1",
                 "PIP_FIND_LINKS": f"{candidate.parent} {wheelhouse}",
                 "PIP_NO_INDEX": "1",
@@ -103,7 +106,6 @@ def _run_quickstart(candidate: Path, wheelhouse: Path) -> dict[str, object]:
                 "PIPX_SHARED_LIBS": (workspace / "pipx-shared").as_posix(),
             }
         )
-        (workspace / "home").mkdir()
         process = subprocess.run(
             ["bash", "-euo", "pipefail", "-c", _quickstart_script()],
             cwd=repository,
