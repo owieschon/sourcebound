@@ -5,7 +5,7 @@
 Use this log when a current sourcebound behavior needs its design rationale or reversal path. It keeps consequential choices out of task docs so maintainers can change a decision without mistaking old process history for product truth.
 <!-- sourcebound:end purpose -->
 
-**[Read the newest decision](#50-keep-pull-request-delivery-static-and-package-verification-separately-2026-07-19)**.
+**[Read the newest decision](#51-treat-the-demo-workflow-path-rename-as-an-internal-migration-2026-07-21)**.
 
 Each entry records its context, choice, consequence, and reversal path as the design receipt.
 
@@ -556,3 +556,13 @@ callers can pin the prior workflow or remove the skill without changing CLI chec
 repair behavior. The workflow also starts Python in isolated mode and writes receipts outside the
 checkout, preventing fork-controlled import hooks or symlinks from redirecting trusted evidence;
 static pull-request execution remains the security floor.
+
+## 51. Treat the demo workflow path rename as an internal migration (2026-07-21)
+
+Context: the package namespace migration changed the deployment workflow trigger from the retired
+module path to `src/sourcebound/demo.py`. The public surface did not change. The workflow still
+publishes the same generated static demonstration; only the implementation path that triggers a
+rebuild changed. Chose a historical
+public disposition tied to the original base and changed artifact instead of claiming the workflow
+adapter could infer that relationship. Reversible: remove the disposition if the workflow gains a
+direct relationship that classifies trigger-path changes.

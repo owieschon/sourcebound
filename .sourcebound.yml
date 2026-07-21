@@ -169,6 +169,12 @@ review_contracts:
         extractor: markdown-section
         locator: "#evidence-and-execution"
 public_dispositions:
+  - base: 1e0bfe7a8fc75ea8d572c99986ed05e6164d6b08
+    kind: artifact
+    subject: fe7dc3155c564f68619597bba2e849be03cd76f34e96cdf4265b41e7e09ba623
+    documentation: DECISION_LOG.md
+    replacement: src/sourcebound/demo.py
+    reason: The deployment trigger follows the package namespace rename without changing the published demo contract.
   - base: 2dddc88e0f4d08a75c63ff7c080412976e580b21
     kind: event
     subject: d42fb3ef1f98bf03c1fbcf0cd8cf42c10ee3ac1aad299bc9323fda478c2c2351
