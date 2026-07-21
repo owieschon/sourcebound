@@ -13,7 +13,7 @@
 - [docs/README.md](docs/README.md): declared canonical context; sha256: b707c7d3b49ee95d924f48d6f7725960aafe5f55c7ebe08d26ffa22148112993
 - [docs/REFERENCE.md](docs/REFERENCE.md): bindings: binding-sensitivity-reference, manifest-reference, supported-bindings; sha256: 78dda9ca4a2ace33af74162dfe561948085187b988859eff3902fc48271dd50a
 - [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md): bindings: security-model; sha256: 3865422d3fe05b1f97cf68e89eaf4bd2cb662c1b7514d0dbcc64e04fc5755403
-- [docs/SUPPORT.md](docs/SUPPORT.md): bindings: support-guide; sha256: d26d344b47ff75813fcbc4e2df55e3045d3e7f94db7514c4637bf904e8549e69
+- [docs/SUPPORT.md](docs/SUPPORT.md): bindings: support-guide; sha256: 88d94f708cac9a623ec9b5d60068019d2b12a7447b9ec01ffec0ce8354c7a0e6
 - [docs/learn/deep-dive-the-deterministic-seam.md](docs/learn/deep-dive-the-deterministic-seam.md): bindings: deterministic-seam-evidence, deterministic-seam-gate, deterministic-seam-phrasing; sha256: 2f92809d492d57c4a9a6f83acff001cef0f433d4820107d8f3d40392387e6035
 - [docs/learn/index.md](docs/learn/index.md): declared canonical context; sha256: e4547bc1e3d5042ea8bd72311887163fc1243a18c54a71a1d768e6cb1e33c02c
 - [docs/learn/tutorial-catch-a-lying-doc.md](docs/learn/tutorial-catch-a-lying-doc.md): bindings: tutorial-outcomes; sha256: ad35c0291a8f850d9468499b37bff7fc4ccd0aa4a4cf88cd3bc59a426c962dbc
