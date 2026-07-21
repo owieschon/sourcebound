@@ -25,7 +25,7 @@ def _isolated_sourcebound_python(tmp_path: Path) -> Path:
     )
     python = environment / "bin" / "python"
     subprocess.run(
-        [str(python), "-m", "pip", "install", "--no-deps", "--no-build-isolation", str(ROOT)],
+        [str(python), "-m", "pip", "install", "--no-build-isolation", str(ROOT)],
         check=True,
     )
     return python
