@@ -105,7 +105,7 @@ def record() -> dict[str, object]:
         ],
         "next_step": {
             "label": "Run the local quickstart",
-            "href": "https://github.com/owieschon/sourcebound#install-and-audit",
+            "href": "https://github.com/owieschon/sourcebound#install-in-the-repository-you-want-to-protect",
         },
     }
 
