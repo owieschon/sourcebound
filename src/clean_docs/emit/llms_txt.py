@@ -1,4 +1,5 @@
 """Project a manifest into an llms.txt index of bound and declared canonical docs."""
+
 from __future__ import annotations
 
 import hashlib
@@ -25,11 +26,15 @@ def _bound_facts(manifest: Manifest) -> dict[str, list[str]]:
 
 
 def _indexed_documents(manifest: Manifest) -> dict[str, list[str]]:
-    documents = _bound_facts(manifest)
     projection = manifest.projections.llms_txt if manifest.projections else None
+    bound_facts = _bound_facts(manifest)
+    documents = (
+        bound_facts.copy() if projection is None or projection.include_bound else {}
+    )
     if projection is not None:
         for path in projection.include:
-            documents.setdefault(path.as_posix(), [])
+            document = path.as_posix()
+            documents.setdefault(document, bound_facts.get(document, []))
     return dict(sorted(documents.items()))
 
 
@@ -53,7 +58,9 @@ def _document_metadata(
         try:
             content = path.read_bytes()
         except OSError as exc:
-            raise ConfigurationError(f"cannot index document {document}: {exc}") from exc
+            raise ConfigurationError(
+                f"cannot index document {document}: {exc}"
+            ) from exc
     if output_path is None:
         link = document
     else:
@@ -76,9 +83,7 @@ def render_llms_txt(
     for doc, ids in _indexed_documents(manifest).items():
         link, digest = _document_metadata(manifest, doc, documents, output_path)
         status = f"bindings: {', '.join(ids)}" if ids else "declared canonical context"
-        lines.append(
-            f"- [{doc}]({link}): {status}; sha256: {digest}"
-        )
+        lines.append(f"- [{doc}]({link}): {status}; sha256: {digest}")
     return "\n".join(lines) + "\n"
 
 

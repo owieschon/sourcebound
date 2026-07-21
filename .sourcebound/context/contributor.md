@@ -1,13 +1,13 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `2a94e79aae0029b54348b567b81fc8dbc3e7b2223add8b4c4a2087f8cf08ae16`
+- Corpus sha256: `c3f487d6f5957c883525c3a9769149a4afa6c7da2775274cf5f0d079fbf02e7a`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `fdd116b30698cefac0c30f844a933284218a7f8a0d7b1d9f7157164c2992f508`
+- Content sha256: `c5dc88eadf3316d4749153b932dac527215b045713ae96d533d4d8e5ba93087b`
 
 <!-- sourcebound:canonical README.md begin -->
 # Sourcebound
@@ -28,13 +28,11 @@ Before adoption, `audit` reports bounded repository-neutral advisories. A manife
 | If you need to... | Start with | You will leave with... |
 | --- | --- | --- |
 | Try the repair loop | [Runnable tutorial](docs/learn/tutorial-catch-a-lying-doc.md) | A failed drift check and a repaired page |
-| Choose a command | [CLI reference](docs/CLI.md) | The command and its write boundary |
+| Adopt Sourcebound in an existing repository | [Support guide](docs/SUPPORT.md) | A narrow, reviewable first gate |
 | Configure a binding | [Manifest reference](docs/REFERENCE.md) | A source-bound fact with the right depth |
+| Choose a command | [CLI reference](docs/CLI.md) | The command and its write boundary |
 | Review a pull request | [Coverage-stating verdict](docs/CLI.md#pull-request-verdicts) | One pinned state with gaps, skips, and non-claims visible |
-| Turn a review issue into tests | [Improvement candidates](docs/IMPROVEMENTS.md) | Separate documentation and product tests without gate authority |
-| Evaluate human or agent tasks | [Evaluation guide](docs/EVALUATION.md) | A replayable result bound to its context and scorer |
-| Build grounded release notes | [Release guide](docs/RELEASES.md) | A factual delta with source evidence |
-| Measure recurring operational problems | [Opt-in feedback loop](docs/FEEDBACK.md) | Bounded envelopes and a receipted improvement case |
+| Choose the right documentation tool | [Ecosystem fit](docs/ECOSYSTEM.md) | One owner for each kind of defect |
 | Understand trust boundaries | [Security model](docs/SECURITY_MODEL.md) | The process and host guarantees |
 
 ## Why Sourcebound exists
@@ -46,6 +44,18 @@ Declared sources own the protected facts. A packaged policy enforces the determi
 <!-- sourcebound:end product-overview -->
 
 Human review can improve a sentence. It cannot make the sentence fail when its defining source changes. The [deterministic seam](docs/learn/deep-dive-the-deterministic-seam.md) explains how Sourcebound separates source evidence, optional phrasing, and gate authority.
+
+## Use Sourcebound when
+
+Use Sourcebound when an authored explanation contains a selected fact that has a stable owner in
+code, configuration, a schema, or a registry. For example, a public action table can derive from
+`ACTIONS` in `src/actions.py`; a source-only rename makes `check` fail, and `drive` updates only the
+declared table region. The [tutorial](docs/learn/tutorial-catch-a-lying-doc.md) runs that exact loop.
+
+Use another tool when it owns the job better. Vale can own prose mechanics. Doc Detective can own
+whether a consequential procedure still works. A generator can own an entire API or schema
+reference. If those tools already cover the facts you need, Sourcebound may not justify another
+gate. The [ecosystem guide](docs/ECOSYSTEM.md) names the boundary.
 
 ## Install in the repository you want to protect
 
@@ -76,20 +86,9 @@ After a bound source changes, run `check`, then use `drive` for a declared repai
 
 ## How the pieces fit
 
-Three inputs stay separate before the deterministic core:
+`authored intent + repository contract + change state → typed evidence → bounded check, repair, projection, and receipt`
 
-- **Authored intent** records why a surface matters. Sourcebound preserves that purpose; it does not infer its priority or turn judgment into gate authority.
-- **Repository contract** declares sources, binding mechanisms, process limits, and projections. Policy markers scope compatible form checks; they do not certify voice.
-- **Change state** combines base and head refs with that contract to produce an immutable impact plan. Static adapters and bounded commands produce typed evidence. Each mechanism proves only its declared relationship; accepted source-claim checks are separate, and unbound prose stays visibly unknown.
-
-The core exposes four job-specific exits:
-
-1. **Repair bounded prose.** `drive` writes only planned regions. `project` runs separately when a declared output depends on changed documentation.
-2. **Reject stale changes.** `check` and `verdict` are read-only. The verdict names changed, bound, unbound, and skipped surfaces.
-3. **Publish agent context.** `project` writes declared outputs such as `llms.txt` and context bundles.
-4. **Record local state.** `verify` emits its own outcome receipt.
-
-`verdict` and `verify` produce independent receipts. Neither certifies unbound or judgment prose. The [product contract](SOURCEBOUND_SPEC.md) defines each authority boundary.
+Intent supplies purpose; the repository contract supplies authority; change state supplies scope. Sourcebound keeps those inputs separate, and it never represents unbound prose or editorial judgment as verified. The [architecture reference](docs/ARCHITECTURE.md#documentation-flow) and [product contract](SOURCEBOUND_SPEC.md) name each boundary.
 
 ## Current boundaries
 

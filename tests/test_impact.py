@@ -248,12 +248,8 @@ def test_private_refactor_produces_coverage_complete_stable_no_impact(
     source.write_text(source.read_text().replace("return value", "return int(value)"))
     head = _commit(root, "refactor private helper")
 
-    first = build_impact_plan(
-        root, root / ".sourcebound.yml", base=base, head=head
-    )
-    second = build_impact_plan(
-        root, root / ".sourcebound.yml", base=base, head=head
-    )
+    first = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
+    second = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
 
     assert first.as_dict() == second.as_dict()
     assert first.digest == second.digest
@@ -262,22 +258,27 @@ def test_private_refactor_produces_coverage_complete_stable_no_impact(
     assert first.no_impact
     assert [item.path for item in first.artifacts] == ["src/api.py"]
     assert first.artifacts[0].coverage == "graph-covered"
-    assert first.artifacts[0].decision == "traversed accepted documentation relationships"
+    assert (
+        first.artifacts[0].decision == "traversed accepted documentation relationships"
+    )
     assert first.unknown == ()
 
-    assert main(
-        [
-            "--root",
-            str(root),
-            "plan",
-            "--base",
-            base,
-            "--head",
-            head,
-            "--format",
-            "json",
-        ]
-    ) == 0
+    assert (
+        main(
+            [
+                "--root",
+                str(root),
+                "plan",
+                "--base",
+                base,
+                "--head",
+                head,
+                "--format",
+                "json",
+            ]
+        )
+        == 0
+    )
     payload = json.loads(capsys.readouterr().out)
     assert payload["schema"] == "sourcebound.impact-plan.v2"
     assert payload["producer"] == {
@@ -326,9 +327,7 @@ def test_review_contract_recommends_review_for_selected_source_change(
     assert plan.unknown == ()
     assert {item.rule for item in plan.recommended} == {"review-contract"}
     source_artifact = next(
-        artifact
-        for artifact in plan.artifacts
-        if artifact.path == "src/delivery.py"
+        artifact for artifact in plan.artifacts if artifact.path == "src/delivery.py"
     )
     assert source_artifact.coverage == "adapter-covered"
     assert source_artifact.graph_roots == ()
@@ -382,10 +381,7 @@ def test_review_contract_records_relevant_target_cochange_without_claiming_truth
     assert result.state == "cochanged"
     assert result.semantic_correctness_checked is False
     assert result.targets[0].state == "changed"
-    assert not any(
-        finding.rule == "review-contract"
-        for finding in plan.recommended
-    )
+    assert not any(finding.rule == "review-contract" for finding in plan.recommended)
     assert plan.impact == "none"
     assert plan.coverage_complete
 
@@ -416,15 +412,10 @@ def test_review_contract_ignores_unselected_source_changes(
     )
 
     assert plan.review_contracts[0].state == "unaffected"
-    assert not any(
-        finding.rule == "review-contract"
-        for finding in plan.recommended
-    )
+    assert not any(finding.rule == "review-contract" for finding in plan.recommended)
     assert plan.impact == "none"
     assert plan.coverage_complete
-    artifact = next(
-        item for item in plan.artifacts if item.path == "src/delivery.py"
-    )
+    artifact = next(item for item in plan.artifacts if item.path == "src/delivery.py")
     assert artifact.coverage == "adapter-covered"
     assert "review-contract:delivery-paging" not in artifact.graph_roots
 
@@ -454,9 +445,7 @@ def test_unknown_review_contract_is_advisory_only(tmp_path: Path) -> None:
     assert plan.coverage_complete
     assert plan.required == ()
     assert plan.unknown == ()
-    finding = next(
-        item for item in plan.recommended if item.rule == "review-contract"
-    )
+    finding = next(item for item in plan.recommended if item.rule == "review-contract")
     assert finding.classification == "recommended"
     assert finding.obligations == ("review-declared-targets",)
 
@@ -490,12 +479,8 @@ def test_review_contract_keeps_result_paths_project_relative(
     result = plan.review_contracts[0]
     assert {item.path for item in result.sources} == {"src/delivery.py"}
     assert {item.path for item in result.targets} == {"docs/delivery.md"}
-    assert {item.path for item in plan.artifacts} == {
-        "packages/widget/src/delivery.py"
-    }
-    finding = next(
-        item for item in plan.recommended if item.rule == "review-contract"
-    )
+    assert {item.path for item in plan.artifacts} == {"packages/widget/src/delivery.py"}
+    finding = next(item for item in plan.recommended if item.rule == "review-contract")
     assert set(finding.paths) == {
         "packages/widget/src/delivery.py",
         "packages/widget/docs/delivery.md",
@@ -504,10 +489,7 @@ def test_review_contract_keeps_result_paths_project_relative(
         "artifact:packages/widget/src/delivery.py",
         "review-contract:delivery-paging",
         "affects",
-    ) in {
-        (edge.source, edge.target, edge.kind)
-        for edge in plan.edges
-    }
+    ) in {(edge.source, edge.target, edge.kind) for edge in plan.edges}
 
 
 def test_public_implementation_refactor_does_not_become_interface_work(
@@ -516,17 +498,15 @@ def test_public_implementation_refactor_does_not_become_interface_work(
     root = _symbol_repository(tmp_path)
     base = _commit(root, "base")
     source = root / "src/api.py"
-    source.write_text(source.read_text().replace("return timeout", "return int(timeout)"))
+    source.write_text(
+        source.read_text().replace("return timeout", "return int(timeout)")
+    )
     head = _commit(root, "refactor public implementation")
 
-    plan = build_impact_plan(
-        root, root / ".sourcebound.yml", base=base, head=head
-    )
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
 
     assert plan.impact == "none"
-    assert not any(
-        event.kind == "public-symbol-changed" for event in plan.events
-    )
+    assert not any(event.kind == "public-symbol-changed" for event in plan.events)
     assert {item.rule for item in plan.unrelated} == {"no-public-contract-delta"}
 
 
@@ -539,16 +519,12 @@ def test_unparseable_supported_source_is_unknown(
     source.write_text("def public_api(\n")
     head = _commit(root, "break source syntax")
 
-    plan = build_impact_plan(
-        root, root / ".sourcebound.yml", base=base, head=head
-    )
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
 
     assert plan.impact == "unknown"
     assert plan.artifacts[0].adapter == "python-ast:failed"
     assert plan.artifacts[0].coverage == "unknown"
-    assert {item.rule for item in plan.unknown} == {
-        "unsupported-public-candidate"
-    }
+    assert {item.rule for item in plan.unknown} == {"unsupported-public-candidate"}
 
 
 def test_unsupported_public_candidate_is_unknown_not_no_impact(
@@ -561,9 +537,7 @@ def test_unsupported_public_candidate_is_unknown_not_no_impact(
     )
     head = _commit(root, "add unsupported public service")
 
-    plan = build_impact_plan(
-        root, root / ".sourcebound.yml", base=base, head=head
-    )
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
 
     assert plan.impact == "unknown"
     assert not plan.coverage_complete
@@ -583,15 +557,11 @@ def test_internal_unsupported_script_does_not_expand_the_plan(
     (root / "scripts/format.sh").write_text("#!/bin/sh\nprintf '%s\\n' formatted\n")
     head = _commit(root, "add internal formatter")
 
-    plan = build_impact_plan(
-        root, root / ".sourcebound.yml", base=base, head=head
-    )
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
 
     assert plan.impact == "none"
     assert plan.artifacts[0].coverage == "unrelated-covered"
-    assert {item.rule for item in plan.unrelated} == {
-        "no-public-contract-delta"
-    }
+    assert {item.rule for item in plan.unrelated} == {"no-public-contract-delta"}
 
 
 def test_valid_mdx_change_is_classified_as_a_direct_document_change(
@@ -605,9 +575,7 @@ def test_valid_mdx_change_is_classified_as_a_direct_document_change(
     mdx.write_text("# Guide\n\n<Callout>New behavior</Callout>\n")
     head = _commit(root, "change unsupported MDX")
 
-    plan = build_impact_plan(
-        root, root / ".sourcebound.yml", base=base, head=head
-    )
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
     payload = plan.as_dict()
 
     assert plan.impact == "none"
@@ -616,9 +584,7 @@ def test_valid_mdx_change_is_classified_as_a_direct_document_change(
     assert payload["unsupported_documents"] == []
     assert plan.artifacts[0].adapter == "mdx-static"
     assert plan.artifacts[0].coverage == "document-direct"
-    assert {item.rule for item in plan.unrelated} == {
-        "direct-document-change"
-    }
+    assert {item.rule for item in plan.unrelated} == {"direct-document-change"}
 
 
 def test_malformed_mdx_change_is_unknown_and_disclosed(tmp_path: Path) -> None:
@@ -630,18 +596,14 @@ def test_malformed_mdx_change_is_unknown_and_disclosed(tmp_path: Path) -> None:
     mdx.write_text("# Guide\n\n<Callout>New behavior\n")
     head = _commit(root, "break MDX")
 
-    plan = build_impact_plan(
-        root, root / ".sourcebound.yml", base=base, head=head
-    )
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
 
     assert plan.impact == "unknown"
     assert not plan.coverage_complete
     assert plan.unsupported_documents == ("docs/guide.mdx",)
     assert plan.artifacts[0].adapter == "mdx-static:failed"
     assert plan.artifacts[0].coverage == "unknown"
-    assert {item.rule for item in plan.unknown} == {
-        "unsupported-document-format"
-    }
+    assert {item.rule for item in plan.unknown} == {"unsupported-document-format"}
 
 
 def test_document_line_moves_do_not_invent_semantic_events(
@@ -649,9 +611,7 @@ def test_document_line_moves_do_not_invent_semantic_events(
 ) -> None:
     root = _symbol_repository(tmp_path)
     readme = root / "README.md"
-    readme.write_text(
-        readme.read_text() + "\nSee [the source](src/api.py).\n"
-    )
+    readme.write_text(readme.read_text() + "\nSee [the source](src/api.py).\n")
     base = _commit(root, "base")
     readme.write_text(
         readme.read_text().replace(
@@ -660,16 +620,12 @@ def test_document_line_moves_do_not_invent_semantic_events(
     )
     head = _commit(root, "move link down")
 
-    plan = build_impact_plan(
-        root, root / ".sourcebound.yml", base=base, head=head
-    )
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
 
     assert plan.impact == "none"
     assert plan.events == ()
     assert plan.artifacts[0].coverage == "graph-covered"
-    assert {item.rule for item in plan.unrelated} == {
-        "no-public-contract-delta"
-    }
+    assert {item.rule for item in plan.unrelated} == {"no-public-contract-delta"}
 
 
 def test_unsupported_runtime_control_is_unknown(
@@ -680,15 +636,11 @@ def test_unsupported_runtime_control_is_unknown(
     (root / "Dockerfile").write_text("FROM python:3.14\n")
     head = _commit(root, "change runtime container")
 
-    plan = build_impact_plan(
-        root, root / ".sourcebound.yml", base=base, head=head
-    )
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
 
     assert plan.impact == "unknown"
     assert plan.artifacts[0].may_expose_public_surface
-    assert {item.rule for item in plan.unknown} == {
-        "unsupported-public-candidate"
-    }
+    assert {item.rule for item in plan.unknown} == {"unsupported-public-candidate"}
 
 
 def test_workflow_job_change_is_supported_advisory_impact(
@@ -724,18 +676,14 @@ def test_workflow_job_change_is_supported_advisory_impact(
     workflow.write_text(workflow.read_text().replace("pytest", "pytest -q"))
     head = _commit(root, "change test job")
 
-    plan = build_impact_plan(
-        root, root / ".sourcebound.yml", base=base, head=head
-    )
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
 
     assert plan.impact == "recommended"
     assert plan.coverage_complete
     assert plan.required == ()
     assert plan.artifacts[0].adapter == "github-actions-static"
     assert {event.kind for event in plan.events} == {"ci-job-changed"}
-    assert {item.rule for item in plan.recommended} == {
-        "public-contract-change"
-    }
+    assert {item.rule for item in plan.recommended} == {"public-contract-change"}
 
 
 def test_workflow_path_filter_is_unknown_without_a_run_receipt(tmp_path: Path) -> None:
@@ -796,7 +744,9 @@ def test_impact_reuses_changed_inventory_for_repository_overview(
     assert main(["--root", str(root), "derive", "--write"]) == 0
     base = _commit(root, "base")
     source = root / "src/api.py"
-    source.write_text(source.read_text().replace("return timeout", "return int(timeout)"))
+    source.write_text(
+        source.read_text().replace("return timeout", "return int(timeout)")
+    )
     head = _commit(root, "refactor implementation")
 
     def unexpected_rescan(_root: Path) -> object:
@@ -825,15 +775,11 @@ def test_malformed_workflow_cannot_become_no_impact(
     workflow.write_text("jobs: [not-a-mapping]\n")
     head = _commit(root, "add malformed workflow")
 
-    plan = build_impact_plan(
-        root, root / ".sourcebound.yml", base=base, head=head
-    )
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
 
     assert plan.impact == "unknown"
     assert plan.artifacts[0].adapter == "github-actions-static:failed"
-    assert {item.rule for item in plan.unknown} == {
-        "unsupported-public-candidate"
-    }
+    assert {item.rule for item in plan.unknown} == {"unsupported-public-candidate"}
 
 
 def test_public_default_change_reaches_reference_and_migration_obligations(
@@ -842,17 +788,19 @@ def test_public_default_change_reaches_reference_and_migration_obligations(
     root = _symbol_repository(tmp_path)
     base = _commit(root, "base")
     source = root / "src/api.py"
-    source.write_text(source.read_text().replace("timeout: int = 5", "timeout: int = 10"))
+    source.write_text(
+        source.read_text().replace("timeout: int = 5", "timeout: int = 10")
+    )
     head = _commit(root, "change public default")
 
-    plan = build_impact_plan(
-        root, root / ".sourcebound.yml", base=base, head=head
-    )
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
 
     assert plan.impact == "required"
     event = next(item for item in plan.events if item.kind == "public-symbol-changed")
     assert event.coverage == "bound"
-    finding = next(item for item in plan.required if item.rule == "public-contract-change")
+    finding = next(
+        item for item in plan.required if item.rule == "public-contract-change"
+    )
     assert finding.obligations == ("review-migration", "review-reference")
     assert "binding:public-api" in finding.graph_roots
 
@@ -901,16 +849,12 @@ ignore:
     )
     head = _commit(root, "add TypeScript interface member")
 
-    plan = build_impact_plan(
-        root, root / ".sourcebound.yml", base=base, head=head
-    )
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
 
     assert plan.impact == "none"
     event = next(item for item in plan.events if item.kind == "public-symbol-changed")
     assert event.coverage == "ignored"
-    assert {item.rule for item in plan.unrelated} == {
-        "ignored-public-contract"
-    }
+    assert {item.rule for item in plan.unrelated} == {"ignored-public-contract"}
 
 
 def test_binding_change_traverses_projection_and_evaluation(
@@ -922,9 +866,7 @@ def test_binding_change_traverses_projection_and_evaluation(
     source.write_text(source.read_text().replace("report", "publish"))
     head = _commit(root, "rename action")
 
-    plan = build_impact_plan(
-        root, root / ".sourcebound.yml", base=base, head=head
-    )
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
 
     assert plan.impact == "required"
     assert {item.rule for item in plan.required} >= {
@@ -940,6 +882,31 @@ def test_binding_change_traverses_projection_and_evaluation(
     }
 
 
+def test_explicit_only_llms_context_does_not_refresh_for_an_excluded_binding(
+    tmp_path: Path,
+) -> None:
+    root = _projection_repository(tmp_path)
+    (root / "docs").mkdir()
+    (root / "docs/CANONICAL.md").write_text("# Canonical\n\nFixed context.\n")
+    manifest = root / ".sourcebound.yml"
+    manifest.write_text(
+        manifest.read_text().replace(
+            "    output: llms.txt\n    include: [README.md]",
+            "    output: llms.txt\n    include_bound: false\n    include: [docs/CANONICAL.md]",
+        )
+    )
+    assert main(["--root", str(root), "project"]) == 0
+    base = _commit(root, "use explicit-only context")
+    source = root / "src/actions.py"
+    source.write_text(source.read_text().replace("report", "publish"))
+    head = _commit(root, "rename action")
+
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
+
+    assert "binding-drift" in {item.rule for item in plan.required}
+    assert "projection-refresh" not in {item.rule for item in plan.required}
+
+
 def test_generated_projection_change_does_not_trigger_itself(
     tmp_path: Path,
 ) -> None:
@@ -949,9 +916,7 @@ def test_generated_projection_change_does_not_trigger_itself(
     projection.write_text(projection.read_text() + "\nmanual edit\n")
     head = _commit(root, "touch generated projection")
 
-    plan = build_impact_plan(
-        root, root / ".sourcebound.yml", base=base, head=head
-    )
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
 
     assert plan.impact == "none"
     assert plan.coverage_complete
@@ -996,15 +961,11 @@ annotations: []
     assert main(["--root", str(root), "project"]) == 0
     base = _commit(root, "add visual")
     record.write_text(
-        record.read_text().replace(
-            "sends accepted work", "sends validated work"
-        )
+        record.read_text().replace("sends accepted work", "sends validated work")
     )
     head = _commit(root, "clarify visual")
 
-    plan = build_impact_plan(
-        root, root / ".sourcebound.yml", base=base, head=head
-    )
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
 
     assert {item.rule for item in plan.required} >= {"projection-refresh"}
     assert {
@@ -1063,7 +1024,7 @@ ignore:
 public_dispositions:
   - base: {base}
     kind: event
-    subject: {next(item.id for item in first.events if item.kind == 'command-removed')}
+    subject: {next(item.id for item in first.events if item.kind == "command-removed")}
     documentation: README.md
     replacement: current-entry
     reason: The installation page names the supported command after the rename.
@@ -1076,9 +1037,7 @@ public_dispositions:
     assert plan.coverage_complete
     assert not plan.unknown
     disposition = next(
-        item
-        for item in plan.unrelated
-        if item.rule == "declared-public-disposition"
+        item for item in plan.unrelated if item.rule == "declared-public-disposition"
     )
     assert "README.md" in disposition.message
     assert "current-entry" in disposition.message

@@ -49,23 +49,42 @@ ROOT_KEYS = {
     "source_claim_checks",
 }
 BINDING_KEYS = {
-    "id", "type", "doc", "region", "anchor", "extractor", "source", "renderer",
-    "columns", "language", "command", "assertion",
+    "id",
+    "type",
+    "doc",
+    "region",
+    "anchor",
+    "extractor",
+    "source",
+    "renderer",
+    "columns",
+    "language",
+    "command",
+    "assertion",
 }
 SOURCE_KEYS = {"path", "symbol", "pointer", "glob"}
 EXTRACTORS = {
-    "file", "json", "path", "python-literal", "repository-inventory",
-    "repository-overview", "structured-data",
+    "file",
+    "json",
+    "path",
+    "python-literal",
+    "repository-inventory",
+    "repository-overview",
+    "structured-data",
 }
 RENDERERS = {
-    "fenced-text", "markdown-fragment", "markdown-list", "markdown-table", "scalar"
+    "fenced-text",
+    "markdown-fragment",
+    "markdown-list",
+    "markdown-table",
+    "scalar",
 }
 EXECUTION_KEYS = {"commands", "allowed_commands"}
 COMMAND_KEYS = {"argv", "timeout_seconds"}
 LEGACY_COMMAND_KEYS = COMMAND_KEYS | {"network"}
 ASSERTION_KEYS = {"json_path", "operator", "expected", "prose"}
 PROJECTION_KEYS = {"llms_txt", "bundles", "demo", "visuals"}
-LLMS_TXT_KEYS = {"output", "title", "summary", "include"}
+LLMS_TXT_KEYS = {"output", "title", "summary", "include", "include_bound"}
 BUNDLE_KEYS = {"id", "output", "include"}
 DEMO_KEYS = {"output", "evidence"}
 VISUAL_KEYS = {"id", "source", "human_output", "agent_output"}
@@ -89,7 +108,12 @@ REVIEW_EXTRACTOR_SUFFIXES = {
     "structured-data": {".json", ".toml", ".yaml", ".yml"},
 }
 PUBLIC_DISPOSITION_KEYS = {
-    "base", "kind", "subject", "documentation", "replacement", "reason"
+    "base",
+    "kind",
+    "subject",
+    "documentation",
+    "replacement",
+    "reason",
 }
 MANIFEST_REFERENCE = (
     {
@@ -140,12 +164,7 @@ def _one_line(raw: Any, where: str) -> str | None:
 
 
 def _required_string(raw: Any, where: str) -> str:
-    if (
-        not isinstance(raw, str)
-        or not raw.strip()
-        or "\n" in raw
-        or "\r" in raw
-    ):
+    if not isinstance(raw, str) or not raw.strip() or "\n" in raw or "\r" in raw:
         raise ConfigurationError(f"{where} must be one non-empty line")
     return raw.strip()
 
@@ -172,8 +191,7 @@ def _load_review_locator(raw: Any, where: str) -> ReviewLocator:
     extractor = data.get("extractor")
     if extractor not in REVIEW_EXTRACTORS:
         raise ConfigurationError(
-            f"{where}.extractor must be one of: "
-            + ", ".join(sorted(REVIEW_EXTRACTORS))
+            f"{where}.extractor must be one of: " + ", ".join(sorted(REVIEW_EXTRACTORS))
         )
     locator = _required_string(data.get("locator"), f"{where}.locator")
     suffixes = REVIEW_EXTRACTOR_SUFFIXES[extractor]
@@ -209,8 +227,7 @@ def _load_review_contracts(raw: Any) -> tuple[ReviewContract, ...]:
         raise ConfigurationError("review_contracts must be a list")
     if len(raw) > MAX_REVIEW_CONTRACTS:
         raise ConfigurationError(
-            "review_contracts must contain at most "
-            f"{MAX_REVIEW_CONTRACTS} contracts"
+            f"review_contracts must contain at most {MAX_REVIEW_CONTRACTS} contracts"
         )
     contracts: list[ReviewContract] = []
     contract_ids: set[str] = set()
@@ -266,12 +283,10 @@ def _load_review_contracts(raw: Any) -> tuple[ReviewContract, ...]:
         total_locators += contract_locator_count
         if total_locators > MAX_REVIEW_LOCATORS:
             raise ConfigurationError(
-                "review_contracts must contain at most "
-                f"{MAX_REVIEW_LOCATORS} locators"
+                f"review_contracts must contain at most {MAX_REVIEW_LOCATORS} locators"
             )
         unique_paths.update(
-            locator.path
-            for locator in groups["sources"] + groups["targets"]
+            locator.path for locator in groups["sources"] + groups["targets"]
         )
         if len(unique_paths) > MAX_REVIEW_UNIQUE_PATHS:
             raise ConfigurationError(
@@ -375,12 +390,20 @@ def _load_projections(raw: Any, bound_docs: set[Path]) -> ProjectionConfig | Non
             _relative_path(path, "projections.llms_txt.include") for path in raw_include
         )
         if len(set(include)) != len(include):
-            raise ConfigurationError("projections.llms_txt.include must not contain duplicates")
+            raise ConfigurationError(
+                "projections.llms_txt.include must not contain duplicates"
+            )
+        include_bound = item.get("include_bound", True)
+        if not isinstance(include_bound, bool):
+            raise ConfigurationError(
+                "projections.llms_txt.include_bound must be a boolean"
+            )
         llms_txt = LlmsTxtProjection(
             output=_relative_path(item.get("output"), "projections.llms_txt.output"),
             title=_one_line(item.get("title"), "projections.llms_txt.title"),
             summary=_one_line(item.get("summary"), "projections.llms_txt.summary"),
             include=include,
+            include_bound=include_bound,
         )
         if llms_txt.output in include:
             raise ConfigurationError(
@@ -413,7 +436,9 @@ def _load_projections(raw: Any, bound_docs: set[Path]) -> ProjectionConfig | Non
             or not all(isinstance(path, str) for path in raw_include)
         ):
             raise ConfigurationError(f"{where}.include must be a non-empty path list")
-        include = tuple(_relative_path(path, f"{where}.include") for path in raw_include)
+        include = tuple(
+            _relative_path(path, f"{where}.include") for path in raw_include
+        )
         if len(set(include)) != len(include):
             raise ConfigurationError(f"{where}.include must not contain duplicates")
         unknown = sorted(path.as_posix() for path in include if path not in bound_docs)
@@ -458,14 +483,10 @@ def _load_projections(raw: Any, bound_docs: set[Path]) -> ProjectionConfig | Non
         source = _relative_path(item.get("source"), f"{where}.source")
         if source.suffix.lower() not in {".json", ".yaml", ".yml"}:
             raise ConfigurationError(f"{where}.source must be JSON or YAML")
-        human_output = _relative_path(
-            item.get("human_output"), f"{where}.human_output"
-        )
+        human_output = _relative_path(item.get("human_output"), f"{where}.human_output")
         if human_output.suffix.lower() not in {".md", ".mdx"}:
             raise ConfigurationError(f"{where}.human_output must be Markdown or MDX")
-        agent_output = _relative_path(
-            item.get("agent_output"), f"{where}.agent_output"
-        )
+        agent_output = _relative_path(item.get("agent_output"), f"{where}.agent_output")
         if agent_output.suffix.lower() != ".md":
             raise ConfigurationError(f"{where}.agent_output must be Markdown")
         if human_output == agent_output:
@@ -480,9 +501,7 @@ def _load_projections(raw: Any, bound_docs: set[Path]) -> ProjectionConfig | Non
             if output == source:
                 raise ConfigurationError(f"{where}.source cannot also be an output")
             outputs.add(output)
-        visuals.append(
-            VisualProjection(visual_id, source, human_output, agent_output)
-        )
+        visuals.append(VisualProjection(visual_id, source, human_output, agent_output))
     if llms_txt is None and not bundles and demo is None and not visuals:
         raise ConfigurationError(
             "projections must configure llms_txt, a bundle, a demo, or visuals"
@@ -522,8 +541,14 @@ def load_manifest(path: Path) -> Manifest:
         plugin_data = _mapping(raw_plugin, where)
         _reject_unknown(plugin_data, PLUGIN_KEYS, where)
         plugin_id = plugin_data.get("id")
-        if not isinstance(plugin_id, str) or not plugin_id or not plugin_id.replace("-", "").isalnum():
-            raise ConfigurationError(f"{where}.id must contain letters, numbers, and hyphens")
+        if (
+            not isinstance(plugin_id, str)
+            or not plugin_id
+            or not plugin_id.replace("-", "").isalnum()
+        ):
+            raise ConfigurationError(
+                f"{where}.id must contain letters, numbers, and hyphens"
+            )
         if plugin_id in plugin_ids:
             raise ConfigurationError(f"duplicate plugin id: {plugin_id}")
         plugin_ids.add(plugin_id)
@@ -537,7 +562,10 @@ def load_manifest(path: Path) -> Manifest:
         if (
             not isinstance(interfaces, list)
             or not interfaces
-            or not all(isinstance(item, str) and item in PLUGIN_INTERFACES for item in interfaces)
+            or not all(
+                isinstance(item, str) and item in PLUGIN_INTERFACES
+                for item in interfaces
+            )
             or len(set(interfaces)) != len(interfaces)
         ):
             raise ConfigurationError(
@@ -545,8 +573,10 @@ def load_manifest(path: Path) -> Manifest:
                 + ", ".join(sorted(PLUGIN_INTERFACES))
             )
         argv = plugin_data.get("argv")
-        if not isinstance(argv, list) or not argv or not all(
-            isinstance(item, str) and item for item in argv
+        if (
+            not isinstance(argv, list)
+            or not argv
+            or not all(isinstance(item, str) and item for item in argv)
         ):
             raise ConfigurationError(f"{where}.argv must be a non-empty string list")
         timeout = plugin_data.get("timeout_seconds", 30)
@@ -564,7 +594,9 @@ def load_manifest(path: Path) -> Manifest:
         _reject_unknown(execution_data, EXECUTION_KEYS, "execution")
         if execution_data.get("commands", "deny") != "deny":
             raise ConfigurationError("execution.commands must be deny")
-        allowed = _mapping(execution_data.get("allowed_commands", {}), "execution.allowed_commands")
+        allowed = _mapping(
+            execution_data.get("allowed_commands", {}), "execution.allowed_commands"
+        )
         for command_id, raw_command in allowed.items():
             where = f"execution.allowed_commands.{command_id}"
             command = _mapping(raw_command, where)
@@ -575,17 +607,27 @@ def load_manifest(path: Path) -> Manifest:
             )
             argv = command.get("argv")
             timeout = command.get("timeout_seconds", 30)
-            if not isinstance(argv, list) or not argv or not all(isinstance(item, str) and item for item in argv):
-                raise ConfigurationError(f"execution.allowed_commands.{command_id}.argv must be a non-empty string list")
+            if (
+                not isinstance(argv, list)
+                or not argv
+                or not all(isinstance(item, str) and item for item in argv)
+            ):
+                raise ConfigurationError(
+                    f"execution.allowed_commands.{command_id}.argv must be a non-empty string list"
+                )
             if PYTHON_EXECUTABLE_TOKEN in argv[1:]:
                 raise ConfigurationError(
                     f"execution.allowed_commands.{command_id}.argv may use "
                     f"{PYTHON_EXECUTABLE_TOKEN} only as its executable"
                 )
             if not isinstance(timeout, int) or not 1 <= timeout <= 300:
-                raise ConfigurationError(f"execution.allowed_commands.{command_id}.timeout_seconds must be 1..300")
+                raise ConfigurationError(
+                    f"execution.allowed_commands.{command_id}.timeout_seconds must be 1..300"
+                )
             if version == 1 and command.get("network", False) is not False:
-                raise ConfigurationError(f"execution.allowed_commands.{command_id}.network must be false")
+                raise ConfigurationError(
+                    f"execution.allowed_commands.{command_id}.network must be false"
+                )
             if version == 1 and "network" in command:
                 deprecations.append(f"{where}.network")
             commands.append(CommandSpec(command_id, tuple(argv), timeout))
@@ -663,20 +705,30 @@ def load_manifest(path: Path) -> Manifest:
             raise ConfigurationError(f"{where}.type must be region, claim, or symbol")
         if binding_type == "claim":
             if data.get("extractor") != "command":
-                raise ConfigurationError(f"{where}.extractor must be command for a claim")
+                raise ConfigurationError(
+                    f"{where}.extractor must be command for a claim"
+                )
             command_ref = data.get("command")
-            if not isinstance(command_ref, str) or command_ref not in {item.id for item in commands}:
-                raise ConfigurationError(f"{where}.command must name an allowed command")
+            if not isinstance(command_ref, str) or command_ref not in {
+                item.id for item in commands
+            }:
+                raise ConfigurationError(
+                    f"{where}.command must name an allowed command"
+                )
             assertion_data = _mapping(data.get("assertion"), f"{where}.assertion")
             _reject_unknown(assertion_data, ASSERTION_KEYS, f"{where}.assertion")
             json_path = assertion_data.get("json_path")
             if not isinstance(json_path, str) or not json_path.startswith("$."):
-                raise ConfigurationError(f"{where}.assertion.json_path must start with $.")
+                raise ConfigurationError(
+                    f"{where}.assertion.json_path must start with $."
+                )
             if assertion_data.get("operator") != "equals":
                 raise ConfigurationError(f"{where}.assertion.operator must be equals")
             prose = assertion_data.get("prose")
             if prose is not None and (not isinstance(prose, str) or not prose.strip()):
-                raise ConfigurationError(f"{where}.assertion.prose must be non-empty when configured")
+                raise ConfigurationError(
+                    f"{where}.assertion.prose must be non-empty when configured"
+                )
             expected_text = json.dumps(assertion_data.get("expected"), sort_keys=True)
             if prose is not None and expected_text not in prose:
                 raise ConfigurationError(
@@ -685,39 +737,49 @@ def load_manifest(path: Path) -> Manifest:
             anchor = data.get("anchor")
             if not isinstance(anchor, str) or not anchor:
                 raise ConfigurationError(f"{where}.anchor must be non-empty")
-            bindings.append(ClaimBinding(
-                id=binding_id,
-                doc=_relative_path(data.get("doc"), f"{where}.doc"),
-                anchor=anchor,
-                extractor="command",
-                command=command_ref,
-                assertion=Assertion(
-                    json_path,
-                    "equals",
-                    assertion_data.get("expected"),
-                    prose,
-                ),
-            ))
+            bindings.append(
+                ClaimBinding(
+                    id=binding_id,
+                    doc=_relative_path(data.get("doc"), f"{where}.doc"),
+                    anchor=anchor,
+                    extractor="command",
+                    command=command_ref,
+                    assertion=Assertion(
+                        json_path,
+                        "equals",
+                        assertion_data.get("expected"),
+                        prose,
+                    ),
+                )
+            )
             continue
 
         source_data = _mapping(data.get("source"), f"{where}.source")
         _reject_unknown(source_data, SOURCE_KEYS, f"{where}.source")
         if binding_type == "symbol":
             symbol = source_data.get("symbol")
-            if symbol is not None and (not isinstance(symbol, str) or not symbol.isidentifier()):
-                raise ConfigurationError(f"{where}.source.symbol must be a Python identifier")
+            if symbol is not None and (
+                not isinstance(symbol, str) or not symbol.isidentifier()
+            ):
+                raise ConfigurationError(
+                    f"{where}.source.symbol must be a Python identifier"
+                )
             anchor = data.get("anchor")
             if not isinstance(anchor, str) or not anchor:
                 raise ConfigurationError(f"{where}.anchor must be non-empty")
-            bindings.append(SymbolBinding(
-                id=binding_id,
-                doc=_relative_path(data.get("doc"), f"{where}.doc"),
-                anchor=anchor,
-                source=Source(
-                    path=_relative_path(source_data.get("path"), f"{where}.source.path"),
-                    symbol=symbol,
-                ),
-            ))
+            bindings.append(
+                SymbolBinding(
+                    id=binding_id,
+                    doc=_relative_path(data.get("doc"), f"{where}.doc"),
+                    anchor=anchor,
+                    source=Source(
+                        path=_relative_path(
+                            source_data.get("path"), f"{where}.source.path"
+                        ),
+                        symbol=symbol,
+                    ),
+                )
+            )
             continue
 
         extractor = data.get("extractor")
@@ -744,9 +806,7 @@ def load_manifest(path: Path) -> Manifest:
         if not isinstance(renderer, str):
             raise ConfigurationError(f"{where}.renderer must be a non-empty string")
         plugin_renderer = (
-            renderer.removeprefix("plugin:")
-            if renderer.startswith("plugin:")
-            else None
+            renderer.removeprefix("plugin:") if renderer.startswith("plugin:") else None
         )
         if renderer not in RENDERERS and plugin_renderer is None:
             raise ConfigurationError(
@@ -772,12 +832,18 @@ def load_manifest(path: Path) -> Manifest:
                 )
         elif extractor == "python-literal":
             if not isinstance(symbol, str) or not symbol.isidentifier():
-                raise ConfigurationError(f"{where}.source.symbol must be a Python identifier")
+                raise ConfigurationError(
+                    f"{where}.source.symbol must be a Python identifier"
+                )
             if pointer is not None or source_glob is not None:
-                raise ConfigurationError(f"{where}.source has fields invalid for python-literal")
+                raise ConfigurationError(
+                    f"{where}.source has fields invalid for python-literal"
+                )
         elif extractor == "json":
             if symbol is not None:
-                raise ConfigurationError(f"{where}.source.symbol is only valid for python-literal")
+                raise ConfigurationError(
+                    f"{where}.source.symbol is only valid for python-literal"
+                )
             if not isinstance(pointer, str) or not pointer.startswith("/"):
                 raise ConfigurationError(
                     f"{where}.source.pointer must be a JSON Pointer starting with /"
@@ -788,10 +854,14 @@ def load_manifest(path: Path) -> Manifest:
             ):
                 raise ConfigurationError(f"{where}.source.pointer must start with /")
             if symbol is not None or source_glob is not None:
-                raise ConfigurationError(f"{where}.source has fields invalid for structured-data")
+                raise ConfigurationError(
+                    f"{where}.source has fields invalid for structured-data"
+                )
         elif extractor == "file":
             if any(value is not None for value in (symbol, pointer, source_glob)):
-                raise ConfigurationError(f"{where}.source.path is the only valid file source field")
+                raise ConfigurationError(
+                    f"{where}.source.path is the only valid file source field"
+                )
         elif extractor in {"repository-inventory", "repository-overview"}:
             if source_path != "." or any(
                 value is not None for value in (symbol, pointer, source_glob)
@@ -804,9 +874,13 @@ def load_manifest(path: Path) -> Manifest:
                 raise ConfigurationError(f"{where}.source.glob must be non-empty")
             glob_path = Path(source_glob)
             if glob_path.is_absolute() or ".." in glob_path.parts:
-                raise ConfigurationError(f"{where}.source.glob must stay inside the repository")
+                raise ConfigurationError(
+                    f"{where}.source.glob must stay inside the repository"
+                )
             if any(value is not None for value in (symbol, pointer, source_path)):
-                raise ConfigurationError(f"{where}.source.glob is the only valid path source field")
+                raise ConfigurationError(
+                    f"{where}.source.glob is the only valid path source field"
+                )
 
         compatible = {
             "file": {"fenced-text", "scalar"},
@@ -841,26 +915,32 @@ def load_manifest(path: Path) -> Manifest:
                 or not all(isinstance(column, str) and column for column in columns)
                 or len(set(columns)) != len(columns)
             ):
-                raise ConfigurationError(f"{where}.columns must be unique non-empty strings")
+                raise ConfigurationError(
+                    f"{where}.columns must be unique non-empty strings"
+                )
         elif columns:
-            raise ConfigurationError(f"{where}.columns is only valid for markdown-table")
-        bindings.append(RegionBinding(
-            id=binding_id,
-            doc=_relative_path(data.get("doc"), f"{where}.doc"),
-            region=region,
-            extractor=extractor,
-            source=Source(
-                path=Path(".") if extractor == "path" else _relative_path(
-                    source_path, f"{where}.source.path"
+            raise ConfigurationError(
+                f"{where}.columns is only valid for markdown-table"
+            )
+        bindings.append(
+            RegionBinding(
+                id=binding_id,
+                doc=_relative_path(data.get("doc"), f"{where}.doc"),
+                region=region,
+                extractor=extractor,
+                source=Source(
+                    path=Path(".")
+                    if extractor == "path"
+                    else _relative_path(source_path, f"{where}.source.path"),
+                    symbol=symbol,
+                    pointer=pointer,
+                    glob=source_glob,
                 ),
-                symbol=symbol,
-                pointer=pointer,
-                glob=source_glob,
-            ),
-            renderer=renderer,
-            columns=tuple(columns),
-            language=language,
-        ))
+                renderer=renderer,
+                columns=tuple(columns),
+                language=language,
+            )
+        )
     projections = _load_projections(
         root.get("projections"), {binding.doc for binding in bindings}
     )

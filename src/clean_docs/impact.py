@@ -147,18 +147,11 @@ class ImpactPlan:
 
     def _payload(self) -> dict[str, object]:
         roots = sorted(
-            {
-                root
-                for artifact in self.artifacts
-                for root in artifact.graph_roots
-            }
+            {root for artifact in self.artifacts for root in artifact.graph_roots}
             | {
                 root
                 for finding in (
-                    self.required
-                    + self.recommended
-                    + self.unrelated
-                    + self.unknown
+                    self.required + self.recommended + self.unrelated + self.unknown
                 )
                 for root in finding.graph_roots
             }
@@ -180,9 +173,7 @@ class ImpactPlan:
             "unsupported_documents": list(self.unsupported_documents),
             "artifacts": [asdict(item) for item in self.artifacts],
             "events": [asdict(item) for item in self.events],
-            "review_contracts": [
-                item.as_dict() for item in self.review_contracts
-            ],
+            "review_contracts": [item.as_dict() for item in self.review_contracts],
             "graph": {
                 "roots": roots,
                 "edges": [asdict(item) for item in self.edges],
@@ -206,9 +197,7 @@ class _ImpactPreparation:
     changed: ChangedReport
     prefix: str
     project_changed: tuple[str, ...]
-    inventory_changes: list[
-        tuple[str, InventoryItem | None, InventoryItem | None]
-    ]
+    inventory_changes: list[tuple[str, InventoryItem | None, InventoryItem | None]]
     public_locator_changes: set[tuple[str, str]]
     required_document_paths: set[str]
     artifact_roots: dict[str, set[str]]
@@ -244,29 +233,17 @@ def _python_interface_payload(node: ast.AST) -> dict[str, object]:
             "name": node.name,
             "arguments": _stable_ast_dump(node.args),
             "returns": (
-                _stable_ast_dump(node.returns)
-                if node.returns is not None
-                else None
+                _stable_ast_dump(node.returns) if node.returns is not None else None
             ),
-            "decorators": [
-                _stable_ast_dump(item)
-                for item in node.decorator_list
-            ],
+            "decorators": [_stable_ast_dump(item) for item in node.decorator_list],
         }
     if isinstance(node, ast.ClassDef):
         return {
             "kind": type(node).__name__,
             "name": node.name,
-            "bases": [
-                _stable_ast_dump(item) for item in node.bases
-            ],
-            "keywords": [
-                _stable_ast_dump(item) for item in node.keywords
-            ],
-            "decorators": [
-                _stable_ast_dump(item)
-                for item in node.decorator_list
-            ],
+            "bases": [_stable_ast_dump(item) for item in node.bases],
+            "keywords": [_stable_ast_dump(item) for item in node.keywords],
+            "decorators": [_stable_ast_dump(item) for item in node.decorator_list],
         }
     raise TypeError(f"unsupported public declaration: {type(node).__name__}")
 
@@ -349,9 +326,7 @@ def _interface_fingerprints(
     failed: set[str] = set()
     snapshot = RepositorySnapshot(root, ref)
     for path in sorted(paths):
-        repository_path = (
-            path if project == Path(".") else (project / path).as_posix()
-        )
+        repository_path = path if project == Path(".") else (project / path).as_posix()
         if _blob_id(root, ref, repository_path) is None:
             continue
         try:
@@ -367,10 +342,7 @@ def _interface_fingerprints(
             except SyntaxError:
                 failed.add(path)
                 continue
-            is_test = (
-                candidate.name.startswith("test_")
-                or "/tests/" in f"/{path}"
-            )
+            is_test = candidate.name.startswith("test_") or "/tests/" in f"/{path}"
             if is_test or candidate.name in PYTHON_TOOLING_MODULES:
                 continue
             for node in tree.body:
@@ -379,16 +351,12 @@ def _interface_fingerprints(
                 ) or node.name.startswith("_"):
                     continue
                 item_id = f"api-symbol:{path}:{node.name}"
-                fingerprints[item_id] = _digest(
-                    _python_interface_payload(node)
-                )
+                fingerprints[item_id] = _digest(_python_interface_payload(node))
         elif suffix in {".ts", ".tsx", ".js", ".jsx"}:
             for match in SCRIPT_EXPORT.finditer(text):
                 name = match.group("name")
                 item_id = f"api-symbol:{path}:{name}"
-                fingerprints[item_id] = _digest(
-                    _script_interface_evidence(text, match)
-                )
+                fingerprints[item_id] = _digest(_script_interface_evidence(text, match))
     return fingerprints, frozenset(failed)
 
 
@@ -482,9 +450,10 @@ def _projection_inputs(manifest: Manifest) -> dict[str, tuple[str, ...]]:
     outputs: dict[str, tuple[str, ...]] = {}
     if manifest.projections.llms_txt is not None:
         llms_projection = manifest.projections.llms_txt
-        outputs[llms_projection.output.as_posix()] = tuple(
-            path.as_posix() for path in llms_projection.include
-        )
+        llms_inputs = {path.as_posix() for path in llms_projection.include}
+        if llms_projection.include_bound:
+            llms_inputs.update(binding.doc.as_posix() for binding in manifest.bindings)
+        outputs[llms_projection.output.as_posix()] = tuple(sorted(llms_inputs))
     for bundle_projection in manifest.projections.bundles:
         outputs[bundle_projection.output.as_posix()] = tuple(
             path.as_posix() for path in bundle_projection.include
@@ -595,18 +564,15 @@ def _may_expose_public_surface(
         {"src", "lib", "app", "api", "cmd", "packages", "services"}
         & set(candidate.parts[:-1])
     )
-    control_surface = (
-        candidate.name in {
-            "Dockerfile",
-            "Makefile",
-            "Taskfile.yml",
-            "compose.yaml",
-            "compose.yml",
-            "docker-compose.yaml",
-            "docker-compose.yml",
-        }
-        or candidate.parts[:2] == (".github", "workflows")
-    )
+    control_surface = candidate.name in {
+        "Dockerfile",
+        "Makefile",
+        "Taskfile.yml",
+        "compose.yaml",
+        "compose.yml",
+        "docker-compose.yaml",
+        "docker-compose.yml",
+    } or candidate.parts[:2] == (".github", "workflows")
     if control_surface:
         return True
     if adapter != "unsupported":
@@ -628,9 +594,7 @@ def _adapter_failed(root: Path, ref: str, path: str, adapter: str) -> bool:
     return False
 
 
-def _workflow_jobs(
-    root: Path, ref: str, path: str, *, exists: bool
-) -> dict[str, str]:
+def _workflow_jobs(root: Path, ref: str, path: str, *, exists: bool) -> dict[str, str]:
     if not exists:
         return {}
     try:
@@ -640,8 +604,7 @@ def _workflow_jobs(
     if not isinstance(raw, dict) or not isinstance(raw.get("jobs"), dict):
         raise ConfigurationError(f"workflow {path} at {ref} needs a jobs mapping")
     return {
-        str(identifier): _digest(job)
-        for identifier, job in sorted(raw["jobs"].items())
+        str(identifier): _digest(job) for identifier, job in sorted(raw["jobs"].items())
     }
 
 
@@ -697,7 +660,9 @@ def _workflow_path_filters(raw: object) -> tuple[tuple[str, tuple[str, ...]], ..
         if not isinstance(configuration, dict):
             continue
         paths = configuration.get("paths")
-        if not isinstance(paths, list) or not all(isinstance(path, str) for path in paths):
+        if not isinstance(paths, list) or not all(
+            isinstance(path, str) for path in paths
+        ):
             continue
         filters.append((str(event), tuple(paths)))
     return tuple(filters)
@@ -724,19 +689,25 @@ def _workflow_path_filter_findings(
 ) -> tuple[ImpactFinding, ...]:
     """Report potentially skipped specialized workflows as unknown until a run receipt exists."""
     relevant_paths = tuple(
-        path for path in changed_paths if Path(path).parts[:2] != (".github", "workflows")
+        path
+        for path in changed_paths
+        if Path(path).parts[:2] != (".github", "workflows")
     )
     if not relevant_paths:
         return ()
     findings: list[ImpactFinding] = []
     for workflow_path in workflow_paths:
         try:
-            raw = yaml.safe_load(RepositorySnapshot(root, ref).read_text(Path(workflow_path)))
+            raw = yaml.safe_load(
+                RepositorySnapshot(root, ref).read_text(Path(workflow_path))
+            )
         except (yaml.YAMLError, UnicodeDecodeError):
             continue
         for event, patterns in _workflow_path_filters(raw):
             excluded = tuple(
-                path for path in relevant_paths if not _matches_workflow_paths(path, patterns)
+                path
+                for path in relevant_paths
+                if not _matches_workflow_paths(path, patterns)
             )
             if not excluded:
                 continue
@@ -747,7 +718,10 @@ def _workflow_path_filter_findings(
                     "ci-path-filter-unverified",
                     f"{repository_workflow} {event} paths may skip changed paths: "
                     + ", ".join(excluded),
-                    paths=(repository_workflow, *(_repo_path(prefix, path) for path in excluded)),
+                    paths=(
+                        repository_workflow,
+                        *(_repo_path(prefix, path) for path in excluded),
+                    ),
                     obligations=("verify-specialized-ci-run",),
                 )
             )
@@ -861,13 +835,9 @@ def _prepare_impact_plan(
         if item is not None and item.kind in PUBLIC_KINDS
     }
     required_document_paths = {
-        _project_path(prefix, item.doc)
-        for item in changed.required
-        if item.doc
+        _project_path(prefix, item.doc) for item in changed.required if item.doc
     }
-    artifact_roots: dict[str, set[str]] = {
-        path: set() for path in project_changed
-    }
+    artifact_roots: dict[str, set[str]] = {path: set() for path in project_changed}
     edges: set[ImpactEdge] = set()
     affected_docs: set[str] = {
         item.source
@@ -905,9 +875,7 @@ def build_impact_plan(
     if project.is_absolute() or ".." in project.parts:
         raise ConfigurationError("impact-plan project must stay inside the repository")
     project = (
-        Path(project.as_posix().strip("/"))
-        if project.as_posix() != "."
-        else Path(".")
+        Path(project.as_posix().strip("/")) if project.as_posix() != "." else Path(".")
     )
     project_root = (root / project).resolve()
     try:
@@ -1028,9 +996,7 @@ def build_impact_plan(
             if projection_triggering or manifest_changed:
                 affected_projections.add(output)
                 for source in projection_triggering:
-                    source_kind = (
-                        "document" if source in affected_docs else "artifact"
-                    )
+                    source_kind = "document" if source in affected_docs else "artifact"
                     edges.add(
                         ImpactEdge(
                             f"{source_kind}:{source}",
@@ -1043,10 +1009,7 @@ def build_impact_plan(
                 for path, root_set in artifact_roots.items():
                     if any(
                         root.startswith(("binding:", "source-claim:"))
-                        and ImpactEdge(
-                            root, f"document:{source}", "serves"
-                        )
-                        in edges
+                        and ImpactEdge(root, f"document:{source}", "serves") in edges
                         for source in projection_triggering
                         for root in root_set
                     ):
@@ -1097,9 +1060,7 @@ def build_impact_plan(
     events_by_path: dict[str, list[ImpactEvent]] = {
         path: [] for path in project_changed
     }
-    event_adapters: dict[str, set[str]] = {
-        path: set() for path in project_changed
-    }
+    event_adapters: dict[str, set[str]] = {path: set() for path in project_changed}
     for item_id, before, after in inventory_changes:
         inventory_item = after or before
         assert inventory_item is not None
@@ -1108,15 +1069,16 @@ def build_impact_plan(
         if inventory_item.kind not in PUBLIC_KINDS:
             continue
         change = (
-            "added"
-            if before is None
-            else "removed"
-            if after is None
-            else "changed"
+            "added" if before is None else "removed" if after is None else "changed"
         )
         event_roots = tuple(sorted(artifact_roots[inventory_item.source]))
         event = ImpactEvent(
-            id=_identifier(item_id, change, before.digest if before else None, after.digest if after else None),
+            id=_identifier(
+                item_id,
+                change,
+                before.digest if before else None,
+                after.digest if after else None,
+            ),
             kind=_event_kind(inventory_item.kind, change),
             path=_repo_path(prefix, inventory_item.source),
             item_id=item_id,
@@ -1176,8 +1138,7 @@ def build_impact_plan(
         artifact_graph_roots = tuple(sorted(artifact_roots[path]))
         event_coverages = {event.coverage for event in path_events}
         has_public_event = any(
-            event.item_id.split(":", 1)[0] in PUBLIC_KINDS
-            for event in path_events
+            event.item_id.split(":", 1)[0] in PUBLIC_KINDS for event in path_events
         )
         if path in projection_outputs:
             coverage = "generated"
@@ -1214,9 +1175,7 @@ def build_impact_plan(
                 may_expose_public_surface=may_expose,
                 coverage=coverage,
                 graph_roots=tuple(
-                    _repo_path(prefix, root)
-                    if root.startswith("artifact:")
-                    else root
+                    _repo_path(prefix, root) if root.startswith("artifact:") else root
                     for root in artifact_graph_roots
                 ),
             )
@@ -1285,9 +1244,7 @@ def build_impact_plan(
     for changed_finding in changed.gaps:
         finding_roots = tuple(
             sorted(
-                artifact_roots.get(
-                    _project_path(prefix, changed_finding.source), set()
-                )
+                artifact_roots.get(_project_path(prefix, changed_finding.source), set())
             )
         )
         unknown.append(
@@ -1307,9 +1264,7 @@ def build_impact_plan(
     for changed_finding in changed.ignored:
         finding_roots = tuple(
             sorted(
-                artifact_roots.get(
-                    _project_path(prefix, changed_finding.source), set()
-                )
+                artifact_roots.get(_project_path(prefix, changed_finding.source), set())
             )
         )
         unrelated.append(
@@ -1412,7 +1367,15 @@ def build_impact_plan(
         )
     workflow_paths = tuple(
         path
-        for path in _git(root, "ls-tree", "-r", "--name-only", changed.head, "--", ".github/workflows").splitlines()
+        for path in _git(
+            root,
+            "ls-tree",
+            "-r",
+            "--name-only",
+            changed.head,
+            "--",
+            ".github/workflows",
+        ).splitlines()
         if path.endswith((".yml", ".yaml"))
     )
     unknown.extend(
@@ -1431,9 +1394,7 @@ def build_impact_plan(
                 "contract-change-review",
                 "the documentation control manifest changed",
                 paths=(manifest_repo_path,),
-                roots=tuple(
-                    sorted(artifact_roots[manifest_relative.as_posix()])
-                ),
+                roots=tuple(sorted(artifact_roots[manifest_relative.as_posix()])),
                 obligations=("review-contract-scope",),
             )
         )
@@ -1524,14 +1485,18 @@ def build_impact_plan(
                 "a historical public-surface finding is documented in "
                 f"{disposition.documentation} and replaced by "
                 f"{disposition.replacement}: {disposition.reason}",
-                paths=tuple(sorted(set(finding.paths + (disposition.documentation.as_posix(),)))),
+                paths=tuple(
+                    sorted(set(finding.paths + (disposition.documentation.as_posix(),)))
+                ),
                 roots=finding.graph_roots,
             )
         )
     unknown = undisposed_unknown
 
     def _normalized(items: list[ImpactFinding]) -> tuple[ImpactFinding, ...]:
-        return tuple(sorted({item.id: item for item in items}.values(), key=lambda item: item.id))
+        return tuple(
+            sorted({item.id: item for item in items}.values(), key=lambda item: item.id)
+        )
 
     normalized_required = _normalized(required)
     normalized_recommended = _normalized(recommended)

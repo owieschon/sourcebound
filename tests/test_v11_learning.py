@@ -21,7 +21,9 @@ def test_public_first_screen_defines_the_product_and_routes_to_learning() -> Non
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     purpose = readme.index("<!-- sourcebound:purpose -->")
     badges = readme.index("[![CI]")
-    start = readme.index("**[Install the stable release and catch your first stale claim]")
+    start = readme.index(
+        "**[Install the stable release and catch your first stale claim]"
+    )
     detail = readme.index("## Why Sourcebound exists")
 
     assert purpose < badges < start < detail
@@ -32,6 +34,41 @@ def test_public_first_screen_defines_the_product_and_routes_to_learning() -> Non
     assert "actions/workflows/ci.yml/badge.svg" in readme
     assert "img.shields.io/github/v/release" in readme
     assert "img.shields.io/badge/license-MIT" in readme
+
+
+def test_core_routes_name_the_reader_job_and_keep_experimental_records_out_of_default_context() -> (
+    None
+):
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    docs_home = (ROOT / "docs/README.md").read_text(encoding="utf-8")
+    projection = (ROOT / "llms.txt").read_text(encoding="utf-8")
+
+    assert "## Use Sourcebound when" in readme
+    assert "Use another tool when it owns the job better." in readme
+    assert "Sourcebound may not justify another" in readme
+    for route in (
+        "learn/tutorial-catch-a-lying-doc.md",
+        "SUPPORT.md",
+        "REFERENCE.md",
+        "CLI.md",
+        "SECURITY_MODEL.md",
+        "ECOSYSTEM.md",
+    ):
+        assert route in docs_home
+    for core_document in (
+        "docs/README.md",
+        "docs/ECOSYSTEM.md",
+        "docs/learn/tutorial-catch-a-lying-doc.md",
+    ):
+        assert core_document in projection
+    assert "[README.md](README.md): bindings: product-overview" in projection
+    for experimental_record in (
+        "docs/EVALUATION.md",
+        "docs/FEEDBACK.md",
+        "docs/IMPROVEMENTS.md",
+        "docs/RELEASES.md",
+    ):
+        assert experimental_record not in projection
 
 
 def test_social_preview_is_current_legible_and_at_repository_aspect_ratio() -> None:
@@ -90,7 +127,9 @@ def test_learning_index_routes_each_reader_job_without_copying_reference() -> No
 
 def test_postmortem_record_is_derived_from_the_archived_case() -> None:
     committed = json.loads(
-        (ROOT / ".sourcebound/learning/ultra-csm-hygiene.json").read_text(encoding="utf-8")
+        (ROOT / ".sourcebound/learning/ultra-csm-hygiene.json").read_text(
+            encoding="utf-8"
+        )
     )
     assert committed == build_record()
     assert committed["measurements"][0] == {
@@ -135,14 +174,20 @@ bindings:
     data_path = root / ".sourcebound/learning/ultra-csm-hygiene.json"
     data = json.loads(data_path.read_text(encoding="utf-8"))
     data["measurements"][0]["before"] = "281"
-    data_path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    data_path.write_text(
+        json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     before = (root / "docs/learn/postmortem-the-readme-that-lied.md").read_text(
         encoding="utf-8"
     )
-    unbound_before = before.split("<!-- sourcebound:end postmortem-measurements -->", 1)[1]
+    unbound_before = before.split(
+        "<!-- sourcebound:end postmortem-measurements -->", 1
+    )[1]
 
     results = evaluate(root, root / ".sourcebound.yml")
-    assert [result.binding_id for result in results if result.changed] == ["measurements"]
+    assert [result.binding_id for result in results if result.changed] == [
+        "measurements"
+    ]
     _results, findings = drive(root, root / ".sourcebound.yml")
     assert not findings
 
@@ -150,8 +195,13 @@ bindings:
         encoding="utf-8"
     )
     assert "| Total findings | 281 |" in after
-    assert after.split("<!-- sourcebound:end postmortem-measurements -->", 1)[1] == unbound_before
-    assert not any(result.changed for result in evaluate(root, root / ".sourcebound.yml"))
+    assert (
+        after.split("<!-- sourcebound:end postmortem-measurements -->", 1)[1]
+        == unbound_before
+    )
+    assert not any(
+        result.changed for result in evaluate(root, root / ".sourcebound.yml")
+    )
 
 
 def test_published_tutorial_runs_the_observed_drift_loop(tmp_path: Path) -> None:
@@ -159,14 +209,16 @@ def test_published_tutorial_runs_the_observed_drift_loop(tmp_path: Path) -> None
     wrapper.write_text(
         "#!/bin/sh\n"
         f"export PYTHONPATH={ROOT / 'src'}\n"
-        f"exec {sys.executable} -m clean_docs \"$@\"\n",
+        f'exec {sys.executable} -m clean_docs "$@"\n',
         encoding="utf-8",
     )
     wrapper.chmod(0o755)
     first = record(wrapper)
     second = record(wrapper)
     committed = json.loads(
-        (ROOT / ".sourcebound/learning/tutorial-evidence.json").read_text(encoding="utf-8")
+        (ROOT / ".sourcebound/learning/tutorial-evidence.json").read_text(
+            encoding="utf-8"
+        )
     )
 
     assert first == second == committed
@@ -179,7 +231,11 @@ def test_deep_dive_claims_resolve_to_deterministic_implementation_sources() -> N
         "deterministic-seam-phrasing",
         "deterministic-seam-gate",
     }
-    results = [result for result in evaluate(ROOT, ROOT / ".sourcebound.yml") if result.binding_id in ids]
+    results = [
+        result
+        for result in evaluate(ROOT, ROOT / ".sourcebound.yml")
+        if result.binding_id in ids
+    ]
 
     assert {result.binding_id for result in results} == ids
     assert not any(result.changed for result in results)

@@ -115,7 +115,7 @@ def test_loads_observe_review_contract(tmp_path: Path) -> None:
                 "      - id: page-policy\n"
                 "        path: src/delivery.py\n"
                 "        extractor: python-symbol\n"
-                    "        locator: Delivery.fetch_page\n",
+                "        locator: Delivery.fetch_page\n",
                 "    sources: []\n",
             ),
             "sources must be a non-empty list",
@@ -137,8 +137,8 @@ def test_loads_observe_review_contract(tmp_path: Path) -> None:
         ),
         (
             VALID_REVIEW_CONTRACTS.replace(
-                    "        locator: Delivery.fetch_page",
-                    "        locator: Delivery.fetch_page\n        unknown: true",
+                "        locator: Delivery.fetch_page",
+                "        locator: Delivery.fetch_page\n        unknown: true",
             ),
             "unknown key",
         ),
@@ -172,8 +172,8 @@ def test_loads_observe_review_contract(tmp_path: Path) -> None:
         ),
         (
             VALID_REVIEW_CONTRACTS.replace(
-                    "        locator: Delivery.fetch_page",
-                    "        locator: Delivery/fetch_page",
+                "        locator: Delivery.fetch_page",
+                "        locator: Delivery/fetch_page",
             ),
             "dotted Python identifier",
         ),
@@ -344,8 +344,7 @@ def _review_contract(
         "id": f"contract-{contract_index}",
         "mode": "observe",
         "sources": [
-            locator("source", index, "python-symbol")
-            for index in range(source_count)
+            locator("source", index, "python-symbol") for index in range(source_count)
         ],
         "targets": [
             locator("target", index, "markdown-section")
@@ -358,7 +357,10 @@ def _review_contract(
     ("contracts", "message"),
     [
         (
-            [_review_contract(index, 1, 1) for index in range(MAX_REVIEW_CONTRACTS + 1)],
+            [
+                _review_contract(index, 1, 1)
+                for index in range(MAX_REVIEW_CONTRACTS + 1)
+            ],
             f"at most {MAX_REVIEW_CONTRACTS} contracts",
         ),
         (
@@ -412,8 +414,7 @@ def test_rejects_repeated_review_locator_identity(tmp_path: Path) -> None:
     repeated["id"] = "second-id"
     targets.append(repeated)
     path.write_text(
-        VALID
-        + yaml.safe_dump({"review_contracts": [contract]}, sort_keys=False)
+        VALID + yaml.safe_dump({"review_contracts": [contract]}, sort_keys=False)
     )
 
     with pytest.raises(ConfigurationError, match="must not repeat"):
@@ -422,16 +423,20 @@ def test_rejects_repeated_review_locator_identity(tmp_path: Path) -> None:
 
 def test_loads_json_pointer_binding(tmp_path: Path) -> None:
     path = tmp_path / ".sourcebound.yml"
-    path.write_text(VALID.replace(
-        "extractor: python-literal\n    source:\n      path: src/actions.py\n      symbol: ACTIONS",
-        "extractor: json\n    source:\n      path: experiment/corpus.json\n      pointer: /cases",
-    ))
+    path.write_text(
+        VALID.replace(
+            "extractor: python-literal\n    source:\n      path: src/actions.py\n      symbol: ACTIONS",
+            "extractor: json\n    source:\n      path: experiment/corpus.json\n      pointer: /cases",
+        )
+    )
     binding = load_manifest(path).bindings[0]
     assert binding.source.pointer == "/cases"
     assert binding.source.symbol is None
 
 
-def test_python_token_is_valid_only_as_the_allowlisted_executable(tmp_path: Path) -> None:
+def test_python_token_is_valid_only_as_the_allowlisted_executable(
+    tmp_path: Path,
+) -> None:
     path = tmp_path / ".sourcebound.yml"
     path.write_text(
         VALID.replace(
@@ -440,7 +445,7 @@ def test_python_token_is_valid_only_as_the_allowlisted_executable(tmp_path: Path
             "  commands: deny\n"
             "  allowed_commands:\n"
             "    invalid:\n"
-            "      argv: [python, \"{python}\"]\n"
+            '      argv: [python, "{python}"]\n'
             "      network: false\n"
             "bindings:",
         )
@@ -452,7 +457,9 @@ def test_python_token_is_valid_only_as_the_allowlisted_executable(tmp_path: Path
 
 def test_loads_strict_projection_contract(tmp_path: Path) -> None:
     path = tmp_path / ".sourcebound.yml"
-    path.write_text(VALID + """\
+    path.write_text(
+        VALID
+        + """\
 projections:
   llms_txt:
     output: llms.txt
@@ -462,7 +469,8 @@ projections:
     - id: contributor
       output: .sourcebound/context/contributor.md
       include: [README.md]
-""")
+"""
+    )
 
     projections = load_manifest(path).projections
 
@@ -473,7 +481,46 @@ projections:
         Path("README.md"),
         Path("docs/CANONICAL.md"),
     )
+    assert projections.llms_txt.include_bound is True
     assert projections.bundles[0].include == (Path("README.md"),)
+
+
+def test_llms_projection_can_exclude_other_bound_documents(tmp_path: Path) -> None:
+    path = tmp_path / ".sourcebound.yml"
+    path.write_text(
+        VALID
+        + """\
+projections:
+  llms_txt:
+    output: llms.txt
+    include_bound: false
+    include: [docs/CANONICAL.md]
+"""
+    )
+
+    projection = load_manifest(path).projections.llms_txt
+
+    assert projection is not None
+    assert projection.include_bound is False
+
+
+@pytest.mark.parametrize("value", ["false", 0, []])
+def test_llms_projection_rejects_non_boolean_include_bound(
+    tmp_path: Path, value: object
+) -> None:
+    path = tmp_path / ".sourcebound.yml"
+    path.write_text(
+        VALID
+        + f"""\
+projections:
+  llms_txt:
+    output: llms.txt
+    include_bound: {value!r}
+"""
+    )
+
+    with pytest.raises(ConfigurationError, match="include_bound must be a boolean"):
+        load_manifest(path)
 
 
 @pytest.mark.parametrize(
@@ -502,12 +549,15 @@ def test_rejects_invalid_projection_contract(
 
 def test_loads_static_demo_projection(tmp_path: Path) -> None:
     path = tmp_path / ".sourcebound.yml"
-    path.write_text(VALID + """\
+    path.write_text(
+        VALID
+        + """\
 projections:
   demo:
     output: docs/demo/index.html
     evidence: .sourcebound/demo/evidence.json
-""")
+"""
+    )
     projections = load_manifest(path).projections
     assert projections is not None and projections.demo is not None
     assert projections.demo.output == Path("docs/demo/index.html")
@@ -515,14 +565,17 @@ projections:
 
 def test_loads_structured_visual_projection(tmp_path: Path) -> None:
     path = tmp_path / ".sourcebound.yml"
-    path.write_text(VALID + """\
+    path.write_text(
+        VALID
+        + """\
 projections:
   visuals:
     - id: queue-flow
       source: docs/visuals/queue-flow.yml
       human_output: docs/generated/queue-flow.mdx
       agent_output: .sourcebound/visuals/queue-flow.md
-""")
+"""
+    )
 
     projections = load_manifest(path).projections
 
@@ -533,14 +586,17 @@ projections:
 
 def test_visual_projection_cannot_replace_a_bound_document(tmp_path: Path) -> None:
     path = tmp_path / ".sourcebound.yml"
-    path.write_text(VALID + """\
+    path.write_text(
+        VALID
+        + """\
 projections:
   visuals:
     - id: queue-flow
       source: docs/visuals/queue-flow.yml
       human_output: README.md
       agent_output: .sourcebound/visuals/queue-flow.md
-""")
+"""
+    )
 
     with pytest.raises(ConfigurationError, match="cannot replace a bound document"):
         load_manifest(path)
@@ -556,7 +612,9 @@ projections:
         ("docs: {}", "unknown key"),
     ],
 )
-def test_rejects_invalid_contract(tmp_path: Path, replacement: str, message: str) -> None:
+def test_rejects_invalid_contract(
+    tmp_path: Path, replacement: str, message: str
+) -> None:
     text = VALID
     if replacement == "version: 1":
         text = text.replace("version: 1", "version: 1\nunknown: true")
@@ -612,6 +670,4 @@ def test_v1_reports_deprecated_network_declaration(tmp_path: Path) -> None:
 
     manifest = load_manifest(path)
 
-    assert manifest.deprecations == (
-        "execution.allowed_commands.summary.network",
-    )
+    assert manifest.deprecations == ("execution.allowed_commands.summary.network",)

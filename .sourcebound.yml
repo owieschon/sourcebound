@@ -218,27 +218,18 @@ projections:
     output: llms.txt
     title: Sourcebound documentation
     summary: Canonical product documentation with source-bound facts and content digests.
+    include_bound: false
     include:
       - README.md
       - SOURCEBOUND_SPEC.md
-      - STANDARD.md
-      - SECURITY.md
+      - docs/README.md
       - docs/CLI.md
-      - docs/EVALUATION.md
-      - docs/BEHAVIOR_SIGNALS.md
-      - docs/FEEDBACK.md
-      - docs/EXTENSIONS.md
       - docs/ARCHITECTURE.md
       - docs/INSTALL.md
-      - docs/VERIFY_RELEASE.md
-      - docs/IMPROVEMENTS.md
-      - docs/LIFECYCLE_EVIDENCE.md
-      - docs/REVIEW_LEDGER.md
-      - docs/RELEASES.md
       - docs/REFERENCE.md
       - docs/SECURITY_MODEL.md
       - docs/SUPPORT.md
-      - docs/SURFACE.md
+      - docs/ECOSYSTEM.md
       - docs/learn/index.md
       - docs/learn/tutorial-catch-a-lying-doc.md
       - docs/learn/postmortem-the-readme-that-lied.md

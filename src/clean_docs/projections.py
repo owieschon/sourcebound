@@ -13,7 +13,12 @@ from urllib.parse import unquote
 from clean_docs.demo import load_demo_evidence, render_static_demo
 from clean_docs.emit import render_llms_txt
 from clean_docs.errors import ConfigurationError
-from clean_docs.models import BindingResult, ContextBundleProjection, Manifest, Provenance
+from clean_docs.models import (
+    BindingResult,
+    ContextBundleProjection,
+    Manifest,
+    Provenance,
+)
 from clean_docs.regions import atomic_write
 from clean_docs.visuals import (
     load_visual_record,
@@ -42,7 +47,16 @@ class ProjectionSet:
 
 def _read_documents(root: Path, manifest: Manifest) -> dict[str, bytes]:
     documents: dict[str, bytes] = {}
-    for document in sorted({binding.doc.as_posix() for binding in manifest.bindings}):
+    paths: set[str] = set()
+    llms = manifest.projections.llms_txt if manifest.projections else None
+    if llms is None or llms.include_bound:
+        paths.update(binding.doc.as_posix() for binding in manifest.bindings)
+    if llms is not None:
+        paths.update(path.as_posix() for path in llms.include)
+    if manifest.projections is not None:
+        for bundle in manifest.projections.bundles:
+            paths.update(path.as_posix() for path in bundle.include)
+    for document in sorted(paths):
         try:
             documents[document] = (root / document).read_bytes()
         except OSError as exc:
@@ -92,17 +106,19 @@ def _render_bundle(
         content = documents[key].decode("utf-8")
         link = _relative_link(root, bundle.output, document)
         digest = hashlib.sha256(documents[key]).hexdigest()
-        lines.extend([
-            "",
-            f"## Canonical document: {key}",
-            "",
-            f"- Source: [{key}]({link})",
-            f"- Content sha256: `{digest}`",
-            "",
-            f"<!-- sourcebound:canonical {key} begin -->",
-            content.rstrip(),
-            f"<!-- sourcebound:canonical {key} end -->",
-        ])
+        lines.extend(
+            [
+                "",
+                f"## Canonical document: {key}",
+                "",
+                f"- Source: [{key}]({link})",
+                f"- Content sha256: `{digest}`",
+                "",
+                f"<!-- sourcebound:canonical {key} begin -->",
+                content.rstrip(),
+                f"<!-- sourcebound:canonical {key} end -->",
+            ]
+        )
     return "\n".join(lines) + "\n"
 
 
@@ -133,7 +149,10 @@ def _verify_links(root: Path, files: dict[Path, str]) -> None:
         # Embedded canonical bytes retain links relative to their original page. The original
         # page is checked separately; generated bundle metadata is checked at the bundle path.
         checked_content = CANONICAL_BLOCK.sub("", content)
-        matches = [*LINK.finditer(checked_content), *HTML_LINK.finditer(checked_content)]
+        matches = [
+            *LINK.finditer(checked_content),
+            *HTML_LINK.finditer(checked_content),
+        ]
         for match in matches:
             raw = unquote(match.group(1))
             if raw.startswith(("http://", "https://", "mailto:")):
@@ -205,7 +224,9 @@ def render_projections(root: Path, manifest: Manifest) -> ProjectionSet:
         files[visual.agent_output] = render_agent_visual(root, visual, record)
         digests[visual.human_output] = record.digest
         digests[visual.agent_output] = record.digest
-    combined = {Path(path): content.decode("utf-8") for path, content in documents.items()}
+    combined = {
+        Path(path): content.decode("utf-8") for path, content in documents.items()
+    }
     combined.update(files)
     _verify_links(root, combined)
     return ProjectionSet(source_ref, corpus_digest, files, digests)
@@ -214,42 +235,50 @@ def render_projections(root: Path, manifest: Manifest) -> ProjectionSet:
 def evaluate_projections(root: Path, manifest: Manifest) -> list[BindingResult]:
     projection_set = render_projections(root, manifest)
     results = []
-    for path, expected in sorted(projection_set.files.items(), key=lambda item: item[0].as_posix()):
+    for path, expected in sorted(
+        projection_set.files.items(), key=lambda item: item[0].as_posix()
+    ):
         try:
             observed = (root / path).read_text(encoding="utf-8")
         except FileNotFoundError:
             observed = ""
         except OSError as exc:
             raise ConfigurationError(f"cannot read projection {path}: {exc}") from exc
-        diff = "".join(difflib.unified_diff(
-            observed.splitlines(keepends=True),
-            expected.splitlines(keepends=True),
-            fromfile=path.as_posix(),
-            tofile=f"{path.as_posix()} (projected)",
-        ))
-        results.append(BindingResult(
-            binding_id=f"projection:{path.as_posix()}",
-            doc=path.as_posix(),
-            changed=observed != expected,
-            expected=expected,
-            observed=observed,
-            diff=diff,
-            provenance=Provenance(
-                ref=projection_set.source_ref,
-                path=path.as_posix(),
-                locator="documentation-graph",
-                extractor="projection",
-                digest=projection_set.digests[path],
-            ),
-            binding_type="projection",
-        ))
+        diff = "".join(
+            difflib.unified_diff(
+                observed.splitlines(keepends=True),
+                expected.splitlines(keepends=True),
+                fromfile=path.as_posix(),
+                tofile=f"{path.as_posix()} (projected)",
+            )
+        )
+        results.append(
+            BindingResult(
+                binding_id=f"projection:{path.as_posix()}",
+                doc=path.as_posix(),
+                changed=observed != expected,
+                expected=expected,
+                observed=observed,
+                diff=diff,
+                provenance=Provenance(
+                    ref=projection_set.source_ref,
+                    path=path.as_posix(),
+                    locator="documentation-graph",
+                    extractor="projection",
+                    digest=projection_set.digests[path],
+                ),
+                binding_type="projection",
+            )
+        )
     return results
 
 
 def write_projections(root: Path, manifest: Manifest) -> tuple[Path, ...]:
     projection_set = render_projections(root, manifest)
     written = []
-    for path, content in sorted(projection_set.files.items(), key=lambda item: item[0].as_posix()):
+    for path, content in sorted(
+        projection_set.files.items(), key=lambda item: item[0].as_posix()
+    ):
         atomic_write(root / path, content)
         written.append(path)
     return tuple(written)

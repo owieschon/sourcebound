@@ -9,6 +9,12 @@ not installed.
 
 **[Check the installed runtime](INSTALL.md#parse-mdx-repositories)**.
 
+## Documentation flow
+
+Sourcebound keeps three inputs separate: authored intent explains why a surface matters, the repository contract declares which relationship may be checked, and change state limits the work to the relevant diff. Typed evidence flows from static adapters or bounded commands into only the declared binding mechanism.
+
+The resulting operations have distinct authority: `drive` repairs planned regions, `check` and `verdict` reject declared drift without writing, `project` refreshes declared context, and `verify` records local state. None of those operations certifies unbound prose, editorial judgment, or a host-level security property.
+
 ## Product runtime
 
 Sourcebound is a Python package and CLI. Python owns the manifest, source extractors, policy checks,

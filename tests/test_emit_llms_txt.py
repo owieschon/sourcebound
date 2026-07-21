@@ -32,7 +32,9 @@ projections:
 def _run(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
     environment = dict(os.environ)
     source = Path(__file__).parents[1] / "src"
-    environment["PYTHONPATH"] = str(source) + os.pathsep + environment.get("PYTHONPATH", "")
+    environment["PYTHONPATH"] = (
+        str(source) + os.pathsep + environment.get("PYTHONPATH", "")
+    )
     return subprocess.run(
         [sys.executable, "-m", "clean_docs", "--root", str(root), *args],
         text=True,
@@ -60,8 +62,14 @@ def test_llms_index_follows_format_and_tracks_document_content(tmp_path: Path) -
     root = _repo(tmp_path)
     output = tmp_path / "published/llms.txt"
     arguments = (
-        "emit", "llms-txt", "--out", str(output), "--title", "Fixture docs",
-        "--summary", "Bound documentation index.",
+        "emit",
+        "llms-txt",
+        "--out",
+        str(output),
+        "--title",
+        "Fixture docs",
+        "--summary",
+        "Bound documentation index.",
     )
     first = _run(root, *arguments)
     assert first.returncode == 0, first.stderr
@@ -73,11 +81,16 @@ def test_llms_index_follows_format_and_tracks_document_content(tmp_path: Path) -
         "[docs/REFERENCE.md](../repo/docs/REFERENCE.md): bindings: settings; sha256:"
         in text
     )
-    assert "[docs/CANONICAL.md](../repo/docs/CANONICAL.md): declared canonical context; sha256:" in text
+    assert (
+        "[docs/CANONICAL.md](../repo/docs/CANONICAL.md): declared canonical context; sha256:"
+        in text
+    )
     assert str(root) not in text
     assert len(re.findall(r"sha256: [0-9a-f]{64}", text)) == 3
 
-    (root / "README.md").write_text((root / "README.md").read_text() + "\nNew guidance.\n")
+    (root / "README.md").write_text(
+        (root / "README.md").read_text() + "\nNew guidance.\n"
+    )
     second = _run(root, *arguments)
     assert second.returncode == 0
     assert output.read_text() != text
@@ -88,3 +101,22 @@ def test_llms_index_rejects_multiline_metadata(tmp_path: Path) -> None:
     result = _run(root, "emit", "llms-txt", "--title", "Bad\nheading")
     assert result.returncode == 2
     assert "title must be one non-empty line" in result.stderr
+
+
+def test_llms_index_can_publish_only_explicit_context(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    manifest = root / ".sourcebound.yml"
+    manifest.write_text(
+        manifest.read_text().replace(
+            "    output: llms.txt\n    include: [docs/CANONICAL.md]",
+            "    output: llms.txt\n    include_bound: false\n    include: [docs/CANONICAL.md]",
+        )
+    )
+
+    result = _run(root, "emit", "llms-txt")
+
+    assert result.returncode == 0, result.stderr
+    text = (root / "llms.txt").read_text()
+    assert "[docs/CANONICAL.md](docs/CANONICAL.md): declared canonical context" in text
+    assert "README.md" not in text
+    assert "docs/REFERENCE.md" not in text

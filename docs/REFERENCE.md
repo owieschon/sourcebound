@@ -333,6 +333,27 @@ Sourcebound checks that the named Markdown page exists and names the replacement
 current public change, vouch for replacement behavior, or carry across base revisions. The record
 states why a past public surface no longer has a source-to-document link at head.
 
+## Curate a primary context index
+
+`llms.txt` lists declared context pages and their content digests. By default, it also lists every
+document with a manifest binding. That default makes a new binding discoverable to an agent reader.
+
+Set `include_bound: false` when the projection is a small primary context. In that
+mode, only the paths in `include` appear in the index. Add a bound page explicitly when it belongs
+in that context; adding a binding alone does not widen it. This changes projection scope only. It
+does not weaken any binding, check, verdict, or coverage report.
+
+```yaml
+projections:
+  llms_txt:
+    output: llms.txt
+    include_bound: false
+    include:
+      - README.md
+      - docs/README.md
+      - docs/REFERENCE.md
+```
+
 ## Structured visual projections
 
 A visual record owns the meaning shared by an annotated human image and its agent-readable text
