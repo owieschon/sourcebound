@@ -246,6 +246,11 @@ relationship and bounded assessment candidates. Its JSON output distinguishes
 `candidate_population`, `candidate_shown`, and `candidate_truncated`; a cap never looks like the
 whole denominator. A missing accepted locator fails closed.
 
+`sourcebound init --no-model --format json` exposes the same narrow class as advisory
+`binding_candidates` during onboarding. Each candidate carries its ownership evidence and an exact
+`manifest_entry`. Init does not write that entry. Review the relationship, add it under
+`source_claim_checks` when it belongs in the repository contract, or reject it when it does not.
+
 Use `identifier-set` for a reference section whose `Columns` block should match the public keys of
 a static Python mapping. Its locator ends in `#keys`, such as `USERS.fields#keys`. Leading
 underscore keys remain implementation details and do not enter that public set.

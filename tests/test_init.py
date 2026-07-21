@@ -132,6 +132,99 @@ def test_init_dry_run_is_read_only_then_default_init_writes_and_verifies(
     assert rerun["operations"] == []
 
 
+def test_init_exposes_advisory_direct_binding_candidates_without_accepting_them(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    root = _python_repo(tmp_path)
+    (root / "src/service/widgets.py").write_text("WIDGETS = ['one', 'two']\n")
+    authored = "# Widgets\n\n## Inventory\n\nThe service contains 2 widgets.\n"
+    (root / "docs/widgets.md").write_text(authored)
+
+    assert main([
+        "--root", str(root), "init", "--no-model", "--dry-run", "--format", "json"
+    ]) == 0
+    plan = json.loads(capsys.readouterr().out)
+
+    assert plan["direct_protection"]["directly_protected"] == 0
+    assert plan["direct_protection"]["cataloged_only_after_init"] > len(plan["facts"])
+    assert plan["direct_protection"]["candidate_population"] == 1
+    assert plan["direct_protection"]["candidate_shown"] == 1
+    assert plan["direct_protection"]["candidate_truncated"] == 0
+    candidate = plan["binding_candidates"]
+    assert len(candidate) == 1
+    assert candidate[0]["relationship"] == "source-claim"
+    assert candidate[0]["document"] == "docs/widgets.md"
+    assert candidate[0]["anchor"] == "inventory"
+    assert candidate[0]["source"] == "src/service/widgets.py"
+    assert candidate[0]["locator"] == "WIDGETS#count"
+    assert candidate[0]["ownership_evidence"]
+    assert candidate[0]["manifest_entry"] == {
+        "id": f"source-claim-{candidate[0]['id'][:12]}",
+        "kind": "count",
+        "doc": "docs/widgets.md",
+        "anchor": "inventory",
+        "subject": "widgets",
+        "source": "src/service/widgets.py",
+        "locator": "WIDGETS#count",
+    }
+    assert "source_claim_checks" in candidate[0]["next_step"]
+
+    assert main(["--root", str(root), "init", "--no-model"]) == 0
+    capsys.readouterr()
+    assert (root / "docs/widgets.md").read_text() == authored
+    manifest = (root / ".sourcebound.yml").read_text()
+    assert "source_claim_checks" not in manifest
+    assert candidate[0]["id"] not in manifest
+
+
+def test_init_omits_ambiguous_direct_binding_candidates(tmp_path: Path) -> None:
+    root = tmp_path / "ambiguous-init"
+    (root / "docs").mkdir(parents=True)
+    (root / "src/one").mkdir(parents=True)
+    (root / "src/two").mkdir(parents=True)
+    (root / "pyproject.toml").write_text(
+        '[project]\nname = "ambiguous-init"\nversion = "1.0.0"\n'
+    )
+    (root / "README.md").write_text("# Ambiguous fixture\n")
+    (root / "docs/widgets.md").write_text(
+        "# Widgets\n\n## Inventory\n\nThe service contains 2 widgets.\n"
+    )
+    (root / "src/one/widgets.py").write_text("WIDGETS = ['one', 'two']\n")
+    (root / "src/two/widgets.py").write_text("WIDGETS = ['one', 'two']\n")
+
+    plan = build_bootstrap_plan(root)
+
+    assert plan.binding_candidates == ()
+    assert plan.direct_protection is not None
+    assert plan.direct_protection.candidate_population == 0
+
+
+def test_init_reports_full_candidate_population_when_candidate_output_is_bounded(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "bounded-candidates"
+    root.mkdir()
+    (root / "README.md").write_text("# Bounded candidates\n")
+    names = (
+        "alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta",
+        "theta", "iota", "kappa", "lambda", "mu", "nu",
+    )
+    for name in names:
+        (root / f"{name}.md").write_text(
+            f"# {name.title()}\n\n## Inventory\n\nThe fixture contains 1 {name}s.\n"
+        )
+        (root / f"{name}.py").write_text(f"{name.upper()}S = ['one']\n")
+
+    plan = build_bootstrap_plan(root)
+
+    assert plan.direct_protection is not None
+    assert plan.direct_protection.candidate_population == len(names)
+    assert plan.direct_protection.candidate_shown == 12
+    assert plan.direct_protection.candidate_truncated == 1
+    assert len(plan.binding_candidates) == 12
+
+
 def test_typescript_repository_bootstraps_without_python_metadata(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

@@ -1243,6 +1243,24 @@ def _main(argv: list[str] | None = None) -> int:
                 )
             for gap in plan.gaps:
                 print(f"[gap] {gap}")
+            if plan.direct_protection is not None:
+                summary = plan.direct_protection
+                print(
+                    "direct protection: "
+                    f"{summary.directly_protected} directly protected; "
+                    f"{summary.cataloged_only_after_init} cataloged after init; "
+                    f"{summary.candidate_shown} advisory candidate(s)"
+                )
+            for candidate in plan.binding_candidates:
+                print(
+                    f"[advisory:{candidate.kind}] {candidate.id} "
+                    f"{candidate.document}#{candidate.anchor} <- "
+                    f"{candidate.source}#{candidate.locator}"
+                )
+                print(
+                    "  next: review it, then add its manifest_entry under "
+                    "source_claim_checks in .sourcebound.yml or reject it"
+                )
             print(
                 f"init: {state} "
                 f"{len(plan.writes) + len(plan.moves) + int(plan.accept_hygiene_baseline)} "

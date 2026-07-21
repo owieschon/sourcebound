@@ -10,6 +10,7 @@ from pathlib import Path
 
 from clean_docs.applicability import classify_document
 from clean_docs.audit import AUDIT_BASELINE_PATH, audit, write_audit_baseline
+from clean_docs.claims import SourceClaimResult, scan_source_claims
 from clean_docs.corpus import list_documents
 from clean_docs.emit import render_llms_txt
 from clean_docs.engine import evaluate
@@ -37,6 +38,7 @@ REFERENCE_REGION = "repository-surface"
 GENERATED_REFERENCE = ".sourcebound/repository-surface.md"
 PLAN_FACT_LIMIT = 100
 PLAN_DIFF_LIMIT = 4000
+PLAN_CANDIDATE_LIMIT = 12
 REFERENCE_SECTION = re.compile(
     r"^## Repository surface\s*\n.*?(?=^## |\Z)", re.MULTILINE | re.DOTALL
 )
@@ -58,6 +60,44 @@ class PlannedMove:
 
 
 @dataclass(frozen=True)
+class BindingCandidate:
+    """One bounded, advisory source-to-prose relationship discovered at init."""
+
+    id: str
+    relationship: str
+    kind: str
+    document: str
+    anchor: str
+    source: str
+    locator: str
+    ownership_evidence: tuple[str, ...]
+    advisory_reason: str
+    manifest_entry: dict[str, str]
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            **asdict(self),
+            "ownership_evidence": list(self.ownership_evidence),
+            "next_step": (
+                "Review this relationship, then add manifest_entry under "
+                "source_claim_checks in .sourcebound.yml or reject it."
+            ),
+        }
+
+
+@dataclass(frozen=True)
+class DirectProtectionSummary:
+    directly_protected: int
+    cataloged_only_after_init: int
+    candidate_population: int
+    candidate_shown: int
+    candidate_truncated: int
+
+    def as_dict(self) -> dict[str, int]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
 class BootstrapPlan:
     facts: tuple[InventoryItem, ...]
     writes: tuple[PlannedWrite, ...]
@@ -67,6 +107,8 @@ class BootstrapPlan:
     digest: str
     canonical_documents: tuple[str, ...] = ()
     accept_hygiene_baseline: bool = False
+    direct_protection: DirectProtectionSummary | None = None
+    binding_candidates: tuple[BindingCandidate, ...] = ()
 
     def as_dict(self) -> dict[str, object]:
         facts = []
@@ -84,6 +126,14 @@ class BootstrapPlan:
             "facts": serialized_facts,
             "facts_omitted": len(facts) - len(serialized_facts),
             "canonical_documents": list(self.canonical_documents),
+            "direct_protection": (
+                None
+                if self.direct_protection is None
+                else self.direct_protection.as_dict()
+            ),
+            "binding_candidates": [
+                candidate.as_dict() for candidate in self.binding_candidates
+            ],
             "operations": [
                 {
                     "action": "write",
@@ -241,6 +291,32 @@ def _canonical_documents(
     return (readme_path,)
 
 
+def _binding_candidate(result: SourceClaimResult) -> BindingCandidate:
+    return BindingCandidate(
+        id=result.id,
+        relationship="source-claim",
+        kind=result.kind,
+        document=result.doc,
+        anchor=result.anchor,
+        source=result.source,
+        locator=result.locator,
+        ownership_evidence=result.ownership_evidence,
+        advisory_reason=(
+            "Static ownership evidence can locate a bounded fact, but it cannot "
+            "prove this prose should become gate authority."
+        ),
+        manifest_entry={
+            "id": f"source-claim-{result.id[:12]}",
+            "kind": result.kind,
+            "doc": result.doc,
+            "anchor": result.anchor,
+            "subject": result.subject,
+            "source": result.source,
+            "locator": result.locator,
+        },
+    )
+
+
 def build_bootstrap_plan(
     root: Path,
     provider: PhrasingProvider | None = None,
@@ -277,6 +353,21 @@ def build_bootstrap_plan(
         )
     report = scan_inventory(root)
     facts = tuple(item for item in report.items if item.kind in INCLUDED_KINDS)
+    candidate_report = scan_source_claims(root)
+    binding_candidates = tuple(
+        _binding_candidate(candidate)
+        for candidate in candidate_report.candidates[:PLAN_CANDIDATE_LIMIT]
+    )
+    candidate_population = sum(
+        count for _status, count in candidate_report.candidate_totals
+    )
+    direct_protection = DirectProtectionSummary(
+        directly_protected=0,
+        cataloged_only_after_init=len(report.items),
+        candidate_population=candidate_population,
+        candidate_shown=len(binding_candidates),
+        candidate_truncated=max(0, candidate_population - len(binding_candidates)),
+    )
     model = build_model_record(root, facts, provider) if provider else None
     reference = _reference_document(
         root,
@@ -405,6 +496,8 @@ def build_bootstrap_plan(
         "moves": [(item.source, item.path) for item in moves],
         "gaps": gaps,
         "model": model.as_dict() if model else None,
+        "direct_protection": direct_protection.as_dict(),
+        "binding_candidates": [candidate.as_dict() for candidate in binding_candidates],
         "accept_hygiene_baseline": accept_hygiene_baseline,
         "canonical_documents": canonical_documents,
     }, sort_keys=True, separators=(",", ":"))
@@ -417,6 +510,8 @@ def build_bootstrap_plan(
         hashlib.sha256(payload.encode()).hexdigest(),
         canonical_documents,
         accept_hygiene_baseline,
+        direct_protection,
+        binding_candidates,
     )
 
 

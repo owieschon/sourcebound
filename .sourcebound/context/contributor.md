@@ -1,13 +1,13 @@
 # Context bundle: contributor
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `e426d0022829ede132ad7183d57906c5caa2db9fac6e35c464f2b48839536ead`
+- Corpus sha256: `6e30a1d33191a7b5c56cb2d8401c109347ca68ce4a72f516e6d0ddbfcd147436`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `7bae61d93eef29e6ac61bf489e61f3ca2a7857295ee0cf0176ba513d2770dce4`
+- Content sha256: `fdd116b30698cefac0c30f844a933284218a7f8a0d7b1d9f7157164c2992f508`
 
 <!-- sourcebound:canonical README.md begin -->
 # Sourcebound
@@ -70,7 +70,7 @@ sourcebound check
 sourcebound verify
 ```
 
-An established, unregistered README stays byte-for-byte authored. Init writes its detected catalog to `.sourcebound/repository-surface.md`; a new README or one that adopted the register may own that region directly.
+An established, unregistered README stays byte-for-byte authored. Init writes its detected catalog to `.sourcebound/repository-surface.md`; a new README or one that adopted the register may own that region directly. Its plan also reports zero directly protected prose after catalog-only setup and lists bounded advisory source-claim candidates when static ownership evidence supports them. Review a candidate, then add its exact relationship manually or reject it.
 
 After a bound source changes, run `check`, then use `drive` for a declared repair. Run `project` when a declared projection depends on the repaired document, then run `verify`. The [tutorial](docs/learn/tutorial-catch-a-lying-doc.md) shows the failure before the repair; the [support guide](docs/SUPPORT.md) covers mature-repository adoption.
 

@@ -109,6 +109,7 @@ class SourceClaimResult:
     status: str
     authority: str
     rank: int
+    ownership_evidence: tuple[str, ...]
     document_digest: str
     source_digest: str
     detail: str
@@ -119,6 +120,7 @@ class SourceClaimResult:
             value = payload[key]
             if isinstance(value, tuple):
                 payload[key] = list(value)
+        payload["ownership_evidence"] = list(self.ownership_evidence)
         return payload
 
 
@@ -518,7 +520,10 @@ def _table_claims(path: str, lines: list[str]) -> list[DocumentClaim]:
     return claims
 
 
-def _relationship_rank(claim: DocumentClaim, fact: SourceFact) -> int:
+def _relationship_assessment(
+    claim: DocumentClaim,
+    fact: SourceFact,
+) -> tuple[int, tuple[str, ...]]:
     doc = claim.doc
     source = fact.source
     anchor = claim.anchor
@@ -544,16 +549,25 @@ def _relationship_rank(claim: DocumentClaim, fact: SourceFact) -> int:
     stem_overlap = bool(doc_stem & source_context)
     anchor_match = claim_subject in anchor_context
     exact_locator = exact_root or exact_nested
+    evidence: list[str] = []
+    if same_parent:
+        evidence.append("document and source share a parent directory")
+    if stem_overlap:
+        evidence.append("document and source filenames share a subject token")
+    if anchor_match:
+        evidence.append("document anchor contains the documented subject")
+    if exact_locator:
+        evidence.append("document subject matches the source locator")
     if claim.kind == "identifier-set":
         ownership = same_parent or stem_overlap or (exact_locator and anchor_match)
     else:
         ownership = same_parent or stem_overlap
     if not ownership:
-        return 0
+        return 0, ()
     if not exact_locator and not (
         same_parent and (stem_overlap or anchor_match)
     ):
-        return 0
+        return 0, ()
 
     rank = min(common, 2) * 10
     rank += 100 if same_parent else 0
@@ -563,7 +577,12 @@ def _relationship_rank(claim: DocumentClaim, fact: SourceFact) -> int:
         rank += 200
     elif claim_subject in _tokens(locator_parts[0]):
         rank += 50 if len(locator_parts) == 1 else 25
-    return rank
+    return rank, tuple(evidence)
+
+
+def _relationship_rank(claim: DocumentClaim, fact: SourceFact) -> int:
+    """Keep the ranking seam stable for callers that need only the numeric score."""
+    return _relationship_assessment(claim, fact)[0]
 
 
 def _result(
@@ -573,6 +592,7 @@ def _result(
     fact: SourceFact,
     authority: str,
     rank: int,
+    ownership_evidence: tuple[str, ...] = (),
 ) -> SourceClaimResult:
     status = "current" if claim.value == fact.value else "drift"
     if claim.kind == "count":
@@ -606,6 +626,7 @@ def _result(
         status,
         authority,
         rank,
+        ownership_evidence,
         claim.digest,
         fact.digest,
         detail,
@@ -742,18 +763,18 @@ def scan_source_claims(
             continue
         ranked = sorted(
             (
-                (_relationship_rank(claim, fact), fact)
+                (*_relationship_assessment(claim, fact), fact)
                 for fact in fact_matches
             ),
-            key=lambda item: (-item[0], item[1].source, item[1].locator),
+            key=lambda item: (-item[0], item[2].source, item[2].locator),
         )
         best_rank = ranked[0][0]
         if best_rank < 100:
             continue
-        best = [fact for rank, fact in ranked if rank == best_rank]
+        best = [item for item in ranked if item[0] == best_rank]
         if len(best) != 1:
             continue
-        fact = best[0]
+        _rank, ownership_evidence, fact = best[0]
         relationship = (
             claim.kind,
             claim.doc,
@@ -771,6 +792,7 @@ def scan_source_claims(
                 fact=fact,
                 authority="assessment",
                 rank=best_rank,
+                ownership_evidence=ownership_evidence,
             )
         )
     candidates.sort(

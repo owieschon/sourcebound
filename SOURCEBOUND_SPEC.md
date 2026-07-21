@@ -78,8 +78,11 @@ receives the packaged overview shape; an existing README keeps its authored open
 already opted into the register. Otherwise, the generated catalog lives at
 `.sourcebound/repository-surface.md`. The initial context projection contains that catalog and the
 root orientation page only; sourcebound does not promote architecture records, examples, or nested
-READMEs to canonical context from their filenames. Init stops instead of replacing an existing
-manifest, overwriting its reserved generated file, or inventing purpose for an ambiguous page.
+READMEs to canonical context from their filenames. Its plan states that a catalog-only setup directly
+protects zero prose claims. It can list bounded static count and identifier-table candidates with the
+ownership evidence and manifest entry needed for review, but it never writes a candidate as an
+accepted relationship. Init stops instead of replacing an existing manifest, overwriting its reserved
+generated file, or inventing purpose for an ambiguous page.
 
 Use `check` for configured binding and projection drift. Use `check --changed --base REF --head REF`
 to classify affected bindings, accepted source claims, and newly detected public surface.

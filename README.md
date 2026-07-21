@@ -58,7 +58,7 @@ sourcebound check
 sourcebound verify
 ```
 
-An established, unregistered README stays byte-for-byte authored. Init writes its detected catalog to `.sourcebound/repository-surface.md`; a new README or one that adopted the register may own that region directly.
+An established, unregistered README stays byte-for-byte authored. Init writes its detected catalog to `.sourcebound/repository-surface.md`; a new README or one that adopted the register may own that region directly. Its plan also reports zero directly protected prose after catalog-only setup and lists bounded advisory source-claim candidates when static ownership evidence supports them. Review a candidate, then add its exact relationship manually or reject it.
 
 After a bound source changes, run `check`, then use `drive` for a declared repair. Run `project` when a declared projection depends on the repaired document, then run `verify`. The [tutorial](docs/learn/tutorial-catch-a-lying-doc.md) shows the failure before the repair; the [support guide](docs/SUPPORT.md) covers mature-repository adoption.
 
