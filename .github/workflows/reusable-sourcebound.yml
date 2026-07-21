@@ -17,12 +17,18 @@ on:
         required: false
         default: ""
         type: string
+      check_name:
+        description: Display name for the caller's required status context.
+        required: false
+        default: sourcebound
+        type: string
 
 permissions:
   contents: read
 
 jobs:
   sourcebound:
+    name: ${{ inputs.check_name }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
