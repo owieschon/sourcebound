@@ -1,0 +1,12 @@
+version: 1
+bindings:
+  - id: actions
+    type: region
+    doc: README.md
+    region: actions
+    extractor: python-literal
+    source:
+      path: src/actions.py
+      symbol: ACTIONS
+    renderer: markdown-table
+    columns: [name, audience]

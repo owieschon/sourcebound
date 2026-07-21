@@ -1,0 +1,12 @@
+{
+  "tests": [
+    {
+      "steps": [
+        {
+          "action": "runShell",
+          "command": "python3 -c \"print('reader procedure current')\""
+        }
+      ]
+    }
+  ]
+}

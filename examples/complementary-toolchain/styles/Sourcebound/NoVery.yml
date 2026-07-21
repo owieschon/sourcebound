@@ -1,0 +1,6 @@
+extends: existence
+message: "Avoid 'very' in this fixture."
+level: error
+ignorecase: true
+tokens:
+  - very
