@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import base64
 import hashlib
 import json
 import os
@@ -21,9 +20,10 @@ VALE_SHA256 = "968c6d8bf2052bc97aa24274234cc466dbcc249b55ace33dd382c2cdfa93b08c"
 VALE_URL = "https://github.com/errata-ai/vale/releases/download/v3.15.1/vale_3.15.1_MacOS_arm64.tar.gz"
 DOC_VERSION = "4.36.0"
 DOC_INTEGRITY = "sha512-i+Ffu32WBMRnvzxhNwxTy6zpJODO2YLlDaqRNgXcbFaQGhFqATBOjZqkhvOMQvlzzikCfKhlWXWSyAg/HP2gzw=="
-DOC_URL = "https://registry.npmjs.org/doc-detective/-/doc-detective-4.36.0.tgz"
+DOC_LOCK = Path("tests/contracts/fixtures/doc-detective-lock.json")
 TRACKED_INPUTS = (
     "tests/contracts/run_toolchain_fixture.py",
+    "tests/contracts/fixtures/doc-detective-lock.json",
     "examples/complementary-toolchain/.doc-detective.json",
     "examples/complementary-toolchain/doc-detective.spec.json",
     "examples/complementary-toolchain/src/actions.py",
@@ -57,10 +57,6 @@ def _tree_inputs(tree: str) -> dict[str, str]:
     return inputs
 
 
-def _sri_sha512(data: bytes) -> str:
-    return "sha512-" + base64.b64encode(hashlib.sha512(data).digest()).decode()
-
-
 def _private(path: Path, root: Path) -> str:
     resolved = path.resolve()
     try:
@@ -83,6 +79,59 @@ def _python_in(venv: Path) -> Path:
     return venv / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
 
 
+def _write_doc_lock(destination: Path) -> dict[str, Any]:
+    lock_bytes = (ROOT / DOC_LOCK).read_bytes()
+    lock = json.loads(lock_bytes)
+    packages = lock.get("packages")
+    if not isinstance(packages, dict) or not packages:
+        raise RuntimeError("Doc Detective lock has no package set")
+    expected = packages.get("node_modules/doc-detective", {})
+    if (
+        expected.get("version") != DOC_VERSION
+        or expected.get("integrity") != DOC_INTEGRITY
+    ):
+        raise RuntimeError("Doc Detective lock does not pin the declared release")
+    for path, package in packages.items():
+        if not path:
+            continue
+        if not isinstance(package, dict):
+            raise RuntimeError(f"Doc Detective lock has malformed package: {path}")
+        if not isinstance(package.get("resolved"), str) or not isinstance(
+            package.get("integrity"), str
+        ):
+            raise RuntimeError(f"Doc Detective lock does not pin package integrity: {path}")
+    destination.write_bytes(lock_bytes)
+    return {"sha256": _sha256(lock_bytes), "package_count": len(packages) - 1}
+
+
+def _sandbox_profile(private_root: Path) -> str:
+    runtime_roots = [
+        Path("/System"),
+        Path("/usr"),
+        Path("/Library"),
+        Path("/opt"),
+        Path("/dev"),
+        Path("/private/etc"),
+        Path("/private/var/db"),
+    ]
+    readable = [private_root, *(root for root in runtime_roots if root.exists())]
+    clauses = [
+        "(version 1)",
+        "(deny default)",
+        "(allow process*)",
+        '(allow file-read* (literal "/"))',
+        '(allow file-read-metadata (subpath "/private"))',
+    ]
+    clauses.extend(f'(allow file-read* (subpath "{path}"))' for path in readable)
+    clauses.append(f'(allow file-write* (subpath "{private_root}"))')
+    clauses.extend(["(allow sysctl-read)", "(deny network*)"])
+    return "\n".join(clauses) + "\n"
+
+
+def _sandboxed(profile: Path, argv: list[str]) -> list[str]:
+    return ["sandbox-exec", "-f", str(profile), *argv]
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--tree", required=True)
@@ -91,6 +140,11 @@ def main() -> int:
         "--wheel",
         type=Path,
         help="run Sourcebound from this wheel instead of the source checkout",
+    )
+    parser.add_argument(
+        "--wheelhouse",
+        type=Path,
+        help="offline dependency wheelhouse required with --wheel",
     )
     args = parser.parse_args()
 
@@ -103,9 +157,9 @@ def main() -> int:
         fixture_copy = private_root / "fixture"
         archive = private_root / "vale.tar.gz"
         vale_dir = private_root / "vale"
-        package_tarball = private_root / "doc-detective.tgz"
+        package_root = private_root / "doc-detective-package"
         profile = private_root / "deny-network.sb"
-        for directory in (home, cache, prefix, vale_dir):
+        for directory in (home, cache, prefix, vale_dir, package_root):
             directory.mkdir(parents=True, exist_ok=True)
         shutil.copytree(ROOT / FIXTURE, fixture_copy)
 
@@ -128,15 +182,42 @@ def main() -> int:
             sourcebound_prefix = [sys.executable, "-m", "sourcebound"]
             sourcebound_runtime = {"installation": "source-tree"}
         else:
+            if args.wheelhouse is None:
+                raise RuntimeError("--wheel requires --wheelhouse for its runtime dependencies")
             wheel = args.wheel.resolve()
+            wheelhouse = args.wheelhouse.resolve()
             if not wheel.is_file():
                 raise RuntimeError(f"Sourcebound wheel does not exist: {wheel}")
+            dependency_wheels = sorted(
+                path
+                for path in wheelhouse.glob("*.whl")
+                if path.name.lower().startswith("pyyaml-")
+            )
+            if len(dependency_wheels) != 1:
+                raise RuntimeError(
+                    "--wheelhouse must contain exactly one PyYAML wheel for offline installation"
+                )
             venv = private_root / "sourcebound-runtime"
             _checked(
-                [sys.executable, "-m", "venv", "--system-site-packages", str(venv)],
+                [sys.executable, "-m", "venv", str(venv)],
                 env=environment,
             )
+            venv_config = (venv / "pyvenv.cfg").read_text()
+            if "include-system-site-packages = false" not in venv_config:
+                raise RuntimeError("wheel runtime must not inherit system site-packages")
             runtime_python = _python_in(venv)
+            _checked(
+                [
+                    str(runtime_python),
+                    "-m",
+                    "pip",
+                    "install",
+                    "--no-index",
+                    "--no-deps",
+                    str(dependency_wheels[0]),
+                ],
+                env=environment,
+            )
             _checked(
                 [
                     str(runtime_python),
@@ -160,13 +241,41 @@ def main() -> int:
                     env=environment,
                 ).stdout.strip()
             ).resolve()
-            if module_path == ROOT or ROOT in module_path.parents:
-                raise RuntimeError("wheel runtime imported Sourcebound from the source checkout")
+            site_packages = Path(
+                _checked(
+                    [
+                        str(runtime_python),
+                        "-I",
+                        "-c",
+                        "import site; print(site.getsitepackages()[0])",
+                    ],
+                    env=environment,
+                ).stdout.strip()
+            ).resolve()
+            if site_packages not in module_path.parents:
+                raise RuntimeError("wheel runtime did not import Sourcebound from its own site-packages")
+            dist_info = next(site_packages.glob("sourcebound-*.dist-info"), None)
+            if dist_info is None:
+                raise RuntimeError("wheel runtime has no Sourcebound distribution metadata")
+            direct_url = dist_info / "direct_url.json"
+            if not direct_url.is_file():
+                raise RuntimeError("wheel runtime has no direct wheel provenance")
+            direct_url_data = json.loads(direct_url.read_text())
+            wheel_sha256 = _sha256(wheel.read_bytes())
+            archive_hash = direct_url_data.get("archive_info", {}).get("hash")
+            if archive_hash != f"sha256={wheel_sha256}":
+                raise RuntimeError("wheel runtime provenance does not match the supplied wheel")
             sourcebound_prefix = [str(runtime_python), "-I", "-m", "sourcebound"]
             sourcebound_runtime = {
                 "installation": "wheel",
-                "wheel_sha256": _sha256(wheel.read_bytes()),
+                "wheel_sha256": wheel_sha256,
+                "system_site_packages": False,
                 "module_path": _private(module_path, private_root),
+                "site_packages": _private(site_packages, private_root),
+                "distribution_path": _private(dist_info, private_root),
+                "direct_url_sha256": _sha256(direct_url.read_bytes()),
+                "direct_url_archive_hash": archive_hash,
+                "dependency_wheel_sha256": _sha256(dependency_wheels[0].read_bytes()),
             }
 
         _checked(["curl", "-fsSL", VALE_URL, "-o", str(archive)], env=environment)
@@ -177,22 +286,64 @@ def main() -> int:
             extracted.extractall(vale_dir, filter="data")
         vale_binary = next(path for path in vale_dir.rglob("vale") if path.is_file())
 
-        _checked(["curl", "-fsSL", DOC_URL, "-o", str(package_tarball)], env=environment)
-        if _sri_sha512(package_tarball.read_bytes()) != DOC_INTEGRITY:
-            raise RuntimeError("Doc Detective tarball integrity mismatch")
-        _checked([
-            "npm", "install", "--prefix", str(prefix), "--ignore-scripts", "--package-lock=true", str(package_tarball),
-        ], env=environment)
-        lock = prefix / "package-lock.json"
-        binary = prefix / "node_modules" / ".bin" / "doc-detective"
+        (package_root / "package.json").write_text(
+            json.dumps(
+                {
+                    "name": "sourcebound-toolchain-fixture",
+                    "version": "1.0.0",
+                    "private": True,
+                    "dependencies": {"doc-detective": DOC_VERSION},
+                },
+                sort_keys=True,
+            )
+            + "\n"
+        )
+        lock = package_root / "package-lock.json"
+        lock_metadata = _write_doc_lock(lock)
+        _checked(
+            [
+                "npm",
+                "ci",
+                "--ignore-scripts",
+                "--no-audit",
+                "--no-fund",
+            ],
+            env=environment,
+            cwd=package_root,
+        )
+        binary = package_root / "node_modules" / ".bin" / "doc-detective"
         if not lock.is_file() or not binary.is_file():
             raise RuntimeError("private installation did not produce lock and binary")
 
-        profile.write_text("(version 1) (deny network*) (allow default)\n")
-        egress_argv = ["sandbox-exec", "-f", str(profile), "python3", "-c", "import socket; socket.create_connection(('1.1.1.1', 443), timeout=2)"]
+        if shutil.which("sandbox-exec") is None:
+            raise RuntimeError("toolchain fixture requires sandbox-exec")
+        profile.write_text(_sandbox_profile(private_root))
+        egress_argv = _sandboxed(
+            profile,
+            [
+                sys.executable,
+                "-I",
+                "-c",
+                "import socket; socket.create_connection(('1.1.1.1', 443), timeout=2)",
+            ],
+        )
         egress = _run(egress_argv, env=environment)
         if egress.returncode == 0:
-            raise RuntimeError("deny-network profile allowed egress")
+            raise RuntimeError("contained external-tool profile allowed egress")
+        host_marker = Path(tempfile.gettempdir()) / "sourcebound-toolchain-host-marker"
+        host_marker.write_text("must remain unreadable to external tools\n")
+        host_read_argv = _sandboxed(
+            profile,
+            [
+                sys.executable,
+                "-I",
+                "-c",
+                f"from pathlib import Path; Path({str(host_marker)!r}).read_text()",
+            ],
+        )
+        host_read = _run(host_read_argv, env=environment)
+        if host_read.returncode == 0:
+            raise RuntimeError("contained external-tool profile read a host file")
 
         sourcebound_base_argv = [
             *sourcebound_prefix,
@@ -203,14 +354,20 @@ def main() -> int:
         sourcebound_base = _run(sourcebound_base_argv, env=environment)
         if sourcebound_base.returncode:
             raise RuntimeError(sourcebound_base.stderr)
-        vale_base_argv = ["sandbox-exec", "-f", str(profile), str(vale_binary), "--config", ".vale.ini", "docs/guide.md"]
+        vale_base_argv = _sandboxed(profile, [str(vale_binary), "--config", ".vale.ini", "docs/guide.md"])
         vale_base = _run(vale_base_argv, env=environment, cwd=fixture_copy)
         if vale_base.returncode:
-            raise RuntimeError(vale_base.stderr)
-        doc_base_argv = ["sandbox-exec", "-f", str(profile), str(binary), "--no-auto-update", "--config", ".doc-detective.json", "--input", "doc-detective.spec.json"]
+            raise RuntimeError(
+                f"Vale failed ({vale_base.returncode}):\n"
+                f"{vale_base.stdout}\n{vale_base.stderr}"
+            )
+        doc_base_argv = _sandboxed(profile, [str(binary), "--no-auto-update", "--config", ".doc-detective.json", "--input", "doc-detective.spec.json"])
         doc_base = _run(doc_base_argv, env=environment, cwd=fixture_copy)
         if doc_base.returncode:
-            raise RuntimeError(doc_base.stderr)
+            raise RuntimeError(
+                f"Doc Detective failed ({doc_base.returncode}):\n"
+                f"{doc_base.stdout}\n{doc_base.stderr}"
+            )
 
         source = fixture_copy / "src" / "actions.py"
         source.write_text(source.read_text().replace(
@@ -234,6 +391,7 @@ def main() -> int:
                 "tmpdir": private_root,
                 "npm_cache": cache,
                 "npm_prefix": prefix,
+                "doc_package_root": package_root,
                 "package_lock": lock,
                 "doc_binary": binary,
                 "vale_binary": vale_binary,
@@ -245,9 +403,20 @@ def main() -> int:
             "input_sha256": inputs,
             "private_paths": paths,
             "vale": {"version": VALE_VERSION, "archive_sha256": _sha256(archive_bytes), "binary_sha256": _sha256(vale_binary.read_bytes())},
-            "doc_detective": {"version": DOC_VERSION, "tarball_integrity": _sri_sha512(package_tarball.read_bytes()), "binary_sha256": _sha256(binary.read_bytes()), "package_lock_sha256": _sha256(lock.read_bytes()), "telemetry_send": False},
+            "doc_detective": {
+                "version": DOC_VERSION,
+                "tarball_integrity": DOC_INTEGRITY,
+                "binary_sha256": _sha256(binary.read_bytes()),
+                "package_lock_sha256": lock_metadata["sha256"],
+                "package_count": lock_metadata["package_count"],
+                "telemetry_send": False,
+            },
             "sourcebound_runtime": sourcebound_runtime,
-            "network": {"profile_sha256": _sha256(profile.read_bytes()), "egress_probe": _record(egress, egress_argv)},
+            "containment": {
+                "profile_sha256": _sha256(profile.read_bytes()),
+                "egress_probe": _record(egress, egress_argv),
+                "host_read_probe": _record(host_read, host_read_argv),
+            },
             "runs": {
                 "sourcebound_baseline": _record(sourcebound_base, sourcebound_base_argv),
                 "sourcebound_mutation": _record(sourcebound_mutation, sourcebound_base_argv),

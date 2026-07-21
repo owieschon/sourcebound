@@ -25,6 +25,7 @@ def main() -> int:
     inputs = receipt.get("input_sha256", {})
     require(set(inputs) == {
         "tests/contracts/run_toolchain_fixture.py",
+        "tests/contracts/fixtures/doc-detective-lock.json",
         "examples/complementary-toolchain/.doc-detective.json",
         "examples/complementary-toolchain/doc-detective.spec.json",
         "examples/complementary-toolchain/src/actions.py",
@@ -45,6 +46,11 @@ def main() -> int:
     require(len(vale.get("binary_sha256", "")) == 64, "missing Vale binary digest")
     require(doc.get("version") == "4.36.0" and doc.get("tarball_integrity") == DOC_INTEGRITY, "wrong Doc Detective identity")
     require(len(doc.get("binary_sha256", "")) == 64 and len(doc.get("package_lock_sha256", "")) == 64, "missing private install digest")
+    if "package_count" in doc:
+        require(
+            isinstance(doc["package_count"], int) and doc["package_count"] > 1,
+            "invalid pinned dependency closure",
+        )
     require(doc.get("telemetry_send") is False, "telemetry is not disabled")
     runtime = receipt.get("sourcebound_runtime", {})
     require(
@@ -57,9 +63,48 @@ def main() -> int:
             len(runtime.get("wheel_sha256", "")) == 64,
             "missing wheel digest",
         )
-    network = receipt.get("network", {})
-    require(len(network.get("profile_sha256", "")) == 64, "missing sandbox profile")
-    require(network.get("egress_probe", {}).get("exit_code") != 0, "egress probe succeeded")
+        require(
+            runtime.get("system_site_packages") is False,
+            "wheel fixture inherited system site-packages",
+        )
+        require(
+            Path(runtime.get("module_path", "")).is_relative_to(
+                Path(runtime.get("site_packages", ""))
+            ),
+            "wheel module escaped its isolated site-packages",
+        )
+        require(
+            Path(runtime.get("distribution_path", "")).is_relative_to(
+                Path(runtime.get("site_packages", ""))
+            ),
+            "wheel distribution escaped its isolated site-packages",
+        )
+        require(
+            runtime.get("direct_url_archive_hash")
+            == f"sha256={runtime.get('wheel_sha256')}",
+            "wheel provenance digest mismatch",
+        )
+        require(
+            len(runtime.get("direct_url_sha256", "")) == 64,
+            "missing wheel provenance receipt",
+        )
+        require(
+            isinstance(doc.get("package_count"), int) and doc["package_count"] > 1,
+            "wheel fixture lacks a pinned dependency closure",
+        )
+    containment = receipt.get("containment", receipt.get("network", {}))
+    require(len(containment.get("profile_sha256", "")) == 64, "missing sandbox profile")
+    require(
+        containment.get("egress_probe", {}).get("exit_code") != 0,
+        "egress probe succeeded",
+    )
+    if "host_read_probe" in containment:
+        require(
+            containment["host_read_probe"].get("exit_code") != 0,
+            "host-read probe succeeded",
+        )
+    elif args.require_wheel:
+        raise SystemExit("wheel fixture lacks a host-read containment probe")
     runs = receipt.get("runs", {})
     expected = {
         "sourcebound_baseline": 0,

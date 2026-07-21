@@ -619,28 +619,33 @@ def validate_verdict_payload(payload: Mapping[str, object]) -> None:
     ):
         raise ConfigurationError("verdict.inputs.impact_plan_sha256 is missing")
 
-    execution = _object(
-        data["execution"],
-        "verdict.execution",
-        frozenset(
-            {
-                "mode",
-                "repository_commands",
-                "repository_processes_started",
-                "plugins",
-                "skipped_binding_ids",
-                "skipped_command_ids",
-                "skipped_plugin_ids",
-            }
-        ),
+    execution = data["execution"]
+    required_execution_keys = frozenset(
+        {
+            "mode",
+            "repository_commands",
+            "plugins",
+            "skipped_binding_ids",
+            "skipped_command_ids",
+            "skipped_plugin_ids",
+        }
     )
+    optional_execution_keys = frozenset({"repository_processes_started"})
+    if not isinstance(execution, dict) or not (
+        frozenset(execution) == required_execution_keys
+        or frozenset(execution) == required_execution_keys | optional_execution_keys
+    ):
+        raise ConfigurationError("verdict.execution fields are invalid")
     if execution["mode"] != ExecutionPolicy.STATIC_ONLY.value:
         raise ConfigurationError("verdict.execution.mode is invalid")
     if execution["repository_commands"] != "skipped":
         raise ConfigurationError(
             "verdict.execution.repository_commands must be skipped"
         )
-    if execution["repository_processes_started"] is not False:
+    if (
+        "repository_processes_started" in execution
+        and execution["repository_processes_started"] is not False
+    ):
         raise ConfigurationError(
             "verdict.execution.repository_processes_started must be false"
         )
@@ -1422,8 +1427,8 @@ def render_verdict_payload_sarif(payload: Mapping[str, object]) -> str:
                     }
                 },
                 "properties": {
-                    "cleanDocsVerdictState": payload["state"],
-                    "cleanDocsVerdictDigest": payload["digest"],
+                    "sourceboundVerdictState": payload["state"],
+                    "sourceboundVerdictDigest": payload["digest"],
                 },
                 "results": [
                     {
@@ -1434,7 +1439,7 @@ def render_verdict_payload_sarif(payload: Mapping[str, object]) -> str:
                                 f"{finding['message']}. Repair: {finding['repair']}"
                             )
                         },
-                        "partialFingerprints": {"cleanDocsFindingId": finding["id"]},
+                        "partialFingerprints": {"sourceboundFindingId": finding["id"]},
                         "locations": [
                             {
                                 "physicalLocation": {
