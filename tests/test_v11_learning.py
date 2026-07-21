@@ -8,7 +8,6 @@ import sys
 from pathlib import Path
 
 from clean_docs.engine import drive, evaluate
-from scripts.build_learning_evidence import build_record
 from scripts.record_learning_tutorial import record
 from scripts.render_social_preview import HEIGHT, WIDTH, render_svg
 
@@ -88,16 +87,19 @@ def test_learning_index_routes_each_reader_job_without_copying_reference() -> No
     assert "../SECURITY_MODEL.md" in index
 
 
-def test_postmortem_record_is_derived_from_the_archived_case() -> None:
+def test_postmortem_record_is_committed_and_bound() -> None:
     committed = json.loads(
         (ROOT / ".sourcebound/learning/ultra-csm-hygiene.json").read_text(encoding="utf-8")
     )
-    assert committed == build_record()
+    postmortem = (LEARN / "postmortem-the-readme-that-lied.md").read_text(encoding="utf-8")
+    assert "../../.sourcebound/learning/ultra-csm-hygiene.json" in postmortem
+    assert "docs/archive" not in postmortem
     assert committed["measurements"][0] == {
         "measure": "Total findings",
         "before": "280",
         "after": "73 (all justified in `NOTES.md`)",
     }
+    assert committed["scope"].startswith("Historical cleanup evidence")
     assert len(committed["examples"]) == 3
 
 

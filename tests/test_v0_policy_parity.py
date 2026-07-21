@@ -96,7 +96,7 @@ def test_pre_write_wrapper_matches_frozen_version_zero_script(tmp_path: Path) ->
         }},
     ]
     environment = {**os.environ, "HOME": str(tmp_path), "PYTHONPATH": str(ROOT / "src")}
-    original = ROOT / "docs/archive/v0/originals/quality-gate.py.orig"
+    original = ROOT / "tests/fixtures/v0-policy/quality-gate.py.orig"
     wrapper = ROOT / "quality-gate.py"
     for payload in payloads:
         baseline = subprocess.run(

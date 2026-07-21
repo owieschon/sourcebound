@@ -1,7 +1,5 @@
 version: 2
 exclude:
-  - pattern: docs/archive/**
-    reason: Frozen Version 0 provenance fixtures stay outside the active product surface.
   - pattern: .sourcebound/reader-trials*/**
     reason: Versioned content-addressed reader evidence preserves observed commands and paths verbatim.
   - pattern: .sourcebound/reviews/**
