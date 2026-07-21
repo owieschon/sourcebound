@@ -13,7 +13,6 @@ def test_version_11_registry_names_every_scenario() -> None:
     assert [case.id for case in cases] == [
         "public-repository-legibility",
         "tutorial-from-a-clean-room",
-        "postmortem-facts-cannot-drift",
         "deterministic-seam-boundary",
         "additive-learning-corpus",
         "fresh-reader-learning-path",
