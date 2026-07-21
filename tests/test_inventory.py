@@ -19,6 +19,19 @@ from clean_docs.renderers import render
 from clean_docs.snapshot import RepositorySnapshot
 
 
+def test_inventory_does_not_promote_test_harness_arguments_to_public_cli(tmp_path: Path) -> None:
+    root = tmp_path / "test-harness-surface"
+    (root / "tests").mkdir(parents=True)
+    (root / "tests" / "runner.py").write_text(
+        "parser.add_parser('private-run')\nparser.add_argument('--private-flag')\n"
+    )
+    report = scan_inventory(root)
+    assert not [
+        item for item in report.items
+        if item.kind in {"cli-command", "cli-option"} and item.source == "tests/runner.py"
+    ]
+
+
 def _python_repo(tmp_path: Path) -> Path:
     root = tmp_path / "python-repo"
     (root / "src/service").mkdir(parents=True)

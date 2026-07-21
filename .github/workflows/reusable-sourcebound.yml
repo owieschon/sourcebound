@@ -169,7 +169,11 @@ jobs:
                   [
                       f"Inventory surfaces: {coverage.get('inventory_total', 'unknown')}",
                       f"Directly bound: {coverage.get('directly_bound', 'unknown')}",
+                      f"Reasoned ignores: {coverage.get('ignored', 'unknown')}",
                       f"Catalog only: {coverage.get('catalog_only', 'unknown')}",
+                      f"Classification complete: {coverage.get('classification_complete', 'unknown')}",
+                      f"Direct coverage complete: {coverage.get('direct_coverage_complete', 'unknown')}",
+                      "Assurance scope: configured contract; unbound prose is not certified",
                   ]
               )
           for finding in payload.get("findings", []):

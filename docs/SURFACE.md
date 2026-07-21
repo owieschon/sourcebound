@@ -19,11 +19,11 @@ The catalog binding catches additions, removals, and replacements across the det
 | --- | ---: | --- |
 | api-symbol | 307 | `AcceptanceCase`, `Assertion`, `AuditFinding`, and 304 more |
 | cli-command | 43 | `audit`, `benchmark`, `binding`, and 40 more |
-| cli-option | 97 | `--accept-hygiene-baseline`, `--attempts`, `--base`, and 94 more |
+| cli-option | 93 | `--accept-hygiene-baseline`, `--attempts`, `--base`, and 90 more |
 | package | 2 | `sourcebound`, `sourcebound-mdx-parser-build` |
 | package-script | 1 | `build` |
 | runtime-constraint | 3 | `ES modules`, `Python >=3.10`, `node >=20` |
-| test-suite | 70 | `scripts/test_readme_quickstart.py`, `scripts/test_release_lifecycle.py`, `tests/test_accessibility.py`, and 67 more |
+| test-suite | 72 | `scripts/test_readme_quickstart.py`, `scripts/test_release_lifecycle.py`, `tests/contracts/test_core_clarity_contract.py`, and 69 more |
 
-<!-- sourcebound:inventory-sha256 8ddfe1e73134157c5ae710d9a3926ca74b948db3fe68926d4a63efe90c4206bf -->
+<!-- sourcebound:inventory-sha256 f96a12a991a551aa69f90e1f0ef78c5e7db10d487f6f567800e79b2c8377824c -->
 <!-- sourcebound:end repository-surface -->

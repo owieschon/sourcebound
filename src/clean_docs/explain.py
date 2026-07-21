@@ -81,7 +81,19 @@ class Explanation:
         return asdict(self)
 
 
+SUMMARY_EXPLANATIONS = {
+    "bound": ("A source-specific binding protects the selected fact.", "Keep its source and generated region current."),
+    "cataloged": ("A catalog records the surface but does not check prose about it.", "Add a source-specific binding when readers depend on the fact."),
+    "classification-complete": ("Every detected surface is bound, cataloged, ignored, or a gap.", "This does not certify unbound prose."),
+    "direct-coverage-complete": ("Every selected surface has a direct binding or reasoned ignore.", "Review selector scope before relying on this result."),
+    "coverage-complete": ("Legacy alias for classification complete.", "Use classification complete to avoid implying prose was checked."),
+}
+
+
 def explain(root: Path, identifier: str) -> Explanation:
+    if identifier in SUMMARY_EXPLANATIONS:
+        summary, repair = SUMMARY_EXPLANATIONS[identifier]
+        return Explanation(identifier, "coverage-summary", "informational", summary, {}, repair, False)
     if identifier in RULES:
         summary, repair = RULES[identifier]
         return Explanation(identifier, "policy-rule", "required", summary, {}, repair, True)
