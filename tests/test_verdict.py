@@ -292,6 +292,60 @@ def test_private_refactor_is_stable_and_ready_with_coverage_stated(
     ]
 
 
+def test_direct_policy_gap_blocks_pr_verdict_and_changes_its_digest(
+    tmp_path: Path,
+) -> None:
+    root = _symbol_repository(tmp_path)
+    (root / "pyproject.toml").write_text(
+        "[project]\nname = 'fixture'\nversion = '1.0.0'\n"
+    )
+    base = _commit(root, "base")
+    without_policy = build_pr_verdict(
+        root,
+        root / ".sourcebound.yml",
+        base=base,
+        head=base,
+    )
+    (root / ".sourcebound-ignore.yml").write_text(
+        """\
+version: 2
+ignore: []
+require_direct:
+  - id: public-package
+    kinds: [package]
+    paths: [pyproject.toml]
+"""
+    )
+    head = _commit(root, "require direct package evidence")
+
+    with_policy = build_pr_verdict(
+        root,
+        root / ".sourcebound.yml",
+        base=base,
+        head=head,
+    )
+    payload = with_policy.as_dict()
+
+    assert with_policy.state == "not_ready"
+    assert with_policy.digest != without_policy.digest
+    assert payload["coverage"]["direct_policy"] == {
+        "configured": True,
+        "required": 1,
+        "satisfied": 0,
+        "gaps": [
+            {
+                "selector": "public-package",
+                "inventory_id": "package:pyproject.toml:project",
+                "kind": "package",
+                "source": "pyproject.toml",
+                "locator": "project",
+            }
+        ],
+        "complete": False,
+    }
+    assert any(finding.rule == "direct-policy-gap" for finding in with_policy.findings)
+
+
 def test_review_contract_advisory_preserves_ready_verdict_and_receipts(
     tmp_path: Path,
 ) -> None:

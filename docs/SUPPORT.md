@@ -132,7 +132,13 @@ required manifest change before it reads source evidence.
 sourcebound verify --base origin/main --head HEAD --out .sourcebound/outcome.json
 ```
 
-The receipt counts current bindings, caught drift, coverage gaps, active and baselined hygiene findings, and projection state. `bound` means a source-specific binding covers the detected locator. `cataloged` means a repository-wide inventory binding tracks the surface but no source-specific documentation claim covers it. `coverage_complete` permits either form; `direct_coverage_complete` requires source-specific bindings or reasoned ignores for the whole detected surface.
+The receipt counts current bindings, caught drift, coverage gaps, active and baselined hygiene findings, and projection state. `bound` means a source-specific binding covers the detected locator. `cataloged` means a repository-wide inventory binding tracks the surface but no source-specific documentation claim covers it. `coverage_complete` remains the compatibility alias for `classification_complete`: every detected surface is bound, cataloged, ignored, or reported as a gap. `direct_coverage_complete` requires source-specific bindings or reasoned ignores for the whole detected surface.
+
+Repositories that need direct protection for selected public surfaces can
+configure version 2 of `.sourcebound-ignore.yml`. The policy is opt-in. Its
+`require_direct` selectors gate only matching inventory records; unrelated
+cataloged records stay visible without becoming failures. The [manifest reference](REFERENCE.md#selected-direct-coverage-policy)
+defines the selector and exact-ignore contract.
 
 Read the receipt's `assurance` object before interpreting a green result. Its
 `cataloged_surfaces_check_prose` and `judgment_prose_certified` fields remain `false`: a passing

@@ -94,6 +94,7 @@ def test_explain_names_catalog_visibility_and_completion_boundaries(
         ("cataloged", "does not check prose"),
         ("coverage-complete", "alias"),
         ("direct-coverage-complete", "direct binding"),
+        ("direct-policy-complete", "selected by direct policy"),
     ):
         assert main(["--root", str(root), "explain", identifier, "--format", "json"]) == 0
         assert expected in json.loads(capsys.readouterr().out)["summary"]

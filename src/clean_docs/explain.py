@@ -24,6 +24,10 @@ RULES = {
         "A document exceeds the packaged line budget.",
         "Split distinct reader tasks or add a reasoned canonical-reference allowance.",
     ),
+    "direct-policy-gap": (
+        "A selected public surface is cataloged or uncovered instead of directly protected.",
+        "Add a source-specific binding, or an exact reasoned ignore when the surface does not need prose.",
+    ),
     "generated-artifact": (
         "Generated runtime residue is tracked as product source.",
         "Remove the artifact and add its pattern to the repository ignore file.",
@@ -85,7 +89,8 @@ SUMMARY_EXPLANATIONS = {
     "bound": ("A source-specific binding protects the selected fact.", "Keep its source and generated region current."),
     "cataloged": ("A catalog records the surface but does not check prose about it.", "Add a source-specific binding when readers depend on the fact."),
     "classification-complete": ("Every detected surface is bound, cataloged, ignored, or a gap.", "This does not certify unbound prose."),
-    "direct-coverage-complete": ("Every selected surface has a direct binding or reasoned ignore.", "Review selector scope before relying on this result."),
+    "direct-coverage-complete": ("Every detected surface has a direct binding or reasoned ignore.", "Use selected direct policy when only part of the surface needs this gate."),
+    "direct-policy-complete": ("Every surface selected by direct policy has a direct binding or reasoned ignore.", "Review selector scope before relying on this result."),
     "coverage-complete": ("Legacy alias for classification complete.", "Use classification complete to avoid implying prose was checked."),
 }
 

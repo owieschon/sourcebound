@@ -917,10 +917,27 @@ def validate_verdict_payload(payload: Mapping[str, object]) -> None:
         _boolean(direct_policy["configured"], "verdict.coverage.direct_policy.configured")
         required = _count(direct_policy["required"], "verdict.coverage.direct_policy.required")
         satisfied = _count(direct_policy["satisfied"], "verdict.coverage.direct_policy.satisfied")
-        if satisfied > required or not isinstance(direct_policy["gaps"], list):
+        gaps = direct_policy["gaps"]
+        if satisfied > required or not isinstance(gaps, list):
             raise ConfigurationError("verdict.coverage.direct_policy is inconsistent")
-        if _boolean(direct_policy["complete"], "verdict.coverage.direct_policy.complete") != (satisfied == required and not direct_policy["gaps"]):
+        if _boolean(
+            direct_policy["complete"],
+            "verdict.coverage.direct_policy.complete",
+        ) != (satisfied == required and not gaps):
             raise ConfigurationError("verdict.coverage.direct_policy.complete contradicts counts")
+        if required != satisfied + len(gaps):
+            raise ConfigurationError("verdict.coverage.direct_policy counts contradict gaps")
+        for index, gap in enumerate(gaps):
+            gap_data = _object(
+                gap,
+                f"verdict.coverage.direct_policy.gaps[{index}]",
+                frozenset({"selector", "inventory_id", "kind", "source", "locator"}),
+            )
+            for field in ("selector", "inventory_id", "kind", "source", "locator"):
+                _string(
+                    gap_data[field],
+                    f"verdict.coverage.direct_policy.gaps[{index}].{field}",
+                )
 
     review_contracts = data["review_contracts"]
     if not isinstance(review_contracts, list):
@@ -1136,6 +1153,23 @@ def _collect_findings(
     impact: ImpactPlan,
 ) -> tuple[VerdictFinding, ...]:
     findings: list[VerdictFinding] = []
+    direct_policy = evidence.inventory.direct_policy
+    if direct_policy is not None:
+        for gap in direct_policy.gaps:
+            findings.append(
+                _finding(
+                    "direct-policy-gap",
+                    "error",
+                    gap.source,
+                    (
+                        f"direct policy {gap.selector} requires {gap.kind} "
+                        f"{gap.locator} ({gap.inventory_id}) to be directly "
+                        "bound or explicitly ignored"
+                    ),
+                    "add a direct Sourcebound relationship for this surface, "
+                    "or add an exact reasoned ignore if it does not need one",
+                )
+            )
     for audit_finding in evidence.audit.findings:
         findings.append(
             _finding(

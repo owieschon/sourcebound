@@ -5,8 +5,11 @@ import json
 import subprocess
 from pathlib import Path
 
+import pytest
+
 from clean_docs.cli import main
 from clean_docs.engine import evaluate, write_results
+from clean_docs.errors import ConfigurationError
 from clean_docs.extractors.inventory import (
     _extract_repository_overview_legacy,
     _inventory_rows_from_items,
@@ -301,6 +304,115 @@ require_direct:
     assert report.direct_policy and report.direct_policy.configured
     assert report.direct_policy.gaps
     assert {gap.selector for gap in report.direct_policy.gaps} == {"public-cli"}
+
+
+def test_direct_policy_accepts_direct_binding_and_exact_reasoned_ignore(
+    tmp_path: Path,
+) -> None:
+    root = _python_repo(tmp_path)
+    manifest = root / ".sourcebound.yml"
+    manifest.write_text(
+        """\
+version: 1
+bindings:
+  - id: serve-command
+    type: symbol
+    doc: docs/guide.md
+    anchor: guide
+    source: {path: src/service/cli.py, symbol: serve}
+"""
+    )
+    policy = root / ".sourcebound-ignore.yml"
+    policy.write_text(
+        """\
+version: 2
+ignore: []
+require_direct:
+  - id: public-cli
+    kinds: [cli-command]
+    paths: [src/service/**]
+"""
+    )
+
+    report = scan_inventory(root)
+
+    assert report.direct_policy is not None
+    assert report.direct_policy.required == 1
+    assert report.direct_policy.satisfied == 1
+    assert report.direct_policy.complete is True
+
+    command = next(item for item in report.items if item.name == "serve")
+    policy.write_text(
+        f"""\
+version: 2
+ignore:
+  - id: {command.id}
+    reason: The generated service command is intentionally catalog-only here.
+require_direct:
+  - id: public-cli
+    kinds: [cli-command]
+    paths: [src/service/**]
+"""
+    )
+    manifest.unlink()
+
+    ignored_report = scan_inventory(root)
+
+    assert ignored_report.direct_policy is not None
+    assert ignored_report.direct_policy.complete is True
+    assert (
+        next(item for item in ignored_report.items if item.id == command.id).coverage
+        == "ignored"
+    )
+
+
+@pytest.mark.parametrize(
+    ("policy", "message"),
+    [
+        (
+            """\
+version: 2
+ignore: []
+require_direct:
+  - id: no-match
+    kinds: [cli-command]
+    paths: [missing/**]
+""",
+            "matches no inventory items",
+        ),
+        (
+            """\
+version: 2
+ignore: []
+require_direct:
+  - id: documents-are-not-a-direct-policy-kind
+    kinds: [document]
+""",
+            "invalid kinds",
+        ),
+        (
+            """\
+version: 2
+ignore: []
+require_direct:
+  - id: parent-path
+    kinds: [cli-command]
+    paths: [../src/**]
+""",
+            "invalid paths",
+        ),
+    ],
+)
+def test_direct_policy_rejects_stale_or_unsupported_selectors(
+    tmp_path: Path,
+    policy: str,
+    message: str,
+) -> None:
+    root = _python_repo(tmp_path)
+    (root / ".sourcebound-ignore.yml").write_text(policy)
+
+    with pytest.raises(ConfigurationError, match=message):
+        scan_inventory(root)
 
 
 def test_repository_overview_stays_compact_and_tracks_the_full_catalog(

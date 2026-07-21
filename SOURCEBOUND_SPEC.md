@@ -19,7 +19,7 @@ to repository evidence, checks those relationships without a model, repairs decl
 projects the same canonical pages for people and agents.
 
 The repository manifest decides which facts receive direct protection. Static inventory makes
-uncovered changes visible. Source-claim discovery can rank numeric counts and column-table identifiers,
+uncovered changes visible. An optional selected direct-coverage policy can require direct bindings or exact reasoned ignores for named public-surface classes without making every cataloged item a prose obligation. Source-claim discovery can rank numeric counts and column-table identifiers,
 but a repository must accept the exact document and source relationship before a deterministic
 mismatch can gate. sourcebound does not infer product strategy, decide which concepts deserve
 explanation, or certify unresolved prose.
@@ -44,9 +44,11 @@ The table below is part of the shipped capability registry:
 | Opt-in feedback loop | Validated operational envelopes and improvement-state receipts satisfy their closed schemas | Observed behavior establishes causality, authorizes purpose, or makes a candidate change correct |
 <!-- sourcebound:end assurance-boundaries -->
 
-An outcome with `"ok": true` means the configured contract passed. Read
-`outcomes.direct_coverage_complete` before claiming source-specific coverage across the detected
-surface. A catalog entry is a change detector, not a prose claim.
+An outcome with `"ok": true` means the configured contract passed. `coverage_complete` remains a
+compatibility alias for `classification_complete`: every detected surface is bound, cataloged,
+ignored, or a visible gap. Read `outcomes.direct_coverage_complete` before claiming source-specific
+coverage across the detected surface, and read `coverage.direct_policy` when a repository has opted
+into selected direct protection. A catalog entry is a change detector, not a prose claim.
 
 ## Operator workflows
 

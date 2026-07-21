@@ -103,6 +103,39 @@ Keep the README focused on the point, first action, proof, and routing. Put proc
 
 Repositories do not configure a standard path. sourcebound bundles the policy pack compiled from [`STANDARD.md`](../STANDARD.md), and CI fails when the authored standard and compiled pack differ.
 
+## Selected direct coverage policy
+
+Use `.sourcebound-ignore.yml` when a repository needs a gate for a narrow class
+of public surfaces, without treating every cataloged symbol as an obligation to
+document. Version 1 files retain their existing exact-ignore behavior. Version
+2 adds `require_direct` selectors:
+
+```yaml
+version: 2
+ignore:
+  - id: cli-command:src/service/legacy.py:legacy-export
+    reason: This compatibility command is intentionally catalog-only.
+require_direct:
+  - id: public-cli
+    kinds: [cli-command, cli-option]
+    paths: [src/service/**]
+```
+
+Each selector has an ID, one or more supported public surface kinds, and an
+optional repository-relative path glob. It must match at least one detected
+surface. Absolute paths, parent traversal, unknown fields, unsupported kinds,
+and duplicate selector IDs fail before a receipt is produced.
+
+A selected item satisfies the policy only when a source-specific binding covers
+its exact locator or the item has an exact reasoned ignore. A catalog entry
+remains visible but does not satisfy the selector. `verify` and `verdict`
+report `direct_policy.required`, `satisfied`, and each unresolved item with its
+selector, inventory ID, kind, path, and locator. Add the binding when the fact
+belongs in reader-facing documentation; add the exact ignore when it does not.
+
+An unselected cataloged item remains a cataloged item. This policy does not
+declare that every detected API, option, or schema needs prose.
+
 ## Review contracts
 
 `review_contracts` declare observe-only relationships between exact source and documentation
