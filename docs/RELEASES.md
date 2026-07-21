@@ -40,5 +40,6 @@ The factual Markdown and JSON remain unchanged when narrative validation fails. 
 
 Release extraction is static and snapshot-bound. First-party and configured discoverer plugins run once per ref in disposable copies. The active worktree, its installed dependencies, and narrative output cannot change the typed delta.
 
-This command describes another repository's release. Workflows publish sourcebound itself, and
-repository-hosted issues hold reader-trial records. Neither belongs in this feature guide.
+This command describes another repository's release. Workflows publish Sourcebound itself; current
+artifact verification belongs in the [release verification guide](VERIFY_RELEASE.md). Neither
+workflow belongs in this feature guide.

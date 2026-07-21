@@ -15,4 +15,5 @@ List the commands or fixtures that prove the change, including one negative case
 - [ ] No AI assistance was used.
 - [ ] AI assistance was used and this pull request states the human-reviewed evidence and test plan.
 
-Use a `Co-authored-by:` trailer only when it accurately records the contribution.
+See [the contribution policy](../CONTRIBUTING.md). Use a `Co-authored-by:` trailer only when it
+accurately records the contribution.
