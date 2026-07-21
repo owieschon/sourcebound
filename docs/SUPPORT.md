@@ -115,7 +115,7 @@ Review and commit the baseline change with the documentation change. A malformed
 ## Compatibility policy
 
 Manifest versions `1` and `2`, plugin API version `1`, and published machine-readable schemas
-remain compatible throughout the 1.x line. A minor release may add optional fields. It cannot
+remain compatible throughout the 2.x line. A minor release may add optional fields. It cannot
 change the meaning of an existing field or silently change normalized evidence for a supported
 adapter.
 
@@ -123,6 +123,10 @@ Before removal, release notes and command output announce a deprecation for at l
 release. Removing a stable CLI command, manifest field, evidence field, or plugin interface breaks
 compatibility. It requires a major release. An incompatible manifest exits `2` and names the
 required manifest change before it reads source evidence.
+
+Sourcebound 2.0 starts the current machine-readable namespace. Consumers moving from the
+preceding distribution must update any SARIF property or fingerprint names they read before
+upgrading.
 
 
 ## Record local outcomes
