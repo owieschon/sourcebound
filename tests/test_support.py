@@ -129,6 +129,7 @@ def test_local_outcome_receipt_reports_baseline_and_changed_impact(
     assert baseline.as_dict()["outcomes"] == {
         "protected_baseline_current": True,
         "coverage_complete": True,
+        "classification_complete": True,
         "direct_coverage_complete": False,
         "drift_caught_before_merge": 0,
     }

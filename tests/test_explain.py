@@ -84,3 +84,16 @@ def test_explain_rejects_an_unknown_identifier(
 
     captured = capsys.readouterr()
     assert "unknown finding or inventory id" in captured.err
+
+
+def test_explain_names_catalog_visibility_and_completion_boundaries(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    root = _repository(tmp_path)
+    for identifier, expected in (
+        ("cataloged", "does not check prose"),
+        ("coverage-complete", "alias"),
+        ("direct-coverage-complete", "direct binding"),
+    ):
+        assert main(["--root", str(root), "explain", identifier, "--format", "json"]) == 0
+        assert expected in json.loads(capsys.readouterr().out)["summary"]

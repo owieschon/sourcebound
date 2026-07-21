@@ -107,6 +107,7 @@ class OutcomeReceipt:
                     self.ok and self.changed is None and self.standard_gaps == 0
                 ),
                 "coverage_complete": self.standard_gaps == 0,
+                "classification_complete": self.standard_gaps == 0,
                 "direct_coverage_complete": (
                     self.standard_gaps == 0 and self.cataloged_inventory_items == 0
                 ),

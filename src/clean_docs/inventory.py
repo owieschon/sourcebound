@@ -207,6 +207,8 @@ def _python_items(path: str, text: str) -> list[dict[str, str]]:
                                 )
                             )
     for candidate in ast.walk(tree):
+        if is_test:
+            continue
         if not isinstance(candidate, ast.Call) or not isinstance(candidate.func, ast.Attribute):
             continue
         if not candidate.args or not isinstance(candidate.args[0], ast.Constant) or not isinstance(candidate.args[0].value, str):

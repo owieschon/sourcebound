@@ -240,6 +240,10 @@ class PullRequestVerdict:
                 "catalog_only": counts["cataloged"],
                 "ignored": counts["ignored"],
                 "unsupported_or_unknown": counts["standard-gap"],
+                "classification_complete": counts["standard-gap"] == 0,
+                "direct_coverage_complete": (
+                    counts["standard-gap"] == 0 and counts["cataloged"] == 0
+                ),
                 "unbound_prose_checked": False,
             },
             "mutation_receipts": [
@@ -874,20 +878,11 @@ def validate_verdict_payload(payload: Mapping[str, object]) -> None:
         "verdict.changed_surface.unsupported_documents",
     )
 
-    coverage = _object(
-        data["coverage"],
-        "verdict.coverage",
-        frozenset(
-            {
-                "inventory_total",
-                "directly_bound",
-                "catalog_only",
-                "ignored",
-                "unsupported_or_unknown",
-                "unbound_prose_checked",
-            }
-        ),
-    )
+    coverage = data["coverage"]
+    base_coverage_keys = frozenset({"inventory_total", "directly_bound", "catalog_only", "ignored", "unsupported_or_unknown", "unbound_prose_checked"})
+    new_coverage_keys = base_coverage_keys | {"classification_complete", "direct_coverage_complete"}
+    if not isinstance(coverage, dict) or frozenset(coverage) not in {base_coverage_keys, new_coverage_keys}:
+        raise ConfigurationError("verdict.coverage fields are invalid")
     coverage_counts = {
         field: _count(coverage[field], f"verdict.coverage.{field}")
         for field in (
@@ -910,6 +905,13 @@ def validate_verdict_payload(payload: Mapping[str, object]) -> None:
         raise ConfigurationError("verdict coverage counts do not sum to total")
     if coverage["unbound_prose_checked"] is not False:
         raise ConfigurationError("verdict.coverage.unbound_prose_checked must be false")
+    if frozenset(coverage) == new_coverage_keys:
+        classification_complete = coverage_counts["unsupported_or_unknown"] == 0
+        direct_coverage_complete = classification_complete and coverage_counts["catalog_only"] == 0
+        if _boolean(coverage["classification_complete"], "verdict.coverage.classification_complete") != classification_complete:
+            raise ConfigurationError("verdict.coverage.classification_complete contradicts counts")
+        if _boolean(coverage["direct_coverage_complete"], "verdict.coverage.direct_coverage_complete") != direct_coverage_complete:
+            raise ConfigurationError("verdict.coverage.direct_coverage_complete contradicts counts")
 
     review_contracts = data["review_contracts"]
     if not isinstance(review_contracts, list):

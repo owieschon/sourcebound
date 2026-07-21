@@ -262,6 +262,13 @@ def test_private_refactor_is_stable_and_ready_with_coverage_stated(
         },
     }
     assert payload["coverage"]["catalog_only"] >= 0
+    assert payload["coverage"]["classification_complete"] is (
+        payload["coverage"]["unsupported_or_unknown"] == 0
+    )
+    assert payload["coverage"]["direct_coverage_complete"] is (
+        payload["coverage"]["unsupported_or_unknown"] == 0
+        and payload["coverage"]["catalog_only"] == 0
+    )
     assert payload["coverage"]["unbound_prose_checked"] is False
     changed = payload["changed_surface"]
     assert changed["files"] == ["src/api.py"]
@@ -680,10 +687,22 @@ def test_verdict_validation_rejects_resigned_semantic_tampering(
     ).as_dict()
     validate_verdict_payload(original)
 
+    legacy = copy.deepcopy(original)
+    del legacy["coverage"]["classification_complete"]
+    del legacy["coverage"]["direct_coverage_complete"]
+    _resign_verdict(legacy)
+    validate_verdict_payload(legacy)
+
     def reject(payload: dict[str, object]) -> None:
         _resign_verdict(payload)
         with pytest.raises(ConfigurationError):
             validate_verdict_payload(payload)
+
+    payload = copy.deepcopy(original)
+    payload["coverage"]["classification_complete"] = not payload["coverage"]["classification_complete"]
+    _resign_verdict(payload)
+    with pytest.raises(ConfigurationError, match="classification_complete contradicts counts"):
+        validate_verdict_payload(payload)
 
     payload = copy.deepcopy(original)
     payload["state"] = "not_ready"
