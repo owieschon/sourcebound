@@ -10,8 +10,6 @@ ROOT = Path(__file__).parents[2]
 VERIFIER = ROOT / "tests/contracts/verify_toolchain_receipt.py"
 INPUTS = {
     "tests/contracts/run_toolchain_fixture.py",
-    "examples/complementary-toolchain/.doc-detective.json",
-    "examples/complementary-toolchain/doc-detective.spec.json",
     "examples/complementary-toolchain/src/actions.py",
     "examples/complementary-toolchain/README.md",
 }
@@ -38,12 +36,6 @@ def _receipt(root: Path) -> dict[str, object]:
             "version": "3.15.1",
             "archive_sha256": "968c6d8bf2052bc97aa24274234cc466dbcc249b55ace33dd382c2cdfa93b08c",
             "binary_sha256": digest,
-        },
-        "doc_detective": {
-            "config_sha256": digest,
-            "telemetry_send": False,
-            "auto_update": False,
-            "execution": "configuration-only",
         },
         "sourcebound_runtime": {"installation": "source-tree"},
         "containment": {
@@ -89,3 +81,18 @@ def test_toolchain_receipt_rejects_empty_relative_sibling_and_traversal_paths(
         receipt["private_paths"]["home"] = value  # type: ignore[index]
         path.write_text(json.dumps(receipt))
         assert _verify(path).returncode != 0
+
+    receipt = _receipt(root)
+    receipt["private_paths"]["private_root"] = "/"
+    path.write_text(json.dumps(receipt))
+    assert _verify(path).returncode != 0
+
+    receipt = _receipt(root)
+    receipt["private_paths"]["home"] = str(root)
+    path.write_text(json.dumps(receipt))
+    assert _verify(path).returncode != 0
+
+    receipt = _receipt(root)
+    receipt["containment"]["allowed_read_roots"] = ["/Users"]  # type: ignore[index]
+    path.write_text(json.dumps(receipt))
+    assert _verify(path).returncode != 0

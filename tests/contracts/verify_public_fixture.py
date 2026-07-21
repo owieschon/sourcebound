@@ -5,17 +5,16 @@ from pathlib import Path
 
 ROOT = Path(__file__).parents[2]
 EXPECTED = {
-    "examples/complementary-toolchain/.doc-detective.json",
     "examples/complementary-toolchain/.sourcebound.yml",
     "examples/complementary-toolchain/.vale.ini",
     "examples/complementary-toolchain/README.md",
-    "examples/complementary-toolchain/doc-detective.spec.json",
     "examples/complementary-toolchain/docs/guide.md",
     "examples/complementary-toolchain/src/actions.py",
     "examples/complementary-toolchain/styles/Sourcebound/NoVery.yml",
     "tests/contracts/run_toolchain_fixture.py",
     "tests/contracts/test_core_clarity_contract.py",
     "tests/contracts/test_ecosystem_boundary.py",
+    "tests/contracts/test_verify_toolchain_receipt.py",
     "tests/contracts/verify_contract_commit.py",
     "tests/contracts/verify_public_fixture.py",
     "tests/contracts/verify_red_contract.py",

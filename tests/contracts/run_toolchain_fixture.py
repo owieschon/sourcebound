@@ -20,8 +20,6 @@ VALE_SHA256 = "968c6d8bf2052bc97aa24274234cc466dbcc249b55ace33dd382c2cdfa93b08c"
 VALE_URL = "https://github.com/errata-ai/vale/releases/download/v3.15.1/vale_3.15.1_MacOS_arm64.tar.gz"
 TRACKED_INPUTS = (
     "tests/contracts/run_toolchain_fixture.py",
-    "examples/complementary-toolchain/.doc-detective.json",
-    "examples/complementary-toolchain/doc-detective.spec.json",
     "examples/complementary-toolchain/src/actions.py",
     "examples/complementary-toolchain/README.md",
 )
@@ -249,10 +247,6 @@ def main() -> int:
             extracted.extractall(vale_dir, filter="data")
         vale_binary = next(path for path in vale_dir.rglob("vale") if path.is_file())
 
-        doc_config = json.loads((fixture_copy / ".doc-detective.json").read_text())
-        if doc_config != {"telemetry": {"send": False}, "autoUpdate": False}:
-            raise RuntimeError("Doc Detective example must explicitly disable telemetry and updates")
-
         if shutil.which("sandbox-exec") is None:
             raise RuntimeError("toolchain fixture requires sandbox-exec")
         profile_text, allowed_read_roots = _sandbox_profile(private_root)
@@ -346,7 +340,6 @@ def main() -> int:
             for name, value in {
                 "private_root": private_root,
                 "home": home,
-                "tmpdir": private_root,
                 "vale_binary": vale_binary,
             }.items()
         }
@@ -356,14 +349,6 @@ def main() -> int:
             "input_sha256": inputs,
             "private_paths": paths,
             "vale": {"version": VALE_VERSION, "archive_sha256": _sha256(archive_bytes), "binary_sha256": _sha256(vale_binary.read_bytes())},
-            "doc_detective": {
-                "config_sha256": _sha256(
-                    (fixture_copy / ".doc-detective.json").read_bytes()
-                ),
-                "telemetry_send": False,
-                "auto_update": False,
-                "execution": "configuration-only",
-            },
             "sourcebound_runtime": sourcebound_runtime,
             "containment": {
                 "profile_sha256": _sha256(profile.read_bytes()),

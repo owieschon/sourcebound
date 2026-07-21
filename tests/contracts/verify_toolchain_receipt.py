@@ -13,13 +13,27 @@ def require(condition: bool, message: str) -> None:
         raise SystemExit(message)
 
 
+def private_root(value: object) -> Path:
+    require(isinstance(value, str) and value, "private root is missing")
+    raw = Path(value)
+    require(raw.is_absolute(), "private root is not absolute")
+    require(".." not in raw.parts, "private root contains parent traversal")
+    canonical = raw.resolve(strict=False)
+    private = Path("/private")
+    require(
+        canonical != private and canonical.is_relative_to(private),
+        "private root is not an isolated private directory",
+    )
+    return canonical
+
+
 def private_path(value: object, root: Path, name: str) -> Path:
     require(isinstance(value, str) and value, f"{name} is missing")
     raw = Path(value)
     require(raw.is_absolute(), f"{name} is not absolute")
     require(".." not in raw.parts, f"{name} contains parent traversal")
     canonical = raw.resolve(strict=False)
-    require(canonical.is_relative_to(root), f"{name} escapes private root")
+    require(canonical != root and canonical.is_relative_to(root), f"{name} escapes private root")
     return canonical
 
 
@@ -34,24 +48,19 @@ def main() -> int:
     inputs = receipt.get("input_sha256", {})
     require(set(inputs) == {
         "tests/contracts/run_toolchain_fixture.py",
-        "examples/complementary-toolchain/.doc-detective.json",
-        "examples/complementary-toolchain/doc-detective.spec.json",
         "examples/complementary-toolchain/src/actions.py",
         "examples/complementary-toolchain/README.md",
     }, "wrong tree-bound input set")
     require(all(len(digest) == 64 for digest in inputs.values()), "invalid input digest")
     paths = receipt.get("private_paths", {})
-    root = private_path(paths.get("private_root"), Path("/"), "private root")
+    root = private_root(paths.get("private_root"))
     for name, value in paths.items():
+        if name == "private_root":
+            continue
         private_path(value, root, name)
     vale = receipt.get("vale", {})
-    doc = receipt.get("doc_detective", {})
     require(vale.get("version") == "3.15.1" and vale.get("archive_sha256") == VALE_SHA256, "wrong Vale identity")
     require(len(vale.get("binary_sha256", "")) == 64, "missing Vale binary digest")
-    require(len(doc.get("config_sha256", "")) == 64, "missing Doc Detective configuration digest")
-    require(doc.get("telemetry_send") is False, "Doc Detective telemetry is not disabled")
-    require(doc.get("auto_update") is False, "Doc Detective updates are not disabled")
-    require(doc.get("execution") == "configuration-only", "wrong Doc Detective boundary")
     runtime = receipt.get("sourcebound_runtime", {})
     require(
         runtime.get("installation") in {"source-tree", "wheel"},
@@ -106,13 +115,18 @@ def main() -> int:
         )
     containment = receipt.get("containment", receipt.get("network", {}))
     require(len(containment.get("profile_sha256", "")) == 64, "missing sandbox profile")
-    require(
-        all(
-            isinstance(path, str) and Path(path).is_absolute()
-            for path in containment.get("allowed_read_roots", [])
-        ),
-        "containment allowlist is invalid",
-    )
+    allowed_read_roots = containment.get("allowed_read_roots", [])
+    require(isinstance(allowed_read_roots, list), "containment allowlist is invalid")
+    for path in allowed_read_roots:
+        require(isinstance(path, str) and path, "containment allowlist is invalid")
+        raw = Path(path)
+        require(raw.is_absolute() and ".." not in raw.parts, "containment allowlist is invalid")
+        canonical = raw.resolve(strict=False)
+        require(
+            canonical in {root, Path("/System"), Path("/usr"), Path("/dev")}
+            or canonical.is_relative_to(Path("/Library/Frameworks/Python.framework")),
+            "containment allowlist exposes an unapproved host root",
+        )
     if args.require_wheel:
         require(
             bool(containment.get("allowed_read_roots")),

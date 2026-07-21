@@ -1,6 +1,6 @@
 # Complementary toolchain fixture
 
-This fixture gives each check one job. A source-bound table tracks the action registry, an editorial rule checks a wording constraint, and a runnable procedure checks a reader task.
+This fixture executes two checks with distinct owners. A source-bound table tracks the action registry, and an editorial rule checks a wording constraint. Procedure runners are separate tools with their own pinned execution environment and receipts.
 
 ## Action registry
 
@@ -11,4 +11,4 @@ This fixture gives each check one job. A source-bound table tracks the action re
 | inspect | maintainers |
 <!-- sourcebound:end actions -->
 
-Change the registry without repairing this table. The source-bound check must fail; the other two checks should not pretend to own that relationship.
+Change the registry without repairing this table. The source-bound check must fail; the editorial check should not pretend to own that relationship.
