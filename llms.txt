@@ -5,7 +5,7 @@
 ## Canonical documentation
 
 - [README.md](README.md): bindings: product-overview; sha256: f1adb9f32d995a33406f883801ed809432d6afd83ef30064f064c3a8ac9818fd
-- [SOURCEBOUND_SPEC.md](SOURCEBOUND_SPEC.md): bindings: assurance-boundaries; sha256: 64dadfd0c0b4ea2004f6770459891c5d080f32b563bf17893f0ad4a292ba85cd
+- [SOURCEBOUND_SPEC.md](SOURCEBOUND_SPEC.md): bindings: assurance-boundaries; sha256: 887b373444daec8f246072cd406c0cf20a595d0d0d597b459a12b1f82f2cfc47
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): declared canonical context; sha256: c3c6d2a19b3cdcf5a1ae956a12992a373fcb2b18e71383d69c0a398c2cbad735
 - [docs/CLI.md](docs/CLI.md): bindings: cli-reference, verdict-reference; sha256: da79370415bdc94f58d7f65ced98e66abdbb024bd26df4cc32ddf6e41ef01576
 - [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md): declared canonical context; sha256: 4e2fba36e8346753f72111cc3afa9846d892ba1dfefc9aea60c5119a4e75ae8b
@@ -13,7 +13,7 @@
 - [docs/README.md](docs/README.md): declared canonical context; sha256: b707c7d3b49ee95d924f48d6f7725960aafe5f55c7ebe08d26ffa22148112993
 - [docs/REFERENCE.md](docs/REFERENCE.md): bindings: binding-sensitivity-reference, manifest-reference, supported-bindings; sha256: 78dda9ca4a2ace33af74162dfe561948085187b988859eff3902fc48271dd50a
 - [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md): bindings: security-model; sha256: 3865422d3fe05b1f97cf68e89eaf4bd2cb662c1b7514d0dbcc64e04fc5755403
-- [docs/SUPPORT.md](docs/SUPPORT.md): bindings: support-guide; sha256: beff46ed0b3a891bc1f5adb65f16bff68aa238e9fdfa893b727d611b409bf25d
+- [docs/SUPPORT.md](docs/SUPPORT.md): bindings: support-guide; sha256: 4b7bd70ed97c86629b4279f6f77a0dcad23e7521cc71317d915caf7a27db3e36
 - [docs/learn/deep-dive-the-deterministic-seam.md](docs/learn/deep-dive-the-deterministic-seam.md): bindings: deterministic-seam-evidence, deterministic-seam-gate, deterministic-seam-phrasing; sha256: 2f92809d492d57c4a9a6f83acff001cef0f433d4820107d8f3d40392387e6035
 - [docs/learn/index.md](docs/learn/index.md): declared canonical context; sha256: e4547bc1e3d5042ea8bd72311887163fc1243a18c54a71a1d768e6cb1e33c02c
 - [docs/learn/tutorial-catch-a-lying-doc.md](docs/learn/tutorial-catch-a-lying-doc.md): bindings: tutorial-outcomes; sha256: ad35c0291a8f850d9468499b37bff7fc4ccd0aa4a4cf88cd3bc59a426c962dbc
