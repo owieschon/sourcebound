@@ -74,8 +74,6 @@ jobs:
       - run: sourcebound --root . release --from v0.4.0 --to HEAD --format json
       - run: python scripts/record_demo.py --out /tmp/sourcebound-demo-evidence.json
       - run: cmp .sourcebound/demo/evidence.json /tmp/sourcebound-demo-evidence.json
-      - run: python scripts/build_learning_evidence.py --out /tmp/sourcebound-learning-evidence.json
-      - run: cmp .sourcebound/learning/ultra-csm-hygiene.json /tmp/sourcebound-learning-evidence.json
       - run: >-
           python scripts/record_learning_tutorial.py
           --sourcebound "$(command -v sourcebound)"

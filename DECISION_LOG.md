@@ -23,9 +23,10 @@ mv`.
 
 ## 2. Archive into `docs/archive/`, conforming to the existing convention, not a new top-level `archive/` (2026-07-12)
 
-Context: the work order suggested "an `archive/` outside the doc tree." ultra-csm already has a
-populated `docs/archive/` (51 historical program reports). Options: (a) create a top-level
-`archive/` as the work order literally says; (b) extend the existing `docs/archive/`. Chose (b):
+Context: the work order suggested "an `archive/` outside the doc tree." The target repository
+already had a populated `docs/archive/` (51 historical program reports). Options: (a) create a
+top-level `archive/` as the work order literally says; (b) extend the existing `docs/archive/`.
+Chose (b):
 a second archive home would compete with the first and violate the one-canonical-home rule the
 standard teaches. Deviation from the literal instruction is deliberate and noted. Reversible:
 the moves are renames; relocating the whole archive later is another `git mv`.
@@ -50,8 +51,8 @@ any of my moves. Reversible: one regex, `ARCHIVE_RE`, gates it.
 
 ## 5. Linter tune -- drop `IF/THEN` from HARNESS_RE (2026-07-12)
 
-Context: the only audience findings on genuine docs (`AGENT_PROFILE.md` x3,
-`TENANT_LOOPWAY_BIBLE.md` x4) were driven entirely by `IF/THEN`. In this repo `IF/THEN` names a
+Context: the only audience findings on genuine docs (an agent profile x3 and a tenant reference
+x4) were driven entirely by `IF/THEN`. In this repo `IF/THEN` names a
 decision-record format; it appears in citations ("recorded in `PROGRAM_REPORT_14`'s IF/THEN") and
 as a metrics-table column, not in agent-address prose. Options: (a) keep it and justify the two
 docs; (b) drop the token. Chose (b): the strong agent-address signals ("next executor", "pick up
