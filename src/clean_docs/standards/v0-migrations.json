@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "baseline": "docs/archive/v0/originals",
+  "baseline": "tests/fixtures/v0-policy",
   "differences": [
     {
       "rule": "archive-surface",

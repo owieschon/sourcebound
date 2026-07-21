@@ -5,9 +5,9 @@
 This case study is for maintainers whose documentation corpus feels polished but has lost a trustworthy reader path. It shows how one real repository separated current guidance from process exhaust, measured the result, and exposed which improvements still required human judgment.
 <!-- sourcebound:end purpose -->
 
-**[Inspect the archived before-and-after record](../archive/v0/ultra-csm-before-after.md)**.
+**[Inspect the typed historical record](../../.sourcebound/learning/ultra-csm-hygiene.json)**.
 
-The [recorded result](../archive/v0/ultra-csm-before-after.md) supplies the measurements and
+The [recorded result](../../.sourcebound/learning/ultra-csm-hygiene.json) supplies the measurements and
 examples rendered below.
 
 The repository did not have one spectacularly false page. It had a quieter failure: current
@@ -36,7 +36,7 @@ history, and intended reader:
 
 The count fell because the reader surface got smaller and the checker lost false positives. It did
 not fall because thresholds were loosened. The remaining findings were reviewed and justified in
-the source repository. The [archived case](../archive/v0/ultra-csm-before-after.md) owns the
+the source repository. The [typed historical record](../../.sourcebound/learning/ultra-csm-hygiene.json) owns the
 complete record.
 
 ## Three changes did most of the work
@@ -59,7 +59,7 @@ them.
 
 The result was not tidier wording. It was a corpus whose paths had different meanings.
 
-The [archived case](../archive/v0/ultra-csm-before-after.md) preserves the full before-and-after
+The [typed historical record](../../.sourcebound/learning/ultra-csm-hygiene.json) preserves the full before-and-after
 page inventory behind these three changes.
 
 ## What the numbers do not prove

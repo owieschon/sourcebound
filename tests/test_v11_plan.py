@@ -28,11 +28,3 @@ def test_current_assurance_table_is_bound_to_the_capability_registry() -> None:
     assert not results["assurance-boundaries"].changed
     assert "Cataloged surfaces check prose" not in specification
     assert "Every cataloged item needs or has a reader-facing explanation" in specification
-
-
-def test_historical_build_plan_is_archived_and_labels_its_authority() -> None:
-    archived = (PROJECT / "docs/archive/v1/BUILD_PLAN.md").read_text()
-
-    assert archived.startswith("# Archived sourcebound build plan through Version 1.1")
-    assert "not a current product contract" in " ".join(archived.split())
-    assert "### Version 1.1: Governed learning layer" in archived
