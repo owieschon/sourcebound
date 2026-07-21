@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+import argparse
 import json
-import sys
 from pathlib import Path
 
 
@@ -15,7 +15,11 @@ def require(condition: bool, message: str) -> None:
 
 
 def main() -> int:
-    receipt = json.loads(Path(sys.argv[1]).read_text())
+    parser = argparse.ArgumentParser()
+    parser.add_argument("receipt", type=Path)
+    parser.add_argument("--require-wheel", action="store_true")
+    args = parser.parse_args()
+    receipt = json.loads(args.receipt.read_text())
     require(receipt.get("schema") == "sourcebound.toolchain-fixture.v1", "wrong receipt schema")
     require(len(receipt.get("staged_tree", "")) == 40, "missing staged tree")
     inputs = receipt.get("input_sha256", {})
@@ -42,6 +46,17 @@ def main() -> int:
     require(doc.get("version") == "4.36.0" and doc.get("tarball_integrity") == DOC_INTEGRITY, "wrong Doc Detective identity")
     require(len(doc.get("binary_sha256", "")) == 64 and len(doc.get("package_lock_sha256", "")) == 64, "missing private install digest")
     require(doc.get("telemetry_send") is False, "telemetry is not disabled")
+    runtime = receipt.get("sourcebound_runtime", {})
+    require(
+        runtime.get("installation") in {"source-tree", "wheel"},
+        "missing Sourcebound runtime identity",
+    )
+    if args.require_wheel:
+        require(runtime.get("installation") == "wheel", "fixture did not use a wheel")
+        require(
+            len(runtime.get("wheel_sha256", "")) == 64,
+            "missing wheel digest",
+        )
     network = receipt.get("network", {})
     require(len(network.get("profile_sha256", "")) == 64, "missing sandbox profile")
     require(network.get("egress_probe", {}).get("exit_code") != 0, "egress probe succeeded")

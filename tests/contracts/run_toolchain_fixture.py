@@ -79,10 +79,19 @@ def _record(result: subprocess.CompletedProcess[str], argv: list[str]) -> dict[s
     }
 
 
+def _python_in(venv: Path) -> Path:
+    return venv / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--tree", required=True)
     parser.add_argument("--receipt", type=Path, required=True)
+    parser.add_argument(
+        "--wheel",
+        type=Path,
+        help="run Sourcebound from this wheel instead of the source checkout",
+    )
     args = parser.parse_args()
 
     inputs = _tree_inputs(args.tree)
@@ -112,8 +121,53 @@ def main() -> int:
             "DOC_DETECTIVE_AUTOINSTALL": "0",
             "DOC_DETECTIVE_SKIP_AUTO_UPDATE": "1",
             "DOC_DETECTIVE_CACHE_DIR": str(private_root / "doc-detective-cache"),
-            "PYTHONPATH": str(ROOT / "src"),
         }
+        sourcebound_runtime: dict[str, object]
+        if args.wheel is None:
+            environment["PYTHONPATH"] = str(ROOT / "src")
+            sourcebound_prefix = [sys.executable, "-m", "sourcebound"]
+            sourcebound_runtime = {"installation": "source-tree"}
+        else:
+            wheel = args.wheel.resolve()
+            if not wheel.is_file():
+                raise RuntimeError(f"Sourcebound wheel does not exist: {wheel}")
+            venv = private_root / "sourcebound-runtime"
+            _checked(
+                [sys.executable, "-m", "venv", "--system-site-packages", str(venv)],
+                env=environment,
+            )
+            runtime_python = _python_in(venv)
+            _checked(
+                [
+                    str(runtime_python),
+                    "-m",
+                    "pip",
+                    "install",
+                    "--no-index",
+                    "--no-deps",
+                    str(wheel),
+                ],
+                env=environment,
+            )
+            module_path = Path(
+                _checked(
+                    [
+                        str(runtime_python),
+                        "-I",
+                        "-c",
+                        "import sourcebound; print(sourcebound.__file__)",
+                    ],
+                    env=environment,
+                ).stdout.strip()
+            ).resolve()
+            if module_path == ROOT or ROOT in module_path.parents:
+                raise RuntimeError("wheel runtime imported Sourcebound from the source checkout")
+            sourcebound_prefix = [str(runtime_python), "-I", "-m", "sourcebound"]
+            sourcebound_runtime = {
+                "installation": "wheel",
+                "wheel_sha256": _sha256(wheel.read_bytes()),
+                "module_path": _private(module_path, private_root),
+            }
 
         _checked(["curl", "-fsSL", VALE_URL, "-o", str(archive)], env=environment)
         archive_bytes = archive.read_bytes()
@@ -140,7 +194,13 @@ def main() -> int:
         if egress.returncode == 0:
             raise RuntimeError("deny-network profile allowed egress")
 
-        sourcebound_base = _run([sys.executable, "-m", "sourcebound", "--root", str(fixture_copy), "check"], env=environment)
+        sourcebound_base_argv = [
+            *sourcebound_prefix,
+            "--root",
+            str(fixture_copy),
+            "check",
+        ]
+        sourcebound_base = _run(sourcebound_base_argv, env=environment)
         if sourcebound_base.returncode:
             raise RuntimeError(sourcebound_base.stderr)
         vale_base_argv = ["sandbox-exec", "-f", str(profile), str(vale_binary), "--config", ".vale.ini", "docs/guide.md"]
@@ -158,7 +218,7 @@ def main() -> int:
             '    "inspect": {"name": "inspect", "audience": "maintainers"},\n'
             '    "publish": {"name": "publish", "audience": "reviewers"},\n',
         ))
-        sourcebound_mutation = _run([sys.executable, "-m", "sourcebound", "--root", str(fixture_copy), "check"], env=environment)
+        sourcebound_mutation = _run(sourcebound_base_argv, env=environment)
         if sourcebound_mutation.returncode != 1:
             raise RuntimeError("source mutation did not produce declared drift")
         vale_mutation = _run(vale_base_argv, env=environment, cwd=fixture_copy)
@@ -186,10 +246,11 @@ def main() -> int:
             "private_paths": paths,
             "vale": {"version": VALE_VERSION, "archive_sha256": _sha256(archive_bytes), "binary_sha256": _sha256(vale_binary.read_bytes())},
             "doc_detective": {"version": DOC_VERSION, "tarball_integrity": _sri_sha512(package_tarball.read_bytes()), "binary_sha256": _sha256(binary.read_bytes()), "package_lock_sha256": _sha256(lock.read_bytes()), "telemetry_send": False},
+            "sourcebound_runtime": sourcebound_runtime,
             "network": {"profile_sha256": _sha256(profile.read_bytes()), "egress_probe": _record(egress, egress_argv)},
             "runs": {
-                "sourcebound_baseline": _record(sourcebound_base, [sys.executable, "-m", "sourcebound", "--root", str(fixture_copy), "check"]),
-                "sourcebound_mutation": _record(sourcebound_mutation, [sys.executable, "-m", "sourcebound", "--root", str(fixture_copy), "check"]),
+                "sourcebound_baseline": _record(sourcebound_base, sourcebound_base_argv),
+                "sourcebound_mutation": _record(sourcebound_mutation, sourcebound_base_argv),
                 "vale_baseline": _record(vale_base, vale_base_argv),
                 "vale_mutation": _record(vale_mutation, vale_base_argv),
                 "doc_detective_baseline": _record(doc_base, doc_base_argv),
