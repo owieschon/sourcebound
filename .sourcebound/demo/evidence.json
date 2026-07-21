@@ -5,7 +5,7 @@
     "The fixture proves one region-binding workflow, not every supported extractor."
   ],
   "next_step": {
-    "href": "https://github.com/owieschon/sourcebound#install-in-the-repository-you-want-to-protect",
+    "href": "https://github.com/owieschon/sourcebound#install-and-audit",
     "label": "Run the local quickstart"
   },
   "prerequisites": [
