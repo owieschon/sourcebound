@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from clean_docs.capabilities import CLI_REFERENCE
-from clean_docs.cli import _parser, _validate_arguments
+from clean_docs.cli import _command_help, _parser, _validate_arguments
 from clean_docs.engine import evaluate
 from clean_docs.manifest import MANIFEST_REFERENCE, load_manifest
 from clean_docs.projections import evaluate_projections
@@ -45,9 +45,7 @@ def test_cli_and_manifest_registries_drive_the_parser_and_self_manifest() -> Non
 def test_repository_dogfoods_the_source_bound_visual_projection() -> None:
     manifest = load_manifest(ROOT / ".sourcebound.yml")
     assert [item.id for item in manifest.projections.visuals] == ["source-bound-flow"]
-    assert [
-        item.doc for item in evaluate_projections(ROOT, manifest)
-    ] == [
+    assert [item.doc for item in evaluate_projections(ROOT, manifest)] == [
         ".sourcebound/context/contributor.md",
         ".sourcebound/visuals/source-bound-flow.md",
         "docs/demo/index.html",
@@ -65,6 +63,15 @@ def test_cli_reference_examples_parse() -> None:
             assert exc.value.code == 0
         else:
             _validate_arguments(_parser().parse_args(argv))
+
+
+def test_top_level_help_leads_with_the_core_path_and_marks_experimental_work() -> None:
+    parser = _parser()
+
+    assert "Core path: bind a fact" in parser.format_help()
+    assert "sourcebound init --no-model" in parser.format_help()
+    assert _command_help("feedback").startswith("[experimental]")
+    assert not _command_help("check").startswith("[experimental]")
 
 
 @pytest.mark.parametrize(
@@ -106,7 +113,7 @@ bindings:
     extractor: python-literal
     source: {path: src/clean_docs/capabilities.py, symbol: CLI_REFERENCE}
     renderer: markdown-table
-    columns: [command, job, writes, example]
+    columns: [area, command, job, writes, example]
   - id: manifest-reference
     type: region
     doc: docs/REFERENCE.md
