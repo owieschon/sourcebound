@@ -263,7 +263,7 @@ sourcebound does not:
 
 ## Compatibility
 
-The 1.x line preserves manifest version `1`, plugin API version `1`, published machine schemas, and
+The 2.x line preserves manifest version `1`, plugin API version `1`, published machine schemas, and
 stable command meanings. Minor releases may add optional fields. An incompatible manifest exits
 `2` before extraction, and a removed stable surface requires a major release.
 

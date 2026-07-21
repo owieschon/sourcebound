@@ -40,7 +40,13 @@ def _receipt(root: Path) -> dict[str, object]:
         "sourcebound_runtime": {"installation": "source-tree"},
         "containment": {
             "profile_sha256": digest,
-            "allowed_read_roots": [str(root)],
+            "allowed_read_roots": [
+                str(root),
+                "/System",
+                "/usr",
+                "/dev",
+                str(Path(sys.executable).resolve().parents[3]),
+            ],
             "private_probe": {"exit_code": 0},
             "egress_reached": True,
             "egress_probe": {"exit_code": 1},
@@ -123,6 +129,34 @@ def test_toolchain_receipt_requires_strict_wheel_identity_paths(tmp_path: Path) 
     path = tmp_path / "wheel-receipt.json"
     path.write_text(json.dumps(receipt))
     assert _verify(path, wheel=True).returncode == 0
+
+    receipt["containment"]["allowed_read_roots"] = [str(root)]  # type: ignore[index]
+    path.write_text(json.dumps(receipt))
+    assert _verify(path, wheel=True).returncode != 0
+
+    receipt = _receipt(root)
+    receipt["containment"]["allowed_read_roots"] = [  # type: ignore[index]
+        str(root),
+        "/System",
+        "/usr",
+        "/dev",
+        str(Path(sys.executable).resolve().parents[3]),
+        str(root),
+    ]
+    path.write_text(json.dumps(receipt))
+    assert _verify(path).returncode != 0
+
+    receipt = _receipt(root)
+    receipt["containment"]["allowed_read_roots"] = [  # type: ignore[index]
+        str(root),
+        "/System",
+        "/usr",
+        "/dev",
+        str(Path(sys.executable).resolve().parents[3]),
+        "/Library",
+    ]
+    path.write_text(json.dumps(receipt))
+    assert _verify(path).returncode != 0
 
     receipt["sourcebound_runtime"]["module_path"] = str(site_packages)  # type: ignore[index]
     path.write_text(json.dumps(receipt))

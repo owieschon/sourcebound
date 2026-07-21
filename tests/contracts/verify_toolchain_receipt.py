@@ -133,16 +133,23 @@ def main() -> int:
     )
     allowed_read_roots = containment.get("allowed_read_roots", [])
     require(isinstance(allowed_read_roots, list), "containment allowlist is invalid")
+    expected_runtime_root = Path(sys.executable).resolve().parents[3]
+    expected_read_roots = {root, Path("/System"), Path("/usr"), Path("/dev"), expected_runtime_root}
+    canonical_read_roots: list[Path] = []
     for path in allowed_read_roots:
         require(isinstance(path, str) and path, "containment allowlist is invalid")
         raw = Path(path)
         require(raw.is_absolute() and ".." not in raw.parts, "containment allowlist is invalid")
         canonical = raw.resolve(strict=False)
-        expected_runtime_root = Path(sys.executable).resolve().parents[3]
-        require(
-            canonical in {root, Path("/System"), Path("/usr"), Path("/dev"), expected_runtime_root},
-            "containment allowlist exposes an unapproved host root",
-        )
+        canonical_read_roots.append(canonical)
+    require(
+        len(canonical_read_roots) == len(set(canonical_read_roots)),
+        "containment allowlist has duplicate roots",
+    )
+    require(
+        set(canonical_read_roots) == expected_read_roots,
+        "containment allowlist does not match the executed sandbox profile",
+    )
     if args.require_wheel:
         require(
             bool(containment.get("allowed_read_roots")),
