@@ -411,7 +411,7 @@ def test_review_contract_advisory_preserves_ready_verdict_and_receipts(
         for result in sarif["runs"][0]["results"]
         if result["ruleId"] == "review-contract-review-recommended"
     )
-    assert sarif_finding["partialFingerprints"]["cleanDocsFindingId"] == (finding["id"])
+    assert sarif_finding["partialFingerprints"]["sourceboundFindingId"] == (finding["id"])
 
 
 def test_unknown_review_contract_is_a_nonblocking_note(tmp_path: Path) -> None:
@@ -709,12 +709,12 @@ def test_json_and_sarif_share_finding_ids(
 
     json_ids = {finding["id"] for finding in json_payload["findings"]}
     sarif_ids = {
-        result["partialFingerprints"]["cleanDocsFindingId"]
+        result["partialFingerprints"]["sourceboundFindingId"]
         for result in sarif["runs"][0]["results"]
     }
     assert json_ids == sarif_ids
     assert (
-        sarif["runs"][0]["properties"]["cleanDocsVerdictDigest"]
+        sarif["runs"][0]["properties"]["sourceboundVerdictDigest"]
         == (json_payload["digest"])
     )
 
@@ -901,6 +901,25 @@ def test_verdict_validation_preserves_exact_legacy_shapes() -> None:
     for payload in payloads:
         _resign_verdict(payload)
         validate_verdict_payload(payload)
+
+
+def test_verdict_v1_accepts_receipts_before_static_process_marker(
+    tmp_path: Path,
+) -> None:
+    root = _symbol_repository(tmp_path)
+    head = _commit(root, "base")
+    payload = build_pr_verdict(
+        root,
+        root / ".sourcebound.yml",
+        base=head,
+        head=head,
+    ).as_dict()
+    execution = payload["execution"]
+    assert isinstance(execution, dict)
+    execution.pop("repository_processes_started")
+    _resign_verdict(payload)
+
+    validate_verdict_payload(payload)
 
 
 def test_verdict_rejects_dirty_or_detached_input_state(
