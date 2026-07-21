@@ -5,7 +5,7 @@
 Use this log when a current sourcebound behavior needs its design rationale or reversal path. It keeps consequential choices out of task docs so maintainers can change a decision without mistaking old process history for product truth.
 <!-- sourcebound:end purpose -->
 
-**[Read the newest decision](#31-hash-python-source-evidence-instead-of-runtime-ast-serialization-2026-07-13)**.
+**[Read the newest decision](#50-keep-pull-request-delivery-static-and-package-verification-separately-2026-07-19)**.
 
 Each entry records its context, choice, consequence, and reversal path as the design receipt.
 
@@ -84,7 +84,7 @@ Context: an interoperable distribution target requires a stepwise skill format. 
 teach the engine that format; (b) keep one native model and project it through an edge adapter.
 Chose (b). `src/clean_docs/emit/stepwise.py` reads the manifest and writes `config.yaml` plus
 ordered reference steps chained by `next_step`. The package names the repository's bound docs
-and carries sourcebound' audit, repair, and verify workflow, so it is a projection instead of a
+and carries Sourcebound's audit, repair, and verify workflow, so it is a projection instead of a
 static clone. Other projection formats can remain sibling adapters over the same model. The
 `test_emit_stepwise` E2E proves schema shape, stable reruns, manifest grounding, navigation, and
 workflow execution in a temporary repository. A target-specific build, security scan, or server
@@ -93,7 +93,7 @@ deleting it leaves the engine untouched.
 
 ## 9. Separate command projections from content indexes (2026-07-13)
 
-Context: the stepwise package carries sourcebound' maintenance commands, while an agent-readable
+Context: the stepwise package carries Sourcebound's maintenance commands, while an agent-readable
 content index must point at the repository documentation itself. Treating one payload as the
 other would make a format-correct artifact serve the wrong reader task. Chose two explicit
 projections. `emit stepwise-skill` packages the audit, repair, and verify workflow.

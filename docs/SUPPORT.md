@@ -36,8 +36,8 @@ Pin both the reusable workflow and its package input to the same full commit:
 ```yaml
 jobs:
   sourcebound:
-    uses: owieschon/sourcebound/.github/workflows/reusable-sourcebound.yml@FULL_40_CHARACTER_CLEAN_DOCS_COMMIT
-    with: {package-ref: FULL_40_CHARACTER_CLEAN_DOCS_COMMIT}
+    uses: owieschon/sourcebound/.github/workflows/reusable-sourcebound.yml@FULL_40_CHARACTER_SOURCEBOUND_COMMIT
+    with: {package-ref: FULL_40_CHARACTER_SOURCEBOUND_COMMIT}
 ```
 
 The workflow rejects tags, branches, abbreviated commits, and non-hexadecimal input before

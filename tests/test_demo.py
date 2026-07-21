@@ -64,6 +64,16 @@ def test_static_demo_is_byte_stable_accessible_and_runtime_free(tmp_path: Path) 
     assert "Evidence sha256:" in first
 
 
+def test_public_demo_next_step_targets_the_current_readme_install_route() -> None:
+    evidence = load_demo_evidence(ROOT / ".sourcebound/demo/evidence.json")
+    readme = (ROOT / "README.md").read_text()
+
+    assert evidence.next_step_href.endswith(
+        "#install-in-the-repository-you-want-to-protect"
+    )
+    assert "## Install in the repository you want to protect" in readme
+
+
 def test_readme_architecture_is_text_native_and_preserves_command_boundaries() -> None:
     readme = (ROOT / "README.md").read_text()
 
