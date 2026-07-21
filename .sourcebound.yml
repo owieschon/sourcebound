@@ -51,7 +51,7 @@ bindings:
       path: src/clean_docs/capabilities.py
       symbol: CLI_REFERENCE
     renderer: markdown-table
-    columns: [command, job, writes, example]
+    columns: [area, command, job, writes, example]
   - id: manifest-reference
     type: region
     doc: docs/REFERENCE.md

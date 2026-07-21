@@ -9,7 +9,11 @@ from pathlib import Path
 from clean_docs import __version__
 from clean_docs.applicability import ROLE_DESCRIPTIONS
 from clean_docs.audit import AUDIT_BASELINE_PATH, audit, write_audit_baseline
-from clean_docs.bootstrap import BootstrapPlan, apply_bootstrap_plan, build_bootstrap_plan
+from clean_docs.bootstrap import (
+    BootstrapPlan,
+    apply_bootstrap_plan,
+    build_bootstrap_plan,
+)
 from clean_docs.capabilities import CLI_REFERENCE
 from clean_docs.changed import check_changed, render_sarif
 from clean_docs.claims import claim_binding_results, scan_source_claims
@@ -52,7 +56,11 @@ from clean_docs.inventory import scan_inventory
 from clean_docs.plugins import scan_extended_inventory
 from clean_docs.manifest import load_manifest
 from clean_docs.models import BindingResult
-from clean_docs.migration import apply_migration, build_migration_plan, rollback_migration
+from clean_docs.migration import (
+    apply_migration,
+    build_migration_plan,
+    rollback_migration,
+)
 from clean_docs.outcomes import build_outcome_receipt
 from clean_docs.performance import benchmark_changed_check
 from clean_docs.phrasing import (
@@ -71,7 +79,10 @@ from clean_docs.release import (
 )
 from clean_docs.regions import atomic_write
 from clean_docs.review_ledger import validate_review_event_ledger
-from clean_docs.review_ledger import initialize_review_event_ledger, write_review_event_ledger
+from clean_docs.review_ledger import (
+    initialize_review_event_ledger,
+    write_review_event_ledger,
+)
 from clean_docs.residue import LOCAL_CONFIG_NAME, load_local_residue_rules
 from clean_docs.sensitivity import (
     decode_json_object,
@@ -88,11 +99,23 @@ from clean_docs.verdict import (
 
 
 def _command_help(command: str) -> str:
-    return next(item["job"] for item in CLI_REFERENCE if item["command"] == command)
+    item = next(item for item in CLI_REFERENCE if item["command"] == command)
+    prefix = "[experimental] " if item["area"] == "experimental" else ""
+    return prefix + item["job"]
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="sourcebound")
+    parser = argparse.ArgumentParser(
+        prog="sourcebound",
+        description=(
+            "Core path: bind a fact, check for drift, repair declared regions, "
+            "then verify the result."
+        ),
+        epilog=(
+            "Start with: sourcebound init --no-model; sourcebound check; "
+            "sourcebound drive; sourcebound verify"
+        ),
+    )
     parser.add_argument("--version", action="version", version=__version__)
     parser.add_argument("--root", type=Path, default=Path.cwd(), help="repository root")
     parser.add_argument(
@@ -114,7 +137,9 @@ def _parser() -> argparse.ArgumentParser:
     residue = sub.add_parser("residue", help="manage private residue matching")
     residue_sub = residue.add_subparsers(dest="residue_command", required=True)
     residue_sub.add_parser("status", help="report whether private matching is active")
-    residue_sub.add_parser("init-local", help="create a permission-restricted local rule template")
+    residue_sub.add_parser(
+        "init-local", help="create a permission-restricted local rule template"
+    )
     inventory_parser = sub.add_parser("inventory", help=_command_help("inventory"))
     inventory_parser.add_argument("--format", choices=("text", "json"), default="text")
     inventory_parser.add_argument(
@@ -237,7 +262,9 @@ def _parser() -> argparse.ArgumentParser:
     lifecycle_transition.add_argument("--input", type=Path, required=True)
     lifecycle_transition.add_argument("--state", type=Path, required=True)
     lifecycle_transition.add_argument("--observation", required=True)
-    lifecycle_transition.add_argument("--to", choices=tuple(sorted(LIFECYCLE_STATES)), required=True)
+    lifecycle_transition.add_argument(
+        "--to", choices=tuple(sorted(LIFECYCLE_STATES)), required=True
+    )
     lifecycle_transition.add_argument(
         "--evidence-kind",
         choices=tuple(sorted(LIFECYCLE_EVIDENCE_KINDS)),
@@ -319,7 +346,9 @@ def _parser() -> argparse.ArgumentParser:
     derive.add_argument("--format", choices=("text", "json"), default="text")
     drive_parser = sub.add_parser("drive", help=_command_help("drive"))
     drive_parser.add_argument("--binding", help="repair one binding id")
-    drive_parser.add_argument("--ref", help="read bound sources from an immutable git ref")
+    drive_parser.add_argument(
+        "--ref", help="read bound sources from an immutable git ref"
+    )
     drive_parser.add_argument("--format", choices=("text", "json"), default="text")
     plan = sub.add_parser("plan", help=_command_help("plan"))
     plan.add_argument("--base", required=True, help="target branch or base git ref")
@@ -327,7 +356,9 @@ def _parser() -> argparse.ArgumentParser:
     plan.add_argument(
         "--project", type=Path, default=Path("."), help="monorepo project path"
     )
-    plan.add_argument("--no-cache", action="store_true", help="bypass immutable-ref cache")
+    plan.add_argument(
+        "--no-cache", action="store_true", help="bypass immutable-ref cache"
+    )
     plan.add_argument("--format", choices=("text", "json"), default="text")
     plan.add_argument(
         "--no-exec",
@@ -336,7 +367,9 @@ def _parser() -> argparse.ArgumentParser:
     )
     verdict = sub.add_parser("verdict", help=_command_help("verdict"))
     verdict.add_argument("--base", required=True, help="target branch or base git ref")
-    verdict.add_argument("--head", required=True, help="checked-out change head git ref")
+    verdict.add_argument(
+        "--head", required=True, help="checked-out change head git ref"
+    )
     verdict.add_argument(
         "--mutation-receipt",
         type=Path,
@@ -348,11 +381,17 @@ def _parser() -> argparse.ArgumentParser:
     check = sub.add_parser("check", help=_command_help("check"))
     check.add_argument("--binding", help="evaluate one binding id")
     check.add_argument("--ref", help="read bound sources from an immutable git ref")
-    check.add_argument("--changed", action="store_true", help="check base-to-head impact")
+    check.add_argument(
+        "--changed", action="store_true", help="check base-to-head impact"
+    )
     check.add_argument("--base", help="base git ref for --changed")
     check.add_argument("--head", help="head git ref for --changed")
-    check.add_argument("--project", type=Path, default=Path("."), help="monorepo project path")
-    check.add_argument("--no-cache", action="store_true", help="bypass immutable-ref cache")
+    check.add_argument(
+        "--project", type=Path, default=Path("."), help="monorepo project path"
+    )
+    check.add_argument(
+        "--no-cache", action="store_true", help="bypass immutable-ref cache"
+    )
     check.add_argument("--format", choices=("text", "json", "sarif"), default="text")
     check.add_argument(
         "--no-exec",
@@ -361,7 +400,9 @@ def _parser() -> argparse.ArgumentParser:
     )
     project = sub.add_parser("project", help=_command_help("project"))
     project.add_argument(
-        "--check", action="store_true", help="exit 1 instead of writing stale projections"
+        "--check",
+        action="store_true",
+        help="exit 1 instead of writing stale projections",
     )
     project.add_argument("--format", choices=("text", "json"), default="text")
     evaluate_tasks = sub.add_parser("eval", help=_command_help("eval"))
@@ -388,15 +429,21 @@ def _parser() -> argparse.ArgumentParser:
         "enable",
         help="enable feedback with a visible sink configuration",
     )
-    feedback_enable.add_argument("--sink", choices=("local", "connected"), required=True)
+    feedback_enable.add_argument(
+        "--sink", choices=("local", "connected"), required=True
+    )
     feedback_enable.add_argument("--target")
     feedback_enable.add_argument("--endpoint")
     feedback_enable.add_argument("--token-env")
-    feedback_sub.add_parser("status", help="show feedback configuration and queue counts")
+    feedback_sub.add_parser(
+        "status", help="show feedback configuration and queue counts"
+    )
     feedback_sub.add_parser("preview", help="write exact pending envelope bytes")
     feedback_sub.add_parser("flush", help="deliver pending envelopes explicitly")
     feedback_sub.add_parser("disable", help="remove delivery authority immediately")
-    feedback_sub.add_parser("rotate", help="replace the pseudonymous installation identifier")
+    feedback_sub.add_parser(
+        "rotate", help="replace the pseudonymous installation identifier"
+    )
     feedback_sub.add_parser("purge", help="delete queued, delivered, and signal state")
     feedback_signal = feedback_sub.add_parser(
         "signal",
@@ -443,16 +490,16 @@ def _parser() -> argparse.ArgumentParser:
     stepwise.add_argument("--role", choices=("skill", "command"), default="skill")
     stepwise.add_argument("--parent-command")
     stepwise.add_argument("--command", dest="command_name")
-    llms = emit_sub.add_parser(
-        "llms-txt", help=_command_help("emit llms-txt")
-    )
+    llms = emit_sub.add_parser("llms-txt", help=_command_help("emit llms-txt"))
     llms.add_argument("--out", type=Path, default=Path("llms.txt"))
     llms.add_argument("--title", default="Repository documentation")
     llms.add_argument("--summary")
     standard = sub.add_parser("standard", help=_command_help("standard"))
     standard_sub = standard.add_subparsers(dest="standard_command", required=True)
     for command in ("build", "check"):
-        item = standard_sub.add_parser(command, help=_command_help(f"standard {command}"))
+        item = standard_sub.add_parser(
+            command, help=_command_help(f"standard {command}")
+        )
         item.add_argument("--source", type=Path, default=Path("STANDARD.md"))
         item.add_argument(
             "--output", type=Path, default=Path("src/clean_docs/standards/default.json")
@@ -519,55 +566,64 @@ def _json(results: list[BindingResult], *, repaired: bool = False) -> str:
             "source_document_prose_certified": False,
         },
     }
-    return json.dumps({
-        "ok": not any(
-            result.changed
-            and result.state != "skipped-untrusted-execution"
-            and not (repaired and result.binding_type == "region")
-            for result in results
-        ),
-        "complete": not any(
-            result.state == "skipped-untrusted-execution" for result in results
-        ),
-        "results": [
+    return (
+        json.dumps(
             {
-                "binding": result.binding_id,
-                "mechanism": result.binding_type,
-                "doc": result.doc,
-                "status": result.state or (
-                    "repaired" if repaired and result.changed
-                and result.binding_type == "region" else (
-                    "drift" if result.changed else "current"
-                )),
-                "diff": result.diff,
-                "provenance": {
-                    "ref": result.provenance.ref,
-                    "path": result.provenance.path,
-                    "locator": result.provenance.locator,
-                    "extractor": result.provenance.extractor,
-                    "digest": result.provenance.digest,
-                },
-                "assurance": {
-                    **assurance[result.binding_type],
-                    **(
-                        {"anchored_prose_checked": result.prose_checked}
-                        if result.binding_type == "command-pin"
-                        else {}
-                    ),
-                },
-            }
-            for result in results
-        ],
-    }, indent=2) + "\n"
+                "ok": not any(
+                    result.changed
+                    and result.state != "skipped-untrusted-execution"
+                    and not (repaired and result.binding_type == "region")
+                    for result in results
+                ),
+                "complete": not any(
+                    result.state == "skipped-untrusted-execution" for result in results
+                ),
+                "results": [
+                    {
+                        "binding": result.binding_id,
+                        "mechanism": result.binding_type,
+                        "doc": result.doc,
+                        "status": result.state
+                        or (
+                            "repaired"
+                            if repaired
+                            and result.changed
+                            and result.binding_type == "region"
+                            else ("drift" if result.changed else "current")
+                        ),
+                        "diff": result.diff,
+                        "provenance": {
+                            "ref": result.provenance.ref,
+                            "path": result.provenance.path,
+                            "locator": result.provenance.locator,
+                            "extractor": result.provenance.extractor,
+                            "digest": result.provenance.digest,
+                        },
+                        "assurance": {
+                            **assurance[result.binding_type],
+                            **(
+                                {"anchored_prose_checked": result.prose_checked}
+                                if result.binding_type == "command-pin"
+                                else {}
+                            ),
+                        },
+                    }
+                    for result in results
+                ],
+            },
+            indent=2,
+        )
+        + "\n"
+    )
 
 
 def _text(results: list[BindingResult], *, repaired: bool = False) -> str:
     lines: list[str] = []
     for result in results:
         was_repaired = repaired and result.changed and result.binding_type == "region"
-        status = result.state or ("repaired" if was_repaired else (
-            "drift" if result.changed else "current"
-        ))
+        status = result.state or (
+            "repaired" if was_repaired else ("drift" if result.changed else "current")
+        )
         lines.append(f"[{status}] {result.binding_id}: {result.doc}")
         if result.diff:
             lines.append(result.diff.rstrip())
@@ -604,18 +660,25 @@ def _main(argv: list[str] | None = None) -> int:
             candidates = load_review_candidates(source, root=root)
             if args.review_command == "candidates":
                 if args.ledger is not None:
-                    ledger = args.ledger if args.ledger.is_absolute() else root / args.ledger
+                    ledger = (
+                        args.ledger if args.ledger.is_absolute() else root / args.ledger
+                    )
                     prior_ledger = (
                         args.prior_ledger
                         if args.prior_ledger is None or args.prior_ledger.is_absolute()
                         else root / args.prior_ledger
                     )
-                    validate_review_event_ledger(ledger, candidates, prior_path=prior_ledger)
-                rendered = json.dumps(
-                    candidates.as_dict(),
-                    indent=2,
-                    ensure_ascii=False,
-                ) + "\n"
+                    validate_review_event_ledger(
+                        ledger, candidates, prior_path=prior_ledger
+                    )
+                rendered = (
+                    json.dumps(
+                        candidates.as_dict(),
+                        indent=2,
+                        ensure_ascii=False,
+                    )
+                    + "\n"
+                )
                 if args.out is None:
                     print(rendered, end="")
                     return 0
@@ -637,12 +700,17 @@ def _main(argv: list[str] | None = None) -> int:
                         ) from exc
                     current = observed == rendered
                     if args.format == "json":
-                        print(json.dumps({
-                            "schema": "sourcebound.improvement-candidate-check.v1",
-                            "ok": current,
-                            "output": relative_output.as_posix(),
-                            "candidate_digest": candidates.digest,
-                        }, indent=2))
+                        print(
+                            json.dumps(
+                                {
+                                    "schema": "sourcebound.improvement-candidate-check.v1",
+                                    "ok": current,
+                                    "output": relative_output.as_posix(),
+                                    "candidate_digest": candidates.digest,
+                                },
+                                indent=2,
+                            )
+                        )
                     else:
                         print(
                             f"[{'current' if current else 'drift'}] "
@@ -682,9 +750,13 @@ def _main(argv: list[str] | None = None) -> int:
                     )
                 return 0
 
-            state_argument = args.out if args.review_lifecycle_command == "init" else args.state
+            state_argument = (
+                args.out if args.review_lifecycle_command == "init" else args.state
+            )
             state_path = (
-                state_argument if state_argument.is_absolute() else root / state_argument
+                state_argument
+                if state_argument.is_absolute()
+                else root / state_argument
             )
             try:
                 relative_state = state_path.resolve().relative_to(root)
@@ -711,15 +783,20 @@ def _main(argv: list[str] | None = None) -> int:
                 lifecycle = load_candidate_lifecycle(state_path, candidates)
                 unknown = check_candidate_lifecycle(lifecycle, root=root)
                 if args.format == "json":
-                    print(json.dumps({
-                        "schema": "sourcebound.improvement-candidate-lifecycle-check.v1",
-                        "ok": not unknown,
-                        "status": "current" if not unknown else "unknown",
-                        "state": relative_state.as_posix(),
-                        "candidate_digest": lifecycle.candidate_digest,
-                        "lifecycle_digest": lifecycle.digest,
-                        "unknown_evidence": list(unknown),
-                    }, indent=2))
+                    print(
+                        json.dumps(
+                            {
+                                "schema": "sourcebound.improvement-candidate-lifecycle-check.v1",
+                                "ok": not unknown,
+                                "status": "current" if not unknown else "unknown",
+                                "state": relative_state.as_posix(),
+                                "candidate_digest": lifecycle.candidate_digest,
+                                "lifecycle_digest": lifecycle.digest,
+                                "unknown_evidence": list(unknown),
+                            },
+                            indent=2,
+                        )
+                    )
                 else:
                     status = "current" if not unknown else "unknown"
                     print(f"[{status}] {relative_state.as_posix()}")
@@ -742,7 +819,9 @@ def _main(argv: list[str] | None = None) -> int:
                 print(json.dumps(lifecycle.as_dict(), indent=2))
             else:
                 status = "transitioned" if not unknown else "unknown"
-                print(f"[{status}] {args.observation}: {args.to} in {relative_state.as_posix()}")
+                print(
+                    f"[{status}] {args.observation}: {args.to} in {relative_state.as_posix()}"
+                )
             return 0 if not unknown else 1
         except CleanDocsError as exc:
             print(f"sourcebound: {exc}", file=sys.stderr)
@@ -762,30 +841,42 @@ def _main(argv: list[str] | None = None) -> int:
             if args.feedback_command == "status":
                 status_config = load_feedback_config(root)
                 pending = preview_feedback(root)
-                print(json.dumps({
-                    "schema": "sourcebound.feedback-status.v1",
-                    "configured": status_config is not None,
-                    "enabled": (
-                        status_config.enabled if status_config is not None else False
-                    ),
-                    "sink": (
-                        dict(status_config.sink)
-                        if status_config is not None
-                        else None
-                    ),
-                    "pending_bytes": len(pending),
-                    "pending_records": pending.count(b"\n"),
-                }, indent=2))
+                print(
+                    json.dumps(
+                        {
+                            "schema": "sourcebound.feedback-status.v1",
+                            "configured": status_config is not None,
+                            "enabled": (
+                                status_config.enabled
+                                if status_config is not None
+                                else False
+                            ),
+                            "sink": (
+                                dict(status_config.sink)
+                                if status_config is not None
+                                else None
+                            ),
+                            "pending_bytes": len(pending),
+                            "pending_records": pending.count(b"\n"),
+                        },
+                        indent=2,
+                    )
+                )
                 return 0
             if args.feedback_command == "preview":
                 sys.stdout.buffer.write(preview_feedback(root))
                 return 0
             if args.feedback_command == "flush":
                 flush_result = flush_feedback(root)
-                print(json.dumps({
-                    "schema": "sourcebound.feedback-flush.v1",
-                    **flush_result,
-                }, indent=2))
+                print(
+                    json.dumps(
+                        {
+                            "schema": "sourcebound.feedback-flush.v1",
+                            **flush_result,
+                        },
+                        indent=2,
+                    )
+                )
                 return 0 if flush_result["failed"] == 0 else 1
             if args.feedback_command == "disable":
                 config = disable_feedback(root)
@@ -823,9 +914,7 @@ def _main(argv: list[str] | None = None) -> int:
                 return 0
             if args.feedback_command == "case":
                 receipt_path = (
-                    args.receipt
-                    if args.receipt.is_absolute()
-                    else root / args.receipt
+                    args.receipt if args.receipt.is_absolute() else root / args.receipt
                 )
                 case = transition_improvement_case(
                     root,
@@ -850,45 +939,51 @@ def _main(argv: list[str] | None = None) -> int:
             print(f"sourcebound: {exc}", file=sys.stderr)
             return exc.exit_code
         if args.format == "json":
-            print(json.dumps({
-                "schema": "sourcebound.audit.v1",
-                "ok": report.ok,
-                "documents": list(report.documents),
-                "ignored_documents": list(report.ignored_documents),
-                "unsupported_documents": list(report.unsupported_documents),
-                "document_profiles": {
-                    profile.path: profile.role
-                    for profile in report.document_profiles
-                },
-                "registered_documents": [
-                    profile.path
-                    for profile in report.document_profiles
-                    if profile.registered
-                ],
-                "enforcement": {
-                    "repository_integrity": report.repository_integrity_enforced,
-                    "policy_documents": [
-                        profile.path
-                        for profile in report.document_profiles
-                        if profile.registered
-                    ],
-                },
-                "policy_preview": report.policy_preview,
-                "role_definitions": ROLE_DESCRIPTIONS,
-                "findings": [asdict(finding) for finding in report.findings],
-                "advisories": [asdict(finding) for finding in report.advisories],
-                "advisory_totals": dict(report.advisory_totals),
-                "baselined_findings": [
-                    asdict(finding) for finding in report.baselined_findings
-                ],
-                "stale_baseline": [
-                    asdict(finding) for finding in report.stale_baseline
-                ],
-            }, indent=2))
+            print(
+                json.dumps(
+                    {
+                        "schema": "sourcebound.audit.v1",
+                        "ok": report.ok,
+                        "documents": list(report.documents),
+                        "ignored_documents": list(report.ignored_documents),
+                        "unsupported_documents": list(report.unsupported_documents),
+                        "document_profiles": {
+                            profile.path: profile.role
+                            for profile in report.document_profiles
+                        },
+                        "registered_documents": [
+                            profile.path
+                            for profile in report.document_profiles
+                            if profile.registered
+                        ],
+                        "enforcement": {
+                            "repository_integrity": report.repository_integrity_enforced,
+                            "policy_documents": [
+                                profile.path
+                                for profile in report.document_profiles
+                                if profile.registered
+                            ],
+                        },
+                        "policy_preview": report.policy_preview,
+                        "role_definitions": ROLE_DESCRIPTIONS,
+                        "findings": [asdict(finding) for finding in report.findings],
+                        "advisories": [
+                            asdict(finding) for finding in report.advisories
+                        ],
+                        "advisory_totals": dict(report.advisory_totals),
+                        "baselined_findings": [
+                            asdict(finding) for finding in report.baselined_findings
+                        ],
+                        "stale_baseline": [
+                            asdict(finding) for finding in report.stale_baseline
+                        ],
+                    },
+                    indent=2,
+                )
+            )
         else:
             document_roles = {
-                profile.path: profile.role
-                for profile in report.document_profiles
+                profile.path: profile.role for profile in report.document_profiles
             }
             for audit_finding in report.findings:
                 print(
@@ -936,9 +1031,7 @@ def _main(argv: list[str] | None = None) -> int:
                 else []
             )
             inventory_report = (
-                scan_inventory(root)
-                if args.no_exec
-                else scan_extended_inventory(root)
+                scan_inventory(root) if args.no_exec else scan_extended_inventory(root)
             )
         except CleanDocsError as exc:
             print(f"sourcebound: {exc}", file=sys.stderr)
@@ -956,14 +1049,18 @@ def _main(argv: list[str] | None = None) -> int:
             print(json.dumps(payload, indent=2))
         else:
             for item in inventory_report.items:
-                print(f"[{item.coverage}] {item.kind} {item.name}: {item.source}#{item.locator}")
+                print(
+                    f"[{item.coverage}] {item.kind} {item.name}: {item.source}#{item.locator}"
+                )
             print(
                 f"inventory: {len(inventory_report.items)} surface(s); "
                 f"{len(inventory_report.languages)} language(s)"
             )
         return 0
     if args.command == "claims":
-        manifest = args.manifest if args.manifest.is_absolute() else root / args.manifest
+        manifest = (
+            args.manifest if args.manifest.is_absolute() else root / args.manifest
+        )
         try:
             source_claim_checks = (
                 load_manifest(manifest).source_claim_checks
@@ -1039,10 +1136,7 @@ def _main(argv: list[str] | None = None) -> int:
             assert isinstance(inputs, dict)
             relationship = inputs["relationship"]
             assert isinstance(relationship, dict)
-            print(
-                f"[{receipt['state']}] {relationship['id']}: "
-                f"{receipt['detail']}"
-            )
+            print(f"[{receipt['state']}] {relationship['id']}: {receipt['detail']}")
             print(
                 "semantic relationship authorized: "
                 f"{str(receipt['semantic_relationship_authorized']).lower()}"
@@ -1107,7 +1201,9 @@ def _main(argv: list[str] | None = None) -> int:
             sys.stdout.write(render_release_markdown(release_report, narrative))
         return 0 if narrative is None or narrative.ok else 1
     if args.command == "migrate":
-        manifest = args.manifest if args.manifest.is_absolute() else root / args.manifest
+        manifest = (
+            args.manifest if args.manifest.is_absolute() else root / args.manifest
+        )
         try:
             if args.rollback:
                 rollback_migration(manifest)
@@ -1160,7 +1256,9 @@ def _main(argv: list[str] | None = None) -> int:
                 if not response_path.is_absolute():
                     response_path = root / response_path
                 try:
-                    provider = RecordedProvider(response_path.read_text(encoding="utf-8"))
+                    provider = RecordedProvider(
+                        response_path.read_text(encoding="utf-8")
+                    )
                 except OSError as exc:
                     raise ConfigurationError(
                         f"cannot read recorded model response {response_path}"
@@ -1177,16 +1275,18 @@ def _main(argv: list[str] | None = None) -> int:
                 )
                 prepare_command_proposer_transcript_path(root, candidate_transcript)
                 transcript_path = candidate_transcript
-            if args.model_transcript and not isinstance(provider, CommandPhrasingProvider):
-                raise ConfigurationError(
-                    "--model-transcript requires --model-config"
-                )
+            if args.model_transcript and not isinstance(
+                provider, CommandPhrasingProvider
+            ):
+                raise ConfigurationError("--model-transcript requires --model-config")
             plan = build_bootstrap_plan(
                 root,
                 provider,
                 accept_hygiene_baseline=args.accept_hygiene_baseline,
             )
-            if transcript_path is not None and isinstance(provider, CommandPhrasingProvider):
+            if transcript_path is not None and isinstance(
+                provider, CommandPhrasingProvider
+            ):
                 write_command_proposer_transcript(
                     root,
                     transcript_path,
@@ -1199,7 +1299,9 @@ def _main(argv: list[str] | None = None) -> int:
             if not args.dry_run:
                 apply_bootstrap_plan(root, plan)
         except CleanDocsError as exc:
-            if transcript_path is not None and isinstance(provider, CommandPhrasingProvider):
+            if transcript_path is not None and isinstance(
+                provider, CommandPhrasingProvider
+            ):
                 try:
                     write_command_proposer_transcript(
                         root,
@@ -1219,7 +1321,8 @@ def _main(argv: list[str] | None = None) -> int:
                         ),
                         detail=(
                             provider.last_error
-                            if provider.last_response is None and provider.last_error is not None
+                            if provider.last_response is None
+                            and provider.last_error is not None
                             else str(exc)
                         ),
                     )
@@ -1269,11 +1372,15 @@ def _main(argv: list[str] | None = None) -> int:
             )
         return 2 if plan.gaps else 0
     if args.command == "doctor":
-        manifest = args.manifest if args.manifest.is_absolute() else root / args.manifest
+        manifest = (
+            args.manifest if args.manifest.is_absolute() else root / args.manifest
+        )
         bundle = build_diagnostic_bundle(root, manifest)
         checks = bundle.checks
         if args.bundle is not None:
-            bundle_path = args.bundle if args.bundle.is_absolute() else root / args.bundle
+            bundle_path = (
+                args.bundle if args.bundle.is_absolute() else root / args.bundle
+            )
             atomic_write(bundle_path, json.dumps(bundle.as_dict(), indent=2) + "\n")
         if args.format == "json":
             print(json.dumps(bundle.as_dict(), indent=2))
@@ -1282,7 +1389,9 @@ def _main(argv: list[str] | None = None) -> int:
                 print(f"[{'ok' if check.ok else 'fail'}] {check.name}: {check.detail}")
         return 0 if all(check.ok for check in checks) else 1
     if args.command in {"verify", "benchmark"}:
-        manifest = args.manifest if args.manifest.is_absolute() else root / args.manifest
+        manifest = (
+            args.manifest if args.manifest.is_absolute() else root / args.manifest
+        )
         try:
             if args.command == "verify":
                 outcome_report = build_outcome_receipt(
@@ -1340,7 +1449,9 @@ def _main(argv: list[str] | None = None) -> int:
         manifest = root / manifest
     try:
         if args.command == "eval":
-            fixtures = args.fixtures if args.fixtures.is_absolute() else root / args.fixtures
+            fixtures = (
+                args.fixtures if args.fixtures.is_absolute() else root / args.fixtures
+            )
             record_dir = args.record_dir
             if record_dir is not None and not record_dir.is_absolute():
                 record_dir = root / record_dir
@@ -1352,7 +1463,9 @@ def _main(argv: list[str] | None = None) -> int:
                 record_dir=record_dir,
             )
             if args.history:
-                history = args.history if args.history.is_absolute() else root / args.history
+                history = (
+                    args.history if args.history.is_absolute() else root / args.history
+                )
                 write_evaluation_history(history, evaluation_report)
             if args.format == "json":
                 print(json.dumps(evaluation_report.as_dict(), indent=2))
@@ -1365,10 +1478,10 @@ def _main(argv: list[str] | None = None) -> int:
                     print(f"{audience}: {passed}/{len(task_results)} task(s) passed")
                     for result in task_results:
                         state = "pass" if result.ok else "fail"
-                        print(f"[{state}] {result.id} ({result.scorer}): {result.detail}")
-                print(
-                    f"hygiene: {len(evaluation_report.hygiene_findings)} finding(s)"
-                )
+                        print(
+                            f"[{state}] {result.id} ({result.scorer}): {result.detail}"
+                        )
+                print(f"hygiene: {len(evaluation_report.hygiene_findings)} finding(s)")
             return 0 if evaluation_report.ok else 1
         if args.command == "project":
             loaded = load_manifest(manifest)
@@ -1383,10 +1496,15 @@ def _main(argv: list[str] | None = None) -> int:
                 return 1 if any(result.changed for result in projection_results) else 0
             written = write_projections(root, loaded)
             if args.format == "json":
-                print(json.dumps({
-                    "ok": True,
-                    "written": [path.as_posix() for path in written],
-                }, indent=2))
+                print(
+                    json.dumps(
+                        {
+                            "ok": True,
+                            "written": [path.as_posix() for path in written],
+                        },
+                        indent=2,
+                    )
+                )
             else:
                 for path in written:
                     print(f"[projected] {path}")
@@ -1442,9 +1560,14 @@ def _main(argv: list[str] | None = None) -> int:
                 f"drive: repaired {sum(result.changed for result in results if result.binding_type == 'region')} document(s); "
                 "implemented policy checks passed"
             )
-            return 1 if any(
-                result.changed and result.binding_type != "region" for result in results
-            ) else 0
+            return (
+                1
+                if any(
+                    result.changed and result.binding_type != "region"
+                    for result in results
+                )
+                else 0
+            )
         if args.command == "plan":
             plan_manifest = manifest
             if args.project != Path(".") and args.manifest == Path(".sourcebound.yml"):
@@ -1555,11 +1678,7 @@ def _main(argv: list[str] | None = None) -> int:
                 else ExecutionPolicy.TRUSTED
             ),
         )
-        if (
-            args.command == "check"
-            and args.binding is None
-            and args.ref is None
-        ):
+        if args.command == "check" and args.binding is None and args.ref is None:
             loaded = load_manifest(manifest)
             if loaded.projections is not None:
                 results.extend(evaluate_projections(root, loaded))
@@ -1584,7 +1703,9 @@ def _main(argv: list[str] | None = None) -> int:
         )
         if args.command == "derive" and args.write and drift:
             write_results(root, results)
-            sys.stdout.write(f"wrote {sum(result.changed for result in results)} document(s)\n")
+            sys.stdout.write(
+                f"wrote {sum(result.changed for result in results)} document(s)\n"
+            )
         if args.command == "check" or getattr(args, "check", False):
             return 1 if drift else 0
         return 0
@@ -1606,7 +1727,9 @@ def main(argv: list[str] | None = None) -> int:
                     if args.model_transcript is not None
                     else Path(".sourcebound/init-proposer-transcript.json")
                 )
-                transcript_path = transcript if transcript.is_absolute() else args.root / transcript
+                transcript_path = (
+                    transcript if transcript.is_absolute() else args.root / transcript
+                )
                 try:
                     proposer_outcome = json.loads(
                         transcript_path.read_text(encoding="utf-8")

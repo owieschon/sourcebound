@@ -12,63 +12,67 @@ you can select the read or repair path without letting a preview change document
 `sourcebound <command> --help` is the proof for exact flags; every example below must pass the same
 argument validator as the executable.
 
-The table is generated from the command registry used by the parser:
+The table is generated from the command registry used by the parser. Start with
+the `core` path: bind a fact, check it, repair declared regions, then verify.
+`policy` supplies optional repository policy, `advanced` holds supporting
+operations, and `experimental` commands are available without becoming the
+default maintenance path.
 
 <!-- sourcebound:begin cli-reference -->
-| command | job | writes | example |
-| --- | --- | --- | --- |
-| audit | Assess documentation and enforce adopted scopes | with --update-baseline | sourcebound audit --format json |
-| residue | Manage private cross-project residue matching | with init-local | sourcebound residue status |
-| residue status | Report whether private residue matching is active | no | sourcebound residue status |
-| residue init-local | Create a permission-restricted private residue template | yes | sourcebound residue init-local |
-| inventory | List detected repository surfaces and coverage | no | sourcebound inventory --format json |
-| claims | Rank and verify static count and column claims | no | sourcebound claims --format json |
-| binding | Inspect one proposed source relationship | no | sourcebound binding --help |
-| binding sensitivity | Test whether one static check depends on a frozen source fact | no | sourcebound binding sensitivity --help |
-| context | Compile provider-neutral evidence packets | no | sourcebound context --help |
-| context compile | Compile a bounded source-addressed context bundle | no | sourcebound context compile --request context-request.json |
-| review | Turn review observations into testable improvement candidates | with --out | sourcebound review --help |
-| review candidates | Compile documentation and product test candidates from one review | with --out | sourcebound review candidates --input review-observations.json |
-| review ledger | Initialize an append-only review denominator | with init | sourcebound review ledger --help |
-| review ledger init | Initialize a review ledger before it reaches a protected branch | yes | sourcebound review ledger init --input review.json --out events.json |
-| review lifecycle | Track assessment-only candidate status with typed evidence | with init or transition | sourcebound review lifecycle --help |
-| review lifecycle init | Initialize a lifecycle record for one candidate set | yes | sourcebound review lifecycle init --input review.json --out lifecycle.json |
-| review lifecycle transition | Apply one evidence-backed candidate transition | yes | sourcebound review lifecycle transition --help |
-| review lifecycle check | Check a lifecycle record against its candidate set | no | sourcebound review lifecycle check --input review.json --state lifecycle.json |
-| init | Write a source-bound documentation baseline | yes | sourcebound init --no-model |
-| explain | Explain a finding or coverage state | no | sourcebound explain purpose-contract --format json |
-| doctor | Check repository and integration readiness | with --bundle | sourcebound doctor --bundle doctor.json |
-| verify | Write a local deterministic outcome receipt | with --out | sourcebound verify --out outcome.json |
-| benchmark | Measure changed-check time and memory budgets | with --out | sourcebound benchmark --base HEAD~1 --head HEAD |
-| derive | Preview or write generated region changes | with --write | sourcebound derive --check |
-| drive | Repair bound regions after deterministic policy checks | yes | sourcebound drive |
-| plan | Build an immutable read-only documentation impact plan | no | sourcebound plan --base origin/main --head HEAD --format json |
-| verdict | Compose one coverage-stating static PR verdict | no | sourcebound verdict --base origin/main --head HEAD --format json |
-| check | Fail on binding drift or uncovered changed surface | no | sourcebound check --changed --base origin/main --head HEAD |
-| project | Regenerate configured documentation projections | unless --check | sourcebound project --check |
-| eval | Score human tasks and replayable agent round trips | with --history or live recording | sourcebound eval --fixtures .sourcebound/eval.yml |
-| release | Render typed release facts between immutable refs | no | sourcebound release --from v0.9.0 --to HEAD |
-| migrate | Upgrade a prior manifest with rollback backup | with --write or --rollback | sourcebound migrate --write |
-| feedback | Manage opt-in operational feedback | yes | sourcebound feedback status |
-| feedback enable | Consent to a named feedback sink | yes | sourcebound feedback enable --sink local |
-| feedback status | Show feedback consent and pending counts | no | sourcebound feedback status |
-| feedback preview | Print exact pending envelope bytes | no | sourcebound feedback preview |
-| feedback flush | Deliver pending feedback envelopes | yes | sourcebound feedback flush |
-| feedback disable | Remove feedback delivery authority | yes | sourcebound feedback disable |
-| feedback rotate | Replace the feedback installation identifier | yes | sourcebound feedback rotate |
-| feedback purge | Delete local feedback state | yes | sourcebound feedback purge |
-| feedback signal | Validate or ingest aggregate behavior signals | varies | sourcebound feedback signal validate --input signal.json |
-| feedback signal prepare | Add a canonical content-derived signal ID | no | sourcebound feedback signal prepare --input signal-body.json |
-| feedback signal validate | Validate one aggregate behavior signal | no | sourcebound feedback signal validate --input signal.json |
-| feedback signal ingest | Create an observed improvement case | yes | sourcebound feedback signal ingest --input signal.json |
-| feedback case | Advance a verified improvement case | yes | sourcebound feedback case transition --case ID --to reproduced --receipt receipt.json |
-| feedback case transition | Apply one adjacent evidence-backed state transition | yes | sourcebound feedback case transition --case ID --to reproduced --receipt receipt.json |
-| emit | Project the manifest into another format | yes | sourcebound emit --help |
-| emit stepwise-skill | Write a manifest-derived stepwise skill package | yes | sourcebound emit stepwise-skill --out skill |
-| emit llms-txt | Write an index of source-bound documents | yes | sourcebound emit llms-txt --out llms.txt |
-| standard | Build or verify the bundled policy pack | varies | sourcebound standard --help |
-| standard build | Compile the canonical standard | yes | sourcebound standard build |
-| standard check | Fail when the policy pack is stale | no | sourcebound standard check |
+| area | command | job | writes | example |
+| --- | --- | --- | --- | --- |
+| policy | audit | Assess documentation and enforce adopted scopes | with --update-baseline | sourcebound audit --format json |
+| experimental | residue | Manage private cross-project residue matching | with init-local | sourcebound residue status |
+| experimental | residue status | Report whether private residue matching is active | no | sourcebound residue status |
+| experimental | residue init-local | Create a permission-restricted private residue template | yes | sourcebound residue init-local |
+| advanced | inventory | List detected repository surfaces and coverage | no | sourcebound inventory --format json |
+| core | claims | Rank and verify static count and column claims | no | sourcebound claims --format json |
+| core | binding | Inspect one proposed source relationship | no | sourcebound binding --help |
+| core | binding sensitivity | Test whether one static check depends on a frozen source fact | no | sourcebound binding sensitivity --help |
+| experimental | context | Compile provider-neutral evidence packets | no | sourcebound context --help |
+| experimental | context compile | Compile a bounded source-addressed context bundle | no | sourcebound context compile --request context-request.json |
+| experimental | review | Turn review observations into testable improvement candidates | with --out | sourcebound review --help |
+| experimental | review candidates | Compile documentation and product test candidates from one review | with --out | sourcebound review candidates --input review-observations.json |
+| experimental | review ledger | Initialize an append-only review denominator | with init | sourcebound review ledger --help |
+| experimental | review ledger init | Initialize a review ledger before it reaches a protected branch | yes | sourcebound review ledger init --input review.json --out events.json |
+| experimental | review lifecycle | Track assessment-only candidate status with typed evidence | with init or transition | sourcebound review lifecycle --help |
+| experimental | review lifecycle init | Initialize a lifecycle record for one candidate set | yes | sourcebound review lifecycle init --input review.json --out lifecycle.json |
+| experimental | review lifecycle transition | Apply one evidence-backed candidate transition | yes | sourcebound review lifecycle transition --help |
+| experimental | review lifecycle check | Check a lifecycle record against its candidate set | no | sourcebound review lifecycle check --input review.json --state lifecycle.json |
+| core | init | Write a source-bound documentation baseline | yes | sourcebound init --no-model |
+| advanced | explain | Explain a finding or coverage state | no | sourcebound explain purpose-contract --format json |
+| advanced | doctor | Check repository and integration readiness | with --bundle | sourcebound doctor --bundle doctor.json |
+| core | verify | Write a local deterministic outcome receipt | with --out | sourcebound verify --out outcome.json |
+| experimental | benchmark | Measure changed-check time and memory budgets | with --out | sourcebound benchmark --base HEAD~1 --head HEAD |
+| core | derive | Preview or write generated region changes | with --write | sourcebound derive --check |
+| core | drive | Repair bound regions after deterministic policy checks | yes | sourcebound drive |
+| core | plan | Build an immutable read-only documentation impact plan | no | sourcebound plan --base origin/main --head HEAD --format json |
+| core | verdict | Compose one coverage-stating static PR verdict | no | sourcebound verdict --base origin/main --head HEAD --format json |
+| core | check | Fail on binding drift or uncovered changed surface | no | sourcebound check --changed --base origin/main --head HEAD |
+| advanced | project | Regenerate configured documentation projections | unless --check | sourcebound project --check |
+| experimental | eval | Score human tasks and replayable agent round trips | with --history or live recording | sourcebound eval --fixtures .sourcebound/eval.yml |
+| experimental | release | Render typed release facts between immutable refs | no | sourcebound release --from v0.9.0 --to HEAD |
+| advanced | migrate | Upgrade a prior manifest with rollback backup | with --write or --rollback | sourcebound migrate --write |
+| experimental | feedback | Manage opt-in operational feedback | yes | sourcebound feedback status |
+| experimental | feedback enable | Consent to a named feedback sink | yes | sourcebound feedback enable --sink local |
+| experimental | feedback status | Show feedback consent and pending counts | no | sourcebound feedback status |
+| experimental | feedback preview | Print exact pending envelope bytes | no | sourcebound feedback preview |
+| experimental | feedback flush | Deliver pending feedback envelopes | yes | sourcebound feedback flush |
+| experimental | feedback disable | Remove feedback delivery authority | yes | sourcebound feedback disable |
+| experimental | feedback rotate | Replace the feedback installation identifier | yes | sourcebound feedback rotate |
+| experimental | feedback purge | Delete local feedback state | yes | sourcebound feedback purge |
+| experimental | feedback signal | Validate or ingest aggregate behavior signals | varies | sourcebound feedback signal validate --input signal.json |
+| experimental | feedback signal prepare | Add a canonical content-derived signal ID | no | sourcebound feedback signal prepare --input signal-body.json |
+| experimental | feedback signal validate | Validate one aggregate behavior signal | no | sourcebound feedback signal validate --input signal.json |
+| experimental | feedback signal ingest | Create an observed improvement case | yes | sourcebound feedback signal ingest --input signal.json |
+| experimental | feedback case | Advance a verified improvement case | yes | sourcebound feedback case transition --case ID --to reproduced --receipt receipt.json |
+| experimental | feedback case transition | Apply one adjacent evidence-backed state transition | yes | sourcebound feedback case transition --case ID --to reproduced --receipt receipt.json |
+| advanced | emit | Project the manifest into another format | yes | sourcebound emit --help |
+| advanced | emit stepwise-skill | Write a manifest-derived stepwise skill package | yes | sourcebound emit stepwise-skill --out skill |
+| advanced | emit llms-txt | Write an index of source-bound documents | yes | sourcebound emit llms-txt --out llms.txt |
+| policy | standard | Build or verify the bundled policy pack | varies | sourcebound standard --help |
+| policy | standard build | Compile the canonical standard | yes | sourcebound standard build |
+| policy | standard check | Fail when the policy pack is stale | no | sourcebound standard check |
 <!-- sourcebound:end cli-reference -->
 
 ## Impact plans
