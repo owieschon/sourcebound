@@ -6,6 +6,7 @@ import json
 import re
 import subprocess
 import sys
+from fnmatch import fnmatch
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -75,6 +76,7 @@ class InventoryItem:
 class InventoryReport:
     languages: tuple[str, ...]
     items: tuple[InventoryItem, ...]
+    direct_policy: "DirectPolicyReport | None" = None
 
     def as_dict(self) -> dict[str, object]:
         return {
@@ -85,7 +87,32 @@ class InventoryReport:
                 state: sum(item.coverage == state for item in self.items)
                 for state in ("bound", "cataloged", "ignored", "standard-gap")
             },
+            "direct_policy": None if self.direct_policy is None else self.direct_policy.as_dict(),
         }
+
+
+@dataclass(frozen=True)
+class DirectPolicyGap:
+    selector: str
+    inventory_id: str
+    kind: str
+    source: str
+    locator: str
+
+
+@dataclass(frozen=True)
+class DirectPolicyReport:
+    configured: bool
+    required: int
+    satisfied: int
+    gaps: tuple[DirectPolicyGap, ...]
+
+    @property
+    def complete(self) -> bool:
+        return not self.gaps
+
+    def as_dict(self) -> dict[str, object]:
+        return {"configured": self.configured, "required": self.required, "satisfied": self.satisfied, "gaps": [asdict(gap) for gap in self.gaps], "complete": self.complete}
 
 
 def _repository_files(root: Path) -> list[Path]:
@@ -335,20 +362,21 @@ def _structured_items(path: str, data: Any) -> list[dict[str, str]]:
     return items
 
 
-def _coverage_ignores(root: Path, identifiers: set[str]) -> dict[str, str]:
+def _coverage_ignores(root: Path, identifiers: set[str]) -> tuple[dict[str, str], tuple[dict[str, object], ...]]:
     ignore_path = root / ".sourcebound-ignore.yml"
     if not ignore_path.exists():
-        return {}
+        return {}, ()
     try:
         raw = yaml.safe_load(ignore_path.read_text(encoding="utf-8"))
     except OSError as exc:
         raise ConfigurationError(f"cannot read coverage policy {ignore_path}") from exc
     except yaml.YAMLError as exc:
         raise ConfigurationError(f"invalid coverage policy {ignore_path}") from exc
-    if not isinstance(raw, dict) or set(raw) != {"version", "ignore"}:
-        raise ConfigurationError("coverage policy must contain only version and ignore")
-    if raw["version"] != 1 or not isinstance(raw["ignore"], list):
-        raise ConfigurationError("coverage policy must use version 1 and an ignore list")
+    if not isinstance(raw, dict) or raw.get("version") not in {1, 2} or not isinstance(raw.get("ignore"), list):
+        raise ConfigurationError("coverage policy must use version 1 or 2 and an ignore list")
+    allowed = {"version", "ignore"} if raw["version"] == 1 else {"version", "ignore", "require_direct"}
+    if set(raw) != allowed:
+        raise ConfigurationError("coverage policy fields are invalid")
     ignored: dict[str, str] = {}
     for index, record in enumerate(raw["ignore"]):
         if not isinstance(record, dict) or set(record) != {"id", "reason"}:
@@ -362,10 +390,23 @@ def _coverage_ignores(root: Path, identifiers: set[str]) -> dict[str, str]:
         if identifier in ignored:
             raise ConfigurationError(f"coverage ignore {index} duplicates an inventory id")
         ignored[identifier] = reason.strip()
-    return ignored
+    selectors = []
+    for index, selector in enumerate(raw.get("require_direct", [])):
+        if not isinstance(selector, dict) or set(selector) - {"id", "kinds", "paths"} or not {"id", "kinds"} <= set(selector):
+            raise ConfigurationError(f"direct selector {index} is invalid")
+        identifier, kinds = selector["id"], selector["kinds"]
+        paths = selector.get("paths", ["**"])
+        if not isinstance(identifier, str) or not identifier or not isinstance(kinds, list) or not kinds or any(kind not in PUBLIC_SURFACE_KINDS for kind in kinds):
+            raise ConfigurationError(f"direct selector {index} has invalid kinds")
+        if not isinstance(paths, list) or not paths or any(not isinstance(path, str) or path.startswith("/") or ".." in Path(path).parts for path in paths):
+            raise ConfigurationError(f"direct selector {index} has invalid paths")
+        selectors.append({"id": identifier, "kinds": tuple(kinds), "paths": tuple(paths)})
+    if len({selector["id"] for selector in selectors}) != len(selectors):
+        raise ConfigurationError("direct selector ids must be unique")
+    return ignored, tuple(selectors)
 
 
-def _coverage(root: Path, identifiers: set[str]) -> tuple[set[tuple[str, str]], bool, dict[str, str]]:
+def _coverage(root: Path, identifiers: set[str]) -> tuple[set[tuple[str, str]], bool, dict[str, str], tuple[dict[str, object], ...]]:
     direct_locators: set[tuple[str, str]] = set()
     cataloged = False
     manifest = root / ".sourcebound.yml"
@@ -390,7 +431,8 @@ def _coverage(root: Path, identifiers: set[str]) -> tuple[set[tuple[str, str]], 
                         direct_locators.add((Path(path).as_posix(), locator))
         except (OSError, yaml.YAMLError):
             pass
-    return direct_locators, cataloged, _coverage_ignores(root, identifiers)
+    ignored, selectors = _coverage_ignores(root, identifiers)
+    return direct_locators, cataloged, ignored, selectors
 
 
 def scan_inventory(root: Path) -> InventoryReport:
@@ -454,7 +496,7 @@ def scan_inventory(root: Path) -> InventoryReport:
         )
     ]
     unique = {item["id"]: item for item in raw_items}
-    direct_locators, cataloged, ignored = _coverage(root, set(unique))
+    direct_locators, cataloged, ignored, selectors = _coverage(root, set(unique))
     items = []
     for identifier in sorted(unique):
         item = unique[identifier]
@@ -473,4 +515,12 @@ def scan_inventory(root: Path) -> InventoryReport:
                 coverage_reason=ignored.get(identifier),
             )
         )
-    return InventoryReport(tuple(sorted(languages)), tuple(items))
+    gaps: list[DirectPolicyGap] = []
+    required = 0
+    for selector in selectors:
+        matches = [item for item in items if item.kind in selector["kinds"] and any(fnmatch(item.source, path) for path in selector["paths"])]
+        if not matches:
+            raise ConfigurationError(f"direct selector {selector['id']} matches no inventory items")
+        required += len(matches)
+        gaps.extend(DirectPolicyGap(str(selector["id"]), item.id, item.kind, item.source, item.locator) for item in matches if item.coverage not in {"bound", "ignored"})
+    return InventoryReport(tuple(sorted(languages)), tuple(items), DirectPolicyReport(bool(selectors), required, required - len(gaps), tuple(gaps)))

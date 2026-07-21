@@ -690,6 +690,7 @@ def test_verdict_validation_rejects_resigned_semantic_tampering(
     legacy = copy.deepcopy(original)
     del legacy["coverage"]["classification_complete"]
     del legacy["coverage"]["direct_coverage_complete"]
+    del legacy["coverage"]["direct_policy"]
     _resign_verdict(legacy)
     validate_verdict_payload(legacy)
 

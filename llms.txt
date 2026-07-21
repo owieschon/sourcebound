@@ -22,7 +22,7 @@
 - [docs/REVIEW_LEDGER.md](docs/REVIEW_LEDGER.md): declared canonical context; sha256: d84d6b5928b066ee7fe4b260012a9cf937c83714380b3d247462c8134cde140d
 - [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md): bindings: security-model; sha256: 3865422d3fe05b1f97cf68e89eaf4bd2cb662c1b7514d0dbcc64e04fc5755403
 - [docs/SUPPORT.md](docs/SUPPORT.md): bindings: support-guide; sha256: cac6334e2c7645898b783ccdd72cc62ea1f140141dac0eec2dcf3954e430959d
-- [docs/SURFACE.md](docs/SURFACE.md): bindings: repository-surface; sha256: 3b07599ea714b2f3b6ec19b0ef3feec3558d1fefdca6d5f842b00aafc7b8bf84
+- [docs/SURFACE.md](docs/SURFACE.md): bindings: repository-surface; sha256: f663215c1567f1dfbab0f1448b709521f2e94afa0417a154643962b65fe4c50a
 - [docs/VERIFY_RELEASE.md](docs/VERIFY_RELEASE.md): declared canonical context; sha256: 5a6bce17d664594d768e742193cc1edbb1598e588aaf200d485d6ecf2c4cac04
 - [docs/learn/deep-dive-the-deterministic-seam.md](docs/learn/deep-dive-the-deterministic-seam.md): bindings: deterministic-seam-evidence, deterministic-seam-gate, deterministic-seam-phrasing; sha256: 37447f841031a48e4745083d1489de48d441f15ef13bc31c89d6af19b597e028
 - [docs/learn/index.md](docs/learn/index.md): declared canonical context; sha256: abd813774363fc58aa0b86a65ed7aa29b44d99b6bb3c0d263197a4f71e93096f

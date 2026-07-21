@@ -275,6 +275,34 @@ bindings:
     assert ignored.coverage == "ignored"
 
 
+def test_direct_policy_rejects_selected_catalog_only_surface(tmp_path: Path) -> None:
+    root = _python_repo(tmp_path)
+    (root / ".sourcebound.yml").write_text("""\
+version: 1
+bindings:
+  - id: catalog
+    type: region
+    doc: README.md
+    region: repository-surface
+    extractor: repository-inventory
+    source: {path: .}
+    renderer: markdown-table
+    columns: [kind, name, source, locator]
+""")
+    (root / ".sourcebound-ignore.yml").write_text("""\
+version: 2
+ignore: []
+require_direct:
+  - id: public-cli
+    kinds: [cli-command]
+    paths: [src/service/**]
+""")
+    report = scan_inventory(root)
+    assert report.direct_policy and report.direct_policy.configured
+    assert report.direct_policy.gaps
+    assert {gap.selector for gap in report.direct_policy.gaps} == {"public-cli"}
+
+
 def test_repository_overview_stays_compact_and_tracks_the_full_catalog(
     tmp_path: Path,
 ) -> None:

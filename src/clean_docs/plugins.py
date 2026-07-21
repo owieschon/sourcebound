@@ -246,4 +246,8 @@ def scan_extended_inventory(root: Path) -> InventoryReport:
         return base
     manifest = load_manifest(manifest_path)
     additions = discover_plugin_items(RepositorySnapshot(root), manifest.plugins)
-    return InventoryReport(base.languages, merge_plugin_inventory(base.items, additions))
+    return InventoryReport(
+        base.languages,
+        merge_plugin_inventory(base.items, additions),
+        base.direct_policy,
+    )

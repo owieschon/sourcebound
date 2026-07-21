@@ -131,6 +131,7 @@ def test_local_outcome_receipt_reports_baseline_and_changed_impact(
         "coverage_complete": True,
         "classification_complete": True,
         "direct_coverage_complete": False,
+        "direct_policy_complete": True,
         "drift_caught_before_merge": 0,
     }
     assert baseline.as_dict()["assurance"] == {
@@ -212,6 +213,25 @@ def test_outcome_does_not_claim_complete_baseline_with_standard_gaps(
     assert payload["coverage"]["standard_gaps"] > 0
     assert payload["outcomes"]["coverage_complete"] is False
     assert payload["outcomes"]["protected_baseline_current"] is False
+
+
+def test_direct_policy_makes_selected_catalog_only_surface_fail(tmp_path: Path) -> None:
+    root, manifest, _, _ = _fixture(tmp_path)
+    (root / ".sourcebound-ignore.yml").write_text("""\
+version: 2
+ignore: []
+require_direct:
+  - id: cli
+    kinds: [cli-command]
+    paths: [cli.py]
+""")
+    receipt = build_outcome_receipt(root, manifest)
+    policy = receipt.as_dict()["coverage"]["direct_policy"]
+    assert receipt.ok is False
+    assert policy["configured"] is True
+    assert policy["required"] == 2
+    assert policy["satisfied"] == 0
+    assert policy["complete"] is False
 
 
 def test_benchmark_reports_reproducible_time_and_memory_budget(tmp_path: Path) -> None:

@@ -244,6 +244,7 @@ class PullRequestVerdict:
                 "direct_coverage_complete": (
                     counts["standard-gap"] == 0 and counts["cataloged"] == 0
                 ),
+                "direct_policy": inventory.direct_policy.as_dict(),
                 "unbound_prose_checked": False,
             },
             "mutation_receipts": [
@@ -880,7 +881,7 @@ def validate_verdict_payload(payload: Mapping[str, object]) -> None:
 
     coverage = data["coverage"]
     base_coverage_keys = frozenset({"inventory_total", "directly_bound", "catalog_only", "ignored", "unsupported_or_unknown", "unbound_prose_checked"})
-    new_coverage_keys = base_coverage_keys | {"classification_complete", "direct_coverage_complete"}
+    new_coverage_keys = base_coverage_keys | {"classification_complete", "direct_coverage_complete", "direct_policy"}
     if not isinstance(coverage, dict) or frozenset(coverage) not in {base_coverage_keys, new_coverage_keys}:
         raise ConfigurationError("verdict.coverage fields are invalid")
     coverage_counts = {
@@ -912,6 +913,14 @@ def validate_verdict_payload(payload: Mapping[str, object]) -> None:
             raise ConfigurationError("verdict.coverage.classification_complete contradicts counts")
         if _boolean(coverage["direct_coverage_complete"], "verdict.coverage.direct_coverage_complete") != direct_coverage_complete:
             raise ConfigurationError("verdict.coverage.direct_coverage_complete contradicts counts")
+        direct_policy = _object(coverage["direct_policy"], "verdict.coverage.direct_policy", frozenset({"configured", "required", "satisfied", "gaps", "complete"}))
+        _boolean(direct_policy["configured"], "verdict.coverage.direct_policy.configured")
+        required = _count(direct_policy["required"], "verdict.coverage.direct_policy.required")
+        satisfied = _count(direct_policy["satisfied"], "verdict.coverage.direct_policy.satisfied")
+        if satisfied > required or not isinstance(direct_policy["gaps"], list):
+            raise ConfigurationError("verdict.coverage.direct_policy is inconsistent")
+        if _boolean(direct_policy["complete"], "verdict.coverage.direct_policy.complete") != (satisfied == required and not direct_policy["gaps"]):
+            raise ConfigurationError("verdict.coverage.direct_policy.complete contradicts counts")
 
     review_contracts = data["review_contracts"]
     if not isinstance(review_contracts, list):

@@ -13,7 +13,7 @@ from clean_docs.engine import evaluate
 from clean_docs.errors import ConfigurationError
 from clean_docs.execution import ExecutionPolicy
 from clean_docs.manifest import load_manifest
-from clean_docs.inventory import InventoryReport, scan_inventory
+from clean_docs.inventory import DirectPolicyReport, InventoryReport, scan_inventory
 from clean_docs.models import BindingResult, Manifest
 from clean_docs.projections import evaluate_projections
 from clean_docs.snapshot import RepositorySnapshot
@@ -60,6 +60,7 @@ class OutcomeReceipt:
     execution_mode: str = ExecutionPolicy.TRUSTED.value
     manifest_deprecations: tuple[str, ...] = ()
     changed: ChangedReport | None = None
+    direct_policy: DirectPolicyReport | None = None
 
     @property
     def ok(self) -> bool:
@@ -70,6 +71,7 @@ class OutcomeReceipt:
             and self.stale_projections == 0
             and self.drifted_source_claims == 0
             and self.missing_source_claims == 0
+            and (self.direct_policy is None or self.direct_policy.complete)
             and (self.changed is None or self.changed.ok)
         )
 
@@ -111,6 +113,7 @@ class OutcomeReceipt:
                 "direct_coverage_complete": (
                     self.standard_gaps == 0 and self.cataloged_inventory_items == 0
                 ),
+                "direct_policy_complete": self.direct_policy is None or self.direct_policy.complete,
                 "drift_caught_before_merge": (
                     0
                     if self.changed is None
@@ -129,6 +132,7 @@ class OutcomeReceipt:
                 "cataloged": self.cataloged_inventory_items,
                 "ignored": self.ignored_inventory_items,
                 "standard_gaps": self.standard_gaps,
+                "direct_policy": None if self.direct_policy is None else self.direct_policy.as_dict(),
             },
             "bindings": {
                 "total": self.bindings,
@@ -241,6 +245,7 @@ def build_outcome_receipt(
         execution_policy.value,
         manifest.deprecations,
         changed,
+        inventory.direct_policy,
     )
 
 
