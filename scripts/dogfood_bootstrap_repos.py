@@ -10,18 +10,18 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from clean_docs.audit import audit
-from clean_docs.bootstrap import (
+from sourcebound.audit import audit
+from sourcebound.bootstrap import (
     GENERATED_REFERENCE,
     apply_bootstrap_plan,
     build_bootstrap_plan,
 )
-from clean_docs.changed import CHANGED_CHECK_BUDGET_SECONDS, check_changed
-from clean_docs.engine import evaluate
-from clean_docs.inventory import scan_inventory
-from clean_docs.manifest import load_manifest
-from clean_docs.models import RegionBinding
-from clean_docs.verdict import build_pr_verdict
+from sourcebound.changed import CHANGED_CHECK_BUDGET_SECONDS, check_changed
+from sourcebound.engine import evaluate
+from sourcebound.inventory import scan_inventory
+from sourcebound.manifest import load_manifest
+from sourcebound.models import RegionBinding
+from sourcebound.verdict import build_pr_verdict
 
 if __package__:
     from scripts.dogfood_public_repos import require, run_git
@@ -50,7 +50,7 @@ CASES = (
         evidence_adapter="python-package",
         readme="README.md",
         mutation_path="src/sample/simple.py",
-        mutation="\n\ndef clean_docs_dogfood():\n    return True\n",
+        mutation="\n\ndef sourcebound_dogfood():\n    return True\n",
     ),
     BootstrapDogfoodCase(
         name="yocto-queue",
@@ -60,7 +60,7 @@ CASES = (
         evidence_adapter="typescript-static",
         readme="readme.md",
         mutation_path="index.d.ts",
-        mutation="\nexport interface CleanDocsDogfood {}\n",
+        mutation="\nexport interface SourceboundDogfood {}\n",
     ),
 )
 

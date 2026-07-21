@@ -28,8 +28,8 @@ first-party adapter:
 | Part | Owner | Contract |
 | --- | --- | --- |
 | `tools/mdx-parser/src/parser.mjs` | Authored adapter source | Parses MDX into versioned structural JSON |
-| `src/clean_docs/adapters/mdx_parser.mjs` | Generated wheel input | Reproducible bundle of the pinned parser dependency graph |
-| `src/clean_docs/mdx.py` | Python boundary | Starts the bundled parser with bounded input, validates its response, and exposes typed nodes |
+| `src/sourcebound/adapters/mdx_parser.mjs` | Generated wheel input | Reproducible bundle of the pinned parser dependency graph |
+| `src/sourcebound/mdx.py` | Python boundary | Starts the bundled parser with bounded input, validates its response, and exposes typed nodes |
 
 The adapter runs in a temporary directory with a reduced environment. It parses structure only. It
 does not evaluate JSX, imports, components, or repository package scripts. The [security model](SECURITY_MODEL.md#trust-tiers)

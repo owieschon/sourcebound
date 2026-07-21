@@ -6,8 +6,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-from clean_docs.corpus import findings_as_json, scan_corpus
-from clean_docs.write_gate import evaluate_write
+from sourcebound.corpus import findings_as_json, scan_corpus
+from sourcebound.write_gate import evaluate_write
 
 
 ROOT = Path(__file__).parents[1]
@@ -70,7 +70,7 @@ def test_prior_false_positive_repairs_are_preserved(tmp_path: Path) -> None:
     assert "IF/THEN" not in details
     assert "byte-identical" not in details
     migrations = json.loads(
-        (ROOT / "src/clean_docs/standards/v0-migrations.json").read_text()
+        (ROOT / "src/sourcebound/standards/v0-migrations.json").read_text()
     )
     assert {item["rule"] for item in migrations["differences"]} >= {
         "archive-surface",

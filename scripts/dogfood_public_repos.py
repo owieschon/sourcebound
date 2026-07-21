@@ -10,7 +10,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from clean_docs.engine import drive, evaluate
+from sourcebound.engine import drive, evaluate
 
 
 @dataclass(frozen=True)
@@ -37,7 +37,7 @@ version: 1
 bindings:
   - id: csm-actions
     type: region
-    doc: docs/CLEAN_DOCS_DOGFOOD.md
+    doc: docs/SOURCEBOUND_DOGFOOD.md
     region: csm-actions
     extractor: python-literal
     source:
@@ -71,7 +71,7 @@ version: 1
 bindings:
   - id: comparison-policy-symbol
     type: symbol
-    doc: docs/CLEAN_DOCS_DOGFOOD.md
+    doc: docs/SOURCEBOUND_DOGFOOD.md
     anchor: policy-registry
     source:
       path: rails/agl/comparison.py
@@ -120,7 +120,7 @@ def _run_case(case: DogfoodCase, parent: Path) -> dict[str, object]:
     require(resolved == case.commit, f"{case.name}: expected {case.commit}, got {resolved}")
 
     manifest = root / ".sourcebound.yml"
-    document = root / "docs/CLEAN_DOCS_DOGFOOD.md"
+    document = root / "docs/SOURCEBOUND_DOGFOOD.md"
     manifest.write_text(case.manifest, encoding="utf-8")
     document.write_text(case.document, encoding="utf-8")
 

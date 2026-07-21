@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from clean_docs.cli import main
+from sourcebound.cli import main
 
 
 def _fixture(tmp_path: Path) -> Path:

@@ -100,7 +100,7 @@ jobs:
         run: |
           mkdir -p "$SOURCEBOUND_EVIDENCE_DIR"
           set +e
-          python3 -I -m clean_docs --root "$GITHUB_WORKSPACE" verdict \
+          python3 -I -m sourcebound --root "$GITHUB_WORKSPACE" verdict \
             --base "$SOURCEBOUND_BASE" \
             --head "$SOURCEBOUND_HEAD" \
             --format json > "$SOURCEBOUND_EVIDENCE_DIR/sourcebound-verdict.json"
@@ -119,7 +119,7 @@ jobs:
           import os
           from pathlib import Path
 
-          from clean_docs.verdict import render_verdict_payload_sarif
+          from sourcebound.verdict import render_verdict_payload_sarif
 
           evidence_dir = Path(os.environ["SOURCEBOUND_EVIDENCE_DIR"])
           source = evidence_dir / "sourcebound-verdict.json"
@@ -324,7 +324,7 @@ jobs:
           import os
           from pathlib import Path
 
-          from clean_docs.verdict import (
+          from sourcebound.verdict import (
               render_verdict_payload_sarif,
               validate_verdict_payload,
           )

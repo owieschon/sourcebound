@@ -11,9 +11,9 @@ import socket
 import subprocess
 from pathlib import Path
 
-from clean_docs.claims import extract_source_facts
-from clean_docs.cli import main
-from clean_docs.sensitivity import FACT_SCHEMA, PROPOSAL_SCHEMA
+from sourcebound.claims import extract_source_facts
+from sourcebound.cli import main
+from sourcebound.sensitivity import FACT_SCHEMA, PROPOSAL_SCHEMA
 
 
 ROOT = Path(__file__).parents[1]

@@ -5,13 +5,13 @@ from pathlib import Path
 
 import pytest
 
-from clean_docs.errors import ConfigurationError
-from clean_docs.accessibility import check_accessibility
-from clean_docs.manifest import load_manifest
-from clean_docs.mdx import parse_mdx
-from clean_docs.projections import render_projections, write_projections
-from clean_docs.standard import load_default_pack
-from clean_docs.visuals import load_visual_record
+from sourcebound.errors import ConfigurationError
+from sourcebound.accessibility import check_accessibility
+from sourcebound.manifest import load_manifest
+from sourcebound.mdx import parse_mdx
+from sourcebound.projections import render_projections, write_projections
+from sourcebound.standard import load_default_pack
+from sourcebound.visuals import load_visual_record
 
 
 MANIFEST = """\

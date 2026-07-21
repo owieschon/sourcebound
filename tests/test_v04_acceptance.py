@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from clean_docs.evaluation import load_evaluation_tasks, run_evaluation
+from sourcebound.evaluation import load_evaluation_tasks, run_evaluation
 from scripts.test_readme_quickstart import _quickstart_script
 
 
@@ -29,10 +29,10 @@ def test_human_quickstart_installs_and_runs_from_declared_docs(tmp_path: Path) -
     assert '"PIP_NO_INDEX"' in lifecycle
 
 
-def test_agent_configuration_round_trip_uses_only_contributor_bundle() -> None:
+def test_agent_configuration_round_trip_uses_only_evaluation_bundle() -> None:
     tasks = load_evaluation_tasks(ROOT / ".sourcebound/eval.yml")
     task = next(task for task in tasks if task.id == "manifest-round-trip")
-    assert task.context == (Path(".sourcebound/context/contributor.md"),)
+    assert task.context == (Path(".sourcebound/context/evaluation.md"),)
 
     report = run_evaluation(
         ROOT, ROOT / ".sourcebound.yml", ROOT / ".sourcebound/eval.yml"

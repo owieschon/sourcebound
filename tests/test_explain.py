@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from clean_docs.cli import main
-from clean_docs.inventory import scan_inventory
+from sourcebound.cli import main
+from sourcebound.inventory import scan_inventory
 
 
 def _repository(tmp_path: Path) -> Path:

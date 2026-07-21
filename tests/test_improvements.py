@@ -8,10 +8,10 @@ from pathlib import Path
 
 import pytest
 
-import clean_docs.improvements as improvements
-from clean_docs.cli import main
-from clean_docs.errors import ConfigurationError, PolicyError
-from clean_docs.improvements import (
+import sourcebound.improvements as improvements
+from sourcebound.cli import main
+from sourcebound.errors import ConfigurationError, PolicyError
+from sourcebound.improvements import (
     CANDIDATES_SCHEMA,
     LIFECYCLE_SCHEMA_V1,
     check_candidate_lifecycle,
@@ -23,7 +23,7 @@ from clean_docs.improvements import (
     transition_candidate_lifecycle,
     write_candidate_lifecycle,
 )
-from clean_docs.review_ledger import (
+from sourcebound.review_ledger import (
     REVIEW_EVENT_LEDGER_SCHEMA,
     validate_review_event_ledger,
 )

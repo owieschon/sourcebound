@@ -9,11 +9,11 @@ from pathlib import Path
 
 import pytest
 
-from clean_docs.engine import drive, evaluate
-from clean_docs.errors import ConfigurationError, ExtractionError
-from clean_docs.manifest import load_manifest
-from clean_docs.plugins import scan_extended_inventory
-from clean_docs.release import build_release_report
+from sourcebound.engine import drive, evaluate
+from sourcebound.errors import ConfigurationError, ExtractionError
+from sourcebound.manifest import load_manifest
+from sourcebound.plugins import scan_extended_inventory
+from sourcebound.release import build_release_report
 
 
 FIXTURE_PLUGIN = Path(__file__).parent / "fixtures/v05_plugin"
@@ -24,7 +24,7 @@ def _run(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
     environment = dict(os.environ)
     environment["PYTHONPATH"] = str(PROJECT / "src")
     return subprocess.run(
-        [sys.executable, "-m", "clean_docs", "--root", str(root), *args],
+        [sys.executable, "-m", "sourcebound", "--root", str(root), *args],
         text=True,
         capture_output=True,
         check=False,

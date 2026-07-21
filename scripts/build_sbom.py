@@ -31,7 +31,7 @@ def render_sbom(wheel: Path, source_date_epoch: int) -> str:
         mdx_manifest_names = [
             name
             for name in archive.namelist()
-            if name.endswith("clean_docs/adapters/mdx_dependencies.json")
+            if name.endswith("sourcebound/adapters/mdx_dependencies.json")
         ]
         if len(mdx_manifest_names) != 1:
             raise ValueError("wheel must contain one MDX dependency manifest")

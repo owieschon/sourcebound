@@ -8,9 +8,9 @@ import uuid
 
 import pytest
 
-from clean_docs import cli
-from clean_docs.errors import ConfigurationError
-from clean_docs.feedback import (
+from sourcebound import cli
+from sourcebound.errors import ConfigurationError
+from sourcebound.feedback import (
     CONFIG_PATH,
     DEAD_LETTER_DIR,
     OUTBOX_DIR,
@@ -172,7 +172,7 @@ def test_connected_delivery_is_explicit_and_dead_letters_after_three_failures(
         root,
         sink="connected",
         endpoint="https://example.invalid/capture",
-        token_env="CLEAN_DOCS_TEST_TOKEN",
+        token_env="SOURCEBOUND_TEST_TOKEN",
     )
     record = enqueue_feedback(
         root,
@@ -188,7 +188,7 @@ def test_connected_delivery_is_explicit_and_dead_letters_after_three_failures(
         network_attempts += 1
         raise OSError("offline")
 
-    monkeypatch.setenv("CLEAN_DOCS_TEST_TOKEN", "test-token")
+    monkeypatch.setenv("SOURCEBOUND_TEST_TOKEN", "test-token")
     monkeypatch.setattr("urllib.request.urlopen", fail_request)
 
     assert network_attempts == 0
@@ -233,7 +233,7 @@ def test_connected_event_maps_idempotency_and_keeps_token_out_of_state(
         root,
         sink="connected",
         endpoint="https://events.example.test/capture",
-        token_env="CLEAN_DOCS_TEST_TOKEN",
+        token_env="SOURCEBOUND_TEST_TOKEN",
     )
     record = enqueue_feedback(
         root,
@@ -243,7 +243,7 @@ def test_connected_event_maps_idempotency_and_keeps_token_out_of_state(
     )
     assert record is not None
     outbox_bytes = record.read_bytes()
-    monkeypatch.setenv("CLEAN_DOCS_TEST_TOKEN", token)
+    monkeypatch.setenv("SOURCEBOUND_TEST_TOKEN", token)
     captured: dict[str, object] = {}
 
     class Response:

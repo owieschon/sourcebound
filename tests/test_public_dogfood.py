@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from clean_docs.manifest import load_manifest
-from clean_docs.models import RegionBinding, SymbolBinding
+from sourcebound.manifest import load_manifest
+from sourcebound.models import RegionBinding, SymbolBinding
 from scripts.dogfood_bootstrap_repos import CASES as BOOTSTRAP_CASES
 from scripts.dogfood_public_repos import CASES
 

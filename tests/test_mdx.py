@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from clean_docs.mdx import (
+from sourcebound.mdx import (
     MDX_PARSER_ID,
     MdxParserError,
     parse_mdx,

@@ -9,11 +9,11 @@ from pathlib import Path
 
 import pytest
 
-from clean_docs.claims import extract_source_facts
-from clean_docs.cli import main
-from clean_docs.errors import ConfigurationError
-from clean_docs.evaluation import run_evaluation
-from clean_docs.sensitivity import (
+from sourcebound.claims import extract_source_facts
+from sourcebound.cli import main
+from sourcebound.errors import ConfigurationError
+from sourcebound.evaluation import run_evaluation
+from sourcebound.sensitivity import (
     FACT_SCHEMA,
     PROPOSAL_SCHEMA,
     evaluate_binding_sensitivity,

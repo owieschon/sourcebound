@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import sys
 
-from clean_docs.execution import resolve_argv
+from sourcebound.execution import resolve_argv
 
 
 def test_python_token_resolves_to_running_interpreter() -> None:
-    assert resolve_argv(("{python}", "-m", "clean_docs")) == (
+    assert resolve_argv(("{python}", "-m", "sourcebound")) == (
         sys.executable,
         "-m",
-        "clean_docs",
+        "sourcebound",
     )
 
 

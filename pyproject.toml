@@ -24,13 +24,13 @@ dev = [
 ]
 
 [project.scripts]
-sourcebound = "clean_docs.cli:main"
+sourcebound = "sourcebound.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-clean_docs = ["adapters/*.json", "adapters/*.mjs", "standards/*.json", "standards/*.md"]
+sourcebound = ["adapters/*.json", "adapters/*.mjs", "standards/*.json", "standards/*.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

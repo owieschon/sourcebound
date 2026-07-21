@@ -3,7 +3,7 @@ execution:
   commands: deny
   allowed_commands:
     quickstart-audit:
-      argv: ["{python}", -m, clean_docs, --root, ., audit]
+      argv: ["{python}", -m, sourcebound, --root, ., audit]
       timeout_seconds: 30
 bindings:
   - id: repository-surface
@@ -19,7 +19,7 @@ bindings:
     region: product-overview
     extractor: python-literal
     source:
-      path: src/clean_docs/capabilities.py
+      path: src/sourcebound/capabilities.py
       symbol: PRODUCT_OVERVIEW
     renderer: markdown-fragment
   - id: assurance-boundaries
@@ -28,7 +28,7 @@ bindings:
     region: assurance-boundaries
     extractor: python-literal
     source:
-      path: src/clean_docs/capabilities.py
+      path: src/sourcebound/capabilities.py
       symbol: ASSURANCE_BOUNDARIES
     renderer: markdown-table
     columns: [surface, sourcebound proves, sourcebound does not prove]
@@ -38,7 +38,7 @@ bindings:
     region: supported-bindings
     extractor: python-literal
     source:
-      path: src/clean_docs/capabilities.py
+      path: src/sourcebound/capabilities.py
       symbol: SUPPORTED_BINDINGS
     renderer: markdown-table
     columns: [binding, source, output, check]
@@ -48,7 +48,7 @@ bindings:
     region: cli-reference
     extractor: python-literal
     source:
-      path: src/clean_docs/capabilities.py
+      path: src/sourcebound/capabilities.py
       symbol: CLI_REFERENCE
     renderer: markdown-table
     columns: [area, command, job, writes, example]
@@ -58,7 +58,7 @@ bindings:
     region: manifest-reference
     extractor: python-literal
     source:
-      path: src/clean_docs/manifest.py
+      path: src/sourcebound/manifest.py
       symbol: MANIFEST_REFERENCE
     renderer: markdown-table
     columns: [binding, required, verifies]
@@ -68,7 +68,7 @@ bindings:
     region: evaluation-scorers
     extractor: python-literal
     source:
-      path: src/clean_docs/capabilities.py
+      path: src/sourcebound/capabilities.py
       symbol: EVALUATION_SCORERS
     renderer: markdown-table
     columns: [scorer, input, passes when]
@@ -77,47 +77,47 @@ bindings:
     doc: docs/IMPROVEMENTS.md
     anchor: review-observations
     source:
-      path: src/clean_docs/improvements.py
+      path: src/sourcebound/improvements.py
       symbol: compile_improvement_candidates
   - id: binding-sensitivity-reference
     type: symbol
     doc: docs/REFERENCE.md
     anchor: binding-sensitivity-inputs
     source:
-      path: src/clean_docs/sensitivity.py
+      path: src/sourcebound/sensitivity.py
       symbol: evaluate_binding_sensitivity
   - id: verdict-reference
     type: symbol
     doc: docs/CLI.md
     anchor: pull-request-verdicts
     source:
-      path: src/clean_docs/verdict.py
+      path: src/sourcebound/verdict.py
       symbol: build_pr_verdict
   - id: release-guide
     type: symbol
     doc: docs/RELEASES.md
     anchor: grounded-release-notes
-    source: {path: src/clean_docs/release.py, symbol: build_release_report}
+    source: {path: src/sourcebound/release.py, symbol: build_release_report}
   - id: extension-guide
     type: symbol
     doc: docs/EXTENSIONS.md
     anchor: extension-api
-    source: {path: src/clean_docs/plugins.py, symbol: _run_plugin}
+    source: {path: src/sourcebound/plugins.py, symbol: _run_plugin}
   - id: migration-guide
     type: symbol
     doc: docs/EXTENSIONS.md
     anchor: migrate-a-prior-manifest
-    source: {path: src/clean_docs/migration.py, symbol: build_migration_plan}
+    source: {path: src/sourcebound/migration.py, symbol: build_migration_plan}
   - id: support-guide
     type: symbol
     doc: docs/SUPPORT.md
     anchor: record-local-outcomes
-    source: {path: src/clean_docs/outcomes.py, symbol: build_outcome_receipt}
+    source: {path: src/sourcebound/outcomes.py, symbol: build_outcome_receipt}
   - id: security-model
     type: symbol
     doc: docs/SECURITY_MODEL.md
     anchor: process-controls
-    source: {path: src/clean_docs/isolation.py, symbol: run_isolated_process}
+    source: {path: src/sourcebound/isolation.py, symbol: run_isolated_process}
   - id: tutorial-outcomes
     type: region
     doc: docs/learn/tutorial-catch-a-lying-doc.md
@@ -132,35 +132,35 @@ bindings:
     type: symbol
     doc: docs/learn/deep-dive-the-deterministic-seam.md
     anchor: evidence-authority
-    source: {path: src/clean_docs/engine.py, symbol: evaluate}
+    source: {path: src/sourcebound/engine.py, symbol: evaluate}
   - id: deterministic-seam-phrasing
     type: symbol
     doc: docs/learn/deep-dive-the-deterministic-seam.md
     anchor: phrasing-boundary
-    source: {path: src/clean_docs/phrasing.py, symbol: build_model_record}
+    source: {path: src/sourcebound/phrasing.py, symbol: build_model_record}
   - id: deterministic-seam-gate
     type: symbol
     doc: docs/learn/deep-dive-the-deterministic-seam.md
     anchor: gate-authority
-    source: {path: src/clean_docs/outcomes.py, symbol: build_outcome_receipt}
+    source: {path: src/sourcebound/outcomes.py, symbol: build_outcome_receipt}
 source_claim_checks:
   - id: binding-type-count
     kind: count
     doc: docs/REFERENCE.md
     anchor: binding-types
     subject: types
-    source: src/clean_docs/manifest.py
+    source: src/sourcebound/manifest.py
     locator: MANIFEST_REFERENCE#count
 review_contracts:
   - id: immutable-snapshot-boundary
     mode: observe
     sources:
       - id: snapshot-materialization
-        path: src/clean_docs/snapshot.py
+        path: src/sourcebound/snapshot.py
         extractor: python-symbol
         locator: RepositorySnapshot.materialized_root
       - id: snapshot-symlink-closure
-        path: src/clean_docs/snapshot.py
+        path: src/sourcebound/snapshot.py
         extractor: python-symbol
         locator: RepositorySnapshot._include_symlink_targets
     targets:

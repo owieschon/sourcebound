@@ -10,9 +10,9 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from clean_docs.bootstrap import apply_bootstrap_plan, build_bootstrap_plan
-from clean_docs.performance import benchmark_changed_check
-from clean_docs.regions import atomic_write
+from sourcebound.bootstrap import apply_bootstrap_plan, build_bootstrap_plan
+from sourcebound.performance import benchmark_changed_check
+from sourcebound.regions import atomic_write
 
 
 @dataclass(frozen=True)

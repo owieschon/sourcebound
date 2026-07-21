@@ -140,7 +140,7 @@ def main() -> int:
         if egress.returncode == 0:
             raise RuntimeError("deny-network profile allowed egress")
 
-        sourcebound_base = _run([sys.executable, "-m", "clean_docs", "--root", str(fixture_copy), "check"], env=environment)
+        sourcebound_base = _run([sys.executable, "-m", "sourcebound", "--root", str(fixture_copy), "check"], env=environment)
         if sourcebound_base.returncode:
             raise RuntimeError(sourcebound_base.stderr)
         vale_base_argv = ["sandbox-exec", "-f", str(profile), str(vale_binary), "--config", ".vale.ini", "docs/guide.md"]
@@ -158,7 +158,7 @@ def main() -> int:
             '    "inspect": {"name": "inspect", "audience": "maintainers"},\n'
             '    "publish": {"name": "publish", "audience": "reviewers"},\n',
         ))
-        sourcebound_mutation = _run([sys.executable, "-m", "clean_docs", "--root", str(fixture_copy), "check"], env=environment)
+        sourcebound_mutation = _run([sys.executable, "-m", "sourcebound", "--root", str(fixture_copy), "check"], env=environment)
         if sourcebound_mutation.returncode != 1:
             raise RuntimeError("source mutation did not produce declared drift")
         vale_mutation = _run(vale_base_argv, env=environment, cwd=fixture_copy)
@@ -188,8 +188,8 @@ def main() -> int:
             "doc_detective": {"version": DOC_VERSION, "tarball_integrity": _sri_sha512(package_tarball.read_bytes()), "binary_sha256": _sha256(binary.read_bytes()), "package_lock_sha256": _sha256(lock.read_bytes()), "telemetry_send": False},
             "network": {"profile_sha256": _sha256(profile.read_bytes()), "egress_probe": _record(egress, egress_argv)},
             "runs": {
-                "sourcebound_baseline": _record(sourcebound_base, [sys.executable, "-m", "clean_docs", "--root", str(fixture_copy), "check"]),
-                "sourcebound_mutation": _record(sourcebound_mutation, [sys.executable, "-m", "clean_docs", "--root", str(fixture_copy), "check"]),
+                "sourcebound_baseline": _record(sourcebound_base, [sys.executable, "-m", "sourcebound", "--root", str(fixture_copy), "check"]),
+                "sourcebound_mutation": _record(sourcebound_mutation, [sys.executable, "-m", "sourcebound", "--root", str(fixture_copy), "check"]),
                 "vale_baseline": _record(vale_base, vale_base_argv),
                 "vale_mutation": _record(vale_mutation, vale_base_argv),
                 "doc_detective_baseline": _record(doc_base, doc_base_argv),

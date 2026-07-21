@@ -19,7 +19,7 @@ def test_sbom_is_deterministic_and_describes_wheel_dependencies(tmp_path: Path) 
             "Requires-Dist: PyYAML>=6.0\n",
         )
         archive.writestr(
-            "clean_docs/adapters/mdx_dependencies.json",
+            "sourcebound/adapters/mdx_dependencies.json",
             json.dumps(
                 {
                     "schema": "sourcebound.mdx-dependencies.v1",

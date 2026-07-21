@@ -6,9 +6,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-from clean_docs.engine import evaluate
-from clean_docs.manifest import load_manifest
-from clean_docs.migration import (
+from sourcebound.engine import evaluate
+from sourcebound.manifest import load_manifest
+from sourcebound.migration import (
     apply_migration,
     backup_path,
     build_migration_plan,
@@ -24,7 +24,7 @@ def _run(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
     environment = dict(os.environ)
     environment["PYTHONPATH"] = str(PROJECT / "src")
     return subprocess.run(
-        [sys.executable, "-m", "clean_docs", "--root", str(root), *args],
+        [sys.executable, "-m", "sourcebound", "--root", str(root), *args],
         text=True,
         capture_output=True,
         check=False,

@@ -6,7 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from clean_docs.engine import evaluate
+from sourcebound.engine import evaluate
 from scripts.record_learning_tutorial import record
 from scripts.render_social_preview import HEIGHT, WIDTH, render_svg
 
@@ -126,7 +126,7 @@ def test_published_tutorial_runs_the_observed_drift_loop(tmp_path: Path) -> None
     wrapper.write_text(
         "#!/bin/sh\n"
         f"export PYTHONPATH={ROOT / 'src'}\n"
-        f'exec {sys.executable} -m clean_docs "$@"\n',
+        f'exec {sys.executable} -m sourcebound "$@"\n',
         encoding="utf-8",
     )
     wrapper.chmod(0o755)
@@ -158,9 +158,9 @@ def test_deep_dive_claims_resolve_to_deterministic_implementation_sources() -> N
     assert not any(result.changed for result in results)
     sources = {result.provenance.path for result in results}
     assert sources == {
-        "src/clean_docs/engine.py",
-        "src/clean_docs/phrasing.py",
-        "src/clean_docs/outcomes.py",
+        "src/sourcebound/engine.py",
+        "src/sourcebound/phrasing.py",
+        "src/sourcebound/outcomes.py",
     }
 
 
@@ -178,8 +178,8 @@ def test_additive_learning_corpus_passes_audit_projection_and_links() -> None:
         text = document.read_text(encoding="utf-8")
         assert len(text.splitlines()) <= 150
     for command in (
-        [sys.executable, "-m", "clean_docs", "--root", str(ROOT), "audit"],
-        [sys.executable, "-m", "clean_docs", "--root", str(ROOT), "project", "--check"],
+        [sys.executable, "-m", "sourcebound", "--root", str(ROOT), "audit"],
+        [sys.executable, "-m", "sourcebound", "--root", str(ROOT), "project", "--check"],
     ):
         result = subprocess.run(
             command,

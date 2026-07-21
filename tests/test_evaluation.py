@@ -8,8 +8,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from clean_docs.errors import ConfigurationError
-from clean_docs.evaluation import (
+from sourcebound.errors import ConfigurationError
+from sourcebound.evaluation import (
     DEFAULT_PROVIDER_TIMEOUT_SECONDS,
     CommandResponseProvider,
     _command_environment,
@@ -17,8 +17,8 @@ from clean_docs.evaluation import (
     run_evaluation,
     write_evaluation_history,
 )
-from clean_docs.manifest import load_manifest
-from clean_docs.projections import write_projections
+from sourcebound.manifest import load_manifest
+from sourcebound.projections import write_projections
 
 
 def test_command_environment_prefers_the_running_install() -> None:

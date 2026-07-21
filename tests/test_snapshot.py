@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from clean_docs.errors import ExtractionError
-from clean_docs.snapshot import RepositorySnapshot
+from sourcebound.errors import ExtractionError
+from sourcebound.snapshot import RepositorySnapshot
 
 
 def _commit(root: Path) -> str:

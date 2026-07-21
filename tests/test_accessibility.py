@@ -3,11 +3,11 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-from clean_docs.accessibility import check_accessibility
-from clean_docs.audit import audit
-from clean_docs.mdx import parse_mdx
-from clean_docs.policy import check_document
-from clean_docs.standard import load_default_pack
+from sourcebound.accessibility import check_accessibility
+from sourcebound.audit import audit
+from sourcebound.mdx import parse_mdx
+from sourcebound.policy import check_document
+from sourcebound.standard import load_default_pack
 
 
 def rules(text: str) -> list[str]:

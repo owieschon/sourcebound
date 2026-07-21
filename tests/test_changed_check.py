@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from clean_docs.cli import main
-from clean_docs.changed import check_changed
+from sourcebound.cli import main
+from sourcebound.changed import check_changed
 
 
 def _commit(root: Path, message: str) -> str:

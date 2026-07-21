@@ -11,7 +11,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from clean_docs.regions import atomic_write
+from sourcebound.regions import atomic_write
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -45,7 +45,7 @@ def _run(root: Path, *arguments: str) -> dict[str, object]:
     environment = dict(os.environ)
     environment["PYTHONPATH"] = str(ROOT / "src")
     proc = subprocess.run(
-        [sys.executable, "-m", "clean_docs", "--root", str(root), *arguments],
+        [sys.executable, "-m", "sourcebound", "--root", str(root), *arguments],
         text=True,
         capture_output=True,
         env=environment,

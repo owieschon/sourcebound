@@ -8,10 +8,10 @@ from typing import NoReturn
 
 import pytest
 
-from clean_docs.cli import main
-from clean_docs.audit import audit
-from clean_docs.bootstrap import apply_bootstrap_plan, build_bootstrap_plan
-from clean_docs.phrasing import MockProvider
+from sourcebound.cli import main
+from sourcebound.audit import audit
+from sourcebound.bootstrap import apply_bootstrap_plan, build_bootstrap_plan
+from sourcebound.phrasing import MockProvider
 
 
 def _python_repo(tmp_path: Path) -> Path:
@@ -299,7 +299,7 @@ def test_no_model_completes_without_credentials_or_network(
         '[project]\nname = "offline-service"\nversion = "1.0.0"\n'
     )
     (root / "README.md").write_text("# Offline service\n")
-    monkeypatch.delenv("CLEAN_DOCS_MODEL", raising=False)
+    monkeypatch.delenv("SOURCEBOUND_MODEL", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.setattr(socket, "create_connection", _block_network)
     monkeypatch.setattr(socket.socket, "connect", _block_network)

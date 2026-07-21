@@ -7,19 +7,19 @@ from pathlib import Path
 
 import pytest
 
-from clean_docs.cli import main
-from clean_docs.engine import evaluate, write_results
-from clean_docs.errors import ConfigurationError
-from clean_docs.extractors.inventory import (
+from sourcebound.cli import main
+from sourcebound.engine import evaluate, write_results
+from sourcebound.errors import ConfigurationError
+from sourcebound.extractors.inventory import (
     _extract_repository_overview_legacy,
     _inventory_rows_from_items,
 )
-from clean_docs.inventory import InventoryItem, scan_inventory
-from clean_docs.manifest import load_manifest
-from clean_docs.models import RegionBinding
-from clean_docs.regions import replace_region
-from clean_docs.renderers import render
-from clean_docs.snapshot import RepositorySnapshot
+from sourcebound.inventory import InventoryItem, scan_inventory
+from sourcebound.manifest import load_manifest
+from sourcebound.models import RegionBinding
+from sourcebound.regions import replace_region
+from sourcebound.renderers import render
+from sourcebound.snapshot import RepositorySnapshot
 
 
 def test_inventory_does_not_promote_test_harness_arguments_to_public_cli(tmp_path: Path) -> None:

@@ -13,8 +13,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 TOOL = ROOT / "tools/mdx-parser"
-BUNDLE = ROOT / "src/clean_docs/adapters/mdx_parser.mjs"
-DEPENDENCIES = ROOT / "src/clean_docs/adapters/mdx_dependencies.json"
+BUNDLE = ROOT / "src/sourcebound/adapters/mdx_parser.mjs"
+DEPENDENCIES = ROOT / "src/sourcebound/adapters/mdx_dependencies.json"
 
 
 def _package_name(path: str) -> str:

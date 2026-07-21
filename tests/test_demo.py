@@ -5,12 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from clean_docs.capabilities import CLI_REFERENCE
-from clean_docs.demo import load_demo_evidence, render_static_demo, validate_static_html
-from clean_docs.errors import ConfigurationError
-from clean_docs.manifest import load_manifest
-from clean_docs.projections import evaluate_projections, write_projections
-from clean_docs.templates import TaskPage, render_task_markdown, validate_task_markdown
+from sourcebound.capabilities import CLI_REFERENCE
+from sourcebound.demo import load_demo_evidence, render_static_demo, validate_static_html
+from sourcebound.errors import ConfigurationError
+from sourcebound.manifest import load_manifest
+from sourcebound.projections import evaluate_projections, write_projections
+from sourcebound.templates import TaskPage, render_task_markdown, validate_task_markdown
 from scripts.record_demo import record
 
 

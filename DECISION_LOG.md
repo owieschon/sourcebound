@@ -82,7 +82,7 @@ avoid. Reversible: prose in `STANDARD.md` section 6.
 
 Context: an interoperable distribution target requires a stepwise skill format. Options: (a)
 teach the engine that format; (b) keep one native model and project it through an edge adapter.
-Chose (b). `src/clean_docs/emit/stepwise.py` reads the manifest and writes `config.yaml` plus
+Chose (b). `src/sourcebound/emit/stepwise.py` reads the manifest and writes `config.yaml` plus
 ordered reference steps chained by `next_step`. The package names the repository's bound docs
 and carries Sourcebound's audit, repair, and verify workflow, so it is a projection instead of a
 static clone. Other projection formats can remain sibling adapters over the same model. The

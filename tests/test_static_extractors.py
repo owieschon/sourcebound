@@ -5,14 +5,14 @@ import subprocess
 import sys
 from pathlib import Path
 
-from clean_docs.engine import evaluate
+from sourcebound.engine import evaluate
 
 
 def _run(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
     env = dict(os.environ)
     env["PYTHONPATH"] = str(Path(__file__).parents[1] / "src")
     return subprocess.run(
-        [sys.executable, "-m", "clean_docs", "--root", str(root), *args],
+        [sys.executable, "-m", "sourcebound", "--root", str(root), *args],
         text=True,
         capture_output=True,
         env=env,
