@@ -438,7 +438,10 @@ def render_sarif(report: ChangedReport) -> str:
                     "ruleId": finding.rule,
                     "level": level,
                     "message": {"text": f"{finding.message}. Repair: {finding.repair}"},
-                    "partialFingerprints": {"sourceboundFindingId": finding.id},
+                    "partialFingerprints": {
+                        "sourceboundFindingId": finding.id,
+                        "cleanDocsFindingId": finding.id,
+                    },
                     "locations": [{
                         "physicalLocation": {
                             "artifactLocation": {"uri": finding.doc or finding.source},

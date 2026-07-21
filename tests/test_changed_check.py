@@ -112,6 +112,7 @@ def test_changed_bound_evidence_has_stable_required_finding_and_sarif(
     sarif = json.loads(capsys.readouterr().out)
     result = sarif["runs"][0]["results"][0]
     assert result["partialFingerprints"]["sourceboundFindingId"] == finding["id"]
+    assert result["partialFingerprints"]["cleanDocsFindingId"] == finding["id"]
     assert result["locations"][0]["physicalLocation"]["artifactLocation"]["uri"] == "README.md"
 
 

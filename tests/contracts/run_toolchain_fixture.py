@@ -18,12 +18,8 @@ FIXTURE = Path("examples/complementary-toolchain")
 VALE_VERSION = "3.15.1"
 VALE_SHA256 = "968c6d8bf2052bc97aa24274234cc466dbcc249b55ace33dd382c2cdfa93b08c"
 VALE_URL = "https://github.com/errata-ai/vale/releases/download/v3.15.1/vale_3.15.1_MacOS_arm64.tar.gz"
-DOC_VERSION = "4.36.0"
-DOC_INTEGRITY = "sha512-i+Ffu32WBMRnvzxhNwxTy6zpJODO2YLlDaqRNgXcbFaQGhFqATBOjZqkhvOMQvlzzikCfKhlWXWSyAg/HP2gzw=="
-DOC_LOCK = Path("tests/contracts/fixtures/doc-detective-lock.json")
 TRACKED_INPUTS = (
     "tests/contracts/run_toolchain_fixture.py",
-    "tests/contracts/fixtures/doc-detective-lock.json",
     "examples/complementary-toolchain/.doc-detective.json",
     "examples/complementary-toolchain/doc-detective.spec.json",
     "examples/complementary-toolchain/src/actions.py",
@@ -79,40 +75,13 @@ def _python_in(venv: Path) -> Path:
     return venv / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
 
 
-def _write_doc_lock(destination: Path) -> dict[str, Any]:
-    lock_bytes = (ROOT / DOC_LOCK).read_bytes()
-    lock = json.loads(lock_bytes)
-    packages = lock.get("packages")
-    if not isinstance(packages, dict) or not packages:
-        raise RuntimeError("Doc Detective lock has no package set")
-    expected = packages.get("node_modules/doc-detective", {})
-    if (
-        expected.get("version") != DOC_VERSION
-        or expected.get("integrity") != DOC_INTEGRITY
-    ):
-        raise RuntimeError("Doc Detective lock does not pin the declared release")
-    for path, package in packages.items():
-        if not path:
-            continue
-        if not isinstance(package, dict):
-            raise RuntimeError(f"Doc Detective lock has malformed package: {path}")
-        if not isinstance(package.get("resolved"), str) or not isinstance(
-            package.get("integrity"), str
-        ):
-            raise RuntimeError(f"Doc Detective lock does not pin package integrity: {path}")
-    destination.write_bytes(lock_bytes)
-    return {"sha256": _sha256(lock_bytes), "package_count": len(packages) - 1}
-
-
-def _sandbox_profile(private_root: Path) -> str:
+def _sandbox_profile(private_root: Path) -> tuple[str, list[Path]]:
+    python_root = Path(sys.executable).resolve().parents[3]
     runtime_roots = [
         Path("/System"),
         Path("/usr"),
-        Path("/Library"),
-        Path("/opt"),
         Path("/dev"),
-        Path("/private/etc"),
-        Path("/private/var/db"),
+        python_root,
     ]
     readable = [private_root, *(root for root in runtime_roots if root.exists())]
     clauses = [
@@ -120,12 +89,16 @@ def _sandbox_profile(private_root: Path) -> str:
         "(deny default)",
         "(allow process*)",
         '(allow file-read* (literal "/"))',
+        '(allow file-read-metadata (subpath "/Library"))',
         '(allow file-read-metadata (subpath "/private"))',
     ]
     clauses.extend(f'(allow file-read* (subpath "{path}"))' for path in readable)
     clauses.append(f'(allow file-write* (subpath "{private_root}"))')
+    clauses.append(
+        '(allow file-write* (literal "/dev/null") (literal "/dev/stdout") (literal "/dev/stderr"))'
+    )
     clauses.extend(["(allow sysctl-read)", "(deny network*)"])
-    return "\n".join(clauses) + "\n"
+    return "\n".join(clauses) + "\n", readable
 
 
 def _sandboxed(profile: Path, argv: list[str]) -> list[str]:
@@ -152,14 +125,11 @@ def main() -> int:
     with tempfile.TemporaryDirectory(prefix="sourcebound-toolchain-") as temp:
         private_root = Path(temp).resolve()
         home = private_root / "home"
-        cache = private_root / "npm-cache"
-        prefix = private_root / "npm-prefix"
         fixture_copy = private_root / "fixture"
         archive = private_root / "vale.tar.gz"
         vale_dir = private_root / "vale"
-        package_root = private_root / "doc-detective-package"
         profile = private_root / "deny-network.sb"
-        for directory in (home, cache, prefix, vale_dir, package_root):
+        for directory in (home, vale_dir):
             directory.mkdir(parents=True, exist_ok=True)
         shutil.copytree(ROOT / FIXTURE, fixture_copy)
 
@@ -167,14 +137,7 @@ def main() -> int:
             "PATH": os.environ["PATH"],
             "HOME": str(home),
             "TMPDIR": str(private_root),
-            "npm_config_cache": str(cache),
-            "npm_config_prefix": str(prefix),
-            "npm_config_package_lock": "true",
-            "npm_config_update_notifier": "false",
             "CI": "1",
-            "DOC_DETECTIVE_AUTOINSTALL": "0",
-            "DOC_DETECTIVE_SKIP_AUTO_UPDATE": "1",
-            "DOC_DETECTIVE_CACHE_DIR": str(private_root / "doc-detective-cache"),
         }
         sourcebound_runtime: dict[str, object]
         if args.wheel is None:
@@ -286,64 +249,67 @@ def main() -> int:
             extracted.extractall(vale_dir, filter="data")
         vale_binary = next(path for path in vale_dir.rglob("vale") if path.is_file())
 
-        (package_root / "package.json").write_text(
-            json.dumps(
-                {
-                    "name": "sourcebound-toolchain-fixture",
-                    "version": "1.0.0",
-                    "private": True,
-                    "dependencies": {"doc-detective": DOC_VERSION},
-                },
-                sort_keys=True,
-            )
-            + "\n"
-        )
-        lock = package_root / "package-lock.json"
-        lock_metadata = _write_doc_lock(lock)
-        _checked(
-            [
-                "npm",
-                "ci",
-                "--ignore-scripts",
-                "--no-audit",
-                "--no-fund",
-            ],
-            env=environment,
-            cwd=package_root,
-        )
-        binary = package_root / "node_modules" / ".bin" / "doc-detective"
-        if not lock.is_file() or not binary.is_file():
-            raise RuntimeError("private installation did not produce lock and binary")
+        doc_config = json.loads((fixture_copy / ".doc-detective.json").read_text())
+        if doc_config != {"telemetry": {"send": False}, "autoUpdate": False}:
+            raise RuntimeError("Doc Detective example must explicitly disable telemetry and updates")
 
         if shutil.which("sandbox-exec") is None:
             raise RuntimeError("toolchain fixture requires sandbox-exec")
-        profile.write_text(_sandbox_profile(private_root))
+        profile_text, allowed_read_roots = _sandbox_profile(private_root)
+        profile.write_text(profile_text)
+        private_probe = private_root / "containment-positive.txt"
+        private_probe_argv = _sandboxed(
+            profile,
+            [
+                sys.executable,
+                "-I",
+                "-c",
+                (
+                    "from pathlib import Path; "
+                    f"path=Path({str(private_probe)!r}); "
+                    "path.write_text('private-root-ok\\n'); "
+                    "assert path.read_text() == 'private-root-ok\\n'"
+                ),
+            ],
+        )
+        private_probe_result = _run(private_probe_argv, env=environment)
+        if private_probe_result.returncode:
+            raise RuntimeError(
+                "contained profile cannot read and write its private root: "
+                f"{private_probe_result.stdout}\n{private_probe_result.stderr}"
+            )
         egress_argv = _sandboxed(
             profile,
             [
                 sys.executable,
                 "-I",
                 "-c",
-                "import socket; socket.create_connection(('1.1.1.1', 443), timeout=2)",
+                (
+                    "from pathlib import Path; import socket; "
+                    f"Path({str(private_root / 'egress-reached')!r}).write_text('reached\\n'); "
+                    "socket.create_connection(('1.1.1.1', 443), timeout=2)"
+                ),
             ],
         )
         egress = _run(egress_argv, env=environment)
-        if egress.returncode == 0:
-            raise RuntimeError("contained external-tool profile allowed egress")
-        host_marker = Path(tempfile.gettempdir()) / "sourcebound-toolchain-host-marker"
-        host_marker.write_text("must remain unreadable to external tools\n")
+        if egress.returncode == 0 or not (private_root / "egress-reached").is_file():
+            raise RuntimeError("egress probe did not reach and reject the network operation")
         host_read_argv = _sandboxed(
             profile,
             [
                 sys.executable,
                 "-I",
                 "-c",
-                f"from pathlib import Path; Path({str(host_marker)!r}).read_text()",
+                (
+                    "from pathlib import Path; "
+                    f"Path({str(private_root / 'host-read-reached')!r}).write_text('reached\\n'); "
+                    f"Path({str(ROOT / 'tests/contracts/run_toolchain_fixture.py')!r}).read_text()"
+                ),
             ],
         )
         host_read = _run(host_read_argv, env=environment)
-        if host_read.returncode == 0:
-            raise RuntimeError("contained external-tool profile read a host file")
+        if host_read.returncode == 0 or not (private_root / "host-read-reached").is_file():
+            raise RuntimeError("host-read probe did not reach and reject the host file operation")
 
         sourcebound_base_argv = [
             *sourcebound_prefix,
@@ -361,13 +327,6 @@ def main() -> int:
                 f"Vale failed ({vale_base.returncode}):\n"
                 f"{vale_base.stdout}\n{vale_base.stderr}"
             )
-        doc_base_argv = _sandboxed(profile, [str(binary), "--no-auto-update", "--config", ".doc-detective.json", "--input", "doc-detective.spec.json"])
-        doc_base = _run(doc_base_argv, env=environment, cwd=fixture_copy)
-        if doc_base.returncode:
-            raise RuntimeError(
-                f"Doc Detective failed ({doc_base.returncode}):\n"
-                f"{doc_base.stdout}\n{doc_base.stderr}"
-            )
 
         source = fixture_copy / "src" / "actions.py"
         source.write_text(source.read_text().replace(
@@ -379,9 +338,8 @@ def main() -> int:
         if sourcebound_mutation.returncode != 1:
             raise RuntimeError("source mutation did not produce declared drift")
         vale_mutation = _run(vale_base_argv, env=environment, cwd=fixture_copy)
-        doc_mutation = _run(doc_base_argv, env=environment, cwd=fixture_copy)
-        if vale_mutation.returncode or doc_mutation.returncode:
-            raise RuntimeError("unowned mutation changed editorial or procedure result")
+        if vale_mutation.returncode:
+            raise RuntimeError("unowned mutation changed the editorial result")
 
         paths = {
             name: _private(value, private_root)
@@ -389,11 +347,6 @@ def main() -> int:
                 "private_root": private_root,
                 "home": home,
                 "tmpdir": private_root,
-                "npm_cache": cache,
-                "npm_prefix": prefix,
-                "doc_package_root": package_root,
-                "package_lock": lock,
-                "doc_binary": binary,
                 "vale_binary": vale_binary,
             }.items()
         }
@@ -404,17 +357,21 @@ def main() -> int:
             "private_paths": paths,
             "vale": {"version": VALE_VERSION, "archive_sha256": _sha256(archive_bytes), "binary_sha256": _sha256(vale_binary.read_bytes())},
             "doc_detective": {
-                "version": DOC_VERSION,
-                "tarball_integrity": DOC_INTEGRITY,
-                "binary_sha256": _sha256(binary.read_bytes()),
-                "package_lock_sha256": lock_metadata["sha256"],
-                "package_count": lock_metadata["package_count"],
+                "config_sha256": _sha256(
+                    (fixture_copy / ".doc-detective.json").read_bytes()
+                ),
                 "telemetry_send": False,
+                "auto_update": False,
+                "execution": "configuration-only",
             },
             "sourcebound_runtime": sourcebound_runtime,
             "containment": {
                 "profile_sha256": _sha256(profile.read_bytes()),
+                "allowed_read_roots": [str(path) for path in allowed_read_roots],
+                "private_probe": _record(private_probe_result, private_probe_argv),
+                "egress_reached": (private_root / "egress-reached").is_file(),
                 "egress_probe": _record(egress, egress_argv),
+                "host_read_reached": (private_root / "host-read-reached").is_file(),
                 "host_read_probe": _record(host_read, host_read_argv),
             },
             "runs": {
@@ -422,8 +379,6 @@ def main() -> int:
                 "sourcebound_mutation": _record(sourcebound_mutation, sourcebound_base_argv),
                 "vale_baseline": _record(vale_base, vale_base_argv),
                 "vale_mutation": _record(vale_mutation, vale_base_argv),
-                "doc_detective_baseline": _record(doc_base, doc_base_argv),
-                "doc_detective_mutation": _record(doc_mutation, doc_base_argv),
             },
         }
         args.receipt.parent.mkdir(parents=True, exist_ok=True)

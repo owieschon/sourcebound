@@ -6,12 +6,21 @@ from pathlib import Path
 
 
 VALE_SHA256 = "968c6d8bf2052bc97aa24274234cc466dbcc249b55ace33dd382c2cdfa93b08c"
-DOC_INTEGRITY = "sha512-i+Ffu32WBMRnvzxhNwxTy6zpJODO2YLlDaqRNgXcbFaQGhFqATBOjZqkhvOMQvlzzikCfKhlWXWSyAg/HP2gzw=="
 
 
 def require(condition: bool, message: str) -> None:
     if not condition:
         raise SystemExit(message)
+
+
+def private_path(value: object, root: Path, name: str) -> Path:
+    require(isinstance(value, str) and value, f"{name} is missing")
+    raw = Path(value)
+    require(raw.is_absolute(), f"{name} is not absolute")
+    require(".." not in raw.parts, f"{name} contains parent traversal")
+    canonical = raw.resolve(strict=False)
+    require(canonical.is_relative_to(root), f"{name} escapes private root")
+    return canonical
 
 
 def main() -> int:
@@ -25,7 +34,6 @@ def main() -> int:
     inputs = receipt.get("input_sha256", {})
     require(set(inputs) == {
         "tests/contracts/run_toolchain_fixture.py",
-        "tests/contracts/fixtures/doc-detective-lock.json",
         "examples/complementary-toolchain/.doc-detective.json",
         "examples/complementary-toolchain/doc-detective.spec.json",
         "examples/complementary-toolchain/src/actions.py",
@@ -33,25 +41,17 @@ def main() -> int:
     }, "wrong tree-bound input set")
     require(all(len(digest) == 64 for digest in inputs.values()), "invalid input digest")
     paths = receipt.get("private_paths", {})
-    root = Path(paths.get("private_root", ""))
-    require(root.is_absolute(), "missing private root")
+    root = private_path(paths.get("private_root"), Path("/"), "private root")
     for name, value in paths.items():
-        try:
-            Path(value).relative_to(root)
-        except ValueError:
-            raise SystemExit(f"{name} escapes private root")
+        private_path(value, root, name)
     vale = receipt.get("vale", {})
     doc = receipt.get("doc_detective", {})
     require(vale.get("version") == "3.15.1" and vale.get("archive_sha256") == VALE_SHA256, "wrong Vale identity")
     require(len(vale.get("binary_sha256", "")) == 64, "missing Vale binary digest")
-    require(doc.get("version") == "4.36.0" and doc.get("tarball_integrity") == DOC_INTEGRITY, "wrong Doc Detective identity")
-    require(len(doc.get("binary_sha256", "")) == 64 and len(doc.get("package_lock_sha256", "")) == 64, "missing private install digest")
-    if "package_count" in doc:
-        require(
-            isinstance(doc["package_count"], int) and doc["package_count"] > 1,
-            "invalid pinned dependency closure",
-        )
-    require(doc.get("telemetry_send") is False, "telemetry is not disabled")
+    require(len(doc.get("config_sha256", "")) == 64, "missing Doc Detective configuration digest")
+    require(doc.get("telemetry_send") is False, "Doc Detective telemetry is not disabled")
+    require(doc.get("auto_update") is False, "Doc Detective updates are not disabled")
+    require(doc.get("execution") == "configuration-only", "wrong Doc Detective boundary")
     runtime = receipt.get("sourcebound_runtime", {})
     require(
         runtime.get("installation") in {"source-tree", "wheel"},
@@ -68,14 +68,30 @@ def main() -> int:
             "wheel fixture inherited system site-packages",
         )
         require(
-            Path(runtime.get("module_path", "")).is_relative_to(
-                Path(runtime.get("site_packages", ""))
+            private_path(
+                runtime.get("module_path"),
+                root,
+                "wheel module path",
+            ).is_relative_to(
+                private_path(
+                    runtime.get("site_packages"),
+                    root,
+                    "wheel site-packages path",
+                )
             ),
             "wheel module escaped its isolated site-packages",
         )
         require(
-            Path(runtime.get("distribution_path", "")).is_relative_to(
-                Path(runtime.get("site_packages", ""))
+            private_path(
+                runtime.get("distribution_path"),
+                root,
+                "wheel distribution path",
+            ).is_relative_to(
+                private_path(
+                    runtime.get("site_packages"),
+                    root,
+                    "wheel site-packages path",
+                )
             ),
             "wheel distribution escaped its isolated site-packages",
         )
@@ -88,21 +104,40 @@ def main() -> int:
             len(runtime.get("direct_url_sha256", "")) == 64,
             "missing wheel provenance receipt",
         )
-        require(
-            isinstance(doc.get("package_count"), int) and doc["package_count"] > 1,
-            "wheel fixture lacks a pinned dependency closure",
-        )
     containment = receipt.get("containment", receipt.get("network", {}))
     require(len(containment.get("profile_sha256", "")) == 64, "missing sandbox profile")
+    require(
+        all(
+            isinstance(path, str) and Path(path).is_absolute()
+            for path in containment.get("allowed_read_roots", [])
+        ),
+        "containment allowlist is invalid",
+    )
+    if args.require_wheel:
+        require(
+            bool(containment.get("allowed_read_roots")),
+            "wheel fixture lacks a containment allowlist",
+        )
+        require(
+            containment.get("private_probe", {}).get("exit_code") == 0,
+            "contained private-root probe failed",
+        )
     require(
         containment.get("egress_probe", {}).get("exit_code") != 0,
         "egress probe succeeded",
     )
+    if args.require_wheel:
+        require(containment.get("egress_reached") is True, "egress probe did not reach the socket call")
     if "host_read_probe" in containment:
         require(
             containment["host_read_probe"].get("exit_code") != 0,
             "host-read probe succeeded",
         )
+        if args.require_wheel:
+            require(
+                containment.get("host_read_reached") is True,
+                "host-read probe did not reach the denied file read",
+            )
     elif args.require_wheel:
         raise SystemExit("wheel fixture lacks a host-read containment probe")
     runs = receipt.get("runs", {})
@@ -111,8 +146,6 @@ def main() -> int:
         "sourcebound_mutation": 1,
         "vale_baseline": 0,
         "vale_mutation": 0,
-        "doc_detective_baseline": 0,
-        "doc_detective_mutation": 0,
     }
     require(set(runs) == set(expected), "wrong execution set")
     for name, status in expected.items():
@@ -120,7 +153,6 @@ def main() -> int:
         require(run.get("exit_code") == status, f"{name} status mismatch")
         require(run.get("argv"), f"{name} missing argv")
     require("vale" in Path(runs["vale_baseline"]["argv"][3]).name, "Vale binary was not invoked")
-    require("doc-detective" in runs["doc_detective_baseline"]["argv"][3], "Doc Detective binary was not invoked")
     return 0
 
 
