@@ -124,9 +124,6 @@ release. Removing a stable CLI command, manifest field, evidence field, or plugi
 compatibility. It requires a major release. An incompatible manifest exits `2` and names the
 required manifest change before it reads source evidence.
 
-SARIF output now emits Sourcebound property names. The older custom property names remain as
-identical compatibility aliases throughout 1.x, then leave in the next major release. Consumers
-should read the Sourcebound names now.
 
 ## Record local outcomes
 

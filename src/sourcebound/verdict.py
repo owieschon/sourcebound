@@ -1429,8 +1429,6 @@ def render_verdict_payload_sarif(payload: Mapping[str, object]) -> str:
                 "properties": {
                     "sourceboundVerdictState": payload["state"],
                     "sourceboundVerdictDigest": payload["digest"],
-                    "cleanDocsVerdictState": payload["state"],
-                    "cleanDocsVerdictDigest": payload["digest"],
                 },
                 "results": [
                     {
@@ -1443,7 +1441,6 @@ def render_verdict_payload_sarif(payload: Mapping[str, object]) -> str:
                         },
                         "partialFingerprints": {
                             "sourceboundFindingId": finding["id"],
-                            "cleanDocsFindingId": finding["id"],
                         },
                         "locations": [
                             {

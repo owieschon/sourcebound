@@ -412,7 +412,6 @@ def test_review_contract_advisory_preserves_ready_verdict_and_receipts(
         if result["ruleId"] == "review-contract-review-recommended"
     )
     assert sarif_finding["partialFingerprints"]["sourceboundFindingId"] == (finding["id"])
-    assert sarif_finding["partialFingerprints"]["cleanDocsFindingId"] == (finding["id"])
 
 
 def test_unknown_review_contract_is_a_nonblocking_note(tmp_path: Path) -> None:
@@ -716,10 +715,6 @@ def test_json_and_sarif_share_finding_ids(
     assert json_ids == sarif_ids
     assert (
         sarif["runs"][0]["properties"]["sourceboundVerdictDigest"]
-        == (json_payload["digest"])
-    )
-    assert (
-        sarif["runs"][0]["properties"]["cleanDocsVerdictDigest"]
         == (json_payload["digest"])
     )
 
