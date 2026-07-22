@@ -12,9 +12,9 @@ from sourcebound.inventory import scan_inventory
 
 
 _INLINE_LINK = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
-_REFERENCE_LINK = re.compile(r"(?<!!)\[[^\]]+\]\[([^\]]+)\]")
+_REFERENCE_LINK = re.compile(r"(?<!!)\[([^\]]+)\]\[([^\]]*)\]")
 _REFERENCE_DEFINITION = re.compile(r"^\[([^\]]+)\]:\s*(\S+)", re.MULTILINE)
-_SHORTCUT_LINK = re.compile(r"(?<!!)\[([^\]]+)\](?![\[(])")
+_SHORTCUT_LINK = re.compile(r"(?<!!)(?<!\])\[([^\]]+)\](?![\[(])")
 _EXCLUDED_PARTS = frozenset({"archive", "generated", ".sourcebound", "tests"})
 
 
@@ -64,12 +64,15 @@ def _unknown(target: str, reason: str, evidence: str) -> ObligationUnknown:
 def _readme_links(text: str) -> tuple[tuple[str, str], ...]:
     definitions = {name.casefold(): target for name, target in _REFERENCE_DEFINITION.findall(text)}
     links: list[tuple[str, str]] = [("inline", target.strip()) for target in _INLINE_LINK.findall(text)]
-    links.extend(
-        ("reference", definitions[name.casefold()])
-        for name in _REFERENCE_LINK.findall(text)
-        if name.casefold() in definitions
-    )
-    links.extend(("unsupported", label) for label in _SHORTCUT_LINK.findall(text))
+    for text_label, reference_label in _REFERENCE_LINK.findall(text):
+        normalized = (reference_label or text_label).casefold()
+        definition_target = definitions.get(normalized)
+        if definition_target is None:
+            links.append(("missing-reference-definition", f"[{text_label}][{reference_label}]"))
+        else:
+            links.append(("reference", definition_target))
+    text_without_definitions = _REFERENCE_DEFINITION.sub("", text)
+    links.extend(("unsupported", label) for label in _SHORTCUT_LINK.findall(text_without_definitions))
     return tuple(links)
 
 
@@ -108,12 +111,13 @@ def compile_obligations(root: Path, *, limit: int = 12) -> ObligationReport:
     unknowns: list[ObligationUnknown] = []
     for form, target in links:
         evidence = f"README.md:{form}:{target}"
-        if form == "unsupported":
-            unknowns.append(_unknown(target, "unsupported-link-form", evidence))
+        if form in {"unsupported", "missing-reference-definition"}:
+            unknown_reason = "unsupported-link-form" if form == "unsupported" else form
+            unknowns.append(_unknown(target, unknown_reason, evidence))
             continue
-        relative, reason = _local_document(target)
-        if reason is not None:
-            unknowns.append(_unknown(target, reason, evidence))
+        relative, local_reason = _local_document(target)
+        if local_reason is not None:
+            unknowns.append(_unknown(target, local_reason, evidence))
             continue
         assert relative is not None
         document = root / relative

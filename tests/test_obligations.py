@@ -98,6 +98,25 @@ def test_reference_style_local_link_is_supported(tmp_path: Path) -> None:
     assert all(candidate.evidence[0].startswith("README.md:reference:") for candidate in report.candidates)
 
 
+def test_collapsed_reference_style_local_link_is_supported(tmp_path: Path) -> None:
+    root = _repository(tmp_path, "# Service\n\n[Commands][]\n\n[commands]: docs/commands.md\n")
+    (root / "docs" / "commands.md").write_text("serve --verbose\n")
+
+    report = compile_obligations(root)
+
+    assert report.candidate_population == 2
+    assert report.unknowns == ()
+
+
+def test_unresolved_reference_style_link_is_unknown_not_silent(tmp_path: Path) -> None:
+    root = _repository(tmp_path, "# Service\n\n[Commands][missing]\n")
+
+    report = compile_obligations(root)
+
+    assert report.candidates == ()
+    assert [unknown.reason for unknown in report.unknowns] == ["missing-reference-definition"]
+
+
 def test_never_silent_for_unsupported_or_unsafe_material_links(tmp_path: Path) -> None:
     root = _repository(tmp_path, "# Service\n\n[Commands]\n[Escape](../commands.md)\n")
 
