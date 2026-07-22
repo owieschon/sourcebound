@@ -91,6 +91,7 @@ Markdown links while ignoring link-shaped text inside code, attributes, and expr
 stays in `unsupported_documents` and cannot look checked. `audit` fails when a new blocker appears. It also fails with `stale-baseline`
 when a recorded blocker is resolved, because the baseline must shrink to match current debt.
 
+<!-- sourcebound:allow-inline-document target=".sourcebound/repository-surface.md" reason="Init conditionally creates this reserved output for an established unregistered README" -->
 For an established README that has not adopted the policy profile, init writes detected source
 facts to `.sourcebound/repository-surface.md` and leaves the README unchanged. The manifest binds
 that generated file, while `llms.txt` still indexes the README as canonical context. A new or

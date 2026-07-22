@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, cast
 
+from sourcebound.corpus import _markdown_control_text
 from sourcebound.policy import REGISTER_PROFILE
 
 
@@ -102,7 +103,6 @@ ROLE_RULES: dict[DocumentRole, frozenset[str]] = {
         "diagram-text-equivalent",
         "image-alternative",
         "prohibited-booster",
-        "nominalization-density",
         "significance-narration",
     }),
     # These files are inputs, procedures, plans, or records. Rewriting them into a
@@ -137,15 +137,15 @@ REGISTER_MARKER = re.compile(
 
 _TEMPLATE_PARTS = frozenset({"prompts", "prompt", "templates", "template"})
 _EVIDENCE_NAME = re.compile(
-    r"(?:^|[-_])(?:review|report|journal|findings|receipt|retro|postmortem|"
-    r"evaluation|eval-results?|status|progress|handoff|dispatch|workorder|blocked|"
+    r"(?:^|[-_])(?:audit|report|journal|findings|receipt|retro|postmortem|"
+    r"eval-results?|status|progress|handoff|dispatch|workorder|blocked|"
     r"changelog|changes?|news|release-notes?|history)(?:[-_.]|$)",
     re.IGNORECASE,
 )
 _PLAN_NAME = re.compile(r"(?:^|[-_])plan(?:[-_.]|$)", re.IGNORECASE)
 _REFERENCE_NAME = re.compile(
-    r"(reference|standard|spec|schema|surface|commands?|cli|api|configuration|"
-    r"policy|contract)",
+    r"(?:^|[-_ ])(?:references?|standards?|specs?|schemas?|surfaces?|commands?|"
+    r"clis?|apis?|configurations?|ledgers?|polic(?:y|ies)|contracts?)(?:[-_. ]|$)",
     re.IGNORECASE,
 )
 _TUTORIAL_NAME = re.compile(
@@ -153,12 +153,13 @@ _TUTORIAL_NAME = re.compile(
     re.IGNORECASE,
 )
 _TROUBLESHOOTING_NAME = re.compile(
-    r"(troubleshoot|debug|diagnos|fixing|recovery|runbook|incident)",
+    r"(troubleshoot|debug|diagnos|fixing|recover(?:ing)?\b|runbook|incident)",
     re.IGNORECASE,
 )
-_SUPPORT_NAMES = frozenset({"operations.md", "support.md"})
+_TROUBLESHOOTING_NAMES = frozenset({"operations.md", "recovery.md", "support.md"})
 _ARCHITECTURE_NAME = re.compile(
-    r"(architecture|compromise|design|decision|adr|proposal|rfc)",
+    r"(?:^|[-_ ])(?:architecture|compromises?|designs?|decisions?|adrs?|proposals?|rfcs?)"
+    r"(?:[-_. ]|$)",
     re.IGNORECASE,
 )
 
@@ -175,8 +176,9 @@ class DocumentProfile:
 
 
 def role_override_error(text: str) -> str | None:
-    markers = ROLE_MARKER.findall(text)
-    overrides = ROLE_OVERRIDE.findall(text)
+    control_text = _markdown_control_text(text)
+    markers = ROLE_MARKER.findall(control_text)
+    overrides = ROLE_OVERRIDE.findall(control_text)
     if not markers:
         return None
     if len(markers) != 1 or len(overrides) != 1:
@@ -202,19 +204,23 @@ def _has_frontmatter(text: str) -> bool:
 
 def classify_document(relative: Path, text: str) -> DocumentProfile:
     """Classify a Markdown file by the job its current form performs."""
+    control_text = _markdown_control_text(text)
     normalized = relative.as_posix()
     parts = tuple(part.lower() for part in relative.parts)
     name = relative.name.lower()
     title = next(
         (
             line.lstrip("#").strip().lower()
-            for line in text.splitlines()
+            for line in control_text.splitlines()
             if line.startswith("#")
         ),
         "",
     )
-    registered = REGISTER_PROFILE in text or REGISTER_MARKER.search(text) is not None
-    if match := ROLE_OVERRIDE.search(text):
+    registered = (
+        REGISTER_PROFILE in control_text
+        or REGISTER_MARKER.search(control_text) is not None
+    )
+    if match := ROLE_OVERRIDE.search(control_text):
         requested = match.group(1)
         if requested in ROLE_RULES:
             role = cast(DocumentRole, requested)
@@ -244,14 +250,14 @@ def classify_document(relative: Path, text: str) -> DocumentProfile:
             "path identifies prompt or generated-content input",
             registered,
         )
-    if _EVIDENCE_NAME.search(relative.name) or any(
-        part in {"reviews", "reports", "journals", "receipts", "evaluations"}
+    if any(
+        part in {"evidence", "reviews", "reports", "journals", "receipts", "evaluations"}
         for part in parts[:-1]
     ):
         return DocumentProfile(
             normalized,
             "evidence",
-            "path identifies a review, result, or longitudinal record",
+            "parent directory identifies a review, result, or longitudinal record",
             registered,
         )
     if _PLAN_NAME.search(relative.name):
@@ -262,7 +268,7 @@ def classify_document(relative: Path, text: str) -> DocumentProfile:
             registered,
         )
     if (
-        name in _SUPPORT_NAMES
+        name in _TROUBLESHOOTING_NAMES
         or _TROUBLESHOOTING_NAME.search(normalized)
         or _TROUBLESHOOTING_NAME.search(title)
     ):
@@ -280,25 +286,78 @@ def classify_document(relative: Path, text: str) -> DocumentProfile:
             registered,
         )
     if (
-        "adr" in parts
+        any(part in {"adr", "adrs", "decision", "decisions"} for part in parts)
         or _ARCHITECTURE_NAME.search(relative.name)
-        or _ARCHITECTURE_NAME.search(title)
     ):
         return DocumentProfile(
             normalized,
             "architecture",
-            "path or title identifies a design or decision record",
+            "path or filename identifies a design or decision record",
             registered,
         )
     if (
-        "references" in parts
+        any(
+            part in {
+                "api",
+                "apis",
+                "contract",
+                "contracts",
+                "policies",
+                "policy",
+                "reference",
+                "references",
+                "schema",
+                "schemas",
+                "spec",
+                "specs",
+                "standard",
+                "standards",
+            }
+            for part in parts[:-1]
+        )
         or _REFERENCE_NAME.search(relative.name)
-        or _REFERENCE_NAME.search(title)
     ):
         return DocumentProfile(
             normalized,
             "reference",
-            "path or title identifies a lookup surface",
+            "path or filename identifies a lookup surface",
+            registered,
+        )
+    if name in {"index.md", "readme.md"} and len(relative.parts) > 1:
+        return DocumentProfile(
+            normalized,
+            "component-overview",
+            "nested index identifies a component-local entry point",
+            registered,
+        )
+    if any(part in {"guide", "guides", "help", "how-to", "howtos", "tasks"} for part in parts[:-1]):
+        return DocumentProfile(
+            normalized,
+            "task",
+            "path identifies an authored help or task page",
+            registered,
+        )
+    if _ARCHITECTURE_NAME.search(title):
+        return DocumentProfile(
+            normalized,
+            "architecture",
+            "title identifies a design or decision record",
+            registered,
+        )
+    if _EVIDENCE_NAME.search(relative.name):
+        return DocumentProfile(
+            normalized,
+            "evidence",
+            "filename identifies a review, result, or longitudinal record",
+            registered,
+        )
+    if (
+        _REFERENCE_NAME.search(title)
+    ):
+        return DocumentProfile(
+            normalized,
+            "reference",
+            "title identifies a lookup surface",
             registered,
         )
     if name in {"contributing.md", "contributor-guide.md"}:
@@ -309,13 +368,6 @@ def classify_document(relative: Path, text: str) -> DocumentProfile:
             registered,
         )
     if name == "readme.md":
-        if len(relative.parts) > 1:
-            return DocumentProfile(
-                normalized,
-                "component-overview",
-                "nested README identifies a component-local entry point",
-                registered,
-            )
         return DocumentProfile(
             normalized,
             "overview",

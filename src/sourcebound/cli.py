@@ -970,6 +970,10 @@ def _main(argv: list[str] | None = None) -> int:
                         "advisories": [
                             asdict(finding) for finding in report.advisories
                         ],
+                        "advisory_occurrences": [
+                            asdict(finding)
+                            for finding in report.advisory_occurrences
+                        ],
                         "advisory_totals": dict(report.advisory_totals),
                         "baselined_findings": [
                             asdict(finding) for finding in report.baselined_findings
@@ -1310,13 +1314,17 @@ def _main(argv: list[str] | None = None) -> int:
                         state=(
                             "provider-failed"
                             if provider.last_response is None
-                            else "rejected"
-                            if plan is None
                             else "bootstrap-failed"
+                            if provider.last_parser_accepted
+                            else "bootstrap-failed"
+                            if plan is not None
+                            else "rejected"
                         ),
                         outcome=(
                             "provider-failed"
                             if provider.last_response is None
+                            else "accept"
+                            if provider.last_parser_accepted or plan is not None
                             else "parser-reject"
                         ),
                         detail=(
@@ -1325,6 +1333,7 @@ def _main(argv: list[str] | None = None) -> int:
                             and provider.last_error is not None
                             else str(exc)
                         ),
+                        record=provider.last_model_record,
                     )
                 except SourceboundError as transcript_error:
                     print(f"sourcebound: {transcript_error}", file=sys.stderr)

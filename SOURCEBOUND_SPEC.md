@@ -61,8 +61,9 @@ role-compatible house-policy candidates for compatibility review. A manifest acc
 integrity checks as gates; a document policy marker accepts compatible deterministic writing rules
 for that page. Unclear ownership, process status, audience fit, historical marks, and text overlap
 remain advisories in either state. The JSON report exposes the enforcement state, policy-preview
-state, every document profile, advisory totals, unsupported MDX paths, and the exact accepted-debt
-baseline under `sourcebound.audit-baseline.v2`. Baseline identity uses rule, path, normalized
+state, every document profile, advisory totals, bounded `advisories` for display, complete
+`advisory_occurrences` for automation, unsupported MDX paths, and the exact accepted-debt baseline
+under `sourcebound.audit-baseline.v2`. Baseline identity uses rule, path, normalized
 offending content, section anchor, and duplicate ordinal. A line number is display metadata, so
 moving unchanged debt does not manufacture a new finding. Version 1 baselines remain readable and
 `audit --update-baseline` migrates them. A maintainer can replace an ambiguous role guess with a
@@ -72,6 +73,7 @@ templates and agent procedures. Literal machine paths in recognized test fixture
 advisories because they can be intentional inputs; the same path in product source or a lockfile
 remains an integrity finding.
 
+<!-- sourcebound:allow-inline-document target=".sourcebound/repository-surface.md" reason="Init conditionally creates this reserved output for an established unregistered README" -->
 Use `init --no-model` once to add a repository-surface binding and `llms.txt`. It preserves existing
 documents, repository-native structure, evidence records, and compatibility aliases. A new README
 receives the packaged overview shape; an existing README keeps its authored opening unless it
@@ -194,9 +196,11 @@ owns its locator rules, tautology guards, work limits, and state meanings.
 
 Current projections are `llms.txt`, exact-byte context bundles, and the static recorded demo.
 Provider context can also be compiled as a read-only, source-addressed
-`sourcebound.context-bundle.v1`. The request pins the repository commit and each source line range.
-Selection is deterministic under a byte budget, and every exclusion carries a reason. Only accepted
-policy may grant instruction authority; repository prose remains evidence data.
+`sourcebound.context-bundle.v2`. A tracked request and every selected source line range are read
+from one repository commit; the bundle records the request path and digest. Selection is
+deterministic under a byte budget, and every exclusion carries a reason. Only a pinned document
+with an active accepted-policy marker may tell a provider to treat selected text as instructions;
+repository prose remains data.
 
 Plugins may add extractors, discoverers, renderers, and policy findings through process API version
 `1`; they cannot replace first-party evidence or set coverage state.

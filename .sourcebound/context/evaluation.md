@@ -1,13 +1,13 @@
 # Context bundle: evaluation
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `92addbabe9a5b43d7f4d5897f39d2c36820db13601bcab291190cb5ead2d178c`
+- Corpus sha256: `c354b38fc5776613fc48c2795a2565cfe6bb721c1a367a9f6262383968f96d44`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `f1adb9f32d995a33406f883801ed809432d6afd83ef30064f064c3a8ac9818fd`
+- Content sha256: `5f2b8db9861eb0b5e09bc98aa8dfedfba9fde1bc2c63e4a4c08e03191675565a`
 
 <!-- sourcebound:canonical README.md begin -->
 # Sourcebound
@@ -67,6 +67,8 @@ Use `uv tool install sourcebound` instead when `uv` owns your command-line tools
 
 After reviewing the assessment, inspect the files that `init` proposes before accepting its gate:
 
+<!-- sourcebound:allow-inline-document target=".sourcebound/repository-surface.md" reason="Init conditionally creates this reserved output for an established unregistered README" -->
+
 ```bash
 sourcebound init --no-model
 git diff -- .sourcebound.yml .sourcebound/repository-surface.md README.md llms.txt
@@ -103,7 +105,7 @@ Use the [learning path](docs/learn/index.md) for examples. The [product contract
 ## Canonical document: docs/EVALUATION.md
 
 - Source: [docs/EVALUATION.md](../../docs/EVALUATION.md)
-- Content sha256: `0aef28b3725447c63ae3f26baa39857631b2f9d84b93b52126d2eeeaea148487`
+- Content sha256: `f0dcfd5c7a3a821636b7a29d49f764d5ecee3a2221b91761b3f00e552b393fc1`
 
 <!-- sourcebound:canonical docs/EVALUATION.md begin -->
 # Evaluate documentation tasks
@@ -208,35 +210,6 @@ and evaluation stops.
 The result is labeled `model-specific-live`. Move an accepted response into a recorded fixture
 before relying on it in offline CI.
 
-## Draft a generated reference at init
-
-`init` accepts the same provider-neutral command configuration when a repository wants bounded
-draft selections for its generated reference document. The configured command receives the
-same JSON request shape on standard input and returns only known fact IDs plus allowlisted
-templates. It does not write repository files.
-
-Use an explicit configuration. `argv[0]` is an absolute path to the operator-selected provider,
-and `env` lists only the credential names the provider needs. Sourcebound writes the transcript to
-`.sourcebound/init-proposer-transcript.json` unless `--model-transcript` overrides it:
-
-```yaml
-adapter: command
-name: local-provider
-argv: [/absolute/path/to/provider-cli, --json]
-timeout_seconds: 300
-env: [SOURCEBOUND_PROVIDER_TOKEN]
-```
-
-```bash
-sourcebound init \
-  --model-config .sourcebound/init-provider.yml
-```
-
-The parser rejects an unknown fact, duplicate selection, unsupported template, malformed
-response, or more than five drafts before init writes the generated baseline. A missing,
-failing, or timed-out provider also leaves generated documentation unwritten. Without
-`--model-config`, init follows the same deterministic bootstrap path as before.
-
 ## Score dependency sensitivity
 
 Use `mutation-red` when a provider proposes one `sourcebound.binding-proposal.v1` object and the
@@ -261,22 +234,13 @@ The scorer calls the same static sensitivity primitive as
 sensitivity-receipt digest and says that semantic authority remains false. Score semantic precision
 and recall against a separately frozen gold relationship set.
 
-## Compile bounded context
+## Adjacent provider paths
 
-Use `context compile` when a provider should receive selected source evidence instead of whole
-documents. The request pins the repository commit, byte budget, source path and line range, evidence
-authority, relationship, rank, and whether the item is required:
+Evaluation scores a bounded task. Two separate pages own the provider inputs around that task:
 
-```bash
-sourcebound context compile \
-  --request .sourcebound/context-request.json \
-  --format json
-```
-
-The `sourcebound.context-bundle.v1` result lists included and excluded items with reasons. Direct
-evidence outranks repository prose. An accepted policy can carry instruction authority; ordinary
-documentation remains data even when its text resembles a prompt. If required evidence does not
-fit, the bundle is `unknown` and the command exits `2`.
+- [Init proposer](INIT_PROPOSER.md) covers optional, allowlisted draft selection during bootstrap.
+- [Context compilation](CONTEXT_COMPILATION.md) covers source-addressed evidence packets and budget
+  failure.
 
 ## Limits
 
@@ -286,11 +250,228 @@ fit, the bundle is `unknown` and the command exits `2`.
 - Command-provider deadlines accept one to 3,600 seconds. The deadline bounds one process attempt;
   it does not predict how long a model needs for a given prompt.
 - Provider-run receipts detect repository byte changes; they do not sandbox the provider process.
-- Context compilation is lexical and source-addressed. It does not use semantic retrieval or a
-  vector index.
 - Configuration scoring writes the response only inside a temporary copy of the fixture repository.
 
 ## Next step
 
 Run `sourcebound project` before evaluation when a task consumes a generated context bundle, then commit the bundle and evaluation history with the canonical documentation change.
 <!-- sourcebound:canonical docs/EVALUATION.md end -->
+
+## Canonical document: docs/INIT_PROPOSER.md
+
+- Source: [docs/INIT_PROPOSER.md](../../docs/INIT_PROPOSER.md)
+- Content sha256: `242959cbd97bb63e9eeb7f6146c1deec56db69399753e261f7dbd50a1356ff32`
+
+<!-- sourcebound:canonical docs/INIT_PROPOSER.md begin -->
+# Configure the optional init proposer
+
+<!-- sourcebound:policy register-v2 -->
+<!-- sourcebound:purpose -->
+Use this task when deterministic discovery has found candidate facts but a bounded provider should
+choose draft inputs for the generated reference. It gives the provider proposal authority only, so
+malformed or unsupported selections fail before Sourcebound writes the baseline.
+<!-- sourcebound:end purpose -->
+
+**[Configure a contained provider](#configure-the-provider)**.
+
+Without `--model-config`, `sourcebound init` follows the deterministic bootstrap path. Enabling a
+provider changes draft selection, not source authority, parsing, or the gate.
+
+## Configure the provider
+
+Save an explicit provider configuration as `.sourcebound/init-provider.yml`. Set `argv[0]` to the
+absolute path of an operator-selected command so PATH lookup cannot change the executable. For a
+Python provider, `{python}` is the only supported runtime token and is valid only as `argv[0]`; it
+resolves to the interpreter running Sourcebound. `env` names only the credentials that command
+needs. Do not add `PATH`; Sourcebound supplies a fixed default:
+
+```yaml
+adapter: command
+name: local-provider
+argv: [/absolute/path/to/provider-cli, --json]
+timeout_seconds: 300
+env: [SOURCEBOUND_PROVIDER_TOKEN]
+```
+
+Run init with that configuration:
+
+```bash
+sourcebound init --model-config .sourcebound/init-provider.yml
+```
+
+## Return bounded selections
+
+The command receives deterministic JSON on standard input and may return only known fact IDs with
+allowlisted templates. Its standard output must be one JSON object in this shape:
+
+```json
+{
+  "drafts": [
+    {
+      "fact_id": "a fact id copied from the request",
+      "template": "provides"
+    }
+  ]
+}
+```
+
+The request lists the allowed templates for each fact kind. An empty `drafts` list is valid.
+Sourcebound does not pass the repository path, repository working directory, or a write API to the
+provider. The command still runs as the caller and can reach absolute host paths or the network when
+the host permits it; the [host boundary](SECURITY_MODEL.md#host-boundary) owns that limit.
+
+## Inspect the disclosure receipt
+
+Sourcebound writes `.sourcebound/init-proposer-transcript.json` unless
+`--model-transcript` selects another repository-relative path. Absolute paths and paths containing
+`..` are rejected. The transcript records the sanitized request, result, and one of three proposer
+outcomes: `accept`, `parser-reject`, or `provider-failed`. The separate
+`state` is `bootstrap-failed` when the parser accepted the response but repository discovery,
+planning, or writing failed afterward. This preserves the parser result while the command exit and
+feedback `result_class` record the later failure.
+
+Verify the observed outcome after `init` returns:
+
+```bash
+python3 - <<'PY'
+import json
+from pathlib import Path
+
+receipt = json.loads(
+    Path(".sourcebound/init-proposer-transcript.json").read_text(encoding="utf-8")
+)
+assert receipt["schema"] == "sourcebound.init-proposer-transcript.v1"
+assert receipt["state"] == "accepted"
+assert receipt["outcome"] == "accept"
+assert receipt["model_record"] is not None
+print(receipt["outcome"])
+PY
+```
+
+If that check fails, read `detail` and `state`. `rejected` names a parser refusal,
+`provider-failed` names command execution failure, and `bootstrap-failed` names a later repository
+failure after an accepted response.
+
+## Failure contract
+
+The parser rejects unknown facts, duplicate selections, unsupported templates, malformed output,
+and more than five drafts. A missing, failed, or timed-out provider leaves generated documentation
+unwritten. Sourcebound does not block network access; run the selected command in a sandbox when it
+must not reach the network.
+
+Return to [evaluation](EVALUATION.md) when the resulting reader task needs a replayable score.
+<!-- sourcebound:canonical docs/INIT_PROPOSER.md end -->
+
+## Canonical document: docs/CONTEXT_COMPILATION.md
+
+- Source: [docs/CONTEXT_COMPILATION.md](../../docs/CONTEXT_COMPILATION.md)
+- Content sha256: `5f0d1ce2bcbe64254006d1b7134eb70b32dcf112ca406aa10ad6bb91a0fd13e2`
+
+<!-- sourcebound:canonical docs/CONTEXT_COMPILATION.md begin -->
+# Compile bounded provider context
+
+<!-- sourcebound:policy register-v2 -->
+<!-- sourcebound:purpose -->
+Use this task when a provider needs selected source facts instead of whole documents. It produces a
+content-addressed bundle that says why each item was kept or omitted, so a tight budget returns
+unknown rather than silently dropping a required fact.
+<!-- sourcebound:end purpose -->
+
+**[Create the request](#create-the-request)**.
+
+## Create the request
+
+<!-- sourcebound:allow section-length reason="The field reference is linked; the complete request builder remains one runnable unit" -->
+
+The request pins its own bytes and every selected source to one repository commit. It also records
+the byte budget, source path and line range, evidence authority, relationship, rank, and whether
+each item is required. Create `.sourcebound/context-request.json` from the repository's current
+README:
+
+```bash
+mkdir -p .sourcebound
+python3 - <<'PY'
+import json
+import subprocess
+from pathlib import Path
+
+readme = subprocess.check_output(
+    ["git", "show", "HEAD:README.md"], text=True
+).splitlines()
+if not readme:
+    raise SystemExit("README.md must be tracked and nonempty")
+request = {
+    "schema": "sourcebound.context-request.v2",
+    "budget_bytes": 4096,
+    "items": [{
+        "id": "repository-opener",
+        "kind": "fact",
+        "path": "README.md",
+        "start_line": 1,
+        "end_line": min(12, len(readme)),
+        "authority": "repository-doc",
+        "relationship": "repository orientation",
+        "reason": "defines the repository for this task",
+        "rank": 10,
+        "required": True,
+        "instruction": False,
+    }],
+}
+Path(".sourcebound/context-request.json").write_text(
+    json.dumps(request, indent=2) + "\n",
+    encoding="utf-8",
+)
+PY
+```
+
+The request is data. `instruction: false` prevents README prose from gaining instruction authority.
+Review and commit it with the source state it selects:
+
+```bash
+git diff -- .sourcebound/context-request.json
+git add .sourcebound/context-request.json
+git commit -m "docs: pin context request"
+```
+
+Compilation rejects an untracked or modified request. An `accepted-policy` item can receive
+instruction authority only when its pinned source document carries an active
+`sourcebound:policy register-v2` marker.
+
+## Compile it
+
+Compile the saved request without invoking a provider:
+
+```bash
+sourcebound context compile \
+  --request .sourcebound/context-request.json \
+  --format json
+```
+
+Exit `0` returns a `sourcebound.context-bundle.v2` object with `"status": "current"`.
+
+## Verify the bundle
+
+Verify the schema and status from a fresh compilation:
+
+```bash
+sourcebound context compile \
+  --request .sourcebound/context-request.json \
+  --format json |
+python3 -c 'import json,sys; p=json.load(sys.stdin); assert p["schema"] == "sourcebound.context-bundle.v2" and p["status"] == "current"'
+```
+
+The result records the pinned request path and SHA-256, then lists included and excluded items with
+reasons. Required items are selected first; within the required and optional classes, direct
+evidence outranks repository prose. A source-verified accepted policy can carry instruction
+authority; ordinary documentation remains data even when its text resembles a prompt. The
+[context request reference](REFERENCE.md#context-request) owns the full field and authority
+contract.
+
+## Budget failure
+
+If required evidence does not fit, the bundle reports `unknown` and the command exits `2`. Optional
+items may be excluded only with a recorded reason. Compilation is lexical and source-addressed; it
+does not use semantic retrieval or a vector index.
+
+Use [evaluation](EVALUATION.md) to score what a provider does with the compiled context.
+<!-- sourcebound:canonical docs/CONTEXT_COMPILATION.md end -->

@@ -132,7 +132,7 @@ def _inventory(
 ) -> tuple[tuple[InventoryItem, ...], bool]:
     key_payload = json.dumps(
         {
-            "extractor": "repository-inventory@1",
+            "extractor": "repository-inventory@2",
             "parameters": {"project": project.as_posix()},
             "source": ref,
             "execution_policy": execution_policy.value,

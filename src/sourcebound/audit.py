@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import hashlib
+import html
 import json
 import posixpath
 import re
 import subprocess
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 from urllib.parse import unquote
 
@@ -15,7 +17,13 @@ from sourcebound.applicability import (
     frontmatter_error,
     role_override_error,
 )
-from sourcebound.corpus import _git_visible_markdown, _is_document_candidate, scan_corpus
+from sourcebound.corpus import (
+    _active_predecessor_markers,
+    _git_visible_markdown,
+    _is_document_candidate,
+    _markdown_control_text,
+    scan_corpus,
+)
 from sourcebound.errors import ConfigurationError
 from sourcebound.mdx import (
     MdxDocument,
@@ -48,6 +56,47 @@ ALLOW = re.compile(
 AUDIT_BASELINE_SCHEMA_V1 = "sourcebound.audit-baseline.v1"
 AUDIT_BASELINE_SCHEMA = "sourcebound.audit-baseline.v2"
 AUDIT_BASELINE_PATH = Path(".sourcebound/audit-baseline.json")
+EVIDENCE_RELATIVE_CLAIM = re.compile(
+    r"(?:\b(?:current|latest)\s+(?:assessment|build|candidate|coverage|evidence|"
+    r"finding|proof|receipt|release|result|run|snapshot|status)\b"
+    r"|\b(?:assessment|build|candidate|coverage|evidence|finding|proof|receipt|"
+    r"release|result|run|snapshot|status)\s+(?:is|are|remains?)\s+"
+    r"(?:current|latest)\b"
+    r"|\b(?:assessment|build|candidate|coverage|evidence|finding|proof|receipt|"
+    r"release|result|run|snapshot|status)\s+currently\s+(?:closes?|fails?|"
+    r"has|have|is|are|passes?|proves?|reports?|shows?)\b"
+    r"|\b(?:assessment|build|candidate|coverage|evidence|finding|proof|receipt|"
+    r"release|result|run|snapshot|status)\s+(?:currently\s+)?(?:closes?|fails?|"
+    r"has|have|is|are|passes?|proves?|reports?|shows?)\b.{0,80}\b(?:currently|today)\b"
+    r"|\b(?:now|today)\b.{0,80}\b(?:closes?|fails?|has|have|is|are|passes?|"
+    r"proves?|reports?|shows?)\b)",
+    re.IGNORECASE,
+)
+EVIDENCE_NEGATION = re.compile(
+    r"\b(?:does\s+not|do\s+not|is\s+not|are\s+not|isn't|aren't|never|no\s+longer|"
+    r"not|without)\b.{0,100}\b(?:current|latest|now|today)\b",
+    re.IGNORECASE,
+)
+EVIDENCE_ANCHOR = re.compile(
+    r"^\s*(?:>\s*)?(?:#{1,6}\s*)?(?:\*\*)?"
+    r"(?:captured|date|snapshot|as of|commit)(?:\*\*)?\s*:?[ \t]*"
+    r"(?:\*\*)?(?P<value>20\d{2}-\d{2}-\d{2}|[0-9a-f]{40})\b",
+    re.IGNORECASE,
+)
+EVIDENCE_CLAUSE_SPLIT = re.compile(
+    r"(?<=[.!?;])\s+|\s+\b(?:but|however|yet)\b\s*[:,]?\s*",
+    re.IGNORECASE,
+)
+INLINE_DOCUMENT_PATH = re.compile(
+    r"^(?P<path>(?:\.?\.?/)?(?:[A-Za-z0-9_.-]+/)*"
+    r"[A-Za-z0-9][A-Za-z0-9_.-]*\.mdx?)"
+    r"(?:#[A-Za-z0-9_.:/-]+)?$",
+    re.IGNORECASE,
+)
+INLINE_DOCUMENT_ALLOW = re.compile(
+    r'<!--\s*sourcebound:allow-inline-document\s+target="([^"]+)"\s+'
+    r'reason="([^"]+)"\s*-->'
+)
 
 
 def _is_test_fixture_path(value: str) -> bool:
@@ -59,6 +108,66 @@ def _is_test_fixture_path(value: str) -> bool:
         or ".test." in name
         or ".spec." in name
     )
+
+
+def _has_affirmative_relative_evidence_claim(text: str) -> bool:
+    for line in text.splitlines():
+        for clause in EVIDENCE_CLAUSE_SPLIT.split(line):
+            if (
+                EVIDENCE_RELATIVE_CLAIM.search(clause)
+                and not EVIDENCE_NEGATION.search(clause)
+            ):
+                return True
+    return False
+
+
+def _valid_evidence_anchor(root: Path, lines: list[str]) -> bool:
+    def commit_exists(value: str) -> bool:
+        try:
+            result = subprocess.run(
+                ["git", "-C", str(root), "cat-file", "-e", f"{value}^{{commit}}"],
+                capture_output=True,
+                timeout=10,
+                check=False,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return False
+        return result.returncode == 0
+
+    for line in lines[:12]:
+        match = EVIDENCE_ANCHOR.match(line)
+        if match is None:
+            continue
+        value = match.group("value")
+        if value.startswith("20"):
+            try:
+                captured = date.fromisoformat(value)
+            except ValueError:
+                continue
+            if captured > date.today():
+                continue
+            return True
+        if commit_exists(value):
+            return True
+    opener = " ".join(lines[:12])
+    for match in re.finditer(r"20\d{2}-\d{2}-\d{2}", opener):
+        prefix = opener[max(0, match.start() - 100):match.start()]
+        if not re.search(r"\b(?:captured|date|inspected|snapshot|as of)\b", prefix, re.I):
+            continue
+        try:
+            captured = date.fromisoformat(match.group())
+        except ValueError:
+            continue
+        if captured > date.today():
+            continue
+        return True
+    for match in re.finditer(r"\b[0-9a-f]{40}\b", opener, re.I):
+        prefix = opener[max(0, match.start() - 100):match.start()]
+        if re.search(r"\b(?:commit|snapshot)\b", prefix, re.I) and commit_exists(
+            match.group()
+        ):
+            return True
+    return False
 
 
 @dataclass(frozen=True)
@@ -79,6 +188,7 @@ class AuditReport:
     unsupported_documents: tuple[str, ...] = ()
     advisories: tuple[AuditFinding, ...] = ()
     advisory_totals: tuple[tuple[str, int], ...] = ()
+    advisory_occurrences: tuple[AuditFinding, ...] = ()
     document_profiles: tuple[DocumentProfile, ...] = ()
     repository_integrity_enforced: bool = False
     policy_preview: bool = False
@@ -436,7 +546,7 @@ def _hidden_document(relative: Path) -> bool:
 
 def _allowances(lines: list[str]) -> set[str]:
     allowed: set[str] = set()
-    for line in lines:
+    for _line_number, line in _outside_fences(lines):
         match = ALLOW.search(line)
         if match and len(match.group(2).strip()) >= 12:
             allowed.add(match.group(1))
@@ -445,7 +555,7 @@ def _allowances(lines: list[str]) -> set[str]:
 
 def _allowance_records(lines: list[str]) -> list[tuple[int, str, str]]:
     records: list[tuple[int, str, str]] = []
-    for line_number, line in enumerate(lines, start=1):
+    for line_number, line in _outside_fences(lines):
         if match := ALLOW.search(line):
             records.append((line_number, match.group(1), match.group(2).strip()))
     return records
@@ -490,22 +600,58 @@ def _mask_inline_code(line: str) -> str:
 
 def _markdown_links(lines: list[str]) -> list[tuple[int, str]]:
     links: list[tuple[int, str]] = []
-    fence: tuple[str, int] | None = None
-    for line_number, line in enumerate(lines, start=1):
-        fence_match = re.match(r"^\s{0,3}(`{3,}|~{3,})", line)
-        if fence_match:
-            marker = fence_match.group(1)
-            if fence is None:
-                fence = (marker[0], len(marker))
-            elif marker[0] == fence[0] and len(marker) >= fence[1]:
-                fence = None
-            continue
-        if fence is not None:
-            continue
-        visible = _mask_inline_code(line)
-        for match in LINK.finditer(visible):
+    control_text = _markdown_control_text("\n".join(lines))
+    for line_number, line in enumerate(control_text.splitlines(), start=1):
+        for match in LINK.finditer(line):
             links.append((line_number, match.group(1)))
     return links
+
+
+def _inline_document_references(lines: list[str]) -> list[tuple[int, str]]:
+    references: list[tuple[int, str]] = []
+    control_text = _markdown_control_text(
+        "\n".join(lines), mask_inline_code=False
+    )
+    for line_number, line in enumerate(control_text.splitlines(), start=1):
+        index = 0
+        while index < len(line):
+            if line[index] != "`" or (index > 0 and line[index - 1] == "\\"):
+                index += 1
+                continue
+            width = 1
+            while index + width < len(line) and line[index + width] == "`":
+                width += 1
+            end = line.find("`" * width, index + width)
+            if end == -1:
+                break
+            value = line[index + width:end].strip()
+            if INLINE_DOCUMENT_PATH.fullmatch(value):
+                references.append((line_number, value))
+            index = end + width
+    return references
+
+
+def _inline_document_target_exists(
+    root: Path,
+    source: Path,
+    target: str,
+    entries: set[str],
+) -> bool:
+    if _link_target_exists(root, source, target, entries):
+        return True
+    clean = unquote(target.split("#", 1)[0]).removeprefix("/")
+    if clean.startswith(("./", "../")):
+        return False
+    return _entry_exists(entries, clean) or (root / clean).exists()
+
+
+def _inline_document_allowances(lines: list[str]) -> set[str]:
+    return {
+        target
+        for _line_number, line in _outside_fences(lines)
+        for target, reason in INLINE_DOCUMENT_ALLOW.findall(line)
+        if len(reason.strip()) >= 12
+    }
 
 
 def _placeholder_link_target(target: str) -> bool:
@@ -544,9 +690,10 @@ def _link_target_exists(
     raw_target: str,
     entries: set[str],
 ) -> bool:
-    target = unquote(raw_target.split("#", 1)[0].split("?", 1)[0]).strip()
-    if target.startswith("<") and target.endswith(">"):
-        target = target[1:-1]
+    unwrapped = raw_target.strip()
+    if unwrapped.startswith("<") and unwrapped.endswith(">"):
+        unwrapped = unwrapped[1:-1]
+    target = unquote(unwrapped.split("#", 1)[0].split("?", 1)[0]).strip()
     if not target or not _local_link(target):
         return True
     repository_root = target.startswith("/")
@@ -573,21 +720,140 @@ def _link_target_exists(
         return True
     if any((root / item).exists() for item in candidates):
         return True
-    # A leading slash can address an application or publication mount. Without
-    # a declared mount, treating it as a repository path creates false blockers.
-    return repository_root
+    # Route-shaped leading-slash targets can address an application or publication
+    # mount. Documentation-file targets instead declare repository identity and
+    # must resolve against the tracked tree.
+    return repository_root and Path(target).suffix.lower() not in {".md", ".mdx"}
+
+
+def _link_target_file(
+    root: Path,
+    source: Path,
+    raw_target: str,
+) -> Path | None:
+    unwrapped = raw_target.strip()
+    if unwrapped.startswith("<") and unwrapped.endswith(">"):
+        unwrapped = unwrapped[1:-1]
+    target = unquote(unwrapped.split("#", 1)[0].split("?", 1)[0]).strip()
+    if not _local_link(target):
+        return None
+    if not target:
+        return root / source
+    if target.startswith("/"):
+        candidate = posixpath.normpath(target.lstrip("/"))
+    else:
+        candidate = posixpath.normpath(
+            posixpath.join(source.parent.as_posix(), target)
+        )
+    if candidate == ".." or candidate.startswith("../"):
+        return None
+    candidates = [candidate]
+    if not Path(candidate).suffix:
+        candidates.extend(
+            (
+                candidate + ".md",
+                candidate + ".mdx",
+                posixpath.join(candidate, "README.md"),
+                posixpath.join(candidate, "index.md"),
+                posixpath.join(candidate, "index.mdx"),
+            )
+        )
+    return next(
+        (root / item for item in candidates if (root / item).is_file()),
+        None,
+    )
+
+
+def _github_heading_slug(heading: str) -> str:
+    heading = re.sub(r"\[([^]]+)]\([^)]+\)", r"\1", heading)
+    heading = html.unescape(re.sub(r"<[^>]+>", "", heading))
+    heading = heading.replace("`", "").replace("*", "").replace("_", "")
+    heading = re.sub(r"[^\w\- ]", "", heading.lower())
+    return re.sub(r"\s", "-", heading.strip())
+
+
+def _document_anchors(text: str) -> set[str]:
+    control_text = _markdown_control_text(text, mask_inline_code=False)
+    anchors = {
+        unquote(match.group(1))
+        for match in re.finditer(
+            r"<[A-Za-z][^>]*\s(?:id|name)=[\"']([^\"']+)[\"'][^>]*>",
+            control_text,
+            re.IGNORECASE,
+        )
+    }
+    counts: dict[str, int] = {}
+    for line in control_text.splitlines():
+        match = re.match(r"^ {0,3}#{1,6}[ \t]+(.+?)[ \t]*#*[ \t]*$", line)
+        if match is None:
+            continue
+        base = _github_heading_slug(match.group(1))
+        if not base:
+            continue
+        ordinal = counts.get(base, 0)
+        counts[base] = ordinal + 1
+        anchors.add(base if ordinal == 0 else f"{base}-{ordinal}")
+    return anchors
+
+
+def _duplicate_primary_heading_findings(
+    document: str,
+    text: str,
+) -> list[AuditFinding]:
+    """Report repeated H1/H2 labels as an information-architecture review seam."""
+    control_text = _markdown_control_text(text, mask_inline_code=False)
+    seen: dict[tuple[int, str], int] = {}
+    findings: list[AuditFinding] = []
+    for line_number, line in enumerate(control_text.splitlines(), start=1):
+        match = re.match(r"^(#{1,2})[ \t]+(.+?)[ \t]*#*[ \t]*$", line)
+        if match is None:
+            continue
+        identity = (len(match.group(1)), _github_heading_slug(match.group(2)))
+        if not identity[1]:
+            continue
+        first_line = seen.setdefault(identity, line_number)
+        if first_line != line_number:
+            findings.append(AuditFinding(
+                "duplicate-heading",
+                document,
+                line_number,
+                f"heading repeats line {first_line}: {match.group(2)}",
+            ))
+    return findings
+
+
+def _link_fragment_exists(root: Path, source: Path, raw_target: str) -> bool:
+    unwrapped = raw_target.strip()
+    if unwrapped.startswith("<") and unwrapped.endswith(">"):
+        unwrapped = unwrapped[1:-1]
+    if "#" not in unwrapped or unwrapped.startswith(
+        ("http://", "https://", "mailto:", "data:")
+    ):
+        return True
+    fragment = unquote(unwrapped.split("#", 1)[1].split("?", 1)[0]).strip()
+    if not fragment:
+        return True
+    target_file = _link_target_file(root, source, raw_target)
+    if target_file is None:
+        # Path identity can come from the tracked tree even when the worktree file is absent.
+        # Without bytes, Sourcebound cannot make a fragment claim.
+        return True
+    if target_file.suffix.lower() not in {".md", ".mdx"}:
+        return True
+    try:
+        text = target_file.read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        return True
+    return fragment in _document_anchors(text)
 
 
 def _outside_fences(lines: list[str]) -> list[tuple[int, str]]:
-    result: list[tuple[int, str]] = []
-    in_fence = False
-    for line_number, line in enumerate(lines, start=1):
-        if line.startswith("```"):
-            in_fence = not in_fence
-            continue
-        if not in_fence:
-            result.append((line_number, line))
-    return result
+    return list(
+        enumerate(
+            _markdown_control_text("\n".join(lines)).splitlines(),
+            start=1,
+        )
+    )
 
 
 def _page_type(relative: Path, text: str) -> str:
@@ -765,6 +1031,36 @@ def _purpose_template_findings(documents: dict[str, str]) -> list[AuditFinding]:
     ]
 
 
+def _repeated_allowance_findings(documents: dict[str, str]) -> list[AuditFinding]:
+    scoped_rules = {"audience", "doc-length", "near-duplicate", "section-length"}
+    occurrences: dict[str, list[tuple[str, int, str]]] = {}
+    for doc, text in documents.items():
+        for line_number, rule, reason in _allowance_records(text.splitlines()):
+            if rule not in scoped_rules:
+                continue
+            normalized_reason = " ".join(reason.casefold().split())
+            occurrences.setdefault(normalized_reason, []).append(
+                (doc, line_number, rule)
+            )
+    findings: list[AuditFinding] = []
+    for repeated in occurrences.values():
+        if len(repeated) < 3:
+            continue
+        doc, line_number, rule = repeated[0]
+        document_count = len({path for path, _line, _rule in repeated})
+        findings.append(AuditFinding(
+            "repeated-allowance-reason",
+            doc,
+            line_number,
+            (
+                f"the same {rule} exception rationale appears {len(repeated)} times "
+                f"across {document_count} documents; replace boilerplate with scoped "
+                "evidence or repair the rule"
+            ),
+        ))
+    return findings
+
+
 def _scan_audit(root: Path, *, preview_policy: bool = False) -> AuditReport:
     root = root.resolve()
     repository_integrity_enforced = (root / ".sourcebound.yml").is_file()
@@ -807,9 +1103,6 @@ def _scan_audit(root: Path, *, preview_policy: bool = False) -> AuditReport:
     advisories: list[AuditFinding] = []
     for relative in tracked_documents:
         normalized = relative.as_posix()
-        if "archive" in relative.parts or _hidden_document(relative):
-            ignored.append(normalized)
-            continue
         path = root / relative
         try:
             text = (
@@ -820,6 +1113,20 @@ def _scan_audit(root: Path, *, preview_policy: bool = False) -> AuditReport:
         except (OSError, UnicodeError) as exc:
             candidate = AuditFinding("unreadable-document", normalized, 1, str(exc))
             (findings if repository_integrity_enforced else advisories).append(candidate)
+            continue
+        for line_number, _marker in _active_predecessor_markers(text):
+            candidate = AuditFinding(
+                "predecessor-marker",
+                normalized,
+                line_number,
+                "predecessor policy marker is ignored; migrate it to a sourcebound marker",
+            )
+            (findings if repository_integrity_enforced else advisories).append(candidate)
+        if _hidden_document(relative):
+            ignored.append(normalized)
+            continue
+        if "archive" in relative.parts:
+            ignored.append(normalized)
             continue
         mdx_document = parsed_mdx.get(normalized)
         if relative.suffix.lower() == ".mdx" and mdx_document is None:
@@ -841,7 +1148,22 @@ def _scan_audit(root: Path, *, preview_policy: bool = False) -> AuditReport:
         active_texts[normalized] = policy_text
         profile = classify_document(relative, policy_text)
         profiles[normalized] = profile
-        role_error = role_override_error(text)
+        evidence_text = _markdown_control_text(policy_text)
+        advisories.extend(
+            _duplicate_primary_heading_findings(normalized, policy_text)
+        )
+        if (
+            profile.role == "evidence"
+            and _has_affirmative_relative_evidence_claim(evidence_text)
+            and not _valid_evidence_anchor(root, evidence_text.splitlines())
+        ):
+            advisories.append(AuditFinding(
+                "evidence-time-horizon",
+                normalized,
+                1,
+                "replace relative-time evidence claims with a capture date or immutable commit",
+            ))
+        role_error = role_override_error(policy_text)
         structure_error = frontmatter_error(text)
         if role_error or structure_error:
             invalid_roles.add(normalized)
@@ -934,6 +1256,7 @@ def _scan_audit(root: Path, *, preview_policy: bool = False) -> AuditReport:
             if mdx_document is not None
             else _markdown_links(lines)
         )
+        inline_document_allowances = _inline_document_allowances(policy_lines)
         for line_number, target in document_links:
             if (
                 _placeholder_link_target(target)
@@ -960,9 +1283,39 @@ def _scan_audit(root: Path, *, preview_policy: bool = False) -> AuditReport:
                     if repository_integrity_enforced or profile.registered
                     else advisories
                 ).append(candidate)
+                continue
+            if not _link_fragment_exists(root, relative, target):
+                candidate = AuditFinding(
+                    "broken-local-fragment",
+                    normalized,
+                    line_number,
+                    f"target fragment does not exist: {target}",
+                )
+                # Heading slugs vary by renderer. Without an explicit renderer
+                # contract, a missing inferred slug is useful evidence but not
+                # sufficient authority to block a repository.
+                advisories.append(candidate)
+        for line_number, target in _inline_document_references(policy_lines):
+            if target in inline_document_allowances:
+                continue
+            if _inline_document_target_exists(
+                root,
+                relative,
+                target,
+                repository_entries,
+            ):
+                continue
+            candidate = AuditFinding(
+                "missing-inline-document",
+                normalized,
+                line_number,
+                f"verify whether this inline document path should exist: {target}",
+            )
+            advisories.append(candidate)
     # These comparisons require editorial ownership knowledge. They remain
     # visible, but they cannot reject a repository from token overlap alone.
     advisories.extend(_assurance_findings(active_texts))
+    advisories.extend(_repeated_allowance_findings(active_texts))
     for candidate in _purpose_template_findings(active_texts):
         if candidate.path in invalid_roles:
             continue
@@ -987,6 +1340,12 @@ def _scan_audit(root: Path, *, preview_policy: bool = False) -> AuditReport:
             continue
         corpus_profile = profiles.get(corpus_finding.doc)
         if corpus_profile is None:
+            continue
+        if (
+            corpus_rule == "process-artifact"
+            and corpus_profile.role == "evidence"
+            and corpus_profile.reason == "explicit sourcebound role marker"
+        ):
             continue
         if corpus_rule == "audience" and corpus_profile.role in {
             "agent-procedure",
@@ -1020,7 +1379,11 @@ def _scan_audit(root: Path, *, preview_policy: bool = False) -> AuditReport:
             and existing.line == candidate.line
             for existing in [*findings, *advisories]
         ):
-            advisories.append(candidate)
+            (
+                findings
+                if corpus_rule == "predecessor-marker" and repository_integrity_enforced
+                else advisories
+            ).append(candidate)
     for residue_finding in scan_residue(root):
         candidate = AuditFinding(
             residue_finding.rule,
@@ -1043,6 +1406,7 @@ def _scan_audit(root: Path, *, preview_policy: bool = False) -> AuditReport:
             else advisories
         ).append(candidate)
     findings.sort(key=lambda item: (item.path, item.line, item.rule))
+    advisory_occurrences = tuple(sorted(advisories, key=_finding_order))
     bounded_advisories, advisory_totals = _bounded_advisories(advisories)
     return AuditReport(
         tuple(active),
@@ -1051,6 +1415,7 @@ def _scan_audit(root: Path, *, preview_policy: bool = False) -> AuditReport:
         unsupported_documents=tuple(sorted(unsupported)),
         advisories=bounded_advisories,
         advisory_totals=advisory_totals,
+        advisory_occurrences=advisory_occurrences,
         document_profiles=tuple(
             profiles[path] for path in sorted(profiles)
         ),
@@ -1106,6 +1471,7 @@ def audit(
         unsupported_documents=report.unsupported_documents,
         advisories=report.advisories,
         advisory_totals=report.advisory_totals,
+        advisory_occurrences=report.advisory_occurrences,
         document_profiles=report.document_profiles,
         repository_integrity_enforced=report.repository_integrity_enforced,
         policy_preview=report.policy_preview,

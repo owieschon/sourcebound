@@ -36,6 +36,10 @@ RULES = {
         "Tracked content contains a machine-specific home path.",
         "Replace it with a repository-relative or portable path.",
     ),
+    "missing-inline-document": (
+        "An inline-code document path does not resolve, but its intended lifecycle is unknown.",
+        "Confirm the path should exist; then fix it, link it, or keep the advisory as a negative example.",
+    ),
     "near-duplicate": (
         "Two reader-facing documents carry substantially the same content.",
         "Keep one canonical explanation and link to it from the other task surface.",

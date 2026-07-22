@@ -41,6 +41,25 @@ TS_EXPORT = re.compile(
 TS_CLI_COMMAND = re.compile(r"\.command\(\s*['\"]([^'\"]+)['\"]")
 TS_CLI_OPTION = re.compile(r"\.option\(\s*['\"]([^'\"]+)['\"]")
 TS_MCP_TOOL = re.compile(r"\.(?:tool|registerTool)\(\s*['\"]([^'\"]+)['\"]")
+MAKE_NAME = r"[A-Za-z0-9][A-Za-z0-9_./-]*"
+MAKE_TARGET = re.compile(
+    rf"^(?P<targets>{MAKE_NAME}(?:[ \t]+{MAKE_NAME})*)[ \t]*:(?!=)"
+)
+MAKE_ASSIGNMENT = re.compile(
+    r"^(?P<name>[A-Za-z_][A-Za-z0-9_]*)[ \t]*"
+    r"(?P<operator>::=|:=|\?=|\+=|=)[ \t]*(?P<value>.*)$"
+)
+MAKE_VARIABLE = re.compile(
+    r"\$\((?P<paren>[A-Za-z_][A-Za-z0-9_]*)\)|"
+    r"\$\{(?P<brace>[A-Za-z_][A-Za-z0-9_]*)\}"
+)
+MAKEFILE_DYNAMIC = re.compile(
+    r"^[ ]*(?:-?include|sinclude|define|endef|ifeq|ifneq|ifdef|ifndef|else|endif|"
+    r"override|export|unexport|undefine|vpath|private)\b|"
+    r"^[ ]*\.RECIPEPREFIX[ \t]*[:?+]?=|"
+    r"\$\((?:eval|call)\b|\$\{(?:eval|call)\b",
+    re.M,
+)
 HTTP_METHODS = {"get", "put", "post", "delete", "patch", "head", "options", "trace"}
 PYTHON_TOOLING_MODULES = {"conftest.py", "noxfile.py", "setup.py"}
 PUBLIC_SURFACE_KINDS = frozenset(
@@ -51,6 +70,7 @@ PUBLIC_SURFACE_KINDS = frozenset(
         "cli-option",
         "config-key",
         "mcp-tool",
+        "make-target",
         "package",
         "package-script",
         "runtime-constraint",
@@ -270,6 +290,142 @@ def _structured(path: Path, text: str) -> Any:
     return None
 
 
+def _parse_makefile(
+    text: str,
+) -> tuple[list[tuple[str, str, str]], set[str], dict[str, list[str]]] | None:
+    if MAKEFILE_DYNAMIC.search(text):
+        return None
+    assignments: list[tuple[str, str, str]] = []
+    phony: set[str] = set()
+    declarations: list[tuple[tuple[str, ...], list[str]]] = []
+    active_block: list[str] | None = None
+    phony_prefix = ".PHONY:"
+    for line in text.splitlines():
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        if line.startswith("\t"):
+            if active_block is None:
+                return None
+            active_block.append(line.rstrip())
+            continue
+        active_block = None
+        if line.startswith(" ") or line.rstrip().endswith("\\"):
+            return None
+        assignment = MAKE_ASSIGNMENT.fullmatch(line)
+        if assignment is not None:
+            assignments.append(
+                (assignment.group("name"), line.rstrip(), assignment.group("value"))
+            )
+            continue
+        if line.startswith(phony_prefix):
+            names = line.removeprefix(phony_prefix).split()
+            if names and all(re.fullmatch(MAKE_NAME, name) for name in names):
+                phony.update(names)
+                continue
+            return None
+        if "%" in line and ":" in line:
+            return None
+        match = MAKE_TARGET.match(line)
+        if match is not None:
+            targets = tuple(match.group("targets").split())
+            active_block = [line.rstrip()]
+            declarations.append((targets, active_block))
+            continue
+        return None
+    blocks: dict[str, list[str]] = {}
+    for targets, evidence in declarations:
+        block = "\n".join(evidence)
+        for target in targets:
+            blocks.setdefault(target, []).append(block)
+    for target in phony:
+        blocks.setdefault(target, [])
+    return assignments, phony, blocks
+
+
+def _makefile_is_statically_classifiable(text: str) -> bool:
+    return _parse_makefile(text) is not None
+
+
+def _makefile_variable_closure(
+    evidence: str, assignments: list[tuple[str, str, str]]
+) -> set[str]:
+    referenced = {
+        match.group("paren") or match.group("brace")
+        for match in MAKE_VARIABLE.finditer(evidence)
+    }
+    pending = list(referenced)
+    while pending:
+        name = pending.pop()
+        for assigned_name, _line, value in assignments:
+            if assigned_name != name:
+                continue
+            for match in MAKE_VARIABLE.finditer(value):
+                dependency = match.group("paren") or match.group("brace")
+                if dependency not in referenced:
+                    referenced.add(dependency)
+                    pending.append(dependency)
+    return referenced
+
+
+def _makefile_has_unaccounted_change(base: str, head: str) -> bool:
+    base_components = _parse_makefile(base)
+    head_components = _parse_makefile(head)
+    if base_components is None or head_components is None:
+        return True
+    base_assignments, _base_phony, base_blocks = base_components
+    head_assignments, _head_phony, head_blocks = head_components
+    base_referenced = _makefile_variable_closure(
+        "\n".join(block for values in base_blocks.values() for block in values),
+        base_assignments,
+    )
+    head_referenced = _makefile_variable_closure(
+        "\n".join(block for values in head_blocks.values() for block in values),
+        head_assignments,
+    )
+    base_by_name: dict[str, list[str]] = {}
+    head_by_name: dict[str, list[str]] = {}
+    for name, line, _value in base_assignments:
+        base_by_name.setdefault(name, []).append(line)
+    for name, line, _value in head_assignments:
+        head_by_name.setdefault(name, []).append(line)
+    for name in set(base_by_name) | set(head_by_name):
+        if name in base_referenced or name in head_referenced:
+            continue
+        if base_by_name.get(name, []) != head_by_name.get(name, []):
+            return True
+    return False
+
+
+def _makefile_items(path: str, text: str) -> list[dict[str, str]]:
+    """Extract the supported static subset of concrete make targets."""
+    components = _parse_makefile(text)
+    if components is None:
+        return []
+    assignments, phony, blocks = components
+
+    items: list[dict[str, str]] = []
+    for target, target_blocks in sorted(blocks.items()):
+        target_evidence = "\n".join(target_blocks)
+        referenced = _makefile_variable_closure(target_evidence, assignments)
+        assignment_evidence = [
+            line for name, line, _value in assignments if name in referenced
+        ]
+        assembled_evidence = "\n".join(
+            [*target_blocks, *assignment_evidence, f".PHONY={target in phony}"]
+        )
+        items.append(
+            _item(
+                "make-target",
+                target,
+                path,
+                target,
+                "makefile-static",
+                assembled_evidence,
+            )
+        )
+    return items
+
+
 def _structured_items(path: str, data: Any) -> list[dict[str, str]]:
     if not isinstance(data, dict):
         return []
@@ -470,6 +626,8 @@ def scan_inventory(root: Path) -> InventoryReport:
             continue
         if file_path.suffix.lower() == ".py":
             raw_items.extend(_python_items(relative, text))
+        if file_path.name in {"Makefile", "GNUmakefile"}:
+            raw_items.extend(_makefile_items(relative, text))
         if file_path.suffix.lower() in {".ts", ".tsx", ".js", ".jsx"}:
             adapter = (
                 "typescript-static"

@@ -14,7 +14,11 @@ from sourcebound.extractors.inventory import (
     _extract_repository_overview_legacy,
     _inventory_rows_from_items,
 )
-from sourcebound.inventory import InventoryItem, scan_inventory
+from sourcebound.inventory import (
+    InventoryItem,
+    _makefile_is_statically_classifiable,
+    scan_inventory,
+)
 from sourcebound.manifest import load_manifest
 from sourcebound.models import RegionBinding
 from sourcebound.regions import replace_region
@@ -169,6 +173,98 @@ def test_typescript_package_inventory_needs_no_project_execution(tmp_path: Path)
     assert any(item.kind == "api-symbol" and item.name == "start" for item in report.items)
     assert any(item.kind == "test-suite" for item in report.items)
     assert not any(item.name == "//note" for item in report.items)
+
+
+def test_makefile_inventory_is_static_and_ignores_comments_and_special_rules(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "make-repo"
+    root.mkdir()
+    makefile = root / "Makefile"
+    makefile.write_text(
+        "# Public development commands.\n"
+        ".PHONY: test build\n"
+        "PYTHON := python\n\n"
+        "test: MODE = full\n"
+        "test build:\n"
+        "\t$(PYTHON) -m pytest\n\n"
+        "docker/build:\n"
+        "\tdocker build .\n"
+    )
+
+    first = scan_inventory(root)
+    targets = [item for item in first.items if item.kind == "make-target"]
+    assert {(item.name, item.adapter) for item in targets} == {
+        ("build", "makefile-static"),
+        ("docker/build", "makefile-static"),
+        ("test", "makefile-static"),
+    }
+
+    before = {item.name: item.digest for item in targets}
+    makefile.write_text(makefile.read_text().replace("# Public", "# Supported"))
+    comment_only = {
+        item.name: item.digest
+        for item in scan_inventory(root).items
+        if item.kind == "make-target"
+    }
+    assert comment_only == before
+
+    makefile.write_text(makefile.read_text().replace("PYTHON := python", "PYTHON := pypy3"))
+    recipe_change = {
+        item.name: item.digest
+        for item in scan_inventory(root).items
+        if item.kind == "make-target"
+    }
+    assert recipe_change.keys() == before.keys()
+    assert recipe_change["test"] != before["test"]
+    assert recipe_change["build"] != before["build"]
+    assert recipe_change["docker/build"] == before["docker/build"]
+
+    before_phony = recipe_change
+    makefile.write_text(makefile.read_text().replace(".PHONY: test build", ".PHONY: build"))
+    after_phony = {
+        item.name: item.digest
+        for item in scan_inventory(root).items
+        if item.kind == "make-target"
+    }
+    assert after_phony["test"] != before_phony["test"]
+    assert after_phony["build"] == before_phony["build"]
+    assert _makefile_is_statically_classifiable(makefile.read_text())
+    assert not _makefile_is_statically_classifiable(
+        "include generated.mk\n$(PUBLIC_TARGET):\n\t@true\n"
+    )
+    assert not _makefile_is_statically_classifiable(
+        "ifeq ($(MODE),release)\nship:\n\t@true\nendif\n"
+    )
+    assert not _makefile_is_statically_classifiable("%.o: %.c\n\tcc -c $<\n")
+    assert not _makefile_is_statically_classifiable("\t@echo orphan\n")
+
+    phony_only = tmp_path / "phony-only"
+    phony_only.mkdir()
+    (phony_only / "Makefile").write_text(".PHONY: ghost\n")
+    ghost = next(
+        item
+        for item in scan_inventory(phony_only).items
+        if item.kind == "make-target"
+    )
+    assert ghost.name == "ghost"
+
+    separated_recipe = tmp_path / "comment-separated"
+    separated_recipe.mkdir()
+    separated_makefile = separated_recipe / "Makefile"
+    separated_makefile.write_text("test:\n# Why this runs.\n\t@echo one\n")
+    before_recipe = next(
+        item for item in scan_inventory(separated_recipe).items
+        if item.kind == "make-target"
+    )
+    separated_makefile.write_text(
+        separated_makefile.read_text().replace("echo one", "echo two")
+    )
+    after_recipe = next(
+        item for item in scan_inventory(separated_recipe).items
+        if item.kind == "make-target"
+    )
+    assert before_recipe.digest != after_recipe.digest
 
 
 def test_node_monorepo_and_registered_mcp_tools_are_discovered_statically(

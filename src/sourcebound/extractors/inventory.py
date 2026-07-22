@@ -15,6 +15,7 @@ INCLUDED_KINDS = {
     "cli-command",
     "cli-option",
     "mcp-tool",
+    "make-target",
     "package",
     "package-script",
     "runtime-constraint",
@@ -78,7 +79,7 @@ def extract_repository_inventory(
             ref=snapshot.label,
             path=".",
             locator="public-surface",
-            extractor="repository-inventory@1",
+            extractor="repository-inventory@2",
             digest=hashlib.sha256(normalized.encode("utf-8")).hexdigest(),
         ),
     )

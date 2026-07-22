@@ -3,12 +3,14 @@ from __future__ import annotations
 import hashlib
 import json
 import subprocess
+import time
 from pathlib import Path
 
 import pytest
 
 from sourcebound.audit import AuditFinding, audit, finding_fingerprint, write_audit_baseline
 from sourcebound.cli import main
+from sourcebound.corpus import _active_predecessor_markers, scan_corpus
 from sourcebound.errors import ConfigurationError
 from sourcebound.policy import REGISTER_PROFILE, ensure_purpose_contract
 
@@ -107,6 +109,71 @@ def test_archive_and_reasoned_length_allowance_are_explicit(tmp_path: Path) -> N
     assert report.ignored_documents == ("docs/archive/REPORT.md",)
 
 
+def test_repeated_editorial_allowance_reason_is_visible_without_blocking(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    reason = (
+        '<!-- sourcebound:allow section-length reason="This section keeps one '
+        'tightly coupled procedure together" -->'
+    )
+    for name in ("ONE.md", "TWO.md", "THREE.md"):
+        (root / name).write_text(f"# {name}\n\n{reason}\n\nCurrent guidance.\n")
+    _track(root)
+
+    report = audit(root)
+
+    assert report.findings == ()
+    repeated = [
+        finding
+        for finding in report.advisories
+        if finding.rule == "repeated-allowance-reason"
+    ]
+    assert len(repeated) == 1
+    assert "appears 3 times across 3 documents" in repeated[0].detail
+
+
+def test_allowance_examples_in_code_fences_do_not_suppress_or_repeat(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    example = (
+        '```markdown\n<!-- sourcebound:allow doc-length reason="Repeated example '
+        'that must stay inert" -->\n```'
+    )
+    for name in ("ONE.md", "TWO.md", "THREE.md"):
+        (root / name).write_text(f"# {name}\n\n{example}\n\nCurrent guidance.\n")
+    _track(root)
+
+    report = audit(root)
+
+    assert not any(
+        finding.rule == "repeated-allowance-reason"
+        for finding in report.advisories
+    )
+
+
+def test_archive_still_rejects_active_predecessor_markers(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    archive = root / "docs/archive"
+    archive.mkdir(parents=True)
+    predecessor = "clean" + "-docs"
+    (root / ".sourcebound.yml").write_text("version: 1\nbindings: []\n")
+    (archive / "REPORT.md").write_text(
+        "# Historical report\n\n"
+        f"<!-- {predecessor}:policy register-v2 -->\n"
+    )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    report = audit(root)
+
+    assert report.ignored_documents == ("docs/archive/REPORT.md",)
+    assert [
+        (finding.rule, finding.path, finding.line)
+        for finding in report.findings
+    ] == [("predecessor-marker", "docs/archive/REPORT.md", 3)]
+
+
 def test_comprehensiveness_is_not_a_length_allowance(tmp_path: Path) -> None:
     root = _repo(tmp_path)
     body = "\n".join(f"line {index}" for index in range(160))
@@ -198,6 +265,398 @@ def test_audit_runs_corpus_rules_and_accepts_named_reasoned_allowances(tmp_path:
     assert [(finding.rule, finding.line) for finding in report.advisories] == [
         ("provenance", 9),
     ]
+
+
+def test_audit_gates_ignored_predecessor_markers_in_configured_repositories(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    predecessor = "clean" + "-docs"
+    (root / ".sourcebound.yml").write_text("version: 1\nbindings: []\n")
+    (root / "README.md").write_text(
+        "# Project\n\n"
+        f"<!-- {predecessor}:policy register-v2 -->\n"
+        "Current repository guidance stays attached to its defining source.\n"
+    )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    report = audit(root)
+
+    assert [
+        (finding.rule, finding.path, finding.line, finding.detail)
+        for finding in report.findings
+        if finding.rule == "predecessor-marker"
+    ] == [
+        (
+            "predecessor-marker",
+            "README.md",
+            3,
+            "predecessor policy marker is ignored; migrate it to a sourcebound marker",
+        ),
+    ]
+
+
+@pytest.mark.parametrize("separator", ["-", "_"])
+def test_corpus_orders_predecessor_markers_before_other_document_findings(
+    tmp_path: Path,
+    separator: str,
+) -> None:
+    root = _repo(tmp_path)
+    predecessor = "clean" + separator + "docs"
+    (root / "STATUS.md").write_text(
+        "# Status\n\n"
+        f"<!-- {predecessor}:policy register-v2 -->\n"
+    )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    assert [
+        (finding.rule, finding.doc, finding.line)
+        for finding in scan_corpus(root)
+    ] == [
+        ("predecessor-marker", "STATUS.md", 3),
+        ("surface", "STATUS.md", 1),
+    ]
+
+
+def test_audit_does_not_confuse_current_markers_or_plain_prose_for_predecessors(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    (root / "README.md").write_text(
+        "# Project\n\n"
+        "<!-- sourcebound:policy register-v2 -->\n"
+        "Clean docs help readers, but only explicit current markers activate policy.\n"
+    )
+    _track(root)
+
+    report = audit(root)
+
+    assert "predecessor-marker" not in {
+        finding.rule for finding in (*report.findings, *report.advisories)
+    }
+
+
+def test_corpus_ignores_predecessor_markers_in_fenced_examples(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    predecessor = "clean" + "-docs"
+    (root / "README.md").write_text(
+        "# Migration\n\n"
+        "Use this example to recognize the predecessor marker before replacing it.\n\n"
+        "```markdown\n"
+        f"<!-- {predecessor}:policy register-v2 -->\n"
+        "```\n"
+    )
+    _track(root)
+
+    report = audit(root)
+
+    assert "predecessor-marker" not in {
+        finding.rule for finding in (*report.findings, *report.advisories)
+    }
+
+
+@pytest.mark.parametrize(
+    "example",
+    [
+        "- Example:\n\n    ~~~markdown\n"
+        "    <!-- sourcebound:role reference -->\n"
+        "    <!-- {predecessor}:policy register-v2 -->\n"
+        "    ~~~~~\n",
+        "> ```markdown\n"
+        "> <!-- sourcebound:role reference -->\n"
+        "> <!-- {predecessor}:policy register-v2 -->\n"
+        "> `````\n",
+        "- > ~~~markdown\n"
+        "  > <!-- sourcebound:role reference -->\n"
+        "  > <!-- {predecessor}:policy register-v2 -->\n"
+        "  > ~~~~~\n",
+        "- > ```markdown\n"
+        "  > <!-- sourcebound:role reference -->\n"
+        "  > <!-- {predecessor}:policy register-v2 -->\n"
+        "  > `````\n",
+    ],
+)
+def test_corpus_masks_authority_inside_container_fences(
+    tmp_path: Path,
+    example: str,
+) -> None:
+    root = _repo(tmp_path)
+    predecessor = "clean" + "-docs"
+    (root / "README.md").write_text(
+        "# Migration\n\n" + example.format(predecessor=predecessor)
+    )
+    _track(root)
+
+    report = audit(root)
+    profile = next(item for item in report.document_profiles if item.path == "README.md")
+
+    assert profile.role == "overview"
+    assert "predecessor-marker" not in {
+        finding.rule for finding in (*report.findings, *report.advisories)
+    }
+
+
+@pytest.mark.parametrize(
+    "opening",
+    [
+        "> ```markdown\n> example\n\n",
+        "- Example:\n\n    ```markdown\n    example\n",
+    ],
+)
+def test_container_fence_does_not_mask_authority_after_container_exit(
+    opening: str,
+) -> None:
+    predecessor = "clean" + "-docs"
+    text = opening + f"<!-- {predecessor}:policy register-v2 -->\n"
+
+    assert [
+        (line, marker.group())
+        for line, marker in _active_predecessor_markers(text)
+    ] == [(text.count("\n"), f"<!-- {predecessor}:policy register-v2 -->")]
+
+
+def test_corpus_ignores_inline_examples_but_finds_active_predecessor_markers(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    predecessor = "clean" + "_docs"
+    (root / "README.md").write_text(
+        "# Migration\n\n"
+        f"Replace `<!-- {predecessor}:policy register-v2 -->` when it appears as a comment.\n"
+        f"<!-- {predecessor}:policy register-v2 -->\n"
+    )
+    _track(root)
+    active_line = next(
+        line_number
+        for line_number, line in enumerate(
+            (root / "README.md").read_text().splitlines(), start=1
+        )
+        if line.startswith(f"<!-- {predecessor}:")
+    )
+
+    report = audit(root)
+
+    assert [
+        (finding.rule, finding.path, finding.line)
+        for finding in (*report.findings, *report.advisories)
+        if finding.rule == "predecessor-marker"
+    ] == [("predecessor-marker", "README.md", active_line)]
+
+
+def test_corpus_handles_long_unclosed_backtick_runs_in_bounded_time(
+) -> None:
+    predecessor = "clean" + "-docs"
+    text = "x" + ("`" * 1_000_000) + f"<!-- {predecessor}:policy register-v2 -->\n"
+
+    started = time.monotonic()
+    markers = list(_active_predecessor_markers(text))
+    elapsed = time.monotonic() - started
+
+    assert elapsed < 1.0
+    assert [(line, marker.group()) for line, marker in markers] == [
+        (1, f"<!-- {predecessor}:policy register-v2 -->")
+    ]
+
+
+def test_corpus_handles_many_escaped_backticks_in_linear_time() -> None:
+    predecessor = "clean" + "-docs"
+    text = (r"\`" * 100_000) + f"<!-- {predecessor}:policy register-v2 -->\n"
+
+    started = time.monotonic()
+    markers = list(_active_predecessor_markers(text))
+    elapsed = time.monotonic() - started
+
+    assert elapsed < 1.0
+    assert [(line, marker.group()) for line, marker in markers] == [
+        (1, f"<!-- {predecessor}:policy register-v2 -->")
+    ]
+
+
+@pytest.mark.parametrize("indent", ["    ", "\t", "  \t"])
+def test_corpus_ignores_predecessor_markers_in_indented_code(
+    tmp_path: Path,
+    indent: str,
+) -> None:
+    root = _repo(tmp_path)
+    predecessor = "clean" + "-docs"
+    (root / "README.md").write_text(
+        "# Migration\n\n"
+        f"{indent}<!-- {predecessor}:policy register-v2 -->\n"
+    )
+    _track(root)
+
+    report = audit(root)
+
+    assert "predecessor-marker" not in {
+        finding.rule for finding in (*report.findings, *report.advisories)
+    }
+
+
+def test_corpus_keeps_three_space_indented_comments_active(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    predecessor = "clean" + "-docs"
+    (root / "README.md").write_text(
+        "# Migration\n\n"
+        f"   <!-- {predecessor}:policy register-v2 -->\n"
+    )
+    _track(root)
+    active_line = next(
+        line_number
+        for line_number, line in enumerate(
+            (root / "README.md").read_text().splitlines(), start=1
+        )
+        if line.startswith(f"   <!-- {predecessor}:")
+    )
+
+    report = audit(root)
+
+    assert [
+        (finding.rule, finding.path, finding.line)
+        for finding in (*report.findings, *report.advisories)
+        if finding.rule == "predecessor-marker"
+    ] == [("predecessor-marker", "README.md", active_line)]
+
+
+def test_corpus_keeps_indented_list_comments_active(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    predecessor = "clean" + "-docs"
+    (root / "README.md").write_text(
+        "# Migration\n\n"
+        "- Replace active legacy comments.\n"
+        f"    <!-- {predecessor}:policy register-v2 -->\n"
+    )
+    _track(root)
+    marker_line = next(
+        number
+        for number, line in enumerate((root / "README.md").read_text().splitlines(), 1)
+        if predecessor in line
+    )
+
+    report = audit(root)
+
+    assert [
+        (finding.rule, finding.path, finding.line)
+        for finding in (*report.findings, *report.advisories)
+        if finding.rule == "predecessor-marker"
+    ] == [("predecessor-marker", "README.md", marker_line)]
+
+
+def test_corpus_keeps_comments_between_escaped_backticks_active(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    predecessor = "clean" + "-docs"
+    (root / "README.md").write_text(
+        "# Migration\n\n"
+        f"\\`<!-- {predecessor}:policy register-v2 -->\\`\n"
+    )
+    _track(root)
+    marker_line = next(
+        number
+        for number, line in enumerate((root / "README.md").read_text().splitlines(), 1)
+        if predecessor in line
+    )
+
+    report = audit(root)
+
+    assert [
+        (finding.rule, finding.path, finding.line)
+        for finding in (*report.findings, *report.advisories)
+        if finding.rule == "predecessor-marker"
+    ] == [("predecessor-marker", "README.md", marker_line)]
+
+
+def test_corpus_ignores_predecessor_markers_in_multiline_code_spans(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    predecessor = "clean" + "-docs"
+    (root / "README.md").write_text(
+        "# Migration\n\n"
+        "`example\n"
+        f"<!-- {predecessor}:purpose -->\n"
+        "ends`\n"
+    )
+    _track(root)
+
+    report = audit(root)
+
+    assert "predecessor-marker" not in {
+        finding.rule for finding in (*report.findings, *report.advisories)
+    }
+
+
+def test_corpus_does_not_close_fences_with_trailing_content(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    predecessor = "clean" + "-docs"
+    (root / "README.md").write_text(
+        "# Migration\n\n"
+        "```markdown\n"
+        "```not-a-close\n"
+        f"<!-- {predecessor}:purpose -->\n"
+        "```\n"
+    )
+    _track(root)
+
+    report = audit(root)
+
+    assert "predecessor-marker" not in {
+        finding.rule for finding in (*report.findings, *report.advisories)
+    }
+
+
+@pytest.mark.parametrize("separator", ["-", "_"])
+@pytest.mark.parametrize(
+    "comment",
+    [
+        "<!-- {marker}:purpose -->",
+        "{{/* {marker}:policy register-v2 */}}",
+    ],
+)
+def test_corpus_finds_markdown_and_mdx_predecessor_markers(
+    tmp_path: Path,
+    separator: str,
+    comment: str,
+) -> None:
+    root = _repo(tmp_path)
+    predecessor = "clean" + separator + "docs"
+    (root / "README.mdx").write_text(
+        "# Migration\n\n" + comment.format(marker=predecessor) + "\n"
+    )
+    _track(root)
+
+    report = audit(root)
+
+    assert [
+        (finding.rule, finding.path, finding.line)
+        for finding in (*report.findings, *report.advisories)
+        if finding.rule == "predecessor-marker"
+    ] == [("predecessor-marker", "README.mdx", 3)]
+
+
+@pytest.mark.parametrize(
+    ("separator", "comment"),
+    [
+        (" ", "<!-- {marker}:policy register-v2 -->"),
+        ("-", "<!-- {marker} policy register-v2 -->"),
+        ("_", "{{/* {marker} policy register-v2 */}}"),
+        (None, "{{/* sourcebound:policy register-v2 */}}"),
+    ],
+)
+def test_corpus_ignores_malformed_and_current_policy_comments(
+    tmp_path: Path,
+    separator: str | None,
+    comment: str,
+) -> None:
+    root = _repo(tmp_path)
+    marker = "sourcebound" if separator is None else "clean" + separator + "docs"
+    text = comment.format(marker=marker)
+    (root / "README.mdx").write_text(f"# Project\n\n{text}\n")
+    _track(root)
+
+    report = audit(root)
+
+    assert "predecessor-marker" not in {
+        finding.rule for finding in (*report.findings, *report.advisories)
+    }
 
 
 def test_audit_requires_the_purpose_contract_before_body_content(tmp_path: Path) -> None:
@@ -325,6 +784,405 @@ def test_generated_context_bundles_are_not_canonical_corpus_pages(tmp_path: Path
     assert report.ignored_documents == (".sourcebound/context/contributor.md",)
 
 
+def test_generated_reader_output_is_reference_not_authored_task(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    generated = root / "docs/generated/system-flow.md"
+    generated.parent.mkdir(parents=True)
+    generated.write_text(
+        "<!-- sourcebound:role reference -->\n"
+        '<figure data-layout="position annotation verification">\n'
+        "<figcaption>Repository facts flow into a deterministic check.</figcaption>\n"
+        "</figure>\n"
+    )
+    tutorial = root / "docs/generated/tutorial.md"
+    tutorial.write_text(
+        "# Queue tutorial\n\n"
+        "Follow this generated exercise to learn the queue recovery sequence.\n"
+    )
+    _track(root)
+
+    report = audit(root, preview_policy=True)
+
+    profile = next(
+        item for item in report.document_profiles if item.path == "docs/generated/system-flow.md"
+    )
+    assert profile.role == "reference"
+    tutorial_profile = next(
+        item for item in report.document_profiles if item.path == "docs/generated/tutorial.md"
+    )
+    assert tutorial_profile.role == "tutorial"
+    assert not any(
+        finding.path == "docs/generated/system-flow.md"
+        and finding.rule in {"purpose-contract", "nominalization-density"}
+        for finding in report.advisories
+    )
+
+
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "REFERENCES.md",
+        "SCHEMAS.md",
+        "STANDARDS.md",
+        "SPECS.md",
+        "POLICIES.md",
+        "CONTRACTS.md",
+    ],
+)
+def test_plural_lookup_filenames_remain_reference_pages(
+    tmp_path: Path,
+    filename: str,
+) -> None:
+    root = _repo(tmp_path)
+    (root / filename).write_text(
+        f"# {Path(filename).stem.title()}\n\n"
+        "Look up the exact repository contract in this page.\n"
+    )
+    _track(root)
+
+    report = audit(root, preview_policy=True)
+
+    profile = next(item for item in report.document_profiles if item.path == filename)
+    assert profile.role == "reference"
+    assert not any(
+        finding.path == filename and finding.rule == "purpose-contract"
+        for finding in report.advisories
+    )
+
+
+def test_help_actions_and_architecture_receipts_keep_their_reader_jobs(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    pages = {
+        "docs/help/index.md": "# Help\n\nChoose the task that matches the current operation.\n",
+        "docs/help/review-and-approve.md": "# Review and approve\n\nReview the exact payload before approval.\n",
+        "docs/help/read-a-receipt.md": "# Read a receipt\n\nUse the recorded outcome to check the operation.\n",
+        "docs/help/review-a-recovery.md": "# Review a recovery\n\nApprove only the supported recovery payload.\n",
+        "docs/operations/recovery.md": "# Recovery\n\nDiagnose the failed operation, apply the bounded repair, then verify the result.\n",
+        "docs/help/inspect-receipts.md": "# Inspect receipts\n\nInspect the outcome without changing it.\n",
+        "docs/help/developer-reference.md": "# Developer reference\n\nLook up the current integration boundary.\n",
+        "docs/decisions/0001-split-receipts.md": "# Split receipts\n\n## Decision\n\nKeep public and private evidence separate.\n",
+        "artifacts/evidence/local-receipt.md": "# Local receipt\n\nObserved result from the local verification run.\n",
+    }
+    for relative, content in pages.items():
+        path = root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content)
+    _track(root)
+
+    report = audit(root)
+    profiles = {profile.path: profile.role for profile in report.document_profiles}
+
+    assert profiles == {
+        "artifacts/evidence/local-receipt.md": "evidence",
+        "docs/decisions/0001-split-receipts.md": "architecture",
+        "docs/help/index.md": "component-overview",
+        "docs/help/developer-reference.md": "reference",
+        "docs/help/inspect-receipts.md": "task",
+        "docs/help/read-a-receipt.md": "task",
+        "docs/help/review-and-approve.md": "task",
+        "docs/help/review-a-recovery.md": "task",
+        "docs/operations/recovery.md": "troubleshooting",
+    }
+    assert not any(
+        finding.rule == "process-artifact"
+        for finding in report.advisories
+    )
+
+
+def test_audit_classifies_audits_as_evidence_and_flags_unanchored_current_claims(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    (root / "AUDIT.md").write_text(
+        "# Security audit\n\nThe current result closes every reproduced hole.\n"
+    )
+    _track(root)
+
+    report = audit(root)
+
+    profiles = {profile.path: profile.role for profile in report.document_profiles}
+    assert profiles["AUDIT.md"] == "evidence"
+    assert [
+        (finding.rule, finding.path, finding.detail)
+        for finding in report.advisories
+        if finding.rule == "evidence-time-horizon"
+    ] == [
+        (
+            "evidence-time-horizon",
+            "AUDIT.md",
+            "replace relative-time evidence claims with a capture date or immutable commit",
+        )
+    ]
+
+
+def test_audit_accepts_dated_evidence(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    (root / "AUDIT.md").write_text(
+        "# Security audit\n\nCaptured 2026-07-21.\n\n"
+        "The current result closes every reproduced hole.\n"
+    )
+    _track(root)
+
+    report = audit(root)
+
+    assert "evidence-time-horizon" not in {
+        finding.rule for finding in report.advisories
+    }
+
+
+@pytest.mark.parametrize(
+    "claim",
+    [
+        "The build passes today.",
+        "The build currently passes.",
+        "This archive is not current proof, but the current build passes.",
+    ],
+)
+def test_audit_flags_affirmative_relative_claims_per_clause(
+    tmp_path: Path,
+    claim: str,
+) -> None:
+    root = _repo(tmp_path)
+    (root / "AUDIT.md").write_text(f"# Build audit\n\n{claim}\n")
+    _track(root)
+
+    report = audit(root)
+
+    assert "evidence-time-horizon" in {
+        finding.rule for finding in report.advisories
+    }
+
+
+def test_audit_accepts_only_a_commit_that_exists_in_the_repository(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    (root / "seed.txt").write_text("seed\n")
+    _track(root)
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "-c",
+            "user.name=Test",
+            "-c",
+            "user.email=test@example.invalid",
+            "commit",
+            "-qm",
+            "seed",
+        ],
+        check=True,
+    )
+    commit = subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "HEAD"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+    (root / "AUDIT.md").write_text(
+        f"# Security audit\n\nCommit {commit}.\n\n"
+        "The current result closes every reproduced hole.\n"
+    )
+    _track(root)
+
+    report = audit(root)
+
+    assert "evidence-time-horizon" not in {
+        finding.rule for finding in report.advisories
+    }
+
+
+def test_audit_accepts_a_multiline_snapshot_receipt(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    (root / "seed.txt").write_text("seed\n")
+    _track(root)
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(root),
+            "-c",
+            "user.name=Test",
+            "-c",
+            "user.email=test@example.invalid",
+            "commit",
+            "-qm",
+            "seed",
+        ],
+        check=True,
+    )
+    commit = subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "HEAD"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+    (root / "AUDIT.md").write_text(
+        "# Security audit\n\n"
+        "> **Snapshot, not current authority.** This audit records commit\n"
+        f"> [{commit[:7]}](https://example.invalid/commit/{commit})\n"
+        "> as inspected on 2026-07-21.\n\n"
+        "The current result closes every reproduced hole.\n"
+    )
+    _track(root)
+
+    report = audit(root)
+
+    assert "evidence-time-horizon" not in {
+        finding.rule for finding in report.advisories
+    }
+
+
+@pytest.mark.parametrize(
+    "invalid_anchor",
+    [
+        "Captured 2026-99-99.",
+        "Captured 2099-01-01.",
+        "Commit " + ("a" * 40) + ".",
+    ],
+)
+def test_audit_rejects_invalid_evidence_anchors(
+    tmp_path: Path,
+    invalid_anchor: str,
+) -> None:
+    root = _repo(tmp_path)
+    (root / "AUDIT.md").write_text(
+        f"# Security audit\n\n{invalid_anchor}\n\n"
+        "The current result closes every reproduced hole.\n"
+    )
+    _track(root)
+
+    report = audit(root)
+
+    assert "evidence-time-horizon" in {
+        finding.rule for finding in report.advisories
+    }
+
+
+def test_evidence_time_horizon_ignores_examples_and_negated_boundaries(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    evidence = root / "evidence/README.md"
+    evidence.parent.mkdir()
+    evidence.write_text(
+        "# Historical receipts\n\n"
+        "Inspect a release-scoped receipt without mistaking it for a claim about the current build.\n"
+        "Past receipts are not current proof and must not be treated as current behavior.\n\n"
+        "```text\nThe current result passes.\nCaptured 2026-99-99.\n```\n"
+        "Current documentation, not this archive, owns supported behavior.\n"
+    )
+    _track(root)
+
+    report = audit(root)
+
+    assert "evidence-time-horizon" not in {
+        finding.rule for finding in report.advisories
+    }
+
+
+@pytest.mark.parametrize(
+    ("path", "expected_role"),
+    [
+        ("docs/EVALUATION.md", "task"),
+        ("docs/REVIEW_LEDGER.md", "reference"),
+        ("contracts/API.md", "reference"),
+        ("schemas/EVENTS.md", "reference"),
+        ("standards/WRITING.md", "reference"),
+        ("policies/SECURITY.md", "reference"),
+        ("apis/HTTP.md", "reference"),
+    ],
+)
+def test_ambiguous_operational_names_and_reference_directories_keep_reader_roles(
+    tmp_path: Path,
+    path: str,
+    expected_role: str,
+) -> None:
+    root = _repo(tmp_path)
+    document = root / path
+    document.parent.mkdir(parents=True, exist_ok=True)
+    document.write_text(
+        "# Document\n\nUse this page to inspect the supported interface.\n"
+    )
+    _track(root)
+
+    report = audit(root)
+
+    assert report.document_profiles[0].role == expected_role
+
+
+@pytest.mark.parametrize(
+    "unrelated_anchor",
+    ["A prior run completed on 2026-01-02.", "Example commit " + ("b" * 40) + "."],
+)
+def test_audit_does_not_let_later_dates_or_commits_anchor_current_evidence(
+    tmp_path: Path,
+    unrelated_anchor: str,
+) -> None:
+    root = _repo(tmp_path)
+    (root / "AUDIT.md").write_text(
+        "# Security audit\n\n"
+        "The current result closes every reproduced hole.\n\n"
+        + "\n".join(f"Context line {index}." for index in range(12))
+        + f"\n\n{unrelated_anchor}\n"
+    )
+    _track(root)
+
+    report = audit(root)
+
+    assert "evidence-time-horizon" in {
+        finding.rule for finding in report.advisories
+    }
+
+
+def test_top_level_dispatch_is_process_residue_but_domain_dispatch_help_is_not(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    (root / "DISPATCH.md").write_text(
+        "# Executor dispatch\n\n"
+        "The next executor should pick up this branch and verify the worktree.\n"
+    )
+    help_page = root / "docs/help/check-an-uncertain-dispatch.md"
+    help_page.parent.mkdir(parents=True)
+    help_page.write_text(
+        "# Check an uncertain dispatch\n\n"
+        "Inspect the delivery record before confirming the dispatch state.\n"
+    )
+    _track(root)
+
+    report = audit(root)
+    process_paths = {
+        finding.path
+        for finding in report.advisories
+        if finding.rule == "process-artifact"
+    }
+
+    assert process_paths == {"DISPATCH.md"}
+
+
+def test_explicit_evidence_role_keeps_an_intentional_generated_report(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    report_path = root / "generated/setup-report.md"
+    report_path.parent.mkdir()
+    report_path.write_text(
+        "# Generated setup report\n\n"
+        "<!-- sourcebound:role evidence -->\n\n"
+        "Captured 2026-07-21.\n\nThe report records the generated fixture result.\n"
+    )
+    _track(root)
+
+    report = audit(root)
+
+    assert not any(
+        finding.rule == "process-artifact"
+        for finding in (*report.findings, *report.advisories)
+    )
+
+
 def test_hidden_configuration_markdown_is_not_reader_documentation(tmp_path: Path) -> None:
     root = _repo(tmp_path)
     command = root / ".agent/commands/STATUS.md"
@@ -338,6 +1196,24 @@ def test_hidden_configuration_markdown_is_not_reader_documentation(tmp_path: Pat
     assert report.ok
     assert report.documents == ("README.md",)
     assert report.ignored_documents == (".agent/commands/STATUS.md",)
+
+
+def test_hidden_markdown_still_rejects_active_predecessor_markers(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    predecessor = "clean" + "-docs"
+    workflow_note = root / ".github/WORKFLOW.md"
+    workflow_note.parent.mkdir(parents=True)
+    workflow_note.write_text(
+        "# Workflow\n\n"
+        f"<!-- {predecessor}:policy register-v2 -->\n"
+    )
+    _track(root)
+
+    report = audit(root)
+
+    assert [(finding.rule, finding.path) for finding in report.advisories] == [
+        ("predecessor-marker", ".github/WORKFLOW.md"),
+    ]
 
 
 def test_packaged_standard_assets_are_not_reader_documents(tmp_path: Path) -> None:
@@ -397,6 +1273,7 @@ def test_unregistered_documents_preview_compatible_policy_without_gating_it(
     assert assessment.findings == ()
     assert dict(assessment.advisory_totals) == {
         "broken-local-link": 1,
+        "evidence-time-horizon": 1,
         "process-artifact": 1,
     }
     assert report.findings == ()
@@ -404,6 +1281,7 @@ def test_unregistered_documents_preview_compatible_policy_without_gating_it(
     assert report.policy_preview
     assert dict(report.advisory_totals) == {
         "broken-local-link": 1,
+        "evidence-time-horizon": 1,
         "preamble-contract": 1,
         "prohibited-booster": 1,
         "process-artifact": 1,
@@ -556,6 +1434,46 @@ def test_invalid_explicit_role_fails_instead_of_silently_using_a_guess(
     ]
 
 
+def test_role_and_register_examples_do_not_activate_policy(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    tutorial = root / "docs/tutorial.md"
+    tutorial.parent.mkdir()
+    tutorial.write_text(
+        "# Tutorial\n\n"
+        "Show readers the marker syntax without activating it.\n\n"
+        "```markdown\n"
+        "<!-- sourcebound:role reference -->\n"
+        f"{REGISTER_PROFILE}\n"
+        "```\n"
+        "Use the next step to verify the example.\n"
+    )
+    _track(root)
+
+    report = audit(root)
+
+    assert report.document_profiles[0].role == "tutorial"
+    assert report.document_profiles[0].registered is False
+    assert report.findings == ()
+
+
+def test_mdx_exported_marker_strings_do_not_activate_authority(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    tutorial = root / "docs/tutorial.mdx"
+    tutorial.parent.mkdir()
+    tutorial.write_text(
+        'export const example = "<!-- sourcebound:role reference -->"\n\n'
+        'export const policy = "<!-- sourcebound:policy register-v2 -->"\n\n'
+        "# Tutorial\n\nFollow the steps to verify the example.\n"
+    )
+    _track(root)
+
+    report = audit(root)
+
+    assert report.document_profiles[0].role == "tutorial"
+    assert report.document_profiles[0].registered is False
+    assert report.findings == ()
+
+
 def test_agent_procedure_keeps_its_execution_contract_under_registration(
     tmp_path: Path,
 ) -> None:
@@ -655,7 +1573,10 @@ def test_contributor_and_compromise_records_keep_their_native_jobs(
     assert "purpose-contract" not in dict(report.advisory_totals)
 
 
-def test_corpus_advisories_are_bounded_without_hiding_totals(tmp_path: Path) -> None:
+def test_corpus_advisories_are_bounded_without_hiding_totals(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     root = _repo(tmp_path)
     for index in range(12):
         (root / f"STATUS-{index}.md").write_text(
@@ -671,7 +1592,20 @@ def test_corpus_advisories_are_bounded_without_hiding_totals(tmp_path: Path) -> 
     ]
     assert len(process) == 3
     assert dict(report.advisory_totals)["process-artifact"] == 12
+    assert len([
+        finding
+        for finding in report.advisory_occurrences
+        if finding.rule == "process-artifact"
+    ]) == 12
     assert report.ok
+
+    assert main(["--root", str(root), "audit", "--format", "json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert len([
+        finding
+        for finding in payload["advisory_occurrences"]
+        if finding["rule"] == "process-artifact"
+    ]) == 12
 
 
 def test_audit_uses_canonical_document_identity_for_symlink_aliases(
@@ -699,6 +1633,9 @@ def test_link_checks_use_repository_identity_and_ignore_literal_examples(
     root = _repo(tmp_path)
     docs = root / "docs"
     docs.mkdir()
+    source = root / "src/example file.ts"
+    source.parent.mkdir()
+    source.write_text("export const value = 1\nexport const other = 2\n")
     tracked = docs / "present.md"
     tracked.write_text("# Present\n")
     (docs / "guide.md").write_text("# Guide\n")
@@ -706,6 +1643,7 @@ def test_link_checks_use_repository_identity_and_ignore_literal_examples(
         "# Project\n\n"
         "[Sparse target](docs/present.md)\n"
         "[Repository root](/docs/present.md)\n"
+        "[Missing root document](/docs/missing-root.md)\n"
         "[Extensionless](docs/guide)\n"
         "[Published route](/handbook/engineering/start)\n"
         "[Template ellipsis](…)\n"
@@ -727,12 +1665,221 @@ def test_link_checks_use_repository_identity_and_ignore_literal_examples(
         if finding.rule == "broken-local-link"
     ]
     assert [(finding.rule, finding.detail) for finding in link_findings] == [
+        ("broken-local-link", "target does not exist: /docs/missing-root.md"),
         ("broken-local-link", "target does not exist: …"),
         ("broken-local-link", "target does not exist: docs/<package>/README.md"),
-        ("broken-local-link", "target does not exist: <docs/also-missing.md>"),
     ]
-    assert dict(report.advisory_totals)["broken-local-link"] == 4
+    assert dict(report.advisory_totals)["broken-local-link"] == 5
     assert not report.repository_integrity_enforced
+
+
+def test_local_link_fragments_resolve_rendered_markdown_anchors(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    docs = root / "docs"
+    docs.mkdir()
+    (docs / "target.md").write_text(
+        "# Café guide\n\n"
+        "## Use `sourcebound check`\n\n"
+        "## Server &amp; client components\n\n"
+        "## Repeated heading\n\n"
+        "## Repeated heading\n\n"
+        '<a id="manual-anchor"></a>\n'
+    )
+    (root / "README.md").write_text(
+        "# Project\n\n"
+        "[Encoded heading](docs/target.md#caf%C3%A9-guide)\n"
+        "[Inline code heading](docs/target.md#use-sourcebound-check)\n"
+        "[Punctuation spacing](docs/target.md#server--client-components)\n"
+        "[Duplicate heading](docs/target.md#repeated-heading-1)\n"
+        "[Explicit anchor](docs/target.md#manual-anchor)\n"
+        "[Same page](#project)\n"
+        "[Source lines](src/example%20file.ts#L1-L2)\n"
+        "[Missing fragment](docs/target.md#missing-heading)\n"
+        "[External fragment](https://example.com/docs#not-local)\n"
+    )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    report = audit(root)
+
+    assert [
+        (finding.rule, finding.detail)
+        for finding in report.advisories
+        if finding.rule == "broken-local-fragment"
+    ] == [
+        (
+            "broken-local-fragment",
+            "target fragment does not exist: docs/target.md#missing-heading",
+        )
+    ]
+
+
+def test_registered_repository_keeps_inferred_fragments_advisory(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    (root / ".sourcebound.yml").write_text("version: 1\nbindings: []\n")
+    (root / "README.md").write_text(
+        "# Project\n\n[Missing section](#not-a-section)\n"
+    )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    report = audit(root)
+
+    assert report.findings == ()
+    assert [finding.rule for finding in report.advisories] == [
+        "broken-local-fragment"
+    ]
+
+
+def test_duplicate_primary_headings_are_an_information_architecture_advisory(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    (root / "README.md").write_text(
+        "# Project\n\n"
+        "## Context request\n\nFirst owner.\n\n"
+        "### Detail\n\n"
+        "## Context request\n\nSecond owner.\n"
+    )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    report = audit(root)
+
+    assert [
+        (finding.rule, finding.line)
+        for finding in report.advisories
+        if finding.rule == "duplicate-heading"
+    ] == [("duplicate-heading", 9)]
+
+
+def test_duplicate_lower_or_different_level_headings_do_not_trigger_primary_advisory(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    (root / "README.md").write_text(
+        "# Project\n\n"
+        "## Contract\n\n"
+        "### Contract\n\n"
+        "### Detail\n\n"
+        "### Detail\n"
+    )
+    subprocess.run(["git", "-C", str(root), "add", "."], check=True)
+
+    report = audit(root)
+
+    assert not any(
+        finding.rule == "duplicate-heading" for finding in report.advisories
+    )
+
+
+def test_inline_document_paths_remain_advisory_without_an_intent_contract(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    docs = root / "docs"
+    docs.mkdir()
+    (root / ".sourcebound.yml").write_text("version: 1\nbindings: []\n")
+    (root / "STATUS.md").write_text("# Status\n")
+    (docs / "present.md").write_text("# Present\n")
+    (docs / "guide.md").write_text(
+        "# Guide\n\n"
+        '<!-- sourcebound:allow-inline-document target="docs/generated-later.md" '
+        'reason="The documented command creates this reserved output" -->\n'
+        '<!-- sourcebound:allow-inline-document target="docs/weak.md" reason="future" -->\n'
+        '`<!-- sourcebound:allow-inline-document target="docs/inline-grant.md" '
+        'reason="Inline code must not grant an exception" -->`\n'
+        "Read `docs/present.md` and root `STATUS.md`.\n"
+        "A setup command creates `docs/generated-later.md`.\n"
+        "A vague exception cannot hide `docs/weak.md`.\n"
+        "Inline example cannot hide `docs/inline-grant.md`.\n"
+        "The stale receipt is `docs/PROGRAM_REPORT_99.md`.\n"
+        "Ignore `module.py:12`, `docs/*.md`, and `docs/<name>.md`.\n\n"
+        "```markdown\n"
+        "docs/FENCED_MISSING.md\n```\n"
+    )
+    _track(root)
+
+    report = audit(root)
+
+    assert [
+        (finding.rule, finding.path, finding.detail)
+        for finding in report.advisories
+        if finding.rule == "missing-inline-document"
+    ] == [
+        (
+            "missing-inline-document",
+            "docs/guide.md",
+            "verify whether this inline document path should exist: docs/weak.md",
+        ),
+        (
+            "missing-inline-document",
+            "docs/guide.md",
+            "verify whether this inline document path should exist: docs/inline-grant.md",
+        ),
+        (
+            "missing-inline-document",
+            "docs/guide.md",
+            "verify whether this inline document path should exist: docs/PROGRAM_REPORT_99.md",
+        ),
+    ]
+
+
+def test_fenced_inline_document_allowance_does_not_grant_an_exception(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    docs = root / "docs"
+    docs.mkdir()
+    (docs / "guide.md").write_text(
+        "# Guide\n\n"
+        "```markdown\n"
+        '<!-- sourcebound:allow-inline-document target="docs/fenced-grant.md" '
+        'reason="Fenced examples must not grant an exception" -->\n'
+        "```\n\n"
+        "Read `docs/fenced-grant.md`.\n"
+    )
+    _track(root)
+
+    report = audit(root)
+
+    assert any(
+        finding.rule == "missing-inline-document"
+        and finding.path == "docs/guide.md"
+        and finding.detail.endswith("docs/fenced-grant.md")
+        for finding in report.advisories
+    )
+    assert report.ok
+
+
+def test_inline_document_negative_and_runtime_examples_never_become_gates(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    (root / ".sourcebound.yml").write_text("version: 1\nbindings: []\n")
+    (root / "GUIDE.md").write_text(
+        "# Path states\n\n"
+        "The historical `docs/OLD.md` no longer exists.\n"
+        "Without `rules.md`, the command uses its fallback.\n"
+        "Each run may create `dispatch.md`; a user can add `notes.md`.\n"
+    )
+    _track(root)
+
+    report = audit(root)
+    inline = [
+        finding
+        for finding in report.advisories
+        if finding.rule == "missing-inline-document"
+    ]
+
+    assert report.ok
+    assert {finding.detail.rsplit(": ", 1)[-1] for finding in inline} == {
+        "docs/OLD.md",
+        "rules.md",
+        "dispatch.md",
+    }
+    assert dict(report.advisory_totals)["missing-inline-document"] == 4
 
 
 def test_placeholder_links_are_role_scoped_and_parse_complete_destinations(

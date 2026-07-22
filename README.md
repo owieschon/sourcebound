@@ -55,6 +55,8 @@ Use `uv tool install sourcebound` instead when `uv` owns your command-line tools
 
 After reviewing the assessment, inspect the files that `init` proposes before accepting its gate:
 
+<!-- sourcebound:allow-inline-document target=".sourcebound/repository-surface.md" reason="Init conditionally creates this reserved output for an established unregistered README" -->
+
 ```bash
 sourcebound init --no-model
 git diff -- .sourcebound.yml .sourcebound/repository-surface.md README.md llms.txt

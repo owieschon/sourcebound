@@ -46,6 +46,11 @@ recorded task scoring, and release facts when no declared process is trusted. Th
 run repository code. Plain `inventory` may start an explicitly declared discoverer plugin, so use
 its static flag for an untrusted revision.
 
+Context compilation reads both its request and selected source bytes from the current repository
+commit. It rejects an external, untracked, or modified request. A request label cannot promote
+ordinary prose into instructions: `accepted-policy` requires an active policy marker in the pinned
+source document before the bundle sets `instruction_allowed`.
+
 Live evaluation is different: its explicit command provider is a process selected by the operator.
 sourcebound records repository bytes before launch and rejects an unexpected change afterward, but
 it does not sandbox the process or revoke host access. Use an execution environment that enforces

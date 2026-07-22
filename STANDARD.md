@@ -7,7 +7,7 @@ STANDARD.md is the canonical writing and documentation policy packaged with Sour
 
 **[Start with the governing principle](#the-one-principle-everything-else-follows)**.
 
-The [pre-publish checklist](#pre-publish-checklist) is the proof surface for an authored review.
+The [pre-publish checklist](#8-pre-publish-checklist) is the proof surface for an authored review.
 
 <!-- sourcebound:allow audience reason="This standard names agent-workflow signals as policy examples rather than addressing an agent" -->
 
@@ -576,11 +576,10 @@ advisory judge owns them. Each rule is stated so a human can run it today; none 
 brittle regex, because a pattern pretending to judge purpose or pedagogy misfires in both
 directions.
 
-- **An executed or superseded plan is process exhaust; a live plan is a reference.** The
-  filename does not separate them: `EVAL_PLAN.md` is an active landing page, while a
-  `RESEED_PLAN.md` whose first line reads "EXECUTED by Program 9" is history. Read the status
-  line, not the name. Instead of a filename rule, an LLM-judge reads the opening lines and asks
-  whether the plan's work is finished.
+- **An executed or superseded plan is process exhaust; a live plan is a reference.** A filename
+  cannot separate them: two files ending in `_PLAN.md` can differ only because one's opening says
+  the work is complete. Read the status line, not the name. Instead of a filename rule, an
+  LLM-judge reads the opening lines and asks whether the plan's work is finished.
 - **A doc about agent operation is not a doc written for a future agent.** An agent profile
   legitimately says "worktree" and "DoD table" because that is its subject; the
   vocabulary-density check flags it anyway. Instead of raising the threshold, judge the second
@@ -588,12 +587,19 @@ directions.
 - **Each section leads with its takeaway.** A section whose first sentence is "see the table"
   buries its point, and no token pattern detects a missing lead. Instead of a mechanical check,
   an LLM-judge scoring the first sentence of each section is where this one slots in.
+- **An inline document path is not necessarily a link contract.** It can name a historical file,
+  an intentionally absent fallback, or output that a later command creates. Report an unresolved
+  inline path for review; block only a broken Markdown link or another explicit path-use contract.
+- **A heading fragment inherits its renderer's slug rules.** Verify explicit HTML anchors exactly.
+  Report an unresolved inferred heading fragment for review unless the repository declares the
+  renderer and slug contract; a generic Markdown policy marker does not grant that authority.
 
-**A rule enforced mechanically is a floor, not a finish.** This document's own no-em-dash rule,
-applied by find-replace, once turned every em dash into a double hyphen: rule-compliant, and a
-typewriter-ism in the one file that cannot afford one. The repair rephrased each line by hand,
-choosing a colon, a period, or a new structure according to the line's job. Only a reviewer can
-choose. That is the same seam as the sentence gate and the three rules above:
+**A rule enforced mechanically is a floor, not a finish.** A former blanket no-em-dash rule,
+applied by find-replace, once turned every em dash into a double hyphen: mechanically compliant,
+and a typewriter-ism in the one file that could not afford one. The rule was removed rather than
+pretending punctuation alone determines register. The repair rephrased each line by hand, choosing
+a colon, a period, or a new structure according to the line's job. Only a reviewer can choose.
+That is the same seam as the sentence gate and the three rules above:
 a checker enforces the letter of a rule, but whether the result reads well is the judgment it
 cannot make. Read every mechanical pass as the floor you start from, never the standard you ship.
 

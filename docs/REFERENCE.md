@@ -136,6 +136,14 @@ belongs in reader-facing documentation; add the exact ignore when it does not.
 An unselected cataloged item remains a cataloged item. This policy does not
 declare that every detected API, option, or schema needs prose.
 
+Static inventory recognizes concrete target declarations in `Makefile` and
+`GNUmakefile` without running `make`. It records each target's declarations,
+recipes, referenced top-level variables, and phony status. Includes,
+conditionals, generated targets, custom recipe prefixes, pattern rules, and
+other dynamic syntax remain unknown during impact planning instead of receiving
+a static-coverage claim. A changed top-level assignment that cannot be traced to
+a concrete target also remains unknown.
+
 ## Review contracts
 
 `review_contracts` declare observe-only relationships between exact source and documentation
@@ -333,6 +341,44 @@ Sourcebound checks that the named Markdown page exists and names the replacement
 current public change, vouch for replacement behavior, or carry across base revisions. The record
 states why a past public surface no longer has a source-to-document link at head.
 
+## Context request
+
+A tracked `sourcebound.context-request.v2` object pins a context selection to the repository's
+current commit. Its top-level fields are exact: `schema`, `budget_bytes`, and `items`.
+`budget_bytes` is a positive integer. The compiler reads the request and selected sources from
+`HEAD`, rejects worktree bytes that differ from that commit, and records the request path and
+SHA-256 in the `sourcebound.context-bundle.v2` result.
+
+Each item uses these fields:
+
+| Field | Contract |
+| --- | --- |
+| `id` | Non-empty identifier unique within the request |
+| `kind` | `example`, `fact`, `history`, `hypothesis`, `instruction`, `policy`, or `projection` |
+| `path` | Repository-relative UTF-8 file that exists at the pinned commit |
+| `start_line`, `end_line` | Inclusive one-based line range at that commit |
+| `authority` | `accepted-policy`, `direct-evidence`, `generated`, `repository-doc`, or `hypothesis`; accepted policy requires an active policy marker in the pinned source |
+| `relationship` | Non-empty description of how the item relates to the task |
+| `reason` | Non-empty inclusion reason recorded in the result |
+| `rank` | Integer used after authority; higher ranks sort first, then `id` ascending |
+| `required` | Boolean; an excluded required item makes the result `unknown` |
+| `instruction` | Boolean request for instruction authority; only `accepted-policy` can receive it |
+
+Supported authorities, strongest first, are `accepted-policy`, `direct-evidence`, `generated`,
+`repository-doc`, and `hypothesis`. The request cannot grant accepted-policy authority by label:
+the selected document must contain an active `sourcebound:policy register-v2` marker at the pinned
+commit. Required evidence is selected before optional context. Within each group, authority, rank,
+and item ID produce a stable order. An optional item that exceeds the byte budget is excluded with
+`budget-exhausted`; a required item that does not fit produces `required-over-budget` and makes the
+bundle `unknown`.
+
+`budget_bytes` counts selected UTF-8 source-content bytes. The serialized bundle's schema and
+metadata overhead are outside that budget, so it is not a hard wire-size or context-window cap.
+
+Compilation rejects unknown fields, an untracked request, a request outside the repository, and
+request bytes that differ from `HEAD`. The [context compilation task](CONTEXT_COMPILATION.md)
+creates, commits, compiles, and verifies a complete request.
+
 ## Curate a primary context index
 
 `llms.txt` lists declared context pages and their content digests. By default, it also lists every
@@ -406,20 +452,3 @@ asset record cannot leave either audience on an older projection. Local image pa
 record IDs, annotation IDs, output paths, coordinates, dimensions, and unknown fields fail closed.
 The [source-bound flow projection](generated/source-bound-flow.md) dogfoods this contract against
 the diagram that introduces Sourcebound.
-
-## Context request
-
-`sourcebound.context-request.v1` compiles a provider-neutral evidence packet from the current commit.
-The byte budget is mandatory. The request contains a full `repository_commit`, positive
-`budget_bytes`, and one or more items.
-Each item names an `id`, `kind`, repository-relative `path`, `start_line`, `end_line`, `authority`,
-`relationship`, `reason`, numeric `rank`, and boolean `required` and `instruction` flags.
-
-Supported authorities, strongest first, are `accepted-policy`, `direct-evidence`, `generated`,
-`repository-doc`, and `hypothesis`. Instruction authority requires both `accepted-policy` and a
-`policy` or `instruction` kind. Other prose stays data.
-
-Required evidence is selected before optional context. Within each group, authority, rank, and item
-ID produce a stable order. An optional item that exceeds the byte budget is excluded with
-`budget-exhausted`. A required item that does not fit produces `required-over-budget` and makes the
-bundle `unknown`.

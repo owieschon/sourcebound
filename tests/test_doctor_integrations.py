@@ -17,16 +17,29 @@ ROOT = Path(__file__).parents[1]
 
 
 def _isolated_sourcebound_python(tmp_path: Path) -> Path:
-    """Install this checkout where the reusable action's isolated Python can load it."""
+    """Expose trusted package paths to a Python isolated from the fixture checkout."""
     environment = tmp_path / "sourcebound-runtime"
     subprocess.run(
         [sys.executable, "-m", "venv", "--system-site-packages", str(environment)],
         check=True,
     )
     python = environment / "bin" / "python"
-    subprocess.run(
-        [str(python), "-m", "pip", "install", "--no-build-isolation", str(ROOT)],
-        check=True,
+    site_packages = Path(
+        subprocess.run(
+            [str(python), "-c", "import site; print(site.getsitepackages()[0])"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+    )
+    trusted_paths = [ROOT / "src"]
+    trusted_paths.extend(
+        Path(entry)
+        for entry in sys.path
+        if entry.endswith("site-packages") and Path(entry).is_dir()
+    )
+    (site_packages / "sourcebound-test-runtime.pth").write_text(
+        "".join(f"{path.resolve()}\n" for path in dict.fromkeys(trusted_paths))
     )
     return python
 

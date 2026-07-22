@@ -38,7 +38,7 @@ TEMPLATE_KINDS = {
     },
     "provides": {
         "api-endpoint", "api-symbol", "cli-command", "cli-option", "mcp-tool", "package",
-        "package-script", "schema", "test-runner", "test-suite",
+        "make-target", "package-script", "schema", "test-runner", "test-suite",
     },
     "tests": {"test-runner", "test-suite"},
 }
@@ -81,6 +81,8 @@ class CommandPhrasingProvider:
     last_prompt_bytes: int | None = None
     last_response_bytes: int | None = None
     last_error: str | None = None
+    last_parser_accepted: bool = False
+    last_model_record: ModelRecord | None = None
 
     @property
     def configuration_sha256(self) -> str:
@@ -158,6 +160,15 @@ def load_command_phrasing_provider(path: Path, root: Path) -> CommandPhrasingPro
         or not all(isinstance(value, str) and value for value in argv)
     ):
         raise ConfigurationError("init proposer config.argv must be a non-empty string list")
+    executable = argv[0]
+    if executable != "{python}" and not Path(executable).is_absolute():
+        raise ConfigurationError(
+            "init proposer config.argv[0] must be an absolute path or {python}"
+        )
+    if "{python}" in argv[1:]:
+        raise ConfigurationError(
+            "init proposer config may use {python} only as argv[0]"
+        )
     timeout_seconds = raw.get("timeout_seconds", DEFAULT_PROVIDER_TIMEOUT_SECONDS)
     if (
         not isinstance(timeout_seconds, int)
@@ -173,6 +184,10 @@ def load_command_phrasing_provider(path: Path, root: Path) -> CommandPhrasingPro
         isinstance(value, str) and value and value.isidentifier() for value in env
     ) or len(set(env)) != len(env):
         raise ConfigurationError("init proposer config.env must be unique environment variable names")
+    if "PATH" in env:
+        raise ConfigurationError(
+            "init proposer config.env cannot grant PATH; Sourcebound supplies a fixed PATH"
+        )
     return CommandPhrasingProvider(tuple(argv), name, root, timeout_seconds, tuple(env))
 
 
@@ -439,10 +454,14 @@ def build_model_record(
     if not isinstance(response, str):
         raise ConfigurationError("phrasing provider returned a non-text response")
     drafts = _parse_response(response, facts)
-    return ModelRecord(
+    record = ModelRecord(
         provider=provider.name,
         prompt_sha256=hashlib.sha256(prompt.encode()).hexdigest(),
         response_sha256=hashlib.sha256(response.encode()).hexdigest(),
         context_flags=flags,
         drafts=drafts,
     )
+    if isinstance(provider, CommandPhrasingProvider):
+        provider.last_parser_accepted = True
+        provider.last_model_record = record
+    return record
