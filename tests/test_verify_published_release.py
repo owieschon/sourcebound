@@ -62,6 +62,41 @@ def test_smoke_installers_names_the_missing_pipx_prerequisite(
         publication._smoke_installers("1.2.2", tmp_path, tmp_path / "temporary")
 
 
+def test_smoke_installers_retries_package_index_visibility(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    attempts = 0
+
+    def fake_run(args: list[str], **_: object) -> str:
+        nonlocal attempts
+        if args[:4] == [sys.executable, "-m", "pipx", "install"]:
+            attempts += 1
+            if attempts == 1:
+                raise RuntimeError("package index has not caught up")
+            return ""
+        if args[:3] == ["uv", "tool", "install"]:
+            return ""
+        if args[1:] == ["--version"]:
+            return "1.2.2"
+        if args[1:] == ["--root", str(tmp_path), "doctor"]:
+            return ""
+        raise AssertionError(f"unexpected command: {args}")
+
+    monkeypatch.setattr(publication, "_run", fake_run)
+    monkeypatch.setattr(publication.importlib.util, "find_spec", lambda name: object())
+    monkeypatch.setattr(publication.shutil, "which", lambda name: "uv")
+    monkeypatch.setattr(publication, "_installed_binary", lambda directory: Path("/bin/sourcebound"))
+    sleeps: list[float] = []
+    monkeypatch.setattr(publication.time, "sleep", sleeps.append)
+
+    assert publication._smoke_installers(
+        "1.2.2", tmp_path, tmp_path / "temporary", attempts=2, delay=0.25
+    ) == {"pipx": "1.2.2", "uv": "1.2.2"}
+    assert attempts == 2
+    assert sleeps == [0.25]
+
+
 def test_verify_published_release_matches_bytes_and_smokes_installers(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -96,7 +131,7 @@ def test_verify_published_release_matches_bytes_and_smokes_installers(
     monkeypatch.setattr(
         publication,
         "_smoke_installers",
-        lambda version, root, temporary: {"pipx": version, "uv": version},
+        lambda version, root, temporary, **_: {"pipx": version, "uv": version},
     )
 
     receipt = publication.verify_published_release(

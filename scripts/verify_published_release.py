@@ -129,59 +129,76 @@ def _installed_binary(directory: Path) -> Path:
     return binary
 
 
-def _smoke_installers(version: str, root: Path, temporary: Path) -> dict[str, str]:
+def _smoke_installers(
+    version: str,
+    root: Path,
+    temporary: Path,
+    *,
+    attempts: int = 24,
+    delay: float = 5.0,
+) -> dict[str, str]:
     specification = f"{PYPI_PROJECT}=={version}"
     if importlib.util.find_spec("pipx") is None:
         raise RuntimeError("pipx module not found; install the workflow's pinned pipx version")
 
-    pipx_home = temporary / "pipx-home"
-    pipx_bin = temporary / "pipx-bin"
-    pipx_env = dict(os.environ)
-    pipx_env.update(
-        {
-            "PIPX_BIN_DIR": str(pipx_bin),
-            "PIPX_DEFAULT_PYTHON": sys.executable,
-            "PIPX_HOME": str(pipx_home),
-            "PIPX_SHARED_LIBS": str(temporary / "pipx-shared"),
-        }
-    )
-    _run(
-        [
-            sys.executable,
-            "-m",
-            "pipx",
-            "install",
-            specification,
-            "--pip-args=--no-cache-dir",
-        ],
-        env=pipx_env,
-    )
-    pipx_sourcebound = _installed_binary(pipx_bin)
-    pipx_version = _run([str(pipx_sourcebound), "--version"], env=pipx_env)
-    _run([str(pipx_sourcebound), "--root", str(root), "doctor"], env=pipx_env)
-
     uv = shutil.which("uv")
     if uv is None:
         raise RuntimeError("uv executable not found")
-    uv_bin = temporary / "uv-bin"
-    uv_env = dict(os.environ)
-    uv_env.update(
-        {
-            "UV_CACHE_DIR": str(temporary / "uv-cache"),
-            "UV_TOOL_BIN_DIR": str(uv_bin),
-            "UV_TOOL_DIR": str(temporary / "uv-tools"),
-        }
-    )
-    _run([uv, "tool", "install", specification], env=uv_env)
-    uv_sourcebound = _installed_binary(uv_bin)
-    uv_version = _run([str(uv_sourcebound), "--version"], env=uv_env)
-    _run([str(uv_sourcebound), "--root", str(root), "doctor"], env=uv_env)
 
-    if pipx_version != version or uv_version != version:
-        raise RuntimeError(
-            f"installer versions do not match {version}: pipx={pipx_version}, uv={uv_version}"
+    last_error: RuntimeError | None = None
+    for attempt in range(attempts):
+        pipx_home = temporary / "pipx-home"
+        pipx_bin = temporary / "pipx-bin"
+        uv_bin = temporary / "uv-bin"
+        for path in (pipx_home, pipx_bin, temporary / "pipx-shared", temporary / "uv-cache", temporary / "uv-tools", uv_bin):
+            shutil.rmtree(path, ignore_errors=True)
+        pipx_env = dict(os.environ)
+        pipx_env.update(
+            {
+                "PIPX_BIN_DIR": str(pipx_bin),
+                "PIPX_DEFAULT_PYTHON": sys.executable,
+                "PIPX_HOME": str(pipx_home),
+                "PIPX_SHARED_LIBS": str(temporary / "pipx-shared"),
+            }
         )
-    return {"pipx": pipx_version, "uv": uv_version}
+        uv_env = dict(os.environ)
+        uv_env.update(
+            {
+                "UV_CACHE_DIR": str(temporary / "uv-cache"),
+                "UV_TOOL_BIN_DIR": str(uv_bin),
+                "UV_TOOL_DIR": str(temporary / "uv-tools"),
+            }
+        )
+        try:
+            _run(
+                [
+                    sys.executable,
+                    "-m",
+                    "pipx",
+                    "install",
+                    specification,
+                    "--pip-args=--no-cache-dir",
+                ],
+                env=pipx_env,
+            )
+            pipx_sourcebound = _installed_binary(pipx_bin)
+            pipx_version = _run([str(pipx_sourcebound), "--version"], env=pipx_env)
+            _run([str(pipx_sourcebound), "--root", str(root), "doctor"], env=pipx_env)
+
+            _run([uv, "tool", "install", specification], env=uv_env)
+            uv_sourcebound = _installed_binary(uv_bin)
+            uv_version = _run([str(uv_sourcebound), "--version"], env=uv_env)
+            _run([str(uv_sourcebound), "--root", str(root), "doctor"], env=uv_env)
+            if pipx_version != version or uv_version != version:
+                raise RuntimeError(
+                    f"installer versions do not match {version}: pipx={pipx_version}, uv={uv_version}"
+                )
+            return {"pipx": pipx_version, "uv": uv_version}
+        except RuntimeError as exc:
+            last_error = exc
+            if attempt + 1 < attempts:
+                time.sleep(delay)
+    raise RuntimeError(f"installers did not expose {specification} after {attempts} attempts: {last_error}")
 
 
 def verify_published_release(
@@ -249,7 +266,13 @@ def verify_published_release(
         }
         if set(observed.values()) != {local_digest}:
             raise RuntimeError(f"published wheel digests differ: {observed}")
-        installers = _smoke_installers(version, root, temporary)
+        installers = _smoke_installers(
+            version,
+            root,
+            temporary,
+            attempts=attempts,
+            delay=delay,
+        )
 
     return {
         "schema": SCHEMA,
