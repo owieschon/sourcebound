@@ -72,6 +72,20 @@ bindings:
       symbol: EVALUATION_SCORERS
     renderer: markdown-table
     columns: [scorer, input, passes when]
+  - id: init-proposer-guide
+    type: symbol
+    doc: docs/INIT_PROPOSER.md
+    anchor: configure-the-provider
+    source:
+      path: src/sourcebound/phrasing.py
+      symbol: CommandPhrasingProvider
+  - id: context-compilation-guide
+    type: symbol
+    doc: docs/CONTEXT_COMPILATION.md
+    anchor: compile-it
+    source:
+      path: src/sourcebound/context.py
+      symbol: compile_context
   - id: improvement-candidate-guide
     type: symbol
     doc: docs/IMPROVEMENTS.md
@@ -224,7 +238,11 @@ projections:
   bundles:
     - id: evaluation
       output: .sourcebound/context/evaluation.md
-      include: [README.md, docs/EVALUATION.md]
+      include:
+        - README.md
+        - docs/EVALUATION.md
+        - docs/INIT_PROPOSER.md
+        - docs/CONTEXT_COMPILATION.md
   demo:
     output: docs/demo/index.html
     evidence: .sourcebound/demo/evidence.json

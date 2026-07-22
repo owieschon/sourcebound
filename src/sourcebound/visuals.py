@@ -239,8 +239,14 @@ def render_human_visual(
         if projection.human_output.suffix.lower() == ".mdx"
         else f"<!-- {receipt} -->"
     )
+    role_marker = (
+        "{/* sourcebound:role reference */}"
+        if projection.human_output.suffix.lower() == ".mdx"
+        else "<!-- sourcebound:role reference -->"
+    )
     lines = [
         comment,
+        role_marker,
         f'<figure id="{visual_id}" data-sourcebound-visual="{VISUAL_SCHEMA}">',
         "  <div "
         + _style(

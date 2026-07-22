@@ -4,17 +4,18 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 import subprocess
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
+from sourcebound.applicability import REGISTER_MARKER
+from sourcebound.corpus import _markdown_control_text
 from sourcebound.errors import ConfigurationError
 
 
-REQUEST_SCHEMA = "sourcebound.context-request.v1"
-BUNDLE_SCHEMA = "sourcebound.context-bundle.v1"
+REQUEST_SCHEMA = "sourcebound.context-request.v2"
+BUNDLE_SCHEMA = "sourcebound.context-bundle.v2"
 KINDS = {
     "example",
     "fact",
@@ -31,9 +32,6 @@ AUTHORITIES = {
     "repository-doc": 20,
     "hypothesis": 10,
 }
-SHA = re.compile(r"^[0-9a-f]{40}$")
-
-
 @dataclass(frozen=True)
 class ContextItem:
     id: str
@@ -64,6 +62,8 @@ class ExcludedContext:
 @dataclass(frozen=True)
 class ContextBundle:
     repository_commit: str
+    request_path: str
+    request_sha256: str
     budget_bytes: int
     used_bytes: int
     rejected_bytes: int
@@ -80,6 +80,10 @@ class ContextBundle:
         return {
             "schema": BUNDLE_SCHEMA,
             "repository_commit": self.repository_commit,
+            "request": {
+                "path": self.request_path,
+                "sha256": self.request_sha256,
+            },
             "budget": {
                 "bytes": self.budget_bytes,
                 "used": self.used_bytes,
@@ -111,6 +115,45 @@ def _git_commit(root: Path) -> str:
     return process.stdout.strip()
 
 
+def _git_blob(root: Path, *, commit: str, path: str, label: str) -> bytes:
+    process = subprocess.run(
+        ["git", "-C", str(root), "show", f"{commit}:{path}"],
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+    if process.returncode != 0:
+        raise ConfigurationError(f"{label} does not exist at {commit}: {path}")
+    return process.stdout
+
+
+def _pinned_request(root: Path, request_path: Path, commit: str) -> tuple[str, bytes]:
+    try:
+        resolved = request_path.resolve(strict=True)
+        relative = resolved.relative_to(root)
+    except (OSError, ValueError) as exc:
+        raise ConfigurationError(
+            "context request must be a tracked repository-relative file"
+        ) from exc
+    normalized = relative.as_posix()
+    committed = _git_blob(
+        root,
+        commit=commit,
+        path=normalized,
+        label="context request",
+    )
+    try:
+        working = resolved.read_bytes()
+    except OSError as exc:
+        raise ConfigurationError(f"cannot read context request {normalized}: {exc}") from exc
+    if working != committed:
+        raise ConfigurationError(
+            "context request bytes differ from the pinned repository commit: "
+            f"{normalized}"
+        )
+    return normalized, committed
+
+
 def _source_text(
     root: Path,
     *,
@@ -122,18 +165,14 @@ def _source_text(
     relative = Path(path)
     if relative.is_absolute() or ".." in relative.parts:
         raise ConfigurationError(f"context path must stay inside the repository: {path}")
-    process = subprocess.run(
-        ["git", "-C", str(root), "show", f"{commit}:{relative.as_posix()}"],
-        capture_output=True,
-        timeout=30,
-        check=False,
+    source = _git_blob(
+        root,
+        commit=commit,
+        path=relative.as_posix(),
+        label="context path",
     )
-    if process.returncode != 0:
-        raise ConfigurationError(
-            f"context path does not exist at {commit}: {path}"
-        )
     try:
-        lines = process.stdout.decode("utf-8").splitlines()
+        lines = source.decode("utf-8").splitlines()
     except UnicodeDecodeError as exc:
         raise ConfigurationError(f"context path is not UTF-8: {path}") from exc
     if start_line < 1 or end_line < start_line or end_line > len(lines):
@@ -141,6 +180,22 @@ def _source_text(
             f"context locator is outside {path}: L{start_line}-L{end_line}"
         )
     return "\n".join(lines[start_line - 1:end_line]) + "\n"
+
+
+def _source_document_text(root: Path, *, commit: str, path: str) -> str:
+    relative = Path(path)
+    if relative.is_absolute() or ".." in relative.parts:
+        raise ConfigurationError(f"context path must stay inside the repository: {path}")
+    source = _git_blob(
+        root,
+        commit=commit,
+        path=relative.as_posix(),
+        label="context path",
+    )
+    try:
+        return source.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise ConfigurationError(f"context path is not UTF-8: {path}") from exc
 
 
 def _canonical_digest(payload: dict[str, object]) -> str:
@@ -156,23 +211,25 @@ def _canonical_digest(payload: dict[str, object]) -> str:
 
 def compile_context(root: Path, request_path: Path) -> ContextBundle:
     root = root.resolve()
+    commit = _git_commit(root)
+    normalized_request_path, request_bytes = _pinned_request(
+        root,
+        request_path,
+        commit,
+    )
     try:
-        raw = json.loads(request_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise ConfigurationError(f"cannot read context request {request_path}: {exc}") from exc
-    request = _mapping(raw, "context request")
-    if set(request) != {"schema", "repository_commit", "budget_bytes", "items"}:
-        raise ConfigurationError("context request has unsupported fields")
-    if request.get("schema") != REQUEST_SCHEMA:
-        raise ConfigurationError("context request has an unsupported schema")
-    commit = request.get("repository_commit")
-    if not isinstance(commit, str) or not SHA.fullmatch(commit):
-        raise ConfigurationError("context request repository_commit must be a full SHA")
-    observed_commit = _git_commit(root)
-    if commit != observed_commit:
+        raw = json.loads(request_bytes.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise ConfigurationError(
-            f"context request commit is {commit}, but repository is {observed_commit}"
+            f"cannot read context request {normalized_request_path}: {exc}"
+        ) from exc
+    request = _mapping(raw, "context request")
+    if request.get("schema") != REQUEST_SCHEMA:
+        raise ConfigurationError(
+            f"context request must use {REQUEST_SCHEMA}; regenerate and commit it"
         )
+    if set(request) != {"schema", "budget_bytes", "items"}:
+        raise ConfigurationError("context request has unsupported fields")
     budget = request.get("budget_bytes")
     if not isinstance(budget, int) or isinstance(budget, bool) or budget < 1:
         raise ConfigurationError("context request budget_bytes must be positive")
@@ -234,6 +291,17 @@ def compile_context(root: Path, request_path: Path) -> ContextBundle:
             start_line=item["start_line"],
             end_line=item["end_line"],
         )
+        if authority == "accepted-policy":
+            policy_text = _source_document_text(
+                root,
+                commit=commit,
+                path=item["path"],
+            )
+            if REGISTER_MARKER.search(_markdown_control_text(policy_text)) is None:
+                raise ConfigurationError(
+                    f"context request item {identifier} claims accepted-policy authority "
+                    "without an active sourcebound policy marker"
+                )
         prepared.append((item, content, len(content.encode())))
 
     prepared.sort(
@@ -290,6 +358,10 @@ def compile_context(root: Path, request_path: Path) -> ContextBundle:
     unsigned: dict[str, object] = {
         "schema": BUNDLE_SCHEMA,
         "repository_commit": commit,
+        "request": {
+            "path": normalized_request_path,
+            "sha256": hashlib.sha256(request_bytes).hexdigest(),
+        },
         "budget": {"bytes": budget, "used": used},
         "status": status,
         "items": [asdict(item) for item in included],
@@ -297,6 +369,8 @@ def compile_context(root: Path, request_path: Path) -> ContextBundle:
     }
     return ContextBundle(
         commit,
+        normalized_request_path,
+        hashlib.sha256(request_bytes).hexdigest(),
         budget,
         used,
         sum(item.bytes for item in excluded),

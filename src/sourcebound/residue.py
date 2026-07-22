@@ -25,7 +25,7 @@ EXCLUDE_KEYS = {"pattern", "reason"}
 TOKEN = re.compile(r"[A-Za-z][A-Za-z0-9_-]*")
 POLICY_METADATA = re.compile(r"^\s*(?:-\s+)?(?:id|pattern|reason):\s*(?P<value>.*)$")
 LOCAL_PATH = re.compile(
-    r"(?<![A-Za-z0-9_])/(?:Users|home)/(?P<owner>[^/\s]+)/"
+    r"(?<![A-Za-z0-9_])/(?P<root>Users|home)/(?P<owner>[A-Za-z0-9._-]+)/"
 )
 LOCAL_PATH_PLACEHOLDERS = {
     "example",
@@ -34,6 +34,15 @@ LOCAL_PATH_PLACEHOLDERS = {
     "username",
     "you",
     "your_username",
+}
+SYSTEM_HOME_OWNERS = {
+    "app",
+    "kamal-proxy",
+    "node",
+    "postgres",
+    "runner",
+    "ubuntu",
+    "www-data",
 }
 SHA256 = re.compile(r"[0-9a-f]{64}")
 GENERATED_PARTS = {"__pycache__", ".DS_Store"}
@@ -214,7 +223,10 @@ def _matches(path: str, patterns: tuple[str, ...]) -> bool:
 def _machine_path_match(line: str) -> bool:
     for match in LOCAL_PATH.finditer(line):
         owner = match.group("owner").strip("<>{}$").lower()
-        if owner not in LOCAL_PATH_PLACEHOLDERS:
+        allowed = owner in LOCAL_PATH_PLACEHOLDERS or (
+            match.group("root") == "home" and owner in SYSTEM_HOME_OWNERS
+        )
+        if not allowed:
             return True
     return False
 

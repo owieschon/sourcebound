@@ -195,6 +195,7 @@ def test_local_path_rule_ignores_placeholders_and_embedded_route_names(
         "/Users/me/project\n"
         "/home/user/project\n"
         "/Accounts/Users/Relationships\n"
+        "input_text ~ '(/Users/|/home/)'\n"
         "/" + "Users/alicebuild/private/project\n"
     )
     _track(root)
@@ -202,7 +203,44 @@ def test_local_path_rule_ignores_placeholders_and_embedded_route_names(
     findings = scan_residue(root)
 
     assert [(finding.rule, finding.line) for finding in findings] == [
-        ("local-path-residue", 9),
+        ("local-path-residue", 10),
+    ]
+
+
+def test_local_path_rule_ignores_standard_runtime_home_directories(
+    tmp_path: Path,
+) -> None:
+    root = _repo(tmp_path)
+    (root / "Dockerfile").write_text(
+        "WORKDIR /home/node/app\nCOPY . /home/ubuntu/service\n"
+        "VOLUME /home/kamal-proxy/.config/kamal-proxy\n"
+    )
+    (root / "fixture.sql").write_text(
+        "INSERT INTO paths VALUES ('/Users/example/project');\n"
+    )
+    (root / "README.md").write_text(
+        "# Paths\n\n/" + "Users/alicebuild/private/project\n"
+    )
+    _track(root)
+
+    findings = scan_residue(root)
+
+    assert [(finding.rule, finding.doc) for finding in findings] == [
+        ("local-path-residue", "README.md"),
+    ]
+
+
+def test_local_path_rule_reports_project_specific_home_owners(tmp_path: Path) -> None:
+    root = _repo(tmp_path)
+    (root / "fixture.txt").write_text(
+        "trace=" + "/home/" + "rocky/project/output.json\n"
+    )
+    _track(root)
+
+    findings = scan_residue(root)
+
+    assert [(finding.rule, finding.doc) for finding in findings] == [
+        ("local-path-residue", "fixture.txt"),
     ]
 
 

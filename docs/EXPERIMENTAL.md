@@ -10,6 +10,8 @@ Use this index when you are evaluating an optional Sourcebound capability rather
 | Capability or record | Read this when | Status boundary |
 | --- | --- | --- |
 | [Evaluation](EVALUATION.md) | You need the evaluator contract or scorer evidence. | It does not decide a repository gate. |
+| [Init proposer](INIT_PROPOSER.md) | You want bounded model-selected draft inputs during bootstrap. | The provider proposes; the parser and source facts retain authority. |
+| [Context compilation](CONTEXT_COMPILATION.md) | You need a budgeted, source-addressed provider packet. | Missing required evidence returns unknown. |
 | [Behavior signals](BEHAVIOR_SIGNALS.md) | You are reviewing observed documentation signals. | Signals inform investigation; they do not establish source truth. |
 | [Feedback](FEEDBACK.md) | You have explicitly enabled a feedback sink. | Delivery is opt-in and cannot change a gate result. |
 | [Extensions](EXTENSIONS.md) | You are considering an adapter or integration. | An extension remains optional until its own contract is adopted. |

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 from pathlib import Path
@@ -7,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from sourcebound.cli import main
-from sourcebound.changed import check_changed
+from sourcebound.changed import _inventory, check_changed
 
 
 def _commit(root: Path, message: str) -> str:
@@ -280,6 +281,34 @@ def test_changed_cache_reuses_base_and_preserves_normalized_output(tmp_path: Pat
 
     assert (changed.cache_hits, changed.cache_misses) == (1, 1)
     assert changed.as_dict() == uncached.as_dict()
+
+
+def test_inventory_v1_cache_cannot_satisfy_v2_static_adapter_scan(
+    tmp_path: Path,
+) -> None:
+    root = _symbol_repository(tmp_path)
+    ref = _commit(root, "base")
+    old_payload = json.dumps(
+        {
+            "extractor": "repository-inventory@1",
+            "parameters": {"project": "."},
+            "source": ref,
+            "execution_policy": "trusted",
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    old_key = hashlib.sha256(old_payload.encode()).hexdigest()
+    cache_root = root / ".git/sourcebound-cache"
+    cache_root.mkdir(parents=True)
+    (cache_root / f"inventory-{old_key}.json").write_text(
+        json.dumps({"key": old_key, "items": []})
+    )
+
+    items, cache_hit = _inventory(root, ref, Path("."), use_cache=True)
+
+    assert not cache_hit
+    assert items
 
 
 def test_changed_monorepo_project_selection_isolates_other_manifests(

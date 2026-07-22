@@ -416,6 +416,24 @@ def test_register_rules_ignore_link_targets_and_inline_code() -> None:
     assert check_document("README.md", content, load_default_pack()) == []
 
 
+def test_register_rules_strip_html_attributes_but_keep_comparison_prose() -> None:
+    content = (
+        f"# Queue\n\n{REGISTER_PROFILE}\n<!-- sourcebound:purpose -->\n"
+        "Queue is a task runner for maintainers who need source-bound operating facts.\n"
+        "<!-- sourcebound:end purpose -->\n\n"
+        "**[Run the first task](docs/start.md)**\n\n"
+        "[Verification result](docs/result.md)\n\n"
+        '<figure data-layout="coordination implementation validation">\n'
+        "<figcaption>The gate shows the current source relationship.</figcaption>\n"
+        "</figure>\n\n"
+        "The source keeps <coordination, implementation, and validation> visible.\n"
+    )
+
+    findings = check_document("README.md", content, load_default_pack())
+
+    assert [finding.rule for finding in findings].count("nominalization-density") == 1
+
+
 def test_truth_yield_does_not_disable_the_rule_for_later_prose() -> None:
     content = (
         f"# Queue\n\n{REGISTER_PROFILE}\n<!-- sourcebound:purpose -->\n"

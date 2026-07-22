@@ -643,6 +643,261 @@ def test_unsupported_runtime_control_is_unknown(
     assert {item.rule for item in plan.unknown} == {"unsupported-public-candidate"}
 
 
+def test_makefile_comment_change_is_supported_and_has_no_public_impact(
+    tmp_path: Path,
+) -> None:
+    root = _symbol_repository(tmp_path)
+    makefile = root / "Makefile"
+    makefile.write_text("# Run the suite.\ntest:\n\tpython -m pytest\n")
+    base = _commit(root, "add make target")
+    makefile.write_text(makefile.read_text().replace("Run the suite", "Run all tests"))
+    head = _commit(root, "clarify make target comment")
+
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
+
+    assert plan.impact == "none"
+    assert plan.coverage_complete
+    assert plan.events == ()
+    assert plan.artifacts[0].adapter == "makefile-static"
+    assert plan.artifacts[0].coverage == "adapter-covered"
+
+
+def test_makefile_recipe_change_emits_a_public_target_event(tmp_path: Path) -> None:
+    root = _symbol_repository(tmp_path)
+    (root / "docs").mkdir()
+    (root / "docs/SURFACE.md").write_text(
+        "# Surface\n\n<!-- sourcebound:begin repository-surface -->\n"
+        "<!-- sourcebound:end repository-surface -->\n"
+    )
+    with (root / ".sourcebound.yml").open("a") as manifest:
+        manifest.write(
+            "  - id: repository-surface\n"
+            "    type: region\n"
+            "    doc: docs/SURFACE.md\n"
+            "    region: repository-surface\n"
+            "    extractor: repository-overview\n"
+            "    source: {path: .}\n"
+            "    renderer: markdown-fragment\n"
+        )
+    makefile = root / "Makefile"
+    makefile.write_text(
+        ".PHONY: test\nPYTHON := python3\n"
+        "test: MODE = full\ntest:\n\t$(PYTHON) -m pytest\n"
+        "docker/build:\n\tdocker build .\n"
+    )
+    assert main(["--root", str(root), "derive", "--write"]) == 0
+    base = _commit(root, "add make target")
+    makefile.write_text(makefile.read_text().replace("python3", "pypy3"))
+    head = _commit(root, "change referenced make variable")
+
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
+
+    assert plan.impact == "recommended"
+    assert plan.coverage_complete
+    assert {event.kind for event in plan.events} == {"make-target-changed"}
+    assert {event.locator for event in plan.events} == {"test"}
+    assert plan.artifacts[0].adapter == "makefile-static"
+    assert {item.rule for item in plan.recommended} == {"public-contract-change"}
+
+
+def test_dynamic_makefile_stays_unknown_instead_of_claiming_static_coverage(
+    tmp_path: Path,
+) -> None:
+    root = _symbol_repository(tmp_path)
+    base = _commit(root, "base")
+    (root / "Makefile").write_text(
+        "include generated.mk\n$(PUBLIC_TARGET):\n\t@true\n"
+    )
+    head = _commit(root, "add dynamic make target")
+
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
+
+    assert plan.impact == "unknown"
+    assert plan.artifacts[0].adapter == "makefile-static:failed"
+    assert {item.rule for item in plan.unknown} == {"unsupported-public-candidate"}
+
+
+def test_dynamic_makefile_base_cannot_be_hidden_by_a_static_head(tmp_path: Path) -> None:
+    root = _symbol_repository(tmp_path)
+    makefile = root / "Makefile"
+    makefile.write_text("include generated.mk\n$(PUBLIC_TARGET):\n\t@true\n")
+    base = _commit(root, "add dynamic make target")
+    makefile.write_text("test:\n\tpython -m pytest\n")
+    head = _commit(root, "replace dynamic target with static target")
+
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
+
+    assert plan.impact == "unknown"
+    assert plan.artifacts[0].adapter == "makefile-static:failed"
+
+
+def test_unrelated_make_assignment_change_is_unknown_semantic_residue(
+    tmp_path: Path,
+) -> None:
+    root = _symbol_repository(tmp_path)
+    makefile = root / "Makefile"
+    makefile.write_text("UNUSED := one\ntest:\n\tpython -m pytest\n")
+    base = _commit(root, "add make target")
+    makefile.write_text(makefile.read_text().replace("UNUSED := one", "UNUSED := two"))
+    head = _commit(root, "change untraced make variable")
+
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
+
+    assert plan.impact == "unknown"
+    assert plan.artifacts[0].adapter == "makefile-static:failed"
+    assert {item.rule for item in plan.unknown} == {"unsupported-public-candidate"}
+
+
+def test_make_target_event_cannot_hide_unaccounted_semantic_residue(
+    tmp_path: Path,
+) -> None:
+    root = _symbol_repository(tmp_path)
+    (root / "docs").mkdir()
+    (root / "docs/SURFACE.md").write_text(
+        "# Surface\n\n<!-- sourcebound:begin repository-surface -->\n"
+        "<!-- sourcebound:end repository-surface -->\n"
+    )
+    with (root / ".sourcebound.yml").open("a") as manifest:
+        manifest.write(
+            "  - id: repository-surface\n"
+            "    type: region\n"
+            "    doc: docs/SURFACE.md\n"
+            "    region: repository-surface\n"
+            "    extractor: repository-overview\n"
+            "    source: {path: .}\n"
+            "    renderer: markdown-fragment\n"
+        )
+    makefile = root / "Makefile"
+    makefile.write_text(
+        "PYTHON := python3\nUNUSED := one\ntest:\n\t$(PYTHON) -m pytest\n"
+    )
+    assert main(["--root", str(root), "derive", "--write"]) == 0
+    base = _commit(root, "add make target")
+    makefile.write_text(
+        makefile.read_text()
+        .replace("PYTHON := python3", "PYTHON := pypy3")
+        .replace("UNUSED := one", "UNUSED := two")
+    )
+    head = _commit(root, "change traced and untraced make variables")
+
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
+
+    assert plan.impact == "unknown"
+    assert not plan.coverage_complete
+    assert {event.locator for event in plan.events} == {"test"}
+    assert plan.artifacts[0].adapter == "makefile-static:failed"
+    assert {item.rule for item in plan.unknown} == {"unsupported-public-candidate"}
+
+
+@pytest.mark.parametrize("operation", ["add", "remove"])
+def test_unchanged_assignment_can_move_into_or_out_of_target_evidence(
+    tmp_path: Path, operation: str
+) -> None:
+    root = _symbol_repository(tmp_path)
+    (root / "docs").mkdir()
+    (root / "docs/SURFACE.md").write_text(
+        "# Surface\n\n<!-- sourcebound:begin repository-surface -->\n"
+        "<!-- sourcebound:end repository-surface -->\n"
+    )
+    with (root / ".sourcebound.yml").open("a") as manifest:
+        manifest.write(
+            "  - id: repository-surface\n"
+            "    type: region\n"
+            "    doc: docs/SURFACE.md\n"
+            "    region: repository-surface\n"
+            "    extractor: repository-overview\n"
+            "    source: {path: .}\n"
+            "    renderer: markdown-fragment\n"
+        )
+    makefile = root / "Makefile"
+    assignment = "PYTHON := python3\n"
+    target = "test:\n\t$(PYTHON) -m pytest\n"
+    makefile.write_text(assignment + (target if operation == "remove" else ""))
+    assert main(["--root", str(root), "derive", "--write"]) == 0
+    base = _commit(root, "base make state")
+    makefile.write_text(assignment + (target if operation == "add" else ""))
+    head = _commit(root, f"{operation} make target")
+
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
+
+    assert plan.impact in {"recommended", "required"}
+    assert plan.coverage_complete
+    assert plan.unknown == ()
+    expected_kind = "make-target-added" if operation == "add" else "make-target-removed"
+    assert {event.kind for event in plan.events} == {expected_kind}
+    assert plan.artifacts[0].adapter == "makefile-static"
+
+
+@pytest.mark.parametrize("operation", ["add", "remove"])
+def test_phony_only_target_is_visible_across_makefile_lifecycle(
+    tmp_path: Path, operation: str
+) -> None:
+    root = _symbol_repository(tmp_path)
+    (root / "docs").mkdir()
+    (root / "docs/SURFACE.md").write_text(
+        "# Surface\n\n<!-- sourcebound:begin repository-surface -->\n"
+        "<!-- sourcebound:end repository-surface -->\n"
+    )
+    with (root / ".sourcebound.yml").open("a") as manifest:
+        manifest.write(
+            "  - id: repository-surface\n"
+            "    type: region\n"
+            "    doc: docs/SURFACE.md\n"
+            "    region: repository-surface\n"
+            "    extractor: repository-overview\n"
+            "    source: {path: .}\n"
+            "    renderer: markdown-fragment\n"
+        )
+    makefile = root / "Makefile"
+    if operation == "remove":
+        makefile.write_text(".PHONY: ghost\n")
+    assert main(["--root", str(root), "derive", "--write"]) == 0
+    base = _commit(root, "base makefile lifecycle")
+    if operation == "add":
+        makefile.write_text(".PHONY: ghost\n")
+    else:
+        makefile.unlink()
+    head = _commit(root, f"{operation} phony-only makefile")
+
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
+
+    expected_kind = "make-target-added" if operation == "add" else "make-target-removed"
+    assert plan.coverage_complete
+    assert plan.unknown == ()
+    assert {event.kind for event in plan.events} == {expected_kind}
+    assert {event.locator for event in plan.events} == {"ghost"}
+
+
+def test_makefile_path_target_recipe_change_is_a_public_event(tmp_path: Path) -> None:
+    root = _symbol_repository(tmp_path)
+    (root / "docs").mkdir()
+    (root / "docs/SURFACE.md").write_text(
+        "# Surface\n\n<!-- sourcebound:begin repository-surface -->\n"
+        "<!-- sourcebound:end repository-surface -->\n"
+    )
+    with (root / ".sourcebound.yml").open("a") as manifest:
+        manifest.write(
+            "  - id: repository-surface\n"
+            "    type: region\n"
+            "    doc: docs/SURFACE.md\n"
+            "    region: repository-surface\n"
+            "    extractor: repository-overview\n"
+            "    source: {path: .}\n"
+            "    renderer: markdown-fragment\n"
+        )
+    makefile = root / "Makefile"
+    makefile.write_text("docker/build:\n\tdocker build .\n")
+    assert main(["--root", str(root), "derive", "--write"]) == 0
+    base = _commit(root, "add path target")
+    makefile.write_text("docker/build:\n\tdocker build --pull .\n")
+    head = _commit(root, "change path target")
+
+    plan = build_impact_plan(root, root / ".sourcebound.yml", base=base, head=head)
+
+    assert plan.impact == "recommended"
+    assert {event.locator for event in plan.events} == {"docker/build"}
+
+
 def test_workflow_job_change_is_supported_advisory_impact(
     tmp_path: Path,
 ) -> None:

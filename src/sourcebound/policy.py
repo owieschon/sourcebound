@@ -50,16 +50,16 @@ QUALIFIER = re.compile(r"\b(?:may|only|unless|except)\b", re.I)
 MARKDOWN_LINK = re.compile(r"\[([^\]]+)\]\(([^)]+)\)")
 INLINE_CODE = re.compile(r"`[^`]*`")
 HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
+HTML_TAG = re.compile(
+    r"</?[A-Za-z][A-Za-z0-9:-]*(?:\s[^<>]*?)?\s*/?>",
+    re.DOTALL,
+)
 
 
 def _prose_lines(text: str) -> list[tuple[int, str]]:
     result = []
-    in_fence = False
-    for line_number, line in enumerate(text.splitlines(), start=1):
-        if line.startswith("```"):
-            in_fence = not in_fence
-            continue
-        if not in_fence and "slop-ok:" not in line and not line.startswith("#"):
+    for line_number, line in enumerate(_control_text(text).splitlines(), start=1):
+        if line.strip() and "slop-ok:" not in line and not line.startswith("#"):
             result.append((line_number, line))
     return result
 
@@ -73,15 +73,14 @@ def _title_tokens(text: str) -> set[str]:
 
 
 def _outside_fences(lines: list[str]) -> list[tuple[int, str]]:
-    result: list[tuple[int, str]] = []
-    in_fence = False
-    for index, line in enumerate(lines):
-        if line.startswith("```"):
-            in_fence = not in_fence
-            continue
-        if not in_fence:
-            result.append((index, line))
-    return result
+    return list(enumerate(_control_text("\n".join(lines)).splitlines()))
+
+
+def _control_text(text: str) -> str:
+    """Use the corpus Markdown parser without creating an import cycle at load time."""
+    from sourcebound.corpus import _markdown_control_text
+
+    return _markdown_control_text(text)
 
 
 def _rule_allowed(text: str, rule: str) -> bool:
@@ -175,6 +174,10 @@ def _paragraphs(text: str) -> list[tuple[int, str]]:
     visible_text = HTML_COMMENT.sub(
         lambda match: "\n" * match.group(0).count("\n"),
         text,
+    )
+    visible_text = HTML_TAG.sub(
+        lambda match: "\n" * match.group(0).count("\n"),
+        visible_text,
     )
 
     def flush() -> None:
@@ -419,6 +422,7 @@ def ensure_purpose_contract(text: str, *, fallback: bool = False) -> str:
     if PURPOSE_BEGIN in text or PURPOSE_END in text:
         return text
     lines = text.splitlines()
+    control_lines = _control_text(text).splitlines()
     heading = next(
         ((index, match.group(1)) for index, line in _outside_fences(lines) if (match := H1_RE.match(line))),
         None,
@@ -430,26 +434,20 @@ def ensure_purpose_contract(text: str, *, fallback: bool = False) -> str:
     selected: tuple[int, int, list[str]] | None = None
     rejected_restatements: list[tuple[int, int]] = []
     index = h1_index + 1
-    in_fence = False
     while index < len(lines):
-        stripped = lines[index].strip()
+        stripped = control_lines[index].strip()
         if stripped.startswith("## "):
             break
-        if stripped.startswith("```"):
-            in_fence = not in_fence
-            index += 1
-            continue
         if (
-            in_fence
-            or not stripped
+            not stripped
             or stripped.startswith("<!--")
             or stripped.lower().startswith(NON_PROSE_STARTS)
         ):
             index += 1
             continue
         end = index
-        while end < len(lines) and lines[end].strip():
-            candidate = lines[end].lstrip()
+        while end < len(lines) and control_lines[end].strip():
+            candidate = control_lines[end].lstrip()
             if candidate.lower().startswith(NON_PROSE_STARTS) or candidate.startswith("<!--"):
                 break
             end += 1

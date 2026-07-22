@@ -16,7 +16,12 @@ from sourcebound import __version__
 from sourcebound.changed import ChangedReport, _check_changed_details, _git
 from sourcebound.errors import ConfigurationError
 from sourcebound.execution import ExecutionPolicy
-from sourcebound.inventory import PUBLIC_SURFACE_KINDS, InventoryItem
+from sourcebound.inventory import (
+    PUBLIC_SURFACE_KINDS,
+    InventoryItem,
+    _makefile_has_unaccounted_change,
+    _makefile_is_statically_classifiable,
+)
 from sourcebound.manifest import load_manifest
 from sourcebound.mdx import MdxParserError, parse_mdx
 from sourcebound.models import Manifest, ReviewContract, SymbolBinding
@@ -435,6 +440,7 @@ def _event_kind(kind: str, change: str) -> str:
         "doc-link": "documentation-link",
         "document": "document",
         "mcp-tool": "mcp-tool",
+        "make-target": "make-target",
         "package": "package",
         "package-script": "package-script",
         "runtime-constraint": "supported-runtime",
@@ -523,6 +529,8 @@ def _adapter_for(
         return "evaluation"
     if candidate.parts[:2] == (".github", "workflows"):
         return "github-actions-static"
+    if candidate.name in {"Makefile", "GNUmakefile"}:
+        return "makefile-static"
     if event_adapters:
         return "+".join(event_adapters)
     if candidate.name.startswith("test_") or candidate.name.endswith(
@@ -573,7 +581,7 @@ def _may_expose_public_surface(
         "docker-compose.yaml",
         "docker-compose.yml",
     } or candidate.parts[:2] == (".github", "workflows")
-    if control_surface:
+    if control_surface and adapter != "makefile-static":
         return True
     if adapter != "unsupported":
         return False
@@ -589,6 +597,8 @@ def _adapter_failed(root: Path, ref: str, path: str, adapter: str) -> bool:
             ast.parse(text, filename=path)
         elif adapter == "mdx-static":
             parse_mdx(text)
+        elif adapter == "makefile-static" and not _makefile_is_statically_classifiable(text):
+            return True
     except (SyntaxError, UnicodeDecodeError, MdxParserError):
         return True
     return False
@@ -1126,10 +1136,31 @@ def build_impact_plan(
             projection_outputs=projection_outputs,
             manifest_path=manifest_relative.as_posix(),
         )
-        adapter_ref = changed.head if head_blob is not None else changed.base
-        adapter_failed = path in failed_adapters or _adapter_failed(
-            root, adapter_ref, repository_path, adapter
+        adapter_refs = tuple(
+            ref
+            for ref, blob in (
+                (changed.base, base_blob),
+                (changed.head, head_blob),
+            )
+            if blob is not None
         )
+        adapter_failed = path in failed_adapters or any(
+            _adapter_failed(root, ref, repository_path, adapter)
+            for ref in adapter_refs
+        )
+        if (
+            not adapter_failed
+            and adapter == "makefile-static"
+            and base_blob is not None
+            and head_blob is not None
+        ):
+            base_text = RepositorySnapshot(root, changed.base).read_text(
+                Path(repository_path)
+            )
+            head_text = RepositorySnapshot(root, changed.head).read_text(
+                Path(repository_path)
+            )
+            adapter_failed = _makefile_has_unaccounted_change(base_text, head_text)
         if adapter_failed:
             adapter = f"{adapter}:failed"
         may_expose = adapter_failed or _may_expose_public_surface(
@@ -1405,7 +1436,9 @@ def build_impact_plan(
         for path in finding.paths
     }
     for artifact in artifacts:
-        if artifact.path in classified_paths or artifact.path in public_event_paths:
+        if not artifact.adapter.endswith(":failed") and (
+            artifact.path in classified_paths or artifact.path in public_event_paths
+        ):
             continue
         if artifact.coverage == "unknown":
             unsupported_document = artifact.adapter.startswith("mdx-static:failed")

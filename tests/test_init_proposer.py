@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import subprocess
 import tempfile
 from hashlib import sha256
 from pathlib import Path
@@ -149,6 +151,83 @@ timeout_seconds: 5
     assert envelope["command"] == "init"
     assert envelope["result_class"] == "invalid"
     assert envelope["outcome"] == "parser-reject"
+
+
+def test_init_proposer_reports_bootstrap_failure_after_parser_accepts(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root = _root(tmp_path)
+    enable_feedback(root, sink="local")
+    (root / "provider.py").write_text(
+        "print('{\\\"drafts\\\":[{\\\"fact_id\\\":\\\"package:pyproject.toml:project\\\",\\\"template\\\":\\\"provides\\\"}]}')\n"
+    )
+    config = _write_config(root, """\
+adapter: command
+name: fixture-provider
+argv: ["{python}", provider.py]
+""")
+
+    def fail_apply(*_args: object, **_kwargs: object) -> None:
+        raise ConfigurationError("fixture bootstrap write failed")
+
+    monkeypatch.setattr("sourcebound.cli.apply_bootstrap_plan", fail_apply)
+
+    assert main(["--root", str(root), "init", "--model-config", config.name]) == 2
+
+    transcript = json.loads(
+        (root / ".sourcebound/init-proposer-transcript.json").read_text()
+    )
+    assert transcript["state"] == "bootstrap-failed"
+    assert transcript["outcome"] == "accept"
+    assert "fixture bootstrap write failed" in transcript["detail"]
+    assert transcript["candidates"][0]["decision"] == "accepted"
+    assert transcript["model_record"]["drafts"][0]["template"] == "provides"
+    records = list((root / OUTBOX_DIR).glob("*.json"))
+    assert len(records) == 1
+    envelope = json.loads(records[0].read_text())
+    assert envelope["outcome"] == "accept"
+    assert envelope["result_class"] == "invalid"
+    _assert_no_generated_baseline(root)
+
+
+def test_documented_init_receipt_verification_runs_against_an_accepted_result(
+    tmp_path: Path,
+) -> None:
+    root = _root(tmp_path)
+    (root / "provider.py").write_text(
+        "print('{\\\"drafts\\\":[{\\\"fact_id\\\":\\\"package:pyproject.toml:project\\\",\\\"template\\\":\\\"provides\\\"}]}')\n"
+    )
+    config = _write_config(root, """\
+adapter: command
+name: fixture-provider
+argv: ["{python}", provider.py]
+""")
+    assert main(["--root", str(root), "init", "--model-config", config.name]) == 0
+
+    document = (PROJECT / "docs/INIT_PROPOSER.md").read_text()
+    assert "Save an explicit provider configuration as `.sourcebound/init-provider.yml`" in document
+    response_shape = re.search(
+        r"standard output must be one JSON object in this shape:\n\n"
+        r"```json\n(?P<body>.*?)\n```",
+        document,
+        re.DOTALL,
+    )
+    assert response_shape is not None
+    assert set(json.loads(response_shape.group("body"))["drafts"][0]) == {
+        "fact_id",
+        "template",
+    }
+    verification_blocks = re.findall(r"```bash\n(.*?)\n```", document, re.DOTALL)
+    assert verification_blocks
+    result = subprocess.run(
+        ["bash", "-eu", "-c", verification_blocks[-1]],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert result.stdout.strip() == "accept"
 
 
 def test_init_proposer_feedback_records_one_accepted_outcome(tmp_path: Path) -> None:
@@ -312,6 +391,34 @@ unknown: value
 
     assert main(["--root", str(root), "init", "--model-config", config.name]) == 2
 
+    _assert_no_generated_baseline(root)
+    assert not (root / ".sourcebound/init-proposer-transcript.json").exists()
+
+
+@pytest.mark.parametrize(("argv", "env", "detail"), [
+    (["provider-cli", "--json"], [], "argv[0] must be an absolute path or {python}"),
+    (["/usr/bin/env", "{python}"], [], "may use {python} only as argv[0]"),
+    (["/usr/bin/env"], ["PATH"], "cannot grant PATH"),
+])
+def test_init_proposer_rejects_ambiguous_executable_configuration(
+    tmp_path: Path,
+    argv: list[str],
+    env: list[str],
+    detail: str,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    root = _root(tmp_path)
+    config = root / "proposer.yml"
+    config.write_text(
+        "adapter: command\n"
+        "name: invalid-provider\n"
+        f"argv: {json.dumps(argv)}\n"
+        f"env: {json.dumps(env)}\n"
+    )
+
+    assert main(["--root", str(root), "init", "--model-config", config.name]) == 2
+
+    assert detail in capsys.readouterr().err
     _assert_no_generated_baseline(root)
     assert not (root / ".sourcebound/init-proposer-transcript.json").exists()
 

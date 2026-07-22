@@ -100,35 +100,6 @@ and evaluation stops.
 The result is labeled `model-specific-live`. Move an accepted response into a recorded fixture
 before relying on it in offline CI.
 
-## Draft a generated reference at init
-
-`init` accepts the same provider-neutral command configuration when a repository wants bounded
-draft selections for its generated reference document. The configured command receives the
-same JSON request shape on standard input and returns only known fact IDs plus allowlisted
-templates. It does not write repository files.
-
-Use an explicit configuration. `argv[0]` is an absolute path to the operator-selected provider,
-and `env` lists only the credential names the provider needs. Sourcebound writes the transcript to
-`.sourcebound/init-proposer-transcript.json` unless `--model-transcript` overrides it:
-
-```yaml
-adapter: command
-name: local-provider
-argv: [/absolute/path/to/provider-cli, --json]
-timeout_seconds: 300
-env: [SOURCEBOUND_PROVIDER_TOKEN]
-```
-
-```bash
-sourcebound init \
-  --model-config .sourcebound/init-provider.yml
-```
-
-The parser rejects an unknown fact, duplicate selection, unsupported template, malformed
-response, or more than five drafts before init writes the generated baseline. A missing,
-failing, or timed-out provider also leaves generated documentation unwritten. Without
-`--model-config`, init follows the same deterministic bootstrap path as before.
-
 ## Score dependency sensitivity
 
 Use `mutation-red` when a provider proposes one `sourcebound.binding-proposal.v1` object and the
@@ -153,22 +124,13 @@ The scorer calls the same static sensitivity primitive as
 sensitivity-receipt digest and says that semantic authority remains false. Score semantic precision
 and recall against a separately frozen gold relationship set.
 
-## Compile bounded context
+## Adjacent provider paths
 
-Use `context compile` when a provider should receive selected source evidence instead of whole
-documents. The request pins the repository commit, byte budget, source path and line range, evidence
-authority, relationship, rank, and whether the item is required:
+Evaluation scores a bounded task. Two separate pages own the provider inputs around that task:
 
-```bash
-sourcebound context compile \
-  --request .sourcebound/context-request.json \
-  --format json
-```
-
-The `sourcebound.context-bundle.v1` result lists included and excluded items with reasons. Direct
-evidence outranks repository prose. An accepted policy can carry instruction authority; ordinary
-documentation remains data even when its text resembles a prompt. If required evidence does not
-fit, the bundle is `unknown` and the command exits `2`.
+- [Init proposer](INIT_PROPOSER.md) covers optional, allowlisted draft selection during bootstrap.
+- [Context compilation](CONTEXT_COMPILATION.md) covers source-addressed evidence packets and budget
+  failure.
 
 ## Limits
 
@@ -178,8 +140,6 @@ fit, the bundle is `unknown` and the command exits `2`.
 - Command-provider deadlines accept one to 3,600 seconds. The deadline bounds one process attempt;
   it does not predict how long a model needs for a given prompt.
 - Provider-run receipts detect repository byte changes; they do not sandbox the provider process.
-- Context compilation is lexical and source-addressed. It does not use semantic retrieval or a
-  vector index.
 - Configuration scoring writes the response only inside a temporary copy of the fixture repository.
 
 ## Next step
