@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sourcebound"
-version = "2.0.0rc3"
+version = "2.0.0"
 description = "Bind documentation claims to source evidence and fail CI when they drift."
 readme = "README.md"
 requires-python = ">=3.10"
