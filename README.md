@@ -9,6 +9,23 @@ Sourcebound is a documentation engine and CLI for maintainers who need code and 
 
 **[Install the stable release and catch your first stale claim](docs/learn/tutorial-catch-a-lying-doc.md)**.
 
+## Watch one fact drift, then repair
+
+The [tutorial](docs/learn/tutorial-catch-a-lying-doc.md) binds a public command table to the Python list that defines it. Rename that source command alone, and the bound table goes stale:
+
+```bash
+sourcebound check
+```
+
+In this example, `check` exits `1` and names the drifted region instead of staying quiet. `drive` then repairs the bound table from the same source:
+
+```bash
+sourcebound drive
+sourcebound check
+```
+
+`drive` exits `0`, and the repeated `check` exits `0` too. See another bound-command example as [recorded evidence](https://owieschon.github.io/sourcebound/) (replayed output, not executed live), or work the [full tutorial locally](docs/learn/tutorial-catch-a-lying-doc.md) against an installed release.
+
 The final `sourcebound verify` command prints a [`sourcebound.outcome.v2` receipt](docs/SUPPORT.md#record-local-outcomes) with `"ok": true`.
 
 Before adoption, `audit` reports bounded repository-neutral advisories. A manifest turns integrity checks into gates; policy markers opt compatible writing rules into specific documents. Neither authorizes Sourcebound to flatten repository-native forms.
