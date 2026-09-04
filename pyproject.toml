@@ -17,7 +17,7 @@ dev = [
   "mypy>=1.10",
   "pipx==1.8.0",
   "pytest>=8.0",
-  "ruff>=0.6",
+  "ruff==0.15.18",
   "setuptools==75.8.0",
   "types-PyYAML>=6.0",
   "wheel==0.45.1",
