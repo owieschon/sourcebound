@@ -24,7 +24,7 @@ sourcebound drive
 sourcebound check
 ```
 
-`drive` exits `0`, and the repeated `check` exits `0` too. See this exact run as [recorded evidence](https://owieschon.github.io/sourcebound/) (replayed output, not executed live), or work the [full tutorial locally](docs/learn/tutorial-catch-a-lying-doc.md) against an installed release.
+`drive` exits `0`, and the repeated `check` exits `0` too. See another bound-command example as [recorded evidence](https://owieschon.github.io/sourcebound/) (replayed output, not executed live), or work the [full tutorial locally](docs/learn/tutorial-catch-a-lying-doc.md) against an installed release.
 
 The final `sourcebound verify` command prints a [`sourcebound.outcome.v2` receipt](docs/SUPPORT.md#record-local-outcomes) with `"ok": true`.
 

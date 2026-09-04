@@ -1,13 +1,13 @@
 # Context bundle: evaluation
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `5699ab048af61d789985d2c8540c45ae4ed988098f161124ba0113f5d1e745ad`
+- Corpus sha256: `91cf701edccdee9eb9a3cb37381a6192db2dba959f3bef0e559b64cd075c14b8`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `df03b8b8de25a3a1d395b28648bc29b9f69a93f633a5fcc28fa45f28111b147c`
+- Content sha256: `ba046ec96bd374459a88ab2f9e7f9d60cbccff4673ca61a307ab1eacb77e8e6a`
 
 <!-- sourcebound:canonical README.md begin -->
 # Sourcebound
@@ -36,7 +36,7 @@ sourcebound drive
 sourcebound check
 ```
 
-`drive` exits `0`, and the repeated `check` exits `0` too. See this exact run as [recorded evidence](https://owieschon.github.io/sourcebound/) (replayed output, not executed live), or work the [full tutorial locally](docs/learn/tutorial-catch-a-lying-doc.md) against an installed release.
+`drive` exits `0`, and the repeated `check` exits `0` too. See another bound-command example as [recorded evidence](https://owieschon.github.io/sourcebound/) (replayed output, not executed live), or work the [full tutorial locally](docs/learn/tutorial-catch-a-lying-doc.md) against an installed release.
 
 The final `sourcebound verify` command prints a [`sourcebound.outcome.v2` receipt](docs/SUPPORT.md#record-local-outcomes) with `"ok": true`.
 
