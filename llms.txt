@@ -4,7 +4,7 @@
 
 ## Canonical documentation
 
-- [README.md](README.md): bindings: product-overview; sha256: 5f2b8db9861eb0b5e09bc98aa8dfedfba9fde1bc2c63e4a4c08e03191675565a
+- [README.md](README.md): bindings: product-overview; sha256: df03b8b8de25a3a1d395b28648bc29b9f69a93f633a5fcc28fa45f28111b147c
 - [SOURCEBOUND_SPEC.md](SOURCEBOUND_SPEC.md): bindings: assurance-boundaries; sha256: 3c1047d13653d530bcff0ee9701a7be1d7679571436285eab21b3299eabc0feb
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): declared canonical context; sha256: c3c6d2a19b3cdcf5a1ae956a12992a373fcb2b18e71383d69c0a398c2cbad735
 - [docs/CLI.md](docs/CLI.md): bindings: cli-reference, verdict-reference; sha256: da79370415bdc94f58d7f65ced98e66abdbb024bd26df4cc32ddf6e41ef01576

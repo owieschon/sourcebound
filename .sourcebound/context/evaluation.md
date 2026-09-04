@@ -1,13 +1,13 @@
 # Context bundle: evaluation
 
 - Source ref: `WORKTREE`
-- Corpus sha256: `c354b38fc5776613fc48c2795a2565cfe6bb721c1a367a9f6262383968f96d44`
+- Corpus sha256: `5699ab048af61d789985d2c8540c45ae4ed988098f161124ba0113f5d1e745ad`
 - Content: exact canonical document bytes
 
 ## Canonical document: README.md
 
 - Source: [README.md](../../README.md)
-- Content sha256: `5f2b8db9861eb0b5e09bc98aa8dfedfba9fde1bc2c63e4a4c08e03191675565a`
+- Content sha256: `df03b8b8de25a3a1d395b28648bc29b9f69a93f633a5fcc28fa45f28111b147c`
 
 <!-- sourcebound:canonical README.md begin -->
 # Sourcebound
@@ -20,6 +20,23 @@ Sourcebound is a documentation engine and CLI for maintainers who need code and 
 [![CI](https://github.com/owieschon/sourcebound/actions/workflows/ci.yml/badge.svg)](https://github.com/owieschon/sourcebound/actions/workflows/ci.yml) [![Release](https://img.shields.io/github/v/release/owieschon/sourcebound?display_name=tag&sort=semver)](https://github.com/owieschon/sourcebound/releases/latest) [![License: MIT](https://img.shields.io/badge/license-MIT-25225f.svg)](LICENSE)
 
 **[Install the stable release and catch your first stale claim](docs/learn/tutorial-catch-a-lying-doc.md)**.
+
+## Watch one fact drift, then repair
+
+The [tutorial](docs/learn/tutorial-catch-a-lying-doc.md) binds a public command table to the Python list that defines it. Rename that source command alone, and the bound table goes stale:
+
+```bash
+sourcebound check
+```
+
+In this example, `check` exits `1` and names the drifted region instead of staying quiet. `drive` then repairs the bound table from the same source:
+
+```bash
+sourcebound drive
+sourcebound check
+```
+
+`drive` exits `0`, and the repeated `check` exits `0` too. See this exact run as [recorded evidence](https://owieschon.github.io/sourcebound/) (replayed output, not executed live), or work the [full tutorial locally](docs/learn/tutorial-catch-a-lying-doc.md) against an installed release.
 
 The final `sourcebound verify` command prints a [`sourcebound.outcome.v2` receipt](docs/SUPPORT.md#record-local-outcomes) with `"ok": true`.
 
