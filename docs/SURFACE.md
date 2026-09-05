@@ -23,7 +23,7 @@ The catalog binding catches additions, removals, and replacements across the det
 | package | 2 | `sourcebound`, `sourcebound-mdx-parser-build` |
 | package-script | 1 | `build` |
 | runtime-constraint | 3 | `ES modules`, `Python >=3.10`, `node >=20` |
-| test-suite | 76 | `scripts/test_readme_quickstart.py`, `scripts/test_release_lifecycle.py`, `tests/contracts/test_core_clarity_contract.py`, and 73 more |
+| test-suite | 77 | `scripts/test_readme_quickstart.py`, `scripts/test_release_lifecycle.py`, `tests/contracts/test_core_clarity_contract.py`, and 74 more |
 
-<!-- sourcebound:inventory-sha256 f6d79146724dfd10285209ad6c3b23b33f8aaa7e2f687c153ddb094c57178a0e -->
+<!-- sourcebound:inventory-sha256 aff0c6bb265ace159718a5b668a95bf16f1948ebd6f1c5d8aef0be1dee953376 -->
 <!-- sourcebound:end repository-surface -->
