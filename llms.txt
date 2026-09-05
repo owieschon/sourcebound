@@ -11,7 +11,7 @@
 - [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md): declared canonical context; sha256: 4e2fba36e8346753f72111cc3afa9846d892ba1dfefc9aea60c5119a4e75ae8b
 - [docs/INSTALL.md](docs/INSTALL.md): declared canonical context; sha256: e5aab0dbbf3616d0084928a1feda3f48ddb4eebd3d0e5bfca65408e424e499c6
 - [docs/README.md](docs/README.md): declared canonical context; sha256: b707c7d3b49ee95d924f48d6f7725960aafe5f55c7ebe08d26ffa22148112993
-- [docs/REFERENCE.md](docs/REFERENCE.md): bindings: binding-sensitivity-reference, manifest-reference, supported-bindings; sha256: 0848975a71840d055f495bb8bf19a6d40ce457ce99073fb8d0edba5f62a33c47
+- [docs/REFERENCE.md](docs/REFERENCE.md): bindings: binding-sensitivity-reference, manifest-reference, supported-bindings; sha256: 305952bd632340f4565567c270a81966de2846eafc2d95d89801d7b98861f257
 - [docs/SECURITY_MODEL.md](docs/SECURITY_MODEL.md): bindings: security-model; sha256: 176aac8176827d1dc1b8eada5f7c8788ad3639bf13fbacbb5169236d2580dac6
 - [docs/SUPPORT.md](docs/SUPPORT.md): bindings: support-guide; sha256: a8e35a510f6bdff65d3da634518b5ccf9de2e61164c06a0cd594e147f46301c6
 - [docs/learn/deep-dive-the-deterministic-seam.md](docs/learn/deep-dive-the-deterministic-seam.md): bindings: deterministic-seam-evidence, deterministic-seam-gate, deterministic-seam-phrasing; sha256: 2f92809d492d57c4a9a6f83acff001cef0f433d4820107d8f3d40392387e6035
