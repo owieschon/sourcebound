@@ -48,9 +48,43 @@ def _select(bindings: tuple[Binding, ...], binding_id: str | None) -> list[Bindi
     return selected
 
 
+def _confine(root: Path, relative: Path) -> Path:
+    """Resolve a manifest-declared document path, rejecting escape from the repository.
+
+    Rejects absolute paths, ``..`` components, a symlinked target document, and
+    a symlinked ancestor directory that would resolve outside ``root``. Every
+    caller (read and write) runs this check itself against the filesystem state
+    at the moment it is called; ``write_results`` also runs it for every planned
+    document before performing any write, so a manifest ``doc`` string reaching
+    this function from an external caller that never went through manifest
+    parsing is validated the same way. This is a snapshot check, not a guarantee
+    against a filesystem concurrently swapped out from under it (a TOCTOU race
+    between the check and the subsequent read or write is not addressed here).
+    """
+    if relative.is_absolute() or ".." in relative.parts:
+        raise ConfigurationError(
+            f"bound document must stay inside the repository: {relative}"
+        )
+    candidate = root / relative
+    try:
+        root_resolved = root.resolve()
+        resolved_parent = candidate.parent.resolve()
+    except (OSError, RuntimeError) as exc:
+        # RuntimeError covers symlink-loop reporting on Python versions/platforms
+        # where Path.resolve() raises rather than resolving as far as possible.
+        raise ConfigurationError(
+            f"cannot resolve bound document {relative}: {exc}"
+        ) from exc
+    if not resolved_parent.is_relative_to(root_resolved) or candidate.is_symlink():
+        raise ConfigurationError(
+            f"bound document escapes the repository through a symlink: {relative}"
+        )
+    return resolved_parent / candidate.name
+
+
 def _document(root: Path, binding: Binding) -> str:
     try:
-        return (root / binding.doc).read_text(encoding="utf-8")
+        return _confine(root, binding.doc).read_text(encoding="utf-8")
     except OSError as exc:
         raise ConfigurationError(f"cannot read bound document {binding.doc}: {exc}") from exc
 
@@ -231,7 +265,7 @@ def evaluate(
             rendered = render_plugin(snapshot, binding, renderer_plugin, evidence)
         else:
             rendered = render(evidence, binding)
-        doc_path = root / binding.doc
+        doc_path = _confine(root, binding.doc)
         doc_key = binding.doc.as_posix()
         if doc_key not in documents:
             try:
@@ -285,8 +319,13 @@ def write_results(root: Path, results: list[BindingResult]) -> None:
                 f"multiple bindings for {result.doc} require a combined document update"
             )
         by_doc[result.doc] = result.expected
-    for doc, content in by_doc.items():
-        atomic_write(root / doc, content)
+    # Preflight: confine every planned write before performing any of them, so a
+    # later invalid target cannot leave earlier documents already mutated.
+    planned_writes = [
+        (_confine(root, Path(doc)), content) for doc, content in by_doc.items()
+    ]
+    for path, content in planned_writes:
+        atomic_write(path, content)
 
 
 def planned_documents(results: list[BindingResult]) -> dict[str, str]:
