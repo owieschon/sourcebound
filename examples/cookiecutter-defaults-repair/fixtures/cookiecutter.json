@@ -1,0 +1,30 @@
+{
+  "author_name": "Ryan Kanno",
+  "author_email": "ryankanno@localkinegrinds.com",
+
+  "project_name": "Everybody go surf",
+  "project_short_description": "This is a short description about {{ cookiecutter.project_name }}",
+  "project_url": "https://github.com/ryankanno/cookiecutter-py",
+  "project_license": "MIT",
+
+  "github_repository_owner": "ryankanno",
+
+  "package_name": "surf",
+  "version": "0.0.0",
+
+  "python_version": "3.12",
+  "supported_python_versions": "3.11, 3.12, 3.13, pypy3.11",
+  "uv_version": "0.12.5",
+  "tox_version": "4.34.1",
+  "sphinx_theme": ["furo", "sphinx-rtd-theme", "pydata-sphinx-theme"],
+  "should_use_direnv": "y",
+  "should_create_author_files": "y",
+  "should_install_github_dependabot": "y",
+  "should_automerge_autoapprove_github_dependabot": "y",
+  "should_install_github_actions": "y",
+  "should_upload_coverage_to_codecov": "n",
+  "should_publish_to_testpypi": "n",
+  "should_publish_to_pypi": "n",
+  "should_publish_to_github_packages": "n",
+  "should_attach_to_github_release": "n"
+}
