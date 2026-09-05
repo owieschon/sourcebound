@@ -22,17 +22,25 @@ def mdx_markers(region: str) -> tuple[str, str]:
     )
 
 
-def replace_region(document: str, region: str, generated: str) -> str:
-    forms = [
+_NESTED_MARKER_PREFIXES = (
+    "<!-- sourcebound:begin ",
+    "<!-- sourcebound:end ",
+    "{/* sourcebound:begin ",
+    "{/* sourcebound:end ",
+)
+
+
+def _bounds(document: str, region: str, forms: tuple[tuple[str, str], ...]) -> tuple[str, str, int, int]:
+    matched = [
         candidate
-        for candidate in (markers(region), mdx_markers(region))
+        for candidate in forms
         if candidate[0] in document or candidate[1] in document
     ]
-    if len(forms) != 1:
+    if len(matched) != 1:
         raise RegionError(
             f"region {region!r} must use exactly one Markdown or MDX marker form"
         )
-    begin, end = forms[0]
+    begin, end = matched[0]
     if document.count(begin) != 1 or document.count(end) != 1:
         raise RegionError(f"region {region!r} must have exactly one begin and one end marker")
     start = document.index(begin) + len(begin)
@@ -40,16 +48,29 @@ def replace_region(document: str, region: str, generated: str) -> str:
     if finish < start:
         raise RegionError(f"region {region!r} end marker precedes its begin marker")
     between = document[start:finish]
-    if any(
-        marker in between
-        for marker in (
-            "<!-- sourcebound:begin ",
-            "<!-- sourcebound:end ",
-            "{/* sourcebound:begin ",
-            "{/* sourcebound:end ",
-        )
-    ):
+    if any(marker in between for marker in _NESTED_MARKER_PREFIXES):
         raise RegionError(f"region {region!r} contains nested sourcebound markers")
+    return begin, end, start, finish
+
+
+def _replace_inline_region(document: str, region: str, generated: str) -> str:
+    if any(marker in document for marker in mdx_markers(region)):
+        raise RegionError(
+            f"region {region!r} inline-scalar rendering does not support MDX markers"
+        )
+    _, _, start, finish = _bounds(document, region, (markers(region),))
+    between = document[start:finish]
+    if "\n" in between or "\r" in between:
+        raise RegionError(f"region {region!r} inline markers must be on the same line")
+    if "\n" in generated or "\r" in generated:
+        raise RegionError(f"region {region!r} inline replacement must not contain newlines")
+    return document[:start] + generated + document[finish:]
+
+
+def replace_region(document: str, region: str, generated: str, *, inline: bool = False) -> str:
+    if inline:
+        return _replace_inline_region(document, region, generated)
+    _, _, start, finish = _bounds(document, region, (markers(region), mdx_markers(region)))
     return document[:start] + "\n" + generated.rstrip() + "\n" + document[finish:]
 
 

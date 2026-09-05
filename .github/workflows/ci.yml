@@ -36,6 +36,7 @@ jobs:
       - run: python -m pip install ".[dev]"
       - run: python scripts/build_mdx_adapter.py
       - run: python -m pytest
+      - run: python examples/cookiecutter-defaults-repair/replay.py
       - run: python -m mypy src/sourcebound
       - run: python -m ruff check src tests
       - run: python scripts/check_doc_names.py

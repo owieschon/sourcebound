@@ -275,7 +275,9 @@ def evaluate(
                     f"cannot read bound document {binding.doc}: {exc}"
                 ) from exc
         observed = documents[doc_key]
-        expected = replace_region(observed, binding.region, rendered)
+        expected = replace_region(
+            observed, binding.region, rendered, inline=binding.renderer == "inline-scalar"
+        )
         if observed != expected and binding.extractor == "repository-overview":
             legacy_evidence = _extract_repository_overview_legacy(
                 snapshot,
@@ -304,12 +306,23 @@ def evaluate(
             observed=observed,
             diff=diff,
             provenance=evidence.provenance,
+            renderer=binding.renderer,
         ))
     return results
 
 
+def _line_ending_style(data: bytes) -> str:
+    if b"\r\n" not in data:
+        return "mixed" if b"\r" in data else "lf"
+    remainder = data.replace(b"\r\n", b"")
+    if b"\r" in remainder or b"\n" in remainder:
+        return "mixed"
+    return "crlf"
+
+
 def write_results(root: Path, results: list[BindingResult]) -> None:
     by_doc: dict[str, str] = {}
+    inline_docs: set[str] = set()
     for result in results:
         if result.binding_type != "region":
             continue
@@ -319,11 +332,30 @@ def write_results(root: Path, results: list[BindingResult]) -> None:
                 f"multiple bindings for {result.doc} require a combined document update"
             )
         by_doc[result.doc] = result.expected
-    # Preflight: confine every planned write before performing any of them, so a
-    # later invalid target cannot leave earlier documents already mutated.
-    planned_writes = [
-        (_confine(root, Path(doc)), content) for doc, content in by_doc.items()
-    ]
+        if result.renderer == "inline-scalar":
+            inline_docs.add(result.doc)
+    # Preflight: confine every planned write, and for documents an inline-scalar
+    # binding touched, resolve their original line-ending style, before performing
+    # any of the writes, so a later invalid target or an unsupported line-ending
+    # mix cannot leave earlier documents already mutated. Documents with only
+    # block-region bindings keep their existing (LF) write behavior unchanged.
+    planned_writes: list[tuple[Path, str]] = []
+    for doc, content in by_doc.items():
+        path = _confine(root, Path(doc))
+        if doc in inline_docs:
+            try:
+                original = path.read_bytes()
+            except OSError as exc:
+                raise ConfigurationError(f"cannot read bound document {doc}: {exc}") from exc
+            style = _line_ending_style(original)
+            if style == "mixed":
+                raise ConfigurationError(
+                    f"{doc} mixes line-ending styles; inline-scalar cannot safely "
+                    "preserve them and refuses to write"
+                )
+            if style == "crlf":
+                content = content.replace("\n", "\r\n")
+        planned_writes.append((path, content))
     for path, content in planned_writes:
         atomic_write(path, content)
 

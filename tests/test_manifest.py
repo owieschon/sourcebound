@@ -434,6 +434,54 @@ def test_loads_json_pointer_binding(tmp_path: Path) -> None:
     assert binding.source.symbol is None
 
 
+def test_loads_json_inline_scalar_binding(tmp_path: Path) -> None:
+    path = tmp_path / ".sourcebound.yml"
+    path.write_text(
+        VALID.replace(
+            "extractor: python-literal\n    source:\n      path: src/actions.py\n      symbol: ACTIONS",
+            "extractor: json\n    source:\n      path: config.json\n      pointer: /flag",
+        ).replace(
+            "renderer: markdown-table\n    columns: [name, tier]",
+            "renderer: inline-scalar",
+        )
+    )
+    binding = load_manifest(path).bindings[0]
+    assert binding.renderer == "inline-scalar"
+    assert binding.source.pointer == "/flag"
+
+
+def test_json_scalar_renderer_combination_is_still_unsupported(tmp_path: Path) -> None:
+    path = tmp_path / ".sourcebound.yml"
+    path.write_text(
+        VALID.replace(
+            "extractor: python-literal\n    source:\n      path: src/actions.py\n      symbol: ACTIONS",
+            "extractor: json\n    source:\n      path: config.json\n      pointer: /flag",
+        ).replace(
+            "renderer: markdown-table\n    columns: [name, tier]",
+            "renderer: scalar",
+        )
+    )
+    with pytest.raises(ConfigurationError, match="incompatible with extractor json"):
+        load_manifest(path)
+
+
+def test_json_inline_scalar_rejects_mdx_document(tmp_path: Path) -> None:
+    path = tmp_path / ".sourcebound.yml"
+    path.write_text(
+        VALID.replace("doc: README.md", "doc: README.mdx")
+        .replace(
+            "extractor: python-literal\n    source:\n      path: src/actions.py\n      symbol: ACTIONS",
+            "extractor: json\n    source:\n      path: config.json\n      pointer: /flag",
+        )
+        .replace(
+            "renderer: markdown-table\n    columns: [name, tier]",
+            "renderer: inline-scalar",
+        )
+    )
+    with pytest.raises(ConfigurationError, match="does not support MDX documents"):
+        load_manifest(path)
+
+
 def test_python_token_is_valid_only_as_the_allowlisted_executable(
     tmp_path: Path,
 ) -> None:
