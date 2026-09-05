@@ -68,11 +68,21 @@ def extract_json_pointer(
         document = json.loads(text)
     except json.JSONDecodeError as exc:
         raise ExtractionError(f"cannot parse {binding.source.path}: {exc}") from exc
-    value = _rows(_resolve(document, binding.source.pointer))
+    resolved = _resolve(document, binding.source.pointer)
+    if binding.renderer == "inline-scalar":
+        if isinstance(resolved, (dict, list)):
+            raise ExtractionError(
+                "inline-scalar json binding requires a scalar JSON value"
+            )
+        value: Any = resolved
+        kind = "scalar"
+    else:
+        value = _rows(resolved)
+        kind = "table"
     normalized = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
     digest = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
     return EvidenceValue(
-        kind="table",
+        kind=kind,
         value=value,
         provenance=Provenance(
             ref=snapshot.label,

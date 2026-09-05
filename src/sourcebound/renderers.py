@@ -32,7 +32,25 @@ def render_markdown_table(evidence: EvidenceValue, binding: RegionBinding) -> st
     return "\n".join([header, divider, *body])
 
 
+def _inline_scalar_text(value: Any) -> str:
+    if isinstance(value, (dict, list)):
+        raise ExtractionError("inline-scalar renderer requires a scalar value")
+    if value is None:
+        text = ""
+    elif isinstance(value, bool):
+        text = "true" if value else "false"
+    else:
+        text = str(value)
+    if "\n" in text or "\r" in text:
+        raise ExtractionError("inline-scalar renderer requires a single-line value")
+    if "sourcebound:begin" in text or "sourcebound:end" in text:
+        raise ExtractionError("inline-scalar renderer value must not contain region markers")
+    return text
+
+
 def render(evidence: EvidenceValue, binding: RegionBinding) -> str:
+    if binding.renderer == "inline-scalar":
+        return _inline_scalar_text(evidence.value)
     if binding.renderer == "markdown-table":
         return render_markdown_table(evidence, binding)
     if binding.renderer == "markdown-list":

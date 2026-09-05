@@ -74,6 +74,7 @@ EXTRACTORS = {
 }
 RENDERERS = {
     "fenced-text",
+    "inline-scalar",
     "markdown-fragment",
     "markdown-list",
     "markdown-table",
@@ -884,7 +885,7 @@ def load_manifest(path: Path) -> Manifest:
 
         compatible = {
             "file": {"fenced-text", "scalar"},
-            "json": {"markdown-table"},
+            "json": {"markdown-table", "inline-scalar"},
             "path": {"markdown-list"},
             "python-literal": {"markdown-fragment", "markdown-table", "scalar"},
             "repository-inventory": {"markdown-table"},
@@ -898,6 +899,11 @@ def load_manifest(path: Path) -> Manifest:
         ):
             raise ConfigurationError(
                 f"{where}.renderer {renderer} is incompatible with extractor {extractor}"
+            )
+        doc = _relative_path(data.get("doc"), f"{where}.doc")
+        if renderer == "inline-scalar" and doc.suffix.lower() == ".mdx":
+            raise ConfigurationError(
+                f"{where}.renderer inline-scalar does not support MDX documents"
             )
         language = data.get("language")
         if language is not None and (
@@ -925,7 +931,7 @@ def load_manifest(path: Path) -> Manifest:
         bindings.append(
             RegionBinding(
                 id=binding_id,
-                doc=_relative_path(data.get("doc"), f"{where}.doc"),
+                doc=doc,
                 region=region,
                 extractor=extractor,
                 source=Source(

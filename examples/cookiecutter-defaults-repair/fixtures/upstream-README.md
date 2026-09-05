@@ -1,0 +1,293 @@
+<h3 align="center">cookiecutter-py</h3>
+
+<div align="center">
+  <p>🐍 Modern Python project Cookiecutter template</p>
+</div>
+
+<div align="center">
+
+[![Python 3.11-3.13](https://img.shields.io/badge/python-3.11%20|%203.12%20|%203.13-blue.svg)](https://www.python.org/downloads/)
+[![GitHub Issues][github-issues-shield]][github-issues-url]
+[![GitHub Pull Requests][github-prs-shield]][github-prs-url]
+[![License][project-license-shield]][project-license-url]
+
+</div>
+
+<div align="center">
+
+[**Explore the latest docs »**][project-docs]
+
+</div>
+
+---
+
+Each time you start a new Python project, you shouldn't start from scratch.
+Ideally, you'd start with a standard project structure and set of tools and
+integrations to help facilitate writing quality Python code.
+
+This modern Python [Cookiecutter](https://github.com/audreyr/cookiecutter)
+template is the tool that will help you do just that.
+
+---
+
+<!-- FEATURES -->
+## ✨ Features
+
+- [`uv`](https://github.com/astral-sh/uv) to manage dependencies
+- [`structlog`](https://www.structlog.org/en/stable) for logging
+- [`mypy`](https://mypy-lang.org) for static typing
+- [`pytest`](https://github.com/pytest-dev/pytest), [`hypothesis`](https://github.com/HypothesisWorks/hypothesis), [`mutmut`](https://github.com/boxed/mutmut) for testing
+
+  - [`pytest-cov`](https://pytest-cov.readthedocs.io/en/latest/) for coverage reports
+  - [`pytest-mock`](https://github.com/pytest-dev/pytest-mock/) for mocks
+  - [`pytest-xdist`](https://github.com/pytest-dev/pytest-xdist) for distributed testing
+  - [`pytest-randomly`](https://github.com/pytest-dev/pytest-randomly) to randomly order tests
+
+- [`tox`](https://tox.readthedocs.org/en/latest/) for testing automation
+- [`sphinx`](http://www.sphinx-doc.org/en/master/) for docs
+  - [`myst-parser`](https://github.com/executablebooks/MyST-Parser) for markdown docs
+  - selectable theme
+- [`pdbp`](https://github.com/mdmintz/pdbp) for debugging
+- [`konch`](http://konch.readthedocs.org/en/latest/) for shell configuration w/ [`ipython`](https://ipython.org) support
+- [`pre-commit`](https://pre-commit.com) hooks with comprehensive tooling:
+  - [`uv-lock`](https://github.com/astral-sh/uv-pre-commit) for dependency management
+  - [`mypy`](https://mypy-lang.org) for type checking
+  - [`ruff`](https://github.com/astral-sh/ruff) for linting, formatting, and import sorting
+  - [`bashate`](https://github.com/openstack/bashate) for shell script linting
+  - [`commitlint`](https://github.com/conventional-changelog/commitlint) for commit message standards
+  - [`detect-secrets`](https://github.com/Yelp/detect-secrets) for secret detection
+  - [`typos`](https://github.com/crate-ci/typos) for spell checking
+  - [`deptry`](https://github.com/fpgmaas/deptry) for dependency validation
+- [`dockerfile`](https://www.docker.com/) for development, testing, and production
+- [`dunamai`](https://github.com/mtkennerly/dunamai) for versioning
+- custom [`Justfile`](https://github.com/casey/just) (run `just`)
+- stay up-to-date w/ configured [`dependabot`](https://dependabot.com/)
+- [`github-actions`](https://github.com/features/actions) with ci (leveraging [`tox`](https://tox.readthedocs.org/en/latest/)), publish to pypi workflows w/ [`release-drafter`](https://github.com/release-drafter/release-drafter) integration
+
+  - [`ci`](https://raw.githubusercontent.com/ryankanno/cookiecutter-py/main/%7B%7Bcookiecutter.package_name%7D%7D/.github/workflows/ci.yml) workflow (leveraging [`tox`](https://tox.readthedocs.org/en/latest/))
+
+    - optional [`codecov`](https://codecov.io) integration for code coverage
+
+  - [`publish`](https://github.com/ryankanno/cookiecutter-py/blob/main/%7B%7Bcookiecutter.package_name%7D%7D/.github/workflows/publish.yml) workflow with configurable publishing to:
+    - [TestPyPI](https://test.pypi.org) (optional, enabled by default)
+    - [PyPI](https://pypi.org) (optional, enabled by default)
+    - [GitHub Packages](https://docs.github.com/en/packages) (optional, disabled by default)
+    - GitHub Release artifacts (optional, disabled by default)
+    - Always builds and uploads artifacts to GitHub Actions for manual inspection
+    - Integrated with [`release-drafter`](https://github.com/release-drafter/release-drafter)
+  - [`auto approve / merge`](https://github.com/ryankanno/cookiecutter-py/blob/main/%7B%7Bcookiecutter.package_name%7D%7D/.github/workflows/auto-approve-merge-dependabot.yml) workflow
+  - with these additional workflows:
+
+    - [`codeql`](https://raw.githubusercontent.com/ryankanno/cookiecutter-py/main/%7B%7Bcookiecutter.package_name%7D%7D/.github/workflows/codeql-analysis.yml) for security analysis
+    - [`hadolint`](https://raw.githubusercontent.com/ryankanno/cookiecutter-py/main/%7B%7Bcookiecutter.package_name%7D%7D/.github/workflows/hadolint.yml) for Dockerfile linting
+    - [`pr-size-labeling`](https://raw.githubusercontent.com/ryankanno/cookiecutter-py/main/%7B%7Bcookiecutter.package_name%7D%7D/.github/workflows/pr-size-labeler.yml) for PR size classification
+    - [`pr-labeler`](https://raw.githubusercontent.com/ryankanno/cookiecutter-py/main/%7B%7Bcookiecutter.package_name%7D%7D/.github/workflows/pr-labeler.yml) for automated PR labeling
+    - [`commitlint`](https://raw.githubusercontent.com/ryankanno/cookiecutter-py/main/%7B%7Bcookiecutter.package_name%7D%7D/.github/workflows/commitlint.yml) for commit message validation
+    - [`trufflehog`](https://raw.githubusercontent.com/ryankanno/cookiecutter-py/main/%7B%7Bcookiecutter.package_name%7D%7D/.github/workflows/trufflehog.yml) for secret scanning
+    - [`docs`](https://raw.githubusercontent.com/ryankanno/cookiecutter-py/main/%7B%7Bcookiecutter.package_name%7D%7D/.github/workflows/docs.yml) for documentation publishing
+    - [`release-drafter`](https://raw.githubusercontent.com/ryankanno/cookiecutter-py/main/%7B%7Bcookiecutter.package_name%7D%7D/.github/workflows/release-drafter.yml) for automated release notes
+- optional [`direnv`](https://github.com/direnv/direnv) .envrc (with [`use uv`](https://raw.githubusercontent.com/ryankanno/dotfiles/5ed45cfd8c387489fc0459eb1a485b2c21f3d159/dot_config/direnv/direnvrc) layout)
+
+<!-- GETTING STARTED -->
+## 🚀 Getting Started
+
+### Prerequisites
+
+Install [Cookiecutter](https://cookiecutter.readthedocs.io/en/latest/installation.html)
+
+```sh
+uv add cookiecutter
+# pip install cookiecutter
+# pipenv install cookiecutter
+```
+
+**Optional**: Install [Cruft](https://github.com/cruft/cruft)
+
+```sh
+uv add cruft
+# pip install cruft
+# pipenv install cruft
+```
+
+## 🛠️ Usage
+
+### Cookiecutter
+
+```sh
+cookiecutter gh:ryankanno/cookiecutter-py
+```
+
+**Note**: If you want to use the auto approve / merge Dependabot workflow, make
+sure to create tags `major`, `minor`, `patch` so that Dependabot can tag its
+PRs. The workflow won't merge anything with a `major` tag.
+
+### Cruft (Optional)
+
+```sh
+cruft create https://github.com/ryankanno/cookiecutter-py/
+```
+
+<!-- DETAILS -->
+## 🔍 Details
+
+### Justfile Commands
+
+The template includes a comprehensive [`Justfile`](https://github.com/casey/just) with the following commands:
+
+**Development:**
+- **`just install`** - Install dependencies using uv
+- **`just clean`** - Remove all build, test, and documentation artifacts
+
+**Testing & Quality:**
+- **`just tests`** - Run all tests (fast, no coverage)
+- **`just tests -- path/to/test.py`** - Run specific tests
+- **`just tests -- --durations=10`** - Show slow test durations
+- **`just coverage`** - Run tests with comprehensive coverage analysis
+- **`just lint`** - Run all linting checks via tox
+- **`just lint --fix`** - Auto-fix linting issues where possible
+- **`just pre-commit`** - Run pre-commit hooks
+
+**Documentation & Distribution:**
+- **`just docs`** - Build Sphinx documentation
+- **`just dist`** - Build distribution packages
+
+**Utilities:**
+- **`just tox -- <args>`** - Run tox with custom arguments
+- **`just watch <recipe>`** - Watch files and re-run commands on changes (with desktop notifications)
+
+All commands use `uv` as the package manager and integrate with tox environments for consistency.
+
+### Docker
+
+To build the container:
+
+```sh
+DOCKER_BUILDKIT=1 docker build .
+```
+
+To run the container (if you've installed the defaults):
+
+```sh
+docker run <image_id or tag> python -m surf.surf
+```
+
+### Versioning
+
+If you enable the PyPi workflow, versioning will happen via [`dunamai`](https://github.com/mtkennerly/dunamai) within the Github pipeline.
+
+If instead, you prefer to version your package, please do it via ```uv version $(dunamai from any)``` as recommended in their [documentation](https://github.com/mtkennerly/dunamai#user-content-integration).
+
+### Publishing a Release
+
+Tags use plain SemVer with no `v` prefix (e.g. `2.0.0`). The `publish.yml` workflow fires on `release: published` and derives the wheel version from the tag via `dunamai from git --style semver`.
+
+Two paths:
+
+**Drafter (default).** [`release-drafter`](https://github.com/release-drafter/release-drafter) maintains a draft on every push to `main`. Version resolves from PR labels: `breaking` → major-ish bump (currently mapped to minor — adjust `version-resolver` if you want true major automation), `feature` → minor, `fix` / `refactor` / `build` / `documentation` / `dependencies` / `performance` → patch. Open the draft, confirm the tag, click **Publish**.
+
+**Manual (forced major or off-cycle cuts).**
+
+```sh
+git tag -a 2.0.0 -m "2.0.0"
+git push origin 2.0.0
+gh release create 2.0.0 --generate-notes
+```
+
+Publishing triggers `publish.yml` which builds the sdist/wheel and uploads them as a GitHub Actions artifact.
+
+#### Skipping a PR from release notes
+
+Apply the `skip-changelog` label to the PR. `exclude-labels` in `.github/release-drafter.yml` keeps labelled PRs out of the next release's changelog and version bump.
+
+### Configuration Variables
+
+When you run cookiecutter, you'll be prompted for various configuration options. Here are the key variables:
+
+**Project Information:**
+- `author_name` - Your full name
+- `author_email` - Your email address
+- `project_name` - Human-readable project name
+- `project_short_description` - Brief description of your project
+- `project_url` - Project repository URL
+- `project_license` - License type (default: MIT)
+- `github_repository_owner` - GitHub username or organization
+- `package_name` - Python package name (snake_case)
+- `version` - Initial version number (default: 0.0.0)
+
+**Python & Dependencies:**
+- `python_version` - Minimum Python version (default: 3.12)
+- `supported_python_versions` - Comma-separated list of supported versions
+- `uv_version` - Version of uv to use
+- `tox_version` - Version of tox to use
+- `sphinx_theme` - Documentation theme ([furo](https://pradyunsg.me/furo/), [sphinx-rtd-theme](https://sphinx-rtd-theme.readthedocs.io/), or [pydata-sphinx-theme](https://pydata-sphinx-theme.readthedocs.io/))
+
+**Optional Features:**
+- `should_use_direnv` - Include .envrc for direnv (default: y)
+- `should_create_author_files` - Include AUTHORS.rst (default: y)
+- `should_install_github_dependabot` - Enable Dependabot (default: y)
+- `should_automerge_autoapprove_github_dependabot` - Auto-approve/merge Dependabot PRs (default: y)
+- `should_install_github_actions` - Include GitHub Actions workflows (default: y)
+- `should_upload_coverage_to_codecov` - Upload coverage to Codecov (default: y)
+
+**Publishing Options:**
+- `should_publish_to_testpypi` - Publish to TestPyPI on every main push (default: y)
+- `should_publish_to_pypi` - Publish to PyPI on release (default: y)
+- `should_publish_to_github_packages` - Publish to GitHub Packages on release (default: n)
+- `should_attach_to_github_release` - Attach build artifacts to GitHub releases (default: n)
+
+**Note:** Even if all publishing options are disabled, the build job still runs and uploads artifacts to GitHub Actions for manual inspection.
+
+<!-- ROADMAP -->
+## 🚧 Roadmap
+
+See the [open issues](https://github.com/ryankanno/cookiecutter-py/issues) for a list of proposed features (and known issues).
+
+<!-- TODO -->
+## ☑️ TODO
+
+- [ ] add mutmut example to template
+- [ ] add hypothesis example to template
+- [ ] add licenses
+- [ ] add typeguard
+- [X] version releases
+- [X] add publish docs workflow
+- [X] update docs
+- [X] include cookiecutter var descriptions
+- [X] update default/initial template doc structure
+- [X] investigate uv
+- [X] migrate to uv
+- [X] finalize v1.0.0
+
+<!-- CONTRIBUTING -->
+## 🤝 Contributing
+
+Contributions are very much appreciated.
+
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/new-cookiecutter-feature`)
+3. Commit your changes (`git commit -m 'Added a new feature'`)
+4. Push to the feature branch (`git push origin feature/new-cookiecutter-feature`)
+5. Open a PR! 🎆
+
+<!-- LICENSE -->
+## 📝 License
+
+Distributed under the MIT License. See [`LICENSE`](https://github.com/ryankanno/cookiecutter-py/blob/main/LICENSE) for more information.
+
+<!-- CONTACT -->
+## 📫 Contact
+
+Ryan Kanno - [@ryankanno][twitter-ryankanno-url]
+
+Project Link: [https://github.com/ryankanno/cookiecutter-py][project-url]
+
+
+[project-url]: https://github.com/ryankanno/cookiecutter-py
+[project-docs]: https://ryankanno.github.io/cookiecutter-py/latest
+[project-license-shield]: https://img.shields.io/github/license/ryankanno/cookiecutter-py
+[project-license-url]: https://github.com/ryankanno/cookiecutter-py/blob/main/LICENSE
+[github-issues-shield]: https://img.shields.io/github/issues/ryankanno/cookiecutter-py
+[github-issues-url]: https://github.com/ryankanno/cookiecutter-py/issues
+[github-prs-shield]: https://img.shields.io/github/issues-pr/ryankanno/cookiecutter-py
+[github-prs-url]: https://github.com/ryankanno/cookiecutter-py/pulls
+[twitter-ryankanno-url]: https://twitter.com/ryankanno
