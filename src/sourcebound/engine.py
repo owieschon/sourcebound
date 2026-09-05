@@ -275,7 +275,9 @@ def evaluate(
                     f"cannot read bound document {binding.doc}: {exc}"
                 ) from exc
         observed = documents[doc_key]
-        expected = replace_region(observed, binding.region, rendered)
+        expected = replace_region(
+            observed, binding.region, rendered, inline=binding.renderer == "inline-scalar"
+        )
         if observed != expected and binding.extractor == "repository-overview":
             legacy_evidence = _extract_repository_overview_legacy(
                 snapshot,
