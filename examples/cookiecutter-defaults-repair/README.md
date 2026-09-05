@@ -17,13 +17,13 @@ public, merged PR, to exercise this feature against a real bug rather than a
 synthetic one.
 
 `fixtures/` holds the frozen inputs, immutable and MIT-licensed:
-- `upstream-README.md` — README before the fix (SHA-256
+- `fixtures/upstream-README.md` — README before the fix (SHA-256
   `89b21a210d40a532767f0aee4b8eb95134b8077f10ba79f76bc4ccddfc881442`)
-- `upstream-README-fixed.md` — README after the fix, used only as the
+- `fixtures/upstream-README-fixed.md` — README after the fix, used only as the
   comparison target
-- `cookiecutter.json` — the JSON source of truth (SHA-256
+- `fixtures/cookiecutter.json` — the JSON source of truth (SHA-256
   `0dc48fe4682188e7a1feb9908a4ad886352cd08867c0fbe7a30c19a19a34adb8`)
-- `LICENSE` — upstream's MIT license, carried with the vendored files
+- `fixtures/LICENSE` — upstream's MIT license, carried with the vendored files
 
 ## Run it
 

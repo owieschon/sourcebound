@@ -68,7 +68,7 @@ The `inline-scalar` renderer places a single value inline within prose, wrapped 
 Mark the location with begin and end markers on the same line as the surrounding prose:
 
 ```markdown
-The default value is <!-- sourcebound:begin my-setting -->old<!-- sourcebound:end my-setting -->.
+The default value is <!-- sourcebound:begin default_upload_setting -->old<!-- sourcebound:end default_upload_setting -->.
 ```
 
 Constraints:
@@ -89,6 +89,8 @@ bindings:
     source: {path: config.json, pointer: /upload_enabled}
     renderer: inline-scalar
 ```
+
+See the [runnable cookiecutter replay example](../examples/cookiecutter-defaults-repair/README.md) for a real-world use of inline-scalar with JSON defaults.
 
 ### Path glob bindings
 
