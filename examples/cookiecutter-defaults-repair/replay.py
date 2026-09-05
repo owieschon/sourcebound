@@ -40,6 +40,9 @@ UPSTREAM_LICENSE = FIXTURES / "LICENSE"
 EXPECTED_README_SHA256 = (
     "89b21a210d40a532767f0aee4b8eb95134b8077f10ba79f76bc4ccddfc881442"
 )
+EXPECTED_README_FIXED_SHA256 = (
+    "52a1b61b1e8ff64af130639383fbca234aa2e0d3668a33252bc3f9b52572fac9"
+)
 EXPECTED_JSON_SHA256 = (
     "0dc48fe4682188e7a1feb9908a4ad886352cd08867c0fbe7a30c19a19a34adb8"
 )
@@ -95,11 +98,17 @@ def _sha256(path: Path) -> str:
 
 def _verify_frozen_inputs() -> None:
     observed_readme = _sha256(UPSTREAM_README)
+    observed_readme_fixed = _sha256(UPSTREAM_README_FIXED)
     observed_json = _sha256(UPSTREAM_JSON)
     if observed_readme != EXPECTED_README_SHA256:
         raise SystemExit(
             f"frozen upstream README changed: expected {EXPECTED_README_SHA256}, "
             f"got {observed_readme}"
+        )
+    if observed_readme_fixed != EXPECTED_README_FIXED_SHA256:
+        raise SystemExit(
+            f"frozen upstream fixed README changed: expected {EXPECTED_README_FIXED_SHA256}, "
+            f"got {observed_readme_fixed}"
         )
     if observed_json != EXPECTED_JSON_SHA256:
         raise SystemExit(
@@ -153,7 +162,8 @@ def _strip_markers(readme_text: str) -> str:
 
 
 def _demonstrate_negative_paths(tmp_root: Path) -> None:
-    """Negative proof: malformed setups fail loudly and leave documents untouched."""
+    """Negative proof: malformed setups fail loudly and leave the document untouched,
+    checked as raw bytes through the real drive() write path, not just evaluate()."""
     document = "<!-- sourcebound:begin flag -->y<!-- sourcebound:begin flag -->\n"
     try:
         replace_region(document, "flag", "n", inline=True)
@@ -162,17 +172,24 @@ def _demonstrate_negative_paths(tmp_root: Path) -> None:
     else:
         raise SystemExit("negative proof failed: duplicate begin marker was not rejected")
 
+    readme_path = tmp_root / "README.md"
+    before_bytes = readme_path.read_bytes()
     manifest_path = tmp_root / ".sourcebound.yml"
+    original_manifest = manifest_path.read_text(encoding="utf-8")
     bad_manifest = MANIFEST_TEMPLATE.format(
         bindings=BINDING_TEMPLATE.format(key="does_not_exist")
     )
     manifest_path.write_text(bad_manifest, encoding="utf-8")
     try:
-        evaluate(tmp_root, manifest_path)
+        drive(tmp_root, manifest_path)
     except (ConfigurationError, ExtractionError):
         pass
     else:
         raise SystemExit("negative proof failed: missing JSON pointer was not rejected")
+    after_bytes = readme_path.read_bytes()
+    if after_bytes != before_bytes:
+        raise SystemExit("negative proof failed: document bytes changed after a rejected drive")
+    manifest_path.write_text(original_manifest, encoding="utf-8")
 
 
 def main() -> None:
@@ -212,15 +229,22 @@ def main() -> None:
         repaired = _strip_markers(repaired_marked)
         print("4. Drove the repair and stripped the inserted markers")
 
-        expected = UPSTREAM_README_FIXED.read_text(encoding="utf-8")
-        if repaired != expected:
+        repaired_bytes = repaired.encode("utf-8")
+        expected_bytes = UPSTREAM_README_FIXED.read_bytes()
+        if repaired_bytes != expected_bytes:
             raise SystemExit("repaired README does not match the upstream fixed README byte-for-byte")
         print("5. Repaired README matches the upstream fixed README byte-for-byte")
 
-        _demonstrate_negative_paths(tmp_root)
-        print("6. Negative-path setups (duplicate marker, missing pointer) failed clearly")
+        clean = evaluate(tmp_root, manifest_path)
+        if any(result.changed for result in clean):
+            raise SystemExit("repeat-check failed: repaired README still shows drift")
+        print("6. Explicit repeat-check: re-auditing the repaired README shows zero drift")
 
-    print(f"7. Frozen originals were never modified: {UPSTREAM_README}, {UPSTREAM_JSON}")
+        _demonstrate_negative_paths(tmp_root)
+        print("7. Negative-path setups (duplicate marker, missing pointer) failed clearly, bytes untouched")
+
+    _verify_frozen_inputs()
+    print(f"8. Frozen originals were never modified: {UPSTREAM_README}, {UPSTREAM_README_FIXED}, {UPSTREAM_JSON}")
 
 
 if __name__ == "__main__":

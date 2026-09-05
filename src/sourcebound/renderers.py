@@ -36,7 +36,7 @@ def _inline_scalar_text(value: Any) -> str:
     if isinstance(value, (dict, list)):
         raise ExtractionError("inline-scalar renderer requires a scalar value")
     if value is None:
-        text = ""
+        text = "null"
     elif isinstance(value, bool):
         text = "true" if value else "false"
     else:

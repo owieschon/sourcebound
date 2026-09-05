@@ -61,6 +61,35 @@ evaluation; it does not evaluate any other expression.
 
 The source assignment may be a list of dictionaries or a dictionary whose values are records. Constructor calls are read as keyword records. sourcebound reads the syntax tree; the [security model](SECURITY_MODEL.md) owns the execution boundary.
 
+### Inline-scalar renderer for Markdown
+
+The `inline-scalar` renderer places a single value inline within prose, wrapped in sourcebound markers on the same line. This is useful for single scalar defaults, versions, or configuration values that belong in a sentence.
+
+Mark the location with begin and end markers on the same line as the surrounding prose:
+
+```markdown
+The default value is <!-- sourcebound:begin my-setting -->old<!-- sourcebound:end my-setting -->.
+```
+
+Constraints:
+- Markdown documents only; `.mdx` files cannot use inline-scalar (use `markdown-table` or block regions instead).
+- No mixed line endings (LF or CRLF only, not both in the same file).
+- The markers must be on the same line as the scalar value.
+
+Example configuration:
+
+```yaml
+version: 1
+bindings:
+  - id: default_upload_setting
+    type: region
+    doc: README.md
+    region: default_upload_setting
+    extractor: json
+    source: {path: config.json, pointer: /upload_enabled}
+    renderer: inline-scalar
+```
+
 ### Path glob bindings
 
 The `path` extractor requires at least one matching file. A zero-match glob exits `3`, names the

@@ -193,3 +193,4 @@ class BindingResult:
     binding_type: str = "region"
     state: str | None = None
     prose_checked: bool = False
+    renderer: str | None = None
