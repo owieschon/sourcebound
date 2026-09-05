@@ -33,6 +33,11 @@ def test_public_first_screen_defines_the_product_and_routes_to_learning() -> Non
     assert "img.shields.io/github/v/release" in readme
     assert "img.shields.io/badge/license-MIT" in readme
 
+    lead_example = readme[start:detail]
+    assert "https://owieschon.github.io/sourcebound/" in lead_example
+    assert "docs/learn/tutorial-catch-a-lying-doc.md" in lead_example
+    assert "sourcebound check" in lead_example and "sourcebound drive" in lead_example
+
 
 def test_core_routes_name_the_reader_job_and_keep_experimental_records_out_of_default_context() -> (
     None
