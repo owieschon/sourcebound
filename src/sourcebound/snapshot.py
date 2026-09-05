@@ -74,7 +74,15 @@ class RepositorySnapshot:
         if self.ref is None:
             target = self.root / path
             try:
-                return target.read_text(encoding="utf-8")
+                resolved_root = self.root.resolve(strict=True)
+                resolved_target = target.resolve(strict=True)
+            except (OSError, RuntimeError) as exc:
+                # Python <3.13 reports symlink loops as RuntimeError.
+                raise ExtractionError(f"cannot read source {path}: {exc}") from exc
+            if resolved_target != resolved_root and resolved_root not in resolved_target.parents:
+                raise ExtractionError(f"source path escapes repository: {path}")
+            try:
+                return resolved_target.read_text(encoding="utf-8")
             except OSError as exc:
                 raise ExtractionError(f"cannot read source {path}: {exc}") from exc
         proc = self._git("show", f"{self.ref}:{path.as_posix()}")
