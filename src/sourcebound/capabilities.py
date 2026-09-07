@@ -128,6 +128,13 @@ CLI_REFERENCE = (
         "example": "sourcebound inventory --format json",
     },
     {
+        "command": "obligations",
+        "area": "advanced",
+        "job": "Compile advisory documentation obligations from README links",
+        "writes": "no",
+        "example": "sourcebound obligations --format json",
+    },
+    {
         "command": "claims",
         "area": "core",
         "job": "Rank and verify static count and column claims",
