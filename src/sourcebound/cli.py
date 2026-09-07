@@ -1080,13 +1080,13 @@ def _main(argv: list[str] | None = None) -> int:
             print(json.dumps(obligations_report.as_dict(), indent=2))
         else:
             print("advisory: no candidate below changes repository authority")
-            for candidate in obligations_report.candidates:
+            for obligation_candidate in obligations_report.candidates:
                 print(
-                    f"[candidate] {candidate.document} -> {candidate.surface_kind} "
-                    f"{candidate.surface_locator} ({candidate.authority})"
+                    f"[candidate] {obligation_candidate.document} -> {obligation_candidate.surface_kind} "
+                    f"{obligation_candidate.surface_locator} ({obligation_candidate.authority})"
                 )
-            for unknown in obligations_report.unknowns:
-                print(f"[unknown:{unknown.reason}] {unknown.target}")
+            for obligation_unknown in obligations_report.unknowns:
+                print(f"[unknown:{obligation_unknown.reason}] {obligation_unknown.target}")
             print(
                 f"obligations: {obligations_report.candidate_shown}/"
                 f"{obligations_report.candidate_population} candidate(s) shown, "
