@@ -7,7 +7,7 @@
 - [README.md](README.md): bindings: product-overview; sha256: ba046ec96bd374459a88ab2f9e7f9d60cbccff4673ca61a307ab1eacb77e8e6a
 - [SOURCEBOUND_SPEC.md](SOURCEBOUND_SPEC.md): bindings: assurance-boundaries; sha256: 3c1047d13653d530bcff0ee9701a7be1d7679571436285eab21b3299eabc0feb
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): declared canonical context; sha256: c3c6d2a19b3cdcf5a1ae956a12992a373fcb2b18e71383d69c0a398c2cbad735
-- [docs/CLI.md](docs/CLI.md): bindings: cli-reference, verdict-reference; sha256: da79370415bdc94f58d7f65ced98e66abdbb024bd26df4cc32ddf6e41ef01576
+- [docs/CLI.md](docs/CLI.md): bindings: cli-reference, verdict-reference; sha256: 766a24cfd4de22ea1d71c3a1539d29006f32aad607c72d33c9018dcae8201c9d
 - [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md): declared canonical context; sha256: 4e2fba36e8346753f72111cc3afa9846d892ba1dfefc9aea60c5119a4e75ae8b
 - [docs/INSTALL.md](docs/INSTALL.md): declared canonical context; sha256: e5aab0dbbf3616d0084928a1feda3f48ddb4eebd3d0e5bfca65408e424e499c6
 - [docs/README.md](docs/README.md): declared canonical context; sha256: b707c7d3b49ee95d924f48d6f7725960aafe5f55c7ebe08d26ffa22148112993
