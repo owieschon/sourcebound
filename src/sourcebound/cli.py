@@ -53,6 +53,7 @@ from sourcebound.improvements import (
     write_improvement_candidates,
 )
 from sourcebound.inventory import scan_inventory
+from sourcebound.obligations import compile_obligations
 from sourcebound.plugins import scan_extended_inventory
 from sourcebound.manifest import load_manifest
 from sourcebound.models import BindingResult
@@ -146,6 +147,14 @@ def _parser() -> argparse.ArgumentParser:
         "--no-exec",
         action="store_true",
         help="skip repository-declared discoverer plugins",
+    )
+    obligations_parser = sub.add_parser("obligations", help=_command_help("obligations"))
+    obligations_parser.add_argument("--format", choices=("text", "json"), default="text")
+    obligations_parser.add_argument(
+        "--limit",
+        type=int,
+        default=12,
+        help="bounded number of candidates and unknowns shown per section",
     )
     claims_parser = sub.add_parser("claims", help=_command_help("claims"))
     claims_parser.add_argument("--format", choices=("text", "json"), default="text")
@@ -1059,6 +1068,31 @@ def _main(argv: list[str] | None = None) -> int:
             print(
                 f"inventory: {len(inventory_report.items)} surface(s); "
                 f"{len(inventory_report.languages)} language(s)"
+            )
+        return 0
+    if args.command == "obligations":
+        try:
+            obligations_report = compile_obligations(root, limit=args.limit)
+        except ValueError as exc:
+            print(f"sourcebound: {exc}", file=sys.stderr)
+            return 2
+        if args.format == "json":
+            print(json.dumps(obligations_report.as_dict(), indent=2))
+        else:
+            print("advisory: no candidate below changes repository authority")
+            for candidate in obligations_report.candidates:
+                print(
+                    f"[candidate] {candidate.document} -> {candidate.surface_kind} "
+                    f"{candidate.surface_locator} ({candidate.authority})"
+                )
+            for unknown in obligations_report.unknowns:
+                print(f"[unknown:{unknown.reason}] {unknown.target}")
+            print(
+                f"obligations: {obligations_report.candidate_shown}/"
+                f"{obligations_report.candidate_population} candidate(s) shown, "
+                f"{obligations_report.candidate_truncated} truncated; "
+                f"{obligations_report.unknown_shown}/{obligations_report.unknown_population} "
+                f"unknown(s) shown, {obligations_report.unknown_truncated} truncated"
             )
         return 0
     if args.command == "claims":

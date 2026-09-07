@@ -26,6 +26,7 @@ default maintenance path.
 | experimental | residue status | Report whether private residue matching is active | no | sourcebound residue status |
 | experimental | residue init-local | Create a permission-restricted private residue template | yes | sourcebound residue init-local |
 | advanced | inventory | List detected repository surfaces and coverage | no | sourcebound inventory --format json |
+| advanced | obligations | Compile advisory documentation obligations from README links | no | sourcebound obligations --format json |
 | core | claims | Rank and verify static count and column claims | no | sourcebound claims --format json |
 | core | binding | Inspect one proposed source relationship | no | sourcebound binding --help |
 | core | binding sensitivity | Test whether one static check depends on a frozen source fact | no | sourcebound binding sensitivity --help |
