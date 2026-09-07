@@ -168,7 +168,8 @@ def compile_obligations(root: Path, *, limit: int = 12) -> ObligationReport:
     readme = _confine(root, "README.md")
     if readme is None:
         unknown = _unknown("README.md", "unsafe-local-link", "README.md:self")
-        return ObligationReport((), (unknown,), 0, 0, 0, 1, 1, 0)
+        shown = (unknown,) if limit else ()
+        return ObligationReport((), shown, 0, 0, 0, 1, len(shown), 1 - len(shown))
     if not readme.is_file():
         return ObligationReport((), (), 0, 0, 0, 0, 0, 0)
     try:
