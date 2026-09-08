@@ -167,7 +167,8 @@ def test_refuses_symlinked_ancestor_directory_escape(tmp_path: Path) -> None:
     assert [unknown.reason for unknown in report.unknowns] == ["unsafe-local-link"]
 
 
-def test_refuses_symlinked_readme_and_does_not_consume_outside_content(tmp_path: Path) -> None:
+@pytest.mark.parametrize("limit", [0, 1])
+def test_refuses_symlinked_readme_and_does_not_consume_outside_content(tmp_path: Path, limit: int) -> None:
     root = _repository(tmp_path, "# Service\n\n[Commands](docs/commands.md)\n")
     (root / "docs" / "commands.md").write_text("serve --verbose\n")
     outside_readme = tmp_path / "external-readme.md"
@@ -175,11 +176,15 @@ def test_refuses_symlinked_readme_and_does_not_consume_outside_content(tmp_path:
     (root / "README.md").unlink()
     (root / "README.md").symlink_to(outside_readme)
 
-    report = compile_obligations(root)
+    report = compile_obligations(root, limit=limit)
 
     assert report.candidates == ()
-    assert [unknown.reason for unknown in report.unknowns] == ["unsafe-local-link"]
-    assert [unknown.target for unknown in report.unknowns] == ["README.md"]
+    assert [unknown.reason for unknown in report.unknowns] == (["unsafe-local-link"] if limit else [])
+    assert [unknown.target for unknown in report.unknowns] == (["README.md"] if limit else [])
+
+    assert report.unknown_population == 1
+    assert report.unknown_shown == limit
+    assert report.unknown_truncated == 1 - limit
 
 
 def test_exact_identifier_boundary_rejects_substring_matches(tmp_path: Path) -> None:
